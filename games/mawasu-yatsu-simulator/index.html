@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/mawasu-yatsu-simulator/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>回すやつシミュレーター</title>
+<meta name="description" content="石臼を回して時速1000kmを目指す">
+<style>
+  :root{
+    --howto-bg:#d9d4c7; --howto-fg:#333;
+    --bg:#d9d4c7; --fg:#333; --fg-night:#f4f1ea; --ground:#b8ab90;
+    --sky-dusk:#e08a4f; --ground-dusk:#8a6448; --sun-dusk:#ffb070;
+    --sky-night:#0b0e26; --ground-night:#1a1d2c; --sun-night:#8a96ff;
+    --base:#a39780; --stone:#9a968e; --wood:#6b4a2b; --wood-mark:#c0392b;
+    --skin:#c8956b; --cloth:#9b5a3c;
+    --dust:#7a6548; --spark:#ffcc55; --fire1:#ffdd66; --fire2:#ff7a1a; --fire3:#e8341c;
+    --glow:#ff8a2a; --ring:#ff9f1c; --pillar:#ffd27a;
+    --smoke:#4a4440; --lava:#ff6a1a; --bolt:#7fc8ff; --magic:#ffd27a; --aura:#ffcc55; --rock:#8a8070;
+    --space:#04050c; --arena:#2b3150; --arena-rim:#4fe3ff; --ufo:#b9c2cc; --ufo-dome:#7fffd4;
+    --win:#ffd54a; --lose:#ff6b6b;
+    --planet1:#d06a3a; --planet2:#3d86d9; --planet3:#d8b46a; --planet4:#8a5ad6;
+    --plaster1:#ece3cf; --plaster2:#d9b88f; --marble:#efe9dd; --roof:#b5532f; --travertine:#cdbf9f;
+    --bronze:#7a6a45; --sand:#d8c08e; --lamp:#ffb45a; --shade:#3a3228;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #wrap{position:fixed;inset:0}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  /* 指の操作を邪魔しないよう、表示だけでタッチは下のキャンバスに通す */
+  #result{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;pointer-events:none}
+  #result[hidden]{display:none}
+  #resultTitle{font-size:48px;font-weight:bold;text-shadow:0 0 4px #000,0 0 4px #000,0 2px 3px #000}
+  #resultBtns{display:flex;gap:12px;pointer-events:auto}
+  /* 防衛成功の文字：一文字ずつ大きく飛び込んで、着地したら光ってから落ち着く */
+  #resultTitle .ch{display:inline-block;opacity:0;animation:chIn .45s cubic-bezier(.2,1.6,.4,1) forwards, chGlow 1.2s ease-out forwards}
+  @keyframes chIn{0%{opacity:0;transform:translateY(-60px) scale(3) rotate(-25deg)}100%{opacity:1;transform:none}}
+  @keyframes chGlow{0%,30%{text-shadow:0 0 4px #000,0 0 4px #000}45%{text-shadow:0 0 24px #fff,0 0 48px var(--win),0 0 4px #000}100%{text-shadow:0 0 4px #000,0 0 4px #000,0 2px 3px #000}}
+  #resultBtns.later{opacity:0;animation:btnIn .4s ease-out forwards}
+  @keyframes btnIn{to{opacity:1}}
+  #resultBtns button{padding:12px 24px;font-size:18px;touch-action:manipulation}
+  #mult{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;padding:8px 12px;font-size:15px;touch-action:manipulation;font-variant-numeric:tabular-nums}
+  #hud{position:fixed;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top,0px) + 16px);text-align:center;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000,0 1px 2px #000;pointer-events:none}
+  #speed{font-size:20px;font-variant-numeric:tabular-nums}
+  #turns{margin-top:2px;font-size:15px;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div id="wrap"></div>
+<!-- デバッグ用の倍率切り替えボタン。公開版では非表示（倍率は ×1 のまま） -->
+<button id="mult" type="button" hidden></button>
+<div id="result" hidden>
+  <div id="resultTitle"></div>
+  <div id="resultBtns"><button id="shareBtn" type="button">共有</button><button id="retryBtn" type="button">リトライ</button></div>
+</div>
+<div id="hud">
+  <div id="speed"></div>
+  <div id="turns"></div>
+</div>
+<section class="howto" data-pos="top-left" hidden>
+  <h2>遊び方</h2>
+  <p>石臼を回して、押す人の歩く速さを時速1000kmまで上げるゲームです。20km/hごとに人が増え、町や空も変わります。目標に届くと宇宙へ打ち上げられ、UFOとのベイゴマ勝負になります。UFOの体力を0にすれば防衛成功、400km/hを下回ると防衛失敗です。</p>
+  <h2>操作</h2>
+  <p>画面をなぞって石臼のまわりを回すと加速します。向きはどちらでも同じです。勝負中は触れた所へ石臼が動き、離すとUFOへ向かいます。PC はマウスのドラッグか、右矢印キーで加速します。</p>
+  <h2>コツ</h2>
+  <p>地上では減速せず、速いほど増え方が良くなります。勝負中は毎秒120km/h落ち、ぶつかるたびに8%減りますが、与えるダメージは速さに比例します。打ち上げまでなぞって速さをためておくと有利です。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- ブルーム（光のにじみ）用。読み込めなかったときはブルームなしで動く -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  const BASE_R = 1.0;       // 土台（石積み）の半径
+  const BASE_H = 0.3;       // 土台の高さ
+  const META_R = 0.72;      // 下の石（固定）の台座部分の半径
+  const META_TOP = 1.18;    // 下の石（円すい）の先端の高さ
+  const MILL_Y = 0.52;      // 上の石（砂時計形）の下端の高さ
+  const MILL_H = 1.3;       // 上の石の高さ
+  const MILL_R = 0.62;      // 上の石の上下端の外半径
+  const WAIST_R = 0.36;     // 上の石のくびれの外半径
+  const WALL = 0.1;         // 上の石の厚み
+  const BEAM = 0.12;        // 木枠・押し棒の太さ
+  const ARM_LEN = 1.9;      // 最初の押し棒の先端までの中心からの距離
+  const PUSH_R = 1.55;      // いちばん内側の押す人が立つ位置（中心からの距離）。速さの表示もこの人の歩く速さ
+  const PUSH_BACK = 0.6;    // 押す人と押し棒の間隔（押し棒の後ろに立つ）
+  const GAP = 0.65;         // 押す人どうしの間隔（押し棒に沿って外へ並ぶ）
+  const HIP_Y = 0.85;       // 押す人の腰の高さ
+  const LEAN = 0.35;        // 押す人の前かがみの角度（rad）
+  const STEP_LEN = 0.6;     // 押す人が1歩で進む距離（足の動きと回転量を合わせる）
+  const SWING = 0.4;        // 足を前後に振る最大角度（rad）
+  const SEG = 16;           // 石の分割数（少なめにして面の向きで回転が見えるようにする）
+  const BASE_SPEED = 0.0;   // 最初の回転の速さ（rad/秒）。何もしなくてもこの速さで回り続ける
+  const DRAG_GAIN = 0.02;   // 指で回した角度1radあたりに増える速さ（rad/秒）。上限は無し
+  const KEY_ACCEL = 1.6;    // 右矢印キーを押している間に1秒あたり増える速さ（rad/秒）
+  const LATE_BOOST = 4;     // 後半ほど増え方が良くなる。目標の速さで増え方が (1 + この値) 倍になる
+  const LATE_CURVE = 2;     // 増え方の伸び方（1：速さに比例してじわじわ、2以上：後半で一気に良くなる）
+  const ROT_MULT = 2;       // 速さに対して実際に回る量の倍率（km/h の表示は変えずに回転だけ速くする）
+  const DEBUG_MULTS = [1, 10, 100];  // デバッグ用：画面右上のボタンを押すたびに、なぞったときの増え方の倍率がこの順に切り替わる
+  const MIN_GRAB_R = 0.25;  // 中心に近すぎる位置では角度が暴れるので数えない
+  const FOV = 40;           // カメラの縦の画角（度）
+  const KMH_PER_PERSON = 20;// この速さ（km/h）ごとに押す人が1人増える
+  const MAX_ARMS = 8;       // 押し棒の最大本数。人が増えるとまず棒の本数が増え、これに達したら棒が伸びる
+  const GOAL_KMH = 1000;    // 目標の速さ（km/h）。人の増加と演出の強まりはここで頭打ち
+  const POP_TIME = 0.35;    // 増えた人がふくらんで現れる時間（秒）
+  const ARM_EASE = 4;       // 押し棒が伸びる・角度を変える速さ（大きいほどすぐ動く）
+  const CAM_EASE = 2;       // カメラが引く速さ（大きいほどすぐ引く）
+  // 演出が始まる速さ（km/h）。始まった後は目標の速さに向けて徐々に強くなる
+  const FX = {
+    dust:20,     // 石の下から粉が舞う
+    swirl:50,    // 押し棒の下の砂が回転に引っぱられて舞う
+    sky:100,     // 空が夕焼け → 夜へ変わっていく
+    shock:100,   // SHOCK_EVERY ごとの節目で、地面に衝撃波が広がり画面が光る
+    ring:200,    // 押し棒の先の軌跡に光の輪
+    kick:250,    // 押す人の足元から土ぼこり
+    spark:300,   // 石のこすれる所から火花
+    stars:350,   // 空に星が出る（夜になるほど明るい）
+    glow:400,    // 石が光りだす
+    smoke:450,   // 石のてっぺんから煙が立ちのぼる
+    shake:500,   // 画面が揺れる
+    cracks:550,  // 地面にひびが入り、溶岩のように光る
+    pillar:600,  // 中心から光の柱
+    meteor:650,  // 流れ星が町の向こうに落ちる
+    fire:700,    // 押し棒の先から炎の尾
+    bolt:750,    // 稲妻が落ちる
+    rainbow:800, // 輪・柱・火花・炎・ひび・魔法陣などが虹色に
+    circle:850,  // 石臼の下にローマ数字の魔法陣が回る
+    aura:900,    // 押す人が金色に光る
+    rocks:950,   // 地面の岩が浮かび上がる
+    fireworks:1000, // 目標の後、町の上に花火が上がり続ける
+  };
+  // 演出の派手さ（全体にかかる倍率）
+  // 目標達成後の流れ：打ち上げ → 宇宙で UFO とベイゴマバトル → 吹き飛んだ UFO が惑星を壊していく
+  const LAUNCH_DELAY = 3;    // 目標達成から打ち上げまでの秒数
+  const LAUNCH_HOLD = 1;     // 飛び立つ前にゴゴゴと揺れる秒数
+  const LAUNCH_ACC = 90;     // 打ち上げの加速（m/秒²）
+  const GROUND_TILE = 6;     // 地面の模様1枚の大きさ（m）
+  const CAM_MIN_Y = 2;       // 打ち上げのときにカメラが下がれる最も低い高さ（地面にめり込まないように）
+  const LAUNCH_TOP = 900;    // この高さまで上がったら宇宙へ
+  const ARENA_R = 20;        // 宇宙のベイゴマ台の半径
+  const UFO_R = 4.5;         // UFO の半径
+  const UFO_HP = 100;        // UFO の体力
+  // 勝ち負け：バトル中は回転がどんどん落ちる。なぞって回転を保ちながら UFO の体力を 0 にすれば防衛成功、
+  // 回転が LOSE_KMH を下回ったら石臼が吹き飛ばされて防衛失敗
+  const HIT_DMG = 25;        // 目標の速さでぶつかったときのダメージ（速さに比例して増減）
+  const BATTLE_DRAIN = 120;  // バトル中に1秒ごとに落ちる速さ（km/h）
+  const HIT_COST = 0.08;     // ぶつかるたびに失う速さの割合
+  const BATTLE_TRACE = 40;   // バトル中に指で1周なぞるごとに上がる速さ（km/h）。1秒に2周ほどなぞり続ければ勝てる
+  const LOSE_KMH = 400;      // この速さを下回ったら負け
+  const KO_SPEED = 120;      // 負けたときに石臼が吹き飛ぶ速さ
+  const TITLE_STEP = 0.35;   // 「防衛成功」を一文字ずつ出す間隔（秒）
+  const RESULT_DELAY = 2.5;  // 決着の演出が終わってから結果を出すまでの秒数
+  const BATTLE = { bowl:0.8, seek:30, swirl:8, damp:0.5, vmax:45, kick:40 };
+  const MOVE = { accel:60, brake:1.5 };  // バトル中に指で石臼を動かすときの、指へ向かう強さとブレーキ（指を離すと自動で UFO へ向かう）  // 中心へ戻る力・相手へ向かう力・回り込む力・減速・最高速・弾き合う強さ
+  const UFO_BOOM_DELAY = 0.7; // 最後の惑星を壊してから UFO が大爆発するまでの秒数
+  const SMASH_SPEED = 160;   // 吹き飛ばされた UFO の速さ（惑星を壊すたびに 1.15 倍）
+  // 吹き飛んだ UFO が壊していく惑星 [色, 半径, 吹き飛び始めからの距離]
+  const PLANETS = [['--planet1', 7, 110], ['--planet2', 12, 250], ['--planet3', 17, 420], ['--planet4', 26, 640]];
+  // ブルーム（明るい所から光がにじみ出る）
+  const BLOOM_STRENGTH = [0.15, 0.6];  // にじみの強さ（速さ0のとき、目標の速さのとき）
+  const BLOOM_RADIUS = 0.3;           // にじみの広がり（0〜1）
+  const BLOOM_THRESHOLD = [0.9, 0.6]; // この明るさを超えた所だけにじむ（昼、夜）。夜は暗い分だけ低くして光をにじませる
+  const FX_BASE = 0.45;     // 演出が始まった瞬間の強さ（0〜1）。大きいほど始まりからはっきり出る
+  const FX_RATE = 2;        // 粒（粉・火花・炎など）や流れ星・稲妻の出る量の倍率
+  const FX_SIZE = 1.4;      // 粒の大きさの倍率
+  const SHOCK_EVERY = 100;  // 衝撃波が出る節目の間隔（km/h）
+  // 空の演出や遠くの建物が見えるよう、速くなるとカメラが少しずつ起き上がって遠くまで映す
+  const TILT_KMH = [300, 800];  // カメラが起き上がり始める速さと、起き上がりきる速さ（km/h）
+  const CAM_PITCH_END = 0.12;   // 起き上がりきったときの見下ろす角度（rad）
+  const SKY_DUSK_KMH = 400; // 夕焼けがいちばん濃くなる速さ（km/h）
+  const SKY_NIGHT_KMH = 800;// 夜になりきる速さ（km/h）
+  // 町：速さに応じて、石臼の奥に古代ローマの建物が生えてくる
+  // 小さな建物：SMALL_FROM から SMALL_STEP ごとに1棟ずつ、近くから外へ広がるように建つ
+  const SMALL_FROM = 300;   // 小さな建物が建ち始める速さ（km/h）
+  const SMALL_STEP = 10;    // この速さ（km/h）ごとに小さな建物が1棟建つ
+  // 小さな建物の種類と出やすさ。[種類, 出やすさ, 出始める速さ(km/h)]
+  //   house:民家  shop:商店  well:井戸  shrine:小さな祠  granary:穀物倉
+  const SMALL_TYPES = [['house', 5, 300], ['shop', 3, 300], ['well', 1, 300], ['shrine', 1, 440], ['granary', 1, 560]];
+  // 大きめの建物：[生える速さ(km/h), [建物の種類...]]
+  //   insula:集合住宅  temple:神殿  arch:凱旋門  basilica:公会堂  column:記念柱
+  //   aqueduct:水道橋  pantheon:パンテオン  colosseum:コロッセオ  grandTemple:丘の上の大神殿
+  const TOWN_PLAN = [
+    [400, ['insula']],
+    [450, ['insula']],
+    [500, ['temple', 'insula']],
+    [550, ['arch', 'insula']],
+    [600, ['basilica']],
+    [650, ['column', 'insula']],
+    [700, ['aqueduct']],
+    [750, ['temple', 'insula']],
+    [800, ['pantheon']],
+    [850, ['insula', 'insula']],
+    [900, ['colosseum']],
+    [950, ['insula']],
+    [1000, ['grandTemple']],
+  ];
+  // 大きな建物の置き場所 [x, z]。スマホ縦持ちでも見えるよう、正面奥の狭い範囲に置く
+  const LANDMARK_POS = { arch:[-5, -16], column:[4, -20], pantheon:[13, -32], colosseum:[-12, -36], aqueduct:[0, -50], grandTemple:[2, -72] };
+  const TOWN_RISE = 0.6;    // 建物が地面から伸びきるまでの時間（秒）
+  const TOWN_NEAR = 9;      // 民家などを置く最も近い距離（押し棒の届かない所）
+  const TOWN_FAR = 50;      // 民家などを置く最も遠い距離（町は速さとともに近くから外へ広がる）
+  const TOWN_SEED = 7;      // 町の並びを決める乱数の種（変えると別の町並みになる）
+  const LAMP_KMH = [300, 700];  // 窓のランプがともり始める速さと、全部ともる速さ（km/h）
+
+  const MAX_PEOPLE = 2 + Math.floor(GOAL_KMH / KMH_PER_PERSON);  // 押す人の最大人数
+  const WAIST_Y = MILL_Y + MILL_H / 2;                        // くびれ（押し棒）の高さ
+  const BASE_FIT = ARM_LEN + 0.4;                             // 最初に画面へ収める半径
+  const CAM_PITCH0 = Math.atan2(0.75, 1);                     // 最初の見下ろす角度（斜め上から）
+  const SUN_DIR = new THREE.Vector3(4, 8, 3).normalize();     // 太陽の方向
+
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const col = n => new THREE.Color(css(n));
+  const clamp01 = v => Math.min(Math.max(v, 0), 1);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  // 演出の強さ：始まる速さで 0.2、目標の速さで 1 になる
+  const fxk = (kmh, start) => kmh < start ? 0 : FX_BASE + (1 - FX_BASE) * clamp01((kmh - start) / (GOAL_KMH - start));
+
+  // ---------- 描画の準備 ----------
+  const wrap = $('wrap');
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  wrap.appendChild(renderer.domElement);
+  const cv = renderer.domElement;
+  cv.setAttribute('aria-label', '石臼（なぞると速く回る）');
+
+  const scene = new THREE.Scene();
+  const C_SKY = [col('--bg'), col('--sky-dusk'), col('--sky-night')];
+  const C_GROUND = [col('--ground'), col('--ground-dusk'), col('--ground-night')];
+  const C_SUN = [new THREE.Color(0xffffff), col('--sun-dusk'), col('--sun-night')];
+  const LIGHT_K = [1, 0.75, 0.35];  // 昼・夕・夜の明るさ
+  scene.background = C_SKY[0].clone();
+  const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 100);
+
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x8a7d66, 0.65);
+  scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.bias = -0.0005;
+  scene.add(sun);
+
+  // r128 の MeshLambertMaterial は flatShading を持たず警告が出るので Standard を使う
+  const mat = (v, opt = {}) => new THREE.MeshStandardMaterial(Object.assign({ color:col(v), roughness:0.95, metalness:0 }, opt));
+  const add = (parent, geo, m, cast = true) => {
+    const mesh = new THREE.Mesh(geo, m);
+    mesh.castShadow = cast; mesh.receiveShadow = true;
+    parent.add(mesh);
+    return mesh;
+  };
+
+  // ---------- 地面と土台 ----------
+  const groundMat = mat('--ground', { map:(() => {
+    // 土のむら・小石・細かな砂粒を描いた、つなぎ目の出ないテクスチャ（明るめにして地面の色を掛ける）
+    const N = 512, c = document.createElement('canvas');
+    c.width = c.height = N;
+    const g = c.getContext('2d');
+    g.fillStyle = '#ececec'; g.fillRect(0, 0, N, N);
+    const wrapDraw = (x, y, r, fn) => {  // 端にかかるものは反対側にも描いて、並べたときにつながるようにする
+      for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N])
+        if (x + dx > -r && x + dx < N + r && y + dy > -r && y + dy < N + r) fn(x + dx, y + dy);
+    };
+    for (let i = 0; i < 260; i++){  // 土のむら
+      const x = Math.random() * N, y = Math.random() * N, r = 10 + Math.random() * 40;
+      const a = 0.04 + Math.random() * 0.06, dark = Math.random() < 0.6;
+      wrapDraw(x, y, r, (px, py) => {
+        const gr = g.createRadialGradient(px, py, 0, px, py, r);
+        gr.addColorStop(0, dark ? `rgba(60,45,30,${a})` : `rgba(255,255,255,${a})`);
+        gr.addColorStop(1, 'rgba(0,0,0,0)');
+        g.fillStyle = gr; g.beginPath(); g.arc(px, py, r, 0, Math.PI * 2); g.fill();
+      });
+    }
+    for (let i = 0; i < 6000; i++){  // 砂粒
+      const v = Math.random() < 0.5 ? 120 + Math.random() * 60 : 235 + Math.random() * 20;
+      g.fillStyle = `rgba(${v},${v * 0.95},${v * 0.9},0.35)`;
+      g.fillRect(Math.random() * N, Math.random() * N, 1.5, 1.5);
+    }
+    for (let i = 0; i < 140; i++){  // 小石
+      const x = Math.random() * N, y = Math.random() * N, rx = 2 + Math.random() * 5, ry = rx * (0.6 + Math.random() * 0.4), rot = Math.random() * Math.PI;
+      const v = 170 + Math.random() * 60;
+      wrapDraw(x, y, rx + 2, (px, py) => {
+        g.fillStyle = 'rgba(60,50,40,0.35)'; g.beginPath(); g.ellipse(px + 1, py + 1.5, rx, ry, rot, 0, Math.PI * 2); g.fill();  // 影
+        g.fillStyle = `rgb(${v},${v * 0.96},${v * 0.9})`; g.beginPath(); g.ellipse(px, py, rx, ry, rot, 0, Math.PI * 2); g.fill();
+      });
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(4000 / GROUND_TILE, 4000 / GROUND_TILE);
+    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return tex;
+  })() });
+  const ground = add(scene, new THREE.PlaneGeometry(4000, 4000), groundMat, false);
+  ground.rotation.x = -Math.PI / 2;
+
+  const base = add(scene, new THREE.CylinderGeometry(BASE_R, BASE_R * 1.05, BASE_H, 24), mat('--base'));
+  base.position.y = BASE_H / 2;
+
+  // ---------- 町（古代ローマ） ----------
+  // 毎回同じ町並みになるよう、種つきの乱数で配置を決める
+  const town = [];          // { g:建物, kmh:生える速さ, delay:ずらす秒数, born:生えた時刻 }
+  const litMats = [];       // 窓のある壁（夜にランプの明かりで光る）
+  const glowMats = [];      // 大きな建物（夜に松明でほんのり照らされる）
+  {
+    let seed = TOWN_SEED;
+    const rnd = (a = 0, b = 1) => {  // mulberry32
+      seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return a + (((t ^ (t >>> 14)) >>> 0) / 4294967296) * (b - a);
+    };
+    const canvasTex = (w, h, draw) => {
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      draw(c.getContext('2d'), w, h);
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    };
+    // 窓の明かり：4×4 の小窓のうち、いくつかにランプがともる
+    const lampTex = canvasTex(64, 64, (g) => {
+      g.fillStyle = '#000'; g.fillRect(0, 0, 64, 64);
+      g.fillStyle = '#fff';
+      for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) if (rnd() < 0.55) g.fillRect(x * 16 + 6, y * 16 + 5, 4, 6);
+    });
+    const lamp = col('--lamp');
+    const std = (v, opt = {}) => new THREE.MeshStandardMaterial(Object.assign({ color:col(v), roughness:0.9, metalness:0 }, opt));
+    // 窓のある壁の材質。窓の並びの細かさ（rx, ry）ごとに作って使い回す
+    const wallCache = {};
+    const wall = (v, rx, ry) => {
+      const key = `${v}:${rx.toFixed(2)}:${ry.toFixed(2)}`;
+      if (!wallCache[key]){
+        const tex = lampTex.clone();
+        tex.needsUpdate = true;
+        tex.repeat.set(rx, ry);
+        const m = std(v, { emissive:lamp, emissiveMap:tex, emissiveIntensity:0 });
+        litMats.push(m);
+        wallCache[key] = m;
+      }
+      return wallCache[key];
+    };
+    const M = {
+      marble:std('--marble', { emissive:lamp, emissiveIntensity:0 }),
+      travertine:std('--travertine', { emissive:lamp, emissiveIntensity:0 }),
+      roof:std('--roof'),
+      bronze:std('--bronze', { roughness:0.5, metalness:0.6 }),
+      sand:std('--sand'),
+      wood:std('--wood'),
+      dark:std('--shade'),
+      plaster:std('--plaster1'),
+    };
+    glowMats.push(M.marble, M.travertine);
+
+    // コロッセオの外壁：3段のアーチと最上階の壁。夜はアーチの奥が明るく光る
+    const drawArches = (g, w, h, bg, archCol) => {
+      g.fillStyle = bg; g.fillRect(0, 0, w, h);
+      g.fillStyle = archCol;
+      const n = 20, aw = w / n;
+      for (let r = 0; r < 3; r++){
+        const y1 = h - r * h * 0.26, ah = h * 0.18;
+        for (let i = 0; i < n; i++){
+          const cx = aw * (i + 0.5);
+          g.fillRect(cx - aw * 0.3, y1 - ah, aw * 0.6, ah - h * 0.02);
+          g.beginPath(); g.arc(cx, y1 - ah, aw * 0.3, Math.PI, 0); g.fill();
+        }
+      }
+      for (let i = 0; i < n * 2; i++) g.fillRect((i + 0.4) * aw / 2, h * 0.1, aw * 0.15, h * 0.06);  // 最上階の小窓
+    };
+    const colTex = canvasTex(512, 128, (g, w, h) => drawArches(g, w, h, css('--travertine'), '#3a3228'));
+    const colGlowTex = canvasTex(512, 128, (g, w, h) => drawArches(g, w, h, '#000', '#fff'));
+    colTex.repeat.set(2, 1); colGlowTex.repeat.set(2, 1);
+    const colosMat = new THREE.MeshStandardMaterial({ map:colTex, roughness:0.9, side:THREE.DoubleSide, emissive:lamp, emissiveMap:colGlowTex, emissiveIntensity:0 });
+    glowMats.push(colosMat);
+
+    // ---- 部品 ----
+    const G = () => new THREE.Group();
+    const mesh = (g, geo, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.receiveShadow = true; g.add(o); return o; };
+    const box = (g, m, w, h, d, x = 0, y = 0, z = 0) => mesh(g, new THREE.BoxGeometry(w, h, d), m, x, y + h / 2, z);
+    // 切妻屋根（三角の面が前後を向く）
+    const roof = (g, w, rh, d, y, x = 0, z = 0) => {
+      const s = new THREE.Shape();
+      s.moveTo(-w / 2, 0); s.lineTo(w / 2, 0); s.lineTo(0, rh); s.closePath();
+      const geo = new THREE.ExtrudeGeometry(s, { depth:d, bevelEnabled:false });
+      geo.translate(0, 0, -d / 2);
+      return mesh(g, geo, M.roof, x, y, z);
+    };
+    // 円柱をまとめて立てる
+    const cols = (g, m, pts, r, h, y) => {
+      const im = new THREE.InstancedMesh(new THREE.CylinderGeometry(r * 0.85, r, h, 10), m, pts.length);
+      im.frustumCulled = false;  // 柱が中心から離れていても消えないように
+      const mm = new THREE.Matrix4();
+      pts.forEach(([x, z], i) => im.setMatrixAt(i, mm.makeTranslation(x, y + h / 2, z)));
+      g.add(im);
+      return im;
+    };
+    // 長方形の周りに柱を並べる位置
+    const around = (w, d, nx, nz) => {
+      const p = [];
+      for (let i = 0; i < nx; i++){ const x = -w / 2 + w * i / (nx - 1); p.push([x, d / 2], [x, -d / 2]); }
+      for (let j = 1; j < nz - 1; j++){ const z = -d / 2 + d * j / (nz - 1); p.push([-w / 2, z], [w / 2, z]); }
+      return p;
+    };
+    // 幅 W・高さ H の壁に、幅 aw・肩の高さ hb のアーチを n 個あけた形（下辺からくり抜く）
+    const archShape = (W, H, n, aw, hb) => {
+      const s = new THREE.Shape();
+      s.moveTo(-W / 2, 0); s.lineTo(-W / 2, H); s.lineTo(W / 2, H); s.lineTo(W / 2, 0);
+      for (let i = n - 1; i >= 0; i--){
+        const cx = -W / 2 + W * (i + 0.5) / n;
+        s.lineTo(cx + aw / 2, 0); s.lineTo(cx + aw / 2, hb);
+        s.absarc(cx, hb, aw / 2, 0, Math.PI, false);
+        s.lineTo(cx - aw / 2, 0);
+      }
+      s.closePath();
+      return s;
+    };
+    const extrude = (g, shape, depth, m, y = 0) => {
+      const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled:false, curveSegments:8 });
+      geo.translate(0, 0, -depth / 2);
+      return mesh(g, geo, m, 0, y, 0);
+    };
+
+    // ---- 建物 ----（どれも +z が正面。rad は重ならないための半径）
+    const B = {
+      // 民家：漆喰の壁に瓦屋根
+      house(){
+        const g = G(), w = rnd(2, 3.2), d = rnd(2.5, 4), h = rnd(1.8, 2.6);
+        box(g, wall(rnd() < 0.5 ? '--plaster1' : '--plaster2', 0.5, 0.25), w, h, d);
+        roof(g, w * 1.1, w * 0.3, d * 1.1, h);
+        return { g, rad:Math.max(w, d) * 0.75 };
+      },
+      // 商店（タベルナ）：正面が開いた店先に日よけ
+      shop(){
+        const g = G(), w = rnd(2, 2.6), d = rnd(2, 2.6), h = rnd(1.8, 2.2);
+        const ow = w * 0.62, oh = h * 0.65, rec = 0.6;  // 店先の開口の幅・高さ・奥行き
+        box(g, wall('--plaster1', 0.5, 0.25), w, h, d - rec, 0, 0, -rec / 2);     // 店の奥（開口の奥の壁が店内に見える）
+        const pw = (w - ow) / 2;
+        for (const sx of [-1, 1]) box(g, M.plaster, pw, h, rec, sx * (ow / 2 + pw / 2), 0, d / 2 - rec / 2);  // 開口の左右の柱
+        box(g, M.plaster, ow, h - oh, rec, 0, oh, d / 2 - rec / 2);              // 開口の上の壁
+        box(g, M.marble, ow * 0.92, 0.55, 0.3, 0, 0, d / 2 - 0.2);               // 石のカウンター
+        for (let i = 0; i < 3; i++)                                               // カウンターの上の壺
+          mesh(g, new THREE.CylinderGeometry(0.07, 0.1, 0.28, 8), M.roof, (i - 1) * ow * 0.28, 0.69, d / 2 - 0.2);
+        const aw = box(g, M.roof, w * 0.9, 0.08, 0.8, 0, h * 0.68, d / 2 + 0.3);  // 日よけ
+        aw.rotation.x = 0.25;
+        roof(g, w * 1.1, w * 0.25, d * 1.1, h);
+        return { g, rad:Math.max(w, d) * 0.8 };
+      },
+      // 井戸：丸い石の井桁に小さな屋根
+      well(){
+        const g = G();
+        mesh(g, new THREE.CylinderGeometry(0.6, 0.65, 0.8, 16), M.travertine, 0, 0.4, 0);
+        box(g, M.wood, 0.1, 1.6, 0.1, -0.55, 0.8, 0);
+        box(g, M.wood, 0.1, 1.6, 0.1, 0.55, 0.8, 0);
+        roof(g, 1.5, 0.45, 1, 2.4);
+        return { g, rad:1 };
+      },
+      // 小さな祠：神殿を小さくしたもの
+      shrine(){ return B.temple(0.3); },
+      // 穀物倉（ホレウム）：細長く低い倉
+      granary(){
+        const g = G(), w = rnd(2.2, 2.8), d = rnd(5, 6.5), h = 1.8;
+        box(g, wall('--plaster2', 0.25, 0.25), w, h, d);
+        roof(g, w * 1.1, 0.6, d * 1.05, h);
+        return { g, rad:d / 2 + 0.3 };
+      },
+      // 集合住宅（インスラ）：3〜5階建て
+      insula(){
+        const g = G(), floors = Math.floor(rnd(3, 6)), w = rnd(4, 6), d = rnd(4, 6.5), h = floors * 2.4;
+        box(g, wall(rnd() < 0.5 ? '--plaster1' : '--plaster2', Math.round(w / 1.5) / 4, floors / 4), w, h, d);
+        roof(g, w * 1.05, 0.9, d * 1.05, h);
+        return { g, rad:Math.max(w, d) * 0.75 };
+      },
+      // 神殿：基壇・周りの柱・本殿・三角の破風
+      temple(s = 1){
+        const g = G(), pw = 6 * s, pd = 10 * s, ph = 1.2 * s, ch = 4 * s, cr = 0.3 * s;
+        box(g, M.marble, pw, ph, pd);
+        cols(g, M.marble, around(pw - cr * 3, pd - cr * 3, 6, 8), cr, ch, ph);
+        box(g, M.marble, pw * 0.55, ch, pd * 0.6, 0, ph, -pd * 0.1);
+        box(g, M.marble, pw, 0.5 * s, pd, 0, ph + ch);
+        roof(g, pw * 1.02, 1.4 * s, pd * 1.02, ph + ch + 0.5 * s);
+        return { g, rad:Math.hypot(pw, pd) / 2 };
+      },
+      // 凱旋門
+      arch(){
+        const g = G(), W = 6, H = 6.5, D = 1.8;
+        extrude(g, archShape(W, H, 1, 2.6, 3.4), D, M.marble);
+        box(g, M.marble, W * 1.04, 1.4, D * 1.04, 0, H);
+        return { g, rad:4 };
+      },
+      // バシリカ（公会堂）：長い建物の両脇に列柱
+      basilica(){
+        const g = G(), w = 8, d = 18, h = 6;
+        box(g, wall('--plaster2', 1, 0.5), w, h, d);
+        roof(g, w * 1.05, 2, d * 1.02, h);
+        const p = [];
+        for (let i = 0; i < 9; i++){ const z = -d / 2 + d * i / 8; p.push([-w / 2 - 1, z], [w / 2 + 1, z]); }
+        cols(g, M.marble, p, 0.3, 4, 0);
+        box(g, M.roof, 1.6, 0.3, d, -w / 2 - 0.8, 4);
+        box(g, M.roof, 1.6, 0.3, d, w / 2 + 0.8, 4);
+        return { g, rad:10 };
+      },
+      // 記念柱：てっぺんに銅像
+      column(){
+        const g = G();
+        box(g, M.marble, 2.2, 1.6, 2.2);
+        cols(g, M.marble, [[0, 0]], 0.6, 12, 1.6);
+        box(g, M.marble, 1.5, 0.6, 1.5, 0, 13.6);
+        box(g, M.bronze, 0.5, 1.4, 0.4, 0, 14.2);
+        mesh(g, new THREE.SphereGeometry(0.25, 10, 8), M.bronze, 0, 15.8, 0);
+        return { g, rad:2 };
+      },
+      // 水道橋：2段のアーチが横一列に続く
+      aqueduct(){
+        const g = G(), L = 140;
+        extrude(g, archShape(L, 9, 28, 3.5, 5.5), 2, M.travertine);
+        extrude(g, archShape(L, 5, 56, 1.6, 3.2), 1.6, M.travertine, 9);
+        box(g, M.travertine, L, 0.8, 2, 0, 14);
+        return { g, rad:0 };  // 横に長いので重なり判定には使わない（周りの建物より奥に置く）
+      },
+      // パンテオン：円筒の本体に丸屋根、正面に柱廊
+      pantheon(){
+        const g = G();
+        mesh(g, new THREE.CylinderGeometry(6, 6, 7, 32), M.travertine, 0, 3.5, 0);
+        mesh(g, new THREE.SphereGeometry(6, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), M.travertine, 0, 7, 0);
+        const p = [];
+        for (let i = 0; i < 8; i++) for (const z of [7.5, 9, 10.5]) p.push([-4.2 + 8.4 * i / 7, z]);
+        cols(g, M.marble, p, 0.35, 6, 0);
+        box(g, M.marble, 10, 0.7, 5, 0, 6, 9);
+        roof(g, 10.4, 2.2, 5.2, 6.7, 0, 9);
+        box(g, M.travertine, 6, 7.5, 3, 0, 0, 5.5);  // 本体と柱廊のつなぎ
+        return { g, rad:9 };
+      },
+      // コロッセオ：楕円の外壁・すり鉢状の客席・砂の闘技場
+      colosseum(){
+        const g = G();
+        mesh(g, new THREE.CylinderGeometry(12, 12, 11, 48, 1, true), colosMat, 0, 5.5, 0);
+        mesh(g, new THREE.CylinderGeometry(11.8, 6, 9, 48, 1, true), M.travertine, 0, 4.5, 0).material.side = THREE.DoubleSide;
+        const arena = mesh(g, new THREE.CircleGeometry(6, 32), M.sand, 0, 0.05, 0);
+        arena.rotation.x = -Math.PI / 2;
+        g.scale.z = 0.82;
+        return { g, rad:12.5 };
+      },
+      // 丘の上の大神殿：階段状の土台に大きな神殿
+      grandTemple(){
+        const g = G();
+        box(g, M.travertine, 30, 2, 36);
+        box(g, M.travertine, 24, 2, 30, 0, 2);
+        const t = B.temple(2.4);
+        t.g.position.y = 4;
+        g.add(t.g);
+        return { g, rad:20 };
+      },
+    };
+
+    // ---- 配置 ----
+    const LANDMARK_RAD = { arch:4, column:2, pantheon:9, colosseum:12.5, aqueduct:0, grandTemple:20 };  // 各建物の rad と同じ値
+    // 大きな建物の場所を先に押さえてから、民家などを奥側の半円に重ならないよう置く
+    const placed = [];
+    const plan = [];
+    TOWN_PLAN.forEach(([kmh, types]) => types.forEach((type, n) => plan.push({ kmh, type, delay:n * 0.12 })));
+    for (let kmh = SMALL_FROM; kmh <= GOAL_KMH; kmh += SMALL_STEP){
+      // その速さで出てよい種類から、出やすさに応じて選ぶ
+      const cand = SMALL_TYPES.filter(([, , from]) => kmh >= from);
+      let r = rnd(0, cand.reduce((a, [, w]) => a + w, 0)), type = cand[0][0];
+      for (const [t, w] of cand){ if ((r -= w) < 0){ type = t; break; } }
+      plan.push({ kmh, type, delay:0 });
+    }
+    plan.sort((a, b) => a.kmh - b.kmh);  // 早く建つものから場所を決める（近い場所を先に使う）
+    for (const p of plan){
+      const pos = LANDMARK_POS[p.type];
+      if (pos) placed.push({ x:pos[0], z:pos[1], rad:LANDMARK_RAD[p.type] });
+    }
+    for (const p of plan){
+      const b = B[p.type]();
+      let x, z, yaw = 0;
+      const pos = LANDMARK_POS[p.type];
+      if (pos){
+        [x, z] = pos;
+      } else {
+        let ok = false;
+        for (let tries = 0; tries < 300 && !ok; tries++){
+          // 町は速さとともに外へ広がる。置けないときは少しずつ遠くまで探す
+          const grow = clamp01((p.kmh - SMALL_FROM) / (GOAL_KMH - SMALL_FROM));
+          const far = Math.min(TOWN_FAR, TOWN_NEAR + 8 + grow * (TOWN_FAR - TOWN_NEAR - 8) + tries * 0.05);
+          const R = rnd(TOWN_NEAR, far), phi = rnd(-0.4, Math.PI + 0.4);  // 奥側（カメラから見て石臼の向こう）
+          x = R * Math.cos(phi); z = -R * Math.sin(phi);
+          ok = !placed.some(o => Math.hypot(o.x - x, o.z - z) < o.rad + b.rad);
+        }
+        if (!ok) continue;  // 置ける場所がなければその建物は省く
+        placed.push({ x, z, rad:b.rad });
+        yaw = Math.atan2(-x, -z) + rnd(-0.2, 0.2);  // 正面を石臼の方へ向ける
+      }
+      b.g.position.set(x, 0, z);
+      b.g.rotation.y = yaw;
+      b.g.visible = false;
+      scene.add(b.g);
+      town.push({ g:b.g, kmh:p.kmh, delay:p.delay, born:null, done:false });
+    }
+  }
+
+  function updateTown(kmh, t){
+    for (const o of town){
+      if (o.done) continue;
+      if (o.born === null){
+        if (kmh < o.kmh) continue;
+        o.born = t + o.delay;  // 同じ段階の建物は少しずつずらして生える
+        // 生えるときに足元から土ぼこりと光の粒を吹き上げる
+        const { x, z } = o.g.position;
+        for (let i = 0; i < 30; i++){
+          const a = rand(0, Math.PI * 2), v = rand(1.5, 4);
+          dustP.emit(x + Math.cos(a) * 2, 0.3, z + Math.sin(a) * 2, Math.cos(a) * v, rand(1, 3), Math.sin(a) * v, C_DUST, 0.4, 0.9, rand(0.8, 1.5), 2, 2);
+          glowP.emit(x, rand(0.5, 3), z, rand(-3, 3), rand(3, 9), rand(-3, 3), C_SPARK, 1, 0.25, rand(0.6, 1.2), 6);
+        }
+      }
+      const k = clamp01((t - o.born) / TOWN_RISE);
+      o.g.visible = t >= o.born;
+      o.g.scale.y = Math.max(popScale(k), 0.001);  // 地面から伸びる
+      if (k >= 1) o.done = true;
+    }
+    const lampK = clamp01((kmh - LAMP_KMH[0]) / (LAMP_KMH[1] - LAMP_KMH[0]));
+    for (const m of litMats) m.emissiveIntensity = 1.2 * lampK;
+    for (const m of glowMats) m.emissiveIntensity = (m.emissiveMap ? 1.0 : 0.12) * lampK;
+  }
+
+  // ---------- 下の石（固定）：台座つきの円すい ----------
+  const stoneMat = mat('--stone', { flatShading:true, side:THREE.DoubleSide });
+  const metaPts = [
+    [0, BASE_H], [META_R, BASE_H], [META_R, 0.5], [0.5, 0.5], [0.08, META_TOP - 0.03], [0, META_TOP]
+  ].map(([x, y]) => new THREE.Vector2(x, y));
+  add(scene, new THREE.LatheGeometry(metaPts, SEG), stoneMat);
+
+  // ---------- 上の石（回る）：中が空洞の砂時計形 ----------
+  const rotor = new THREE.Group();
+  scene.add(rotor);
+
+  const y0 = MILL_Y, yw = WAIST_Y, y1 = MILL_Y + MILL_H;
+  const millPts = [
+    [MILL_R, y0], [WAIST_R, yw], [MILL_R, y1],                      // 外側
+    [MILL_R - WALL, y1], [WAIST_R - WALL, yw], [MILL_R - WALL, y0], // 内側
+    [MILL_R, y0]                                                    // 輪郭を閉じる
+  ].map(([x, y]) => new THREE.Vector2(x, y));
+  add(rotor, new THREE.LatheGeometry(millPts, SEG), stoneMat);
+
+  // ---------- 木枠と押し棒 ----------
+  // くびれを四角い枠で挟み、そこから外へ押し棒を出す。
+  // 人が増えるとまず押し棒の本数が増えて等間隔に開き、最大本数に達したら棒が外へ伸びる
+  const woodMat = mat('--wood');
+  const markMat = mat('--wood-mark');  // 1本だけ色を変えて、1周したのが分かるようにする
+  const C = WAIST_R + BEAM * 0.6;  // 枠の木材の中心位置
+  for (const s of [-1, 1]){
+    add(rotor, new THREE.BoxGeometry(2 * C + BEAM, BEAM, BEAM), woodMat).position.set(0, yw, s * C);
+    add(rotor, new THREE.BoxGeometry(BEAM, BEAM, 2 * C + BEAM), woodMat).position.set(s * C, yw, 0);
+  }
+  const barGeo = new THREE.BoxGeometry(1, BEAM, BEAM);  // 長さ1の棒を伸ばして使う
+  // 押し棒1本ごとに、角度（ang）と長さ（len）を目標へ向けてなめらかに動かす
+  const arms = [];
+  for (let j = 0; j < MAX_ARMS; j++){
+    const g = new THREE.Group();
+    g.visible = false;
+    rotor.add(g);
+    arms.push({ g, bar:add(g, barGeo, j === 0 ? markMat : woodMat), ang:0, len:j < 2 ? ARM_LEN : C, on:false });  // 最初の2本は最初から伸びている
+  }
+  let armCount = 2;  // 今使っている押し棒の本数
+  let armLen = ARM_LEN;  // いちばん長い押し棒の長さ（カメラ・輪・影の範囲に使う）
+  const armTargetAng = j => j * Math.PI * 2 / armCount;
+  function placeArms(dt){
+    const e = 1 - Math.exp(-ARM_EASE * dt);
+    armLen = 0;
+    arms.forEach((a, j) => {
+      if (j >= armCount) return;
+      if (!a.on){ a.on = true; a.g.visible = true; a.ang = armTargetAng(j); }  // 新しい棒は枠から生えてくる
+      const n = peopleOnArm(j);
+      const tLen = ARM_LEN + Math.max(n - 1, 0) * GAP;
+      a.len += (tLen - a.len) * e;
+      // 角度は近い向きに回って目標へ寄せる
+      const d = Math.atan2(Math.sin(armTargetAng(j) - a.ang), Math.cos(armTargetAng(j) - a.ang));
+      a.ang += d * e;
+      a.g.rotation.y = a.ang;
+      const len = Math.max(a.len - C, 0.001);
+      a.bar.scale.x = len;
+      a.bar.position.set(C + len / 2, yw, 0);
+      armLen = Math.max(armLen, a.len);
+    });
+  }
+
+  // ---------- 押す人 ----------
+  // 押し棒の後ろに立ち、前かがみで棒を押す姿勢。石と一緒に回る。
+  // 人数が多くなるので、部位ごとに InstancedMesh でまとめて描く
+  const skinMat = mat('--skin'), clothMat = mat('--cloth');
+  const Y = new THREE.Vector3(0, 1, 0), Z = new THREE.Vector3(0, 0, 1);
+  const MAXP = MAX_PEOPLE;
+  const inst = (geo, m, n) => {
+    const im = new THREE.InstancedMesh(geo, m, n);
+    im.castShadow = true; im.receiveShadow = true;
+    im.frustumCulled = false;  // 回転で範囲が変わるので視野外判定をしない
+    im.count = 0;
+    rotor.add(im);
+    return im;
+  };
+  // 腕は全員同じ姿勢なので、肩から手（押し棒の上）までの長さと向きを一度だけ計算する
+  const SH = new THREE.Vector3(0.24, HIP_Y + 0.55 * Math.cos(LEAN), 0.55 * Math.sin(LEAN));
+  const HAND = new THREE.Vector3(0.2, WAIST_Y, PUSH_BACK);
+  const armSize = HAND.clone().sub(SH).length();
+  const legIM  = inst(new THREE.BoxGeometry(0.14, HIP_Y, 0.16), skinMat, MAXP * 2);
+  const bodyIM = inst(new THREE.BoxGeometry(0.38, 0.77, 0.22), clothMat, MAXP);
+  const headIM = inst(new THREE.SphereGeometry(0.12, 12, 8), skinMat, MAXP);
+  const armIM  = inst(new THREE.BoxGeometry(0.1, 0.1, armSize), skinMat, MAXP * 2);
+
+  // 部位ごとの人のローカル座標での変換（ローカルでは +z が前）
+  const T = (x, y, z) => new THREE.Matrix4().makeTranslation(x, y, z);
+  const torsoM = T(0, HIP_Y, 0).multiply(new THREE.Matrix4().makeRotationX(LEAN));
+  const bodyM = torsoM.clone().multiply(T(0, 0.235, 0));
+  const headM = torsoM.clone().multiply(T(0, 0.77, 0));
+  const hipM = [-1, 1].map(sx => T(sx * 0.1, HIP_Y, 0));
+  const legDownM = T(0, -HIP_Y / 2, 0);
+  const armM = [-1, 1].map(sx => {
+    const sh = SH.clone(); sh.x *= sx;
+    const hand = HAND.clone(); hand.x *= sx;
+    const q = new THREE.Quaternion().setFromUnitVectors(Z, hand.clone().sub(sh).normalize());
+    return new THREE.Matrix4().compose(sh.add(hand).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1));
+  });
+  // +x 方向の押し棒の後ろに立ち、回転の正の向き（右矢印キーの向き）＝ -z を向く。ほかの棒はこれを棒の角度だけ回す
+  const faceQ = new THREE.Quaternion().setFromAxisAngle(Y, Math.PI);
+
+  // 押す人。k 番目の人は k % 本数 番目の棒の、内側から k / 本数 番目に立つ
+  const people = [];  // { born:現れた時刻 }
+  const addPerson = born => { people.push({ born }); armCount = Math.min(MAX_ARMS, Math.max(2, people.length)); };
+  const peopleOnArm = j => j < people.length ? Math.floor((people.length - 1 - j) / armCount) + 1 : 0;
+  const personSpot = k => ({ arm:arms[k % armCount], r:PUSH_R + Math.floor(k / armCount) * GAP });
+  addPerson(-99); addPerson(-99);  // 最初の2人は最初からいる
+
+  // 現れるときに少し大きくなってから戻る
+  const popScale = t => { const k = t - 1; return 1 + 2.70158 * k * k * k + 1.70158 * k * k; };
+
+  const mP = new THREE.Matrix4(), mO = new THREE.Matrix4(), mRx = new THREE.Matrix4(), mArm = new THREE.Matrix4();
+  const vPos = new THREE.Vector3(), vScl = new THREE.Vector3();
+  function updatePeople(t){
+    const rot = rotor.rotation.y;
+    people.forEach((p, k) => {
+      const { arm, r } = personSpot(k);
+      const sc = popScale(clamp01((t - p.born) / POP_TIME));
+      vPos.set(r, 0, PUSH_BACK);
+      vScl.setScalar(Math.max(sc, 0.001));
+      mP.compose(vPos, faceQ, vScl).premultiply(mArm.makeRotationY(arm.ang));
+      bodyIM.setMatrixAt(k, mO.multiplyMatrices(mP, bodyM));
+      headIM.setMatrixAt(k, mO.multiplyMatrices(mP, headM));
+      // 足の角度は回転量から決める。歩いた距離＝回転角×半径なので、外側の人ほど大股で速く動く
+      const a = SWING * Math.sin(rot * r / (STEP_LEN * 2) * Math.PI * 2);  // 2歩で1周期
+      for (let j = 0; j < 2; j++){
+        mRx.makeRotationX(j === 0 ? a : -a);
+        legIM.setMatrixAt(k * 2 + j, mO.multiplyMatrices(mP, hipM[j]).multiply(mRx).multiply(legDownM));
+        armIM.setMatrixAt(k * 2 + j, mO.multiplyMatrices(mP, armM[j]));
+      }
+    });
+    bodyIM.count = headIM.count = people.length;
+    legIM.count = armIM.count = people.length * 2;
+    for (const im of [legIM, bodyIM, headIM, armIM]) im.instanceMatrix.needsUpdate = true;
+  }
+
+  // ---------- 粒（粉・火花・炎など） ----------
+  // 粒ごとに色・透明度・大きさを持たせたいので、小さなシェーダーで点を描く
+  const projU = { value:1 };  // 世界の大きさ → 画面のピクセル数への換算（resize で更新）
+  const P_VS = `
+    attribute float size; attribute vec4 pcol; uniform float uProj; varying vec4 vCol;
+    void main(){
+      vCol = pcol;
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      gl_PointSize = size * uProj / -mv.z;
+      gl_Position = projectionMatrix * mv;
+    }`;
+  // uRim が 1 のときは粒の縁を暗くして、明るい地面や空の上でも粒の形が見えるようにする
+  const P_FS = `
+    uniform float uRim; uniform float uSoft; varying vec4 vCol;
+    void main(){
+      float d = length(gl_PointCoord - 0.5);
+      if (d > 0.5) discard;
+      vec3 c = mix(vCol.rgb, vCol.rgb * 0.3, uRim * smoothstep(0.22, 0.5, d));
+      gl_FragColor = vec4(c, vCol.a * pow(1.0 - d * 2.0 * (1.0 - uRim * 0.7), 1.0 + uSoft));  // uSoft：大きいほど縁がふんわり消える
+    }`;
+  function makeParticles(max, blending, drag, rim, soft){
+    const pos = new Float32Array(max * 3), pc = new Float32Array(max * 4), size = new Float32Array(max);
+    const vel = new Float32Array(max * 3), life = new Float32Array(max), life0 = new Float32Array(max);
+    const a0 = new Float32Array(max), s0 = new Float32Array(max), grav = new Float32Array(max), sg = new Float32Array(max);
+    const geo = new THREE.BufferGeometry();
+    const aPos = new THREE.BufferAttribute(pos, 3), aCol = new THREE.BufferAttribute(pc, 4), aSize = new THREE.BufferAttribute(size, 1);
+    geo.setAttribute('position', aPos); geo.setAttribute('pcol', aCol); geo.setAttribute('size', aSize);
+    const m = new THREE.ShaderMaterial({ uniforms:{ uProj:projU, uRim:{ value:rim }, uSoft:{ value:soft } }, vertexShader:P_VS, fragmentShader:P_FS, transparent:true, depthWrite:false, blending });
+    const pts = new THREE.Points(geo, m);
+    pts.frustumCulled = false;
+    scene.add(pts);
+    let next = 0;
+    return {
+      mat:m, pts,
+      // すべての粒を消す
+      clear(){ life.fill(0); for (let i = 0; i < max; i++){ pc[i*4+3] = 0; size[i] = 0; } aCol.needsUpdate = aSize.needsUpdate = true; },
+      // 古い粒から順に上書きして使い回す
+      // grow：0 なら小さくなりながら消え、正の値なら（煙のように）その倍率まで大きくなりながら消える
+      emit(x, y, z, vx, vy, vz, c, a, s, l, g, grow = 0){
+        const i = next; next = (next + 1) % max;
+        pos[i*3] = x; pos[i*3+1] = y; pos[i*3+2] = z;
+        vel[i*3] = vx; vel[i*3+1] = vy; vel[i*3+2] = vz;
+        pc[i*4] = c.r; pc[i*4+1] = c.g; pc[i*4+2] = c.b; pc[i*4+3] = a;
+        s *= FX_SIZE;
+        a0[i] = a; s0[i] = s; size[i] = s; life[i] = life0[i] = l; grav[i] = g; sg[i] = grow;
+      },
+      update(dt){
+        const k = Math.exp(-drag * dt);
+        for (let i = 0; i < max; i++){
+          if (life[i] <= 0) continue;
+          life[i] -= dt;
+          if (life[i] <= 0){ pc[i*4+3] = 0; size[i] = 0; continue; }
+          vel[i*3+1] -= grav[i] * dt;
+          vel[i*3] *= k; vel[i*3+1] *= k; vel[i*3+2] *= k;
+          pos[i*3] += vel[i*3] * dt; pos[i*3+1] += vel[i*3+1] * dt; pos[i*3+2] += vel[i*3+2] * dt;
+          const f = life[i] / life0[i];
+          pc[i*4+3] = a0[i] * f;
+          size[i] = sg[i] ? s0[i] * (1 + (1 - f) * sg[i]) : s0[i] * (0.5 + 0.5 * f);
+        }
+        aPos.needsUpdate = aCol.needsUpdate = aSize.needsUpdate = true;
+      },
+    };
+  }
+  const dustP = makeParticles(3000, THREE.NormalBlending, 1.2, 0, 1.5);  // 粉・土ぼこり・煙（縁のない、ふんわりした雲）
+  const glowP = makeParticles(12000, THREE.AdditiveBlending, 0.6, 1, 0);  // 火花・炎・祝福（光るもの）
+
+  // ---------- 光の輪と光の柱 ----------
+  const fxMat = (v, blending) => new THREE.MeshBasicMaterial({ color:col(v), transparent:true, opacity:0, depthWrite:false, side:THREE.DoubleSide, blending });
+  const ringMat = fxMat('--ring', THREE.NormalBlending);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.93, 1.0, 128), ringMat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = WAIST_Y;
+  scene.add(ring);
+
+  const PILLAR_H = 400;
+  const pillarGeo = new THREE.CylinderGeometry(1, 1, PILLAR_H, 32, 1, true);
+  const pillarMat = fxMat('--pillar', THREE.AdditiveBlending);
+  const coreMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending });
+  const pillar = new THREE.Mesh(pillarGeo, pillarMat), core = new THREE.Mesh(pillarGeo, coreMat);
+  for (const m of [pillar, core]){ m.position.y = PILLAR_H / 2; m.visible = false; scene.add(m); }
+
+  const C_DUST0 = col('--dust'), C_DUST = C_DUST0.clone(), C_SPARK = col('--spark'), C_GLOW = col('--glow'), C_RING = col('--ring'), C_PILLAR = col('--pillar');
+  const C_FIRE = [col('--fire1'), col('--fire2'), col('--fire3')];
+  const tmpC = new THREE.Color(), tmpV = new THREE.Vector3();
+  const rainbowAt = h => tmpC.setHSL(((h % 1) + 1) % 1, 1, 0.6);
+
+  // ---------- 追加の演出 ----------
+  const C_SMOKE = col('--smoke'), C_LAVA = col('--lava'), C_BOLT = col('--bolt'), C_MAGIC = col('--magic'), C_AURA = col('--aura');
+  const makeTex = (w, h, draw) => {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    return new THREE.CanvasTexture(c);
+  };
+  const fxBasic = (c, blending, opt = {}) => new THREE.MeshBasicMaterial(Object.assign({ color:c, transparent:true, opacity:0, depthWrite:false, side:THREE.DoubleSide, blending }, opt));
+  // 地面に貼る板（地面とちらつかないよう、少し手前に描く）
+  const groundFx = (m, y) => {
+    Object.assign(m, { polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2 });
+    const o = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m);
+    o.rotation.x = -Math.PI / 2; o.position.y = y; o.visible = false;
+    scene.add(o);
+    return o;
+  };
+
+  // 節目の衝撃波：SHOCK_EVERY ごとに地面へ輪が広がる
+  const shocks = [0, 1, 2, 3].map(() => {
+    const m = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 96), fxBasic(C_RING, THREE.NormalBlending));
+    m.rotation.x = -Math.PI / 2; m.position.y = 0.06; m.visible = false;
+    scene.add(m);
+    return { m, t:-1 };
+  });
+  let lastMilestone = 0;
+
+  // 星：空いっぱいの点。夜になるほど明るい
+  const stars = (() => {
+    const n = 900, R = 600, p = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++){
+      const th = Math.random() * Math.PI * 2, el = 0.02 + Math.pow(Math.random(), 1.6) * 1.2;
+      p[i*3] = Math.cos(th) * Math.cos(el) * R; p[i*3+1] = Math.sin(el) * R; p[i*3+2] = Math.sin(th) * Math.cos(el) * R;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+    const s = new THREE.Points(g, new THREE.PointsMaterial({ color:0xffffff, size:2, sizeAttenuation:false, transparent:true, opacity:0, depthWrite:false }));
+    s.frustumCulled = false; s.visible = false;
+    scene.add(s);
+    return s;
+  })();
+
+  // 地面のひび：中心から外へ伸びるひびが溶岩のように光る
+  const cracks = groundFx(fxBasic(C_LAVA, THREE.AdditiveBlending, { map:makeTex(512, 512, (g, w) => {
+    g.fillStyle = '#000'; g.fillRect(0, 0, w, w);
+    g.strokeStyle = '#fff'; g.lineCap = 'round'; g.shadowColor = '#fff'; g.shadowBlur = 8;
+    for (let i = 0; i < 28; i++){
+      let a = Math.random() * Math.PI * 2, r = 45 + Math.random() * 20, lw = 3 + Math.random() * 3;
+      let x = w / 2 + Math.cos(a) * r, y = w / 2 + Math.sin(a) * r;
+      while (r < w / 2 - 12){
+        r += 10 + Math.random() * 14; a += (Math.random() - 0.5) * 0.5;
+        const nx = w / 2 + Math.cos(a) * r, ny = w / 2 + Math.sin(a) * r;
+        g.lineWidth = lw; g.beginPath(); g.moveTo(x, y); g.lineTo(nx, ny); g.stroke();
+        x = nx; y = ny; lw *= 0.92;
+      }
+    }
+  }) }), 0.03);
+
+  // 魔法陣：石臼の下でローマ数字の輪が回る
+  const magic = groundFx(fxBasic(C_MAGIC, THREE.AdditiveBlending, { map:makeTex(512, 512, (g, w) => {
+    const c = w / 2;
+    g.fillStyle = '#000'; g.fillRect(0, 0, w, w);
+    g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.shadowColor = '#fff'; g.shadowBlur = 6;
+    for (const [r, lw] of [[0.97, 4], [0.84, 3], [0.5, 3], [0.46, 1.5]]){ g.lineWidth = lw; g.beginPath(); g.arc(c, c, r * c, 0, Math.PI * 2); g.stroke(); }
+    const nums = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+    g.font = 'bold 30px serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    nums.forEach((t, i) => {
+      const a = i / 12 * Math.PI * 2 - Math.PI / 2;
+      g.save(); g.translate(c + Math.cos(a) * 0.905 * c, c + Math.sin(a) * 0.905 * c); g.rotate(a + Math.PI / 2); g.fillText(t, 0, 0); g.restore();
+    });
+    // 内側の星形（8つの点を3つ飛ばしで結ぶ）
+    g.lineWidth = 2.5; g.beginPath();
+    for (let i = 0; i <= 8; i++){ const a = (i * 3 % 8) / 8 * Math.PI * 2 - Math.PI / 2; const x = c + Math.cos(a) * 0.82 * c, y = c + Math.sin(a) * 0.82 * c; i ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.stroke();
+  }) }), 0.04);
+
+  // 流れ星：遠くの空から町の向こうへ落ちる
+  const meteors = [];
+  // 稲妻：空から地面へ。ギザギザの線をいくつか使い回す
+  const BOLT_N = 18;
+  const bolts = [0, 1, 2].map(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(BOLT_N * 3), 3));
+    const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color:C_BOLT, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false }));
+    l.frustumCulled = false; l.visible = false;
+    scene.add(l);
+    return { l, t:-1 };
+  });
+  // 浮かぶ岩
+  const ROCK_N = 40;
+  const rockIM = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.4, 0), mat('--rock', { flatShading:true }), ROCK_N);
+  rockIM.frustumCulled = false; rockIM.count = 0;
+  scene.add(rockIM);
+  const rocks = [...Array(ROCK_N)].map(() => ({ a:rand(0, Math.PI * 2), r:rand(1.3, 3.5), y:rand(0, 14), s:rand(0.5, 1.6), spin:rand(0.5, 2), v:rand(0.6, 1.6) }));
+  const rq = new THREE.Quaternion(), re = new THREE.Euler(), rp = new THREE.Vector3(), rs = new THREE.Vector3(), rm = new THREE.Matrix4();
+  let fwTimer = 0;
+
+  // 光るものの重ね方：暗いときは光を足し合わせて輝かせ、明るいときは普通に重ねて色と形を見せる
+  // （明るい地面に光を足し合わせると白くなって見えなくなるため）
+  let glowAdd = null;
+  function setGlowMode(add){
+    if (add === glowAdd) return;
+    glowAdd = add;
+    const b = add ? THREE.AdditiveBlending : THREE.NormalBlending;
+    for (const m of [glowP.mat, pillarMat, coreMat, cracks.material, magic.material, ...bolts.map(o => o.l.material)]){ m.blending = b; m.needsUpdate = true; }
+    glowP.mat.uniforms.uRim.value = add ? 0 : 0.5;
+    coreMat.color.set(add ? 0xffffff : css('--pillar'));  // 白い芯は明るい所で見えないので柱の色にする
+  }
+
+  function updateExtra(dt, kmh, rot, prevRot, w, zk, night, light){
+    setGlowMode(light < 0.6);
+    const rainbow = kmh >= FX.rainbow;
+    const hue = tNow * 0.25;
+
+    // 砂の渦：押し棒の下の地面の砂が、回転に引っぱられて舞う
+    const fSwirl = fxk(kmh, FX.swirl);
+    if (fSwirl > 0 && onGround()) each('swirl', 20 + 120 * fSwirl, dt, () => {
+      const a = rand(0, Math.PI * 2), r = armLen * rand(0.6, 1.15);
+      const x = r * Math.cos(a), z = r * Math.sin(a), tv = Math.min(w * r, 8) * 0.7;
+      dustP.emit(x, 0.1, z, z / r * tv, rand(0.2, 1), -x / r * tv, C_DUST, 0.3, 0.3 * zk, rand(0.8, 1.5), 0.3, 1.5);
+    });
+
+    // 節目の衝撃波と画面の光
+    const ms = kmh >= FX.shock ? Math.floor(kmh / SHOCK_EVERY) : 0;
+    if (ms > lastMilestone){
+      lastMilestone = ms;
+      const s = shocks.find(o => o.t < 0) || shocks[0];
+      s.t = 0; s.m.visible = true;
+
+    }
+    for (const s of shocks){
+      if (s.t < 0) continue;
+      s.t += dt;
+      const k = s.t / 0.9;
+      if (k >= 1){ s.t = -1; s.m.visible = false; continue; }
+      s.m.scale.setScalar(armLen * (1 + k * 7));
+      s.m.material.opacity = 0.8 * (1 - k);
+      s.m.material.color.copy(rainbow ? rainbowAt(hue) : C_RING);
+    }
+
+    // 足元の土ぼこり：押す人が地面を蹴るたびに
+    const fKick = fxk(kmh, FX.kick);
+    if (fKick > 0 && people.length && onGround()) each('kick', 30 + 200 * fKick, dt, () => {
+      const k = (Math.random() * people.length) | 0, { arm, r } = personSpot(k);
+      const th = rot + arm.ang;
+      const x = r * Math.cos(th) + PUSH_BACK * Math.sin(th), z = -r * Math.sin(th) + PUSH_BACK * Math.cos(th);
+      dustP.emit(x, 0.1, z, rand(-0.8, 0.8), rand(0.3, 1.2), rand(-0.8, 0.8), C_DUST, 0.35, 0.3 * zk, rand(0.5, 1), 1, 2);
+    });
+
+    // 星：夜になるほど明るくまたたく
+    const fStars = fxk(kmh, FX.stars) * night;
+    stars.visible = fStars > 0;
+    stars.material.opacity = fStars * (0.85 + 0.15 * Math.sin(tNow * 3));
+
+    // 煙：石のてっぺんから立ちのぼり、広がりながら消える
+    const fSmoke = fxk(kmh, FX.smoke);
+    if (fSmoke > 0 && onGround()) each('smoke', 12 + 50 * fSmoke, dt, () => {
+      const a = rand(0, Math.PI * 2), r = rand(0, MILL_R - WALL);
+      dustP.emit(r * Math.cos(a), MILL_Y + MILL_H, r * Math.sin(a), rand(-0.3, 0.3), rand(1.5, 3) * Math.sqrt(zk), rand(-0.3, 0.3),
+        C_SMOKE, 0.35, 0.35 * zk, rand(2.5, 4), -0.3, 3);
+    });
+
+    // 地面のひび：脈打つように光る
+    const fCracks = fxk(kmh, FX.cracks);
+    cracks.visible = fCracks > 0;
+    cracks.scale.setScalar(armLen * 1.8);
+    cracks.material.opacity = fCracks * (0.7 + 0.3 * Math.sin(tNow * 7));
+    cracks.material.color.copy(rainbow ? rainbowAt(hue + 0.3) : C_LAVA);
+
+    // 流れ星
+    const fMeteor = fxk(kmh, FX.meteor);
+    if (fMeteor > 0 && Math.random() < (0.5 + 3 * fMeteor) * FX_RATE * dt){
+      const th = rand(-1.2, 1.2), D = rand(250, 450);
+      const v = new THREE.Vector3(rand(-1, 1), -rand(0.4, 0.8), rand(-0.2, 0.4)).normalize().multiplyScalar(rand(120, 200));
+      meteors.push({ p:new THREE.Vector3(Math.sin(th) * D, rand(60, 140), -Math.cos(th) * D), v, life:rand(0.8, 1.4) });
+    }
+    for (let i = meteors.length - 1; i >= 0; i--){
+      const m = meteors[i];
+      m.life -= dt;
+      for (let j = 0; j < 4; j++){  // 尾：1フレームの移動の間に点を並べる
+        const f = j / 4;
+        glowP.emit(m.p.x + m.v.x * dt * f, m.p.y + m.v.y * dt * f, m.p.z + m.v.z * dt * f, 0, 0, 0,
+          rainbow ? rainbowAt(Math.random()) : C_BOLT, 0.9, 2.5, 0.35, 0);
+      }
+      m.p.addScaledVector(m.v, dt);
+      if (m.p.y <= 0){  // 地面に落ちたら火花を散らす
+        for (let j = 0; j < 40; j++) glowP.emit(m.p.x, 0.5, m.p.z, rand(-15, 15), rand(5, 20), rand(-15, 15), C_FIRE[(Math.random() * 3) | 0], 1, 3, rand(0.5, 1), 20);
+        meteors.splice(i, 1);
+      } else if (m.life <= 0) meteors.splice(i, 1);
+    }
+
+    // 稲妻：空から地面へ落ちて、画面が光る
+    const fBolt = fxk(kmh, FX.bolt);
+    if (fBolt > 0 && Math.random() < (0.4 + 2.5 * fBolt) * FX_RATE * dt){
+      const b = bolts.find(o => o.t < 0);
+      if (b){
+        const a = rand(0, Math.PI), r = rand(armLen * 1.3, armLen * 4 + 10);
+        const gx = Math.cos(a) * r, gz = -Math.sin(a) * r, top = rand(40, 70);
+        const p = b.l.geometry.attributes.position.array;
+        for (let i = 0; i < BOLT_N; i++){
+          const k = i / (BOLT_N - 1), j = (1 - k) * 6 + (i && i < BOLT_N - 1 ? 1.5 : 0);
+          p[i*3] = gx + (i < BOLT_N - 1 ? rand(-j, j) : 0); p[i*3+1] = top * (1 - k); p[i*3+2] = gz + (i < BOLT_N - 1 ? rand(-j, j) : 0);
+          glowP.emit(p[i*3], p[i*3+1], p[i*3+2], 0, 0, 0, C_BOLT, 0.8, 1.2 * zk, 0.25, 0);  // 線を太く見せる光
+        }
+        b.l.geometry.attributes.position.needsUpdate = true;
+        b.t = 0; b.l.visible = true;
+        for (let j = 0; j < 30; j++) glowP.emit(gx, 0.3, gz, rand(-8, 8), rand(3, 12), rand(-8, 8), C_BOLT, 1, 0.5 * zk, rand(0.3, 0.7), 15);
+
+      }
+    }
+    for (const b of bolts){
+      if (b.t < 0) continue;
+      b.t += dt;
+      if (b.t > 0.25){ b.t = -1; b.l.visible = false; continue; }
+      b.l.material.opacity = (1 - b.t / 0.25) * (Math.random() < 0.3 ? 0.3 : 1);  // ちらつき
+    }
+
+    // 魔法陣：石と一緒に回る
+    const fMagic = fxk(kmh, FX.circle);
+    magic.visible = fMagic > 0;
+    magic.scale.setScalar(armLen * 1.5);
+    magic.rotation.z = rot * 0.5;
+    magic.material.opacity = fMagic * (0.8 + 0.2 * Math.sin(tNow * 4));
+    magic.material.color.copy(rainbow ? rainbowAt(hue + 0.6) : C_MAGIC);
+
+    // 押す人が金色に光る
+    const fAura = fxk(kmh, FX.aura);
+    for (const m of [skinMat, clothMat]){
+      m.emissive.copy(rainbow ? rainbowAt(hue + 0.15) : C_AURA);
+      m.emissiveIntensity = fAura * 0.9 * (0.75 + 0.25 * Math.sin(tNow * 6));
+    }
+
+    // 浮かぶ岩：地面から浮かび上がり、回りながら空へ昇っていく
+    const fRocks = fxk(kmh, FX.rocks);
+    rockIM.count = Math.round(fRocks * ROCK_N);
+    for (let i = 0; i < rockIM.count; i++){
+      const o = rocks[i];
+      o.y += o.v * dt * Math.sqrt(zk);
+      o.a += dt * 0.3;
+      if (o.y > 14 * Math.sqrt(zk)){ o.y = 0; o.a = rand(0, Math.PI * 2); }
+      rp.set(Math.cos(o.a) * o.r * armLen, o.y, -Math.sin(o.a) * o.r * armLen);
+      rq.setFromEuler(re.set(tNow * o.spin, tNow * o.spin * 0.7, 0));
+      rs.setScalar(o.s * Math.sqrt(zk));
+      rockIM.setMatrixAt(i, rm.compose(rp, rq, rs));
+    }
+    rockIM.instanceMatrix.needsUpdate = true;
+
+    // 花火：目標の後、町の上に上がり続ける
+    if (kmh >= FX.fireworks){
+      fwTimer -= dt;
+      if (fwTimer <= 0){
+        fwTimer = rand(0.15, 0.45);
+        const x = rand(-40, 40), y = rand(10, 22), z = rand(-70, -40), h0 = Math.random();
+        for (let i = 0; i < 260; i++){
+          const th = rand(0, Math.PI * 2), up = rand(-1, 1), v = rand(6, 14), hh = Math.sqrt(1 - up * up);
+          glowP.emit(x, y, z, Math.cos(th) * hh * v, up * v, Math.sin(th) * hh * v, rainbowAt(h0 + rand(-0.05, 0.05)), 1, 0.6, rand(1.2, 2), 4);
+        }
+      }
+    }
+  }
+
+  // ---------- ブルーム ----------
+  let composer = null, bloom = null, renderPass = null, curScene = scene;
+  if (THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass){
+    composer = new THREE.EffectComposer(renderer);
+    renderPass = new THREE.RenderPass(scene, camera);
+    composer.addPass(renderPass);
+    bloom = new THREE.UnrealBloomPass(new THREE.Vector2(256, 256), BLOOM_STRENGTH[0], BLOOM_RADIUS, BLOOM_THRESHOLD[0]);
+    composer.addPass(bloom);
+  }
+
+  // ---------- 画面サイズとカメラ ----------
+  let camFit = BASE_FIT;  // 今カメラが画面に収めている半径（押し棒の伸びに遅れてついていく）
+  let camDist = 1;
+  let camTilt = 0;  // カメラの起き上がり具合（0〜1）
+  const camTarget = new THREE.Vector3(), camDir = new THREE.Vector3();
+  function placeCamera(){
+    const vHalf = THREE.MathUtils.degToRad(FOV / 2);
+    const hHalf = Math.atan(Math.tan(vHalf) * camera.aspect);
+    // 縦持ちでも押し棒の先まで画面に収まる距離にカメラを引く
+    camDist = camFit / Math.sin(Math.min(vHalf, hHalf));
+    // 速くなるほど起き上がり、注視点も上げて、空と遠くの町が画面に入るようにする
+    const tk = camTilt * camTilt * (3 - 2 * camTilt);
+    const pitch = CAM_PITCH0 + (CAM_PITCH_END - CAM_PITCH0) * tk;
+    camTarget.set(0, 0.8 + tk * camFit * 0.5, 0);
+    camDir.set(0, Math.sin(pitch), Math.cos(pitch));
+    camera.position.copy(camTarget).addScaledVector(camDir, camDist);
+    camera.lookAt(camTarget);
+    camera.near = Math.max(0.05, camDist * 0.01);
+    camera.far = camDist * 10 + PILLAR_H * 2;
+    camera.updateProjectionMatrix();
+  }
+  function resize(){
+    const W = wrap.clientWidth, H = wrap.clientHeight;
+    const pr = Math.min(window.devicePixelRatio || 1, 2);  // モバイルで重くならないよう2で頭打ち
+    renderer.setPixelRatio(pr);
+    renderer.setSize(W, H, false);
+    if (composer){ composer.setPixelRatio(pr); composer.setSize(W, H); }
+    camera.aspect = W / H;
+    projU.value = H * pr / (2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2)));
+    placeCamera();
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  // 押し棒が伸びたら影を落とす範囲と太陽の距離も広げる
+  let shadowR = 0;
+  function updateShadow(){
+    const R = armLen + 1.5;
+    if (Math.abs(R - shadowR) < 0.05) return;
+    shadowR = R;
+    const sc = sun.shadow.camera;
+    Object.assign(sc, { left:-R, right:R, top:R, bottom:-R, near:0.5, far:R * 4 + 20 });
+    sc.updateProjectionMatrix();
+    sun.position.copy(SUN_DIR).multiplyScalar(R * 2 + 8);
+  }
+
+  // ---------- 操作：指で回した分だけ回転を速くする ----------
+  // 画面上の指の位置を押し棒の高さの水平面に投影し、中心まわりで回った角度を測る。
+  // どちら向きに回しても、回した角度の分だけ速さが増える（石の回る向きは変わらない）
+  let speed = BASE_SPEED;
+  // 今の速さに応じた増え方の倍率。目標の速さに近づくほど大きくなり、目標を超えたらそのまま
+  const lateBoost = () => 1 + LATE_BOOST * Math.pow(clamp01(speed * PUSH_R * 3.6 / GOAL_KMH), LATE_CURVE);
+  const ray = new THREE.Raycaster();
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -WAIST_Y);
+  const ndc = new THREE.Vector2(), hit = new THREE.Vector3();
+  function angleAt(x, y){
+    const r = cv.getBoundingClientRect();
+    ndc.set((x - r.left) / r.width * 2 - 1, -(y - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    if (!ray.ray.intersectPlane(plane, hit)) return null;
+    fingerPt.set(hit.x, hit.z); fingerOn = true;  // バトル中の移動先として使う
+    if (Math.hypot(hit.x, hit.z) < MIN_GRAB_R) return null;
+    return Math.atan2(-hit.z, hit.x);  // rotation.y が増える向き（回転の向き）を正にする
+  }
+
+  // デバッグ用：押すたびに倍率を切り替えるボタン
+  let multIdx = 0;
+  const multBtn = $('mult');
+  const showMult = () => { multBtn.textContent = `倍率 ×${DEBUG_MULTS[multIdx]}`; };
+  multBtn.addEventListener('click', () => { multIdx = (multIdx + 1) % DEBUG_MULTS.length; showMult(); });
+  showMult();
+
+  const drags = new Map();
+  const fingerPt = new THREE.Vector2();
+  let fingerOn = false;  // 画面に触れていて、指の位置が分かっているか
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    drags.set(e.pointerId, { a:angleAt(e.clientX, e.clientY) });
+  });
+  cv.addEventListener('pointermove', e => {
+    const d = drags.get(e.pointerId);
+    if (!d) return;
+    const a = angleAt(e.clientX, e.clientY);
+    if (a !== null && d.a !== null){
+      const da = Math.atan2(Math.sin(a - d.a), Math.cos(a - d.a));  // -π〜π に丸めて境目での跳びを防ぐ
+      // どちら向きになぞっても速くなる。バトル中は回転を保つための専用の増え方。倍率はデバッグ用ボタンで切り替え
+      const gain = inBattle() ? BATTLE_TRACE / (PUSH_R * 3.6) / (Math.PI * 2) : DRAG_GAIN * lateBoost();
+      speed += Math.abs(da) * gain * DEBUG_MULTS[multIdx];
+    }
+    d.a = a;
+  });
+  const endDrag = e => { drags.delete(e.pointerId); if (!drags.size) fingerOn = false; };
+  cv.addEventListener('pointerup', endDrag);
+  cv.addEventListener('pointercancel', endDrag);
+
+  // PC 用：右矢印キーを押している間だけ速くする
+  let keyRight = false;
+  const setKey = (e, on) => {
+    if (e.key === 'ArrowRight'){ keyRight = on; e.preventDefault(); }
+  };
+  addEventListener('keydown', e => setKey(e, true));
+  addEventListener('keyup', e => setKey(e, false));
+  addEventListener('blur', () => { keyRight = false; });
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
+  document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
+
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    if (e.target.closest && e.target.closest('button')) return;  // ボタンの連打は止めない
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+
+  // ---------- 人を増やす ----------
+  let tNow = 0;
+  function checkPeople(kmh, zk){
+    const want = Math.min(2 + Math.floor(kmh / KMH_PER_PERSON), MAX_PEOPLE);
+    let n = 0;
+    while (people.length < want){
+      addPerson(tNow + n * 0.06);  // 一度にたくさん増えたときは少しずつずらして現れる
+      n++;
+      // 現れる場所に土ぼこりを立てる（棒の角度は目標の角度で見積もる）
+      const k = people.length - 1, r = PUSH_R + Math.floor(k / armCount) * GAP;
+      const th = rotor.rotation.y + armTargetAng(k % armCount);
+      tmpV.set(r * Math.cos(th) + PUSH_BACK * Math.sin(th), 0.6, -r * Math.sin(th) + PUSH_BACK * Math.cos(th));
+      for (let i = 0; i < 40; i++){
+        dustP.emit(tmpV.x, tmpV.y, tmpV.z, rand(-1.5, 1.5) * zk, rand(0.3, 1.5) * zk, rand(-1.5, 1.5) * zk, C_DUST, 0.4, 0.4 * zk, rand(0.6, 1.1), 1.5 * zk, 2);
+      }
+    }
+  }
+
+  // ---------- 演出 ----------
+  const acc = { dust:0, spark:0, fire:0, swirl:0, kick:0, smoke:0, exhaust:0, liftDust:0, trail:0 };  // 1フレームに満たない発生数の持ち越し
+  const each = (key, rate, dt, fn) => { acc[key] += rate * FX_RATE * dt; while (acc[key] >= 1){ acc[key]--; fn(); } };
+  // 回転数：目標達成までに回った回数。達成したらそこで止める
+  let turnsAtGoal = null;
+  const turnCount = () => turnsAtGoal ?? Math.floor(rotor.rotation.y / (Math.PI * 2));
+  let goalDone = false, lastLight = 1;
+  const hud = $('hud'), speedEl = $('speed'), turnsEl = $('turns');
+
+  function updateEffects(dt, kmh, prevRot, zk){
+    const rot = rotor.rotation.y, w = speed * ROT_MULT;  // 実際の回転の角速度
+
+    // 空・地面・光：昼 → 夕焼け → 夜
+    const k1 = clamp01((kmh - FX.sky) / (SKY_DUSK_KMH - FX.sky));
+    const k2 = clamp01((kmh - SKY_DUSK_KMH) / (SKY_NIGHT_KMH - SKY_DUSK_KMH));
+    const mix = (arr, out) => out.copy(arr[0]).lerp(arr[1], k1).lerp(arr[2], k2);
+    mix(C_SKY, scene.background);
+    mix(C_GROUND, groundMat.color);
+    mix(C_SUN, sun.color);
+    const light = LIGHT_K[0] + (LIGHT_K[1] - LIGHT_K[0]) * k1 + (LIGHT_K[2] - LIGHT_K[1]) * k2;
+    hemi.intensity = 0.65 * light; sun.intensity = 0.8 * light;
+    // 土ぼこりは地面の色をもとに、昼は濃く・夜は明るくして、地面から浮いて見えるようにする
+    C_DUST.copy(C_DUST0).lerp(tmpC.copy(groundMat.color).multiplyScalar(2.2), 1 - clamp01((light - 0.35) / 0.5));
+    lastLight = light;
+
+    const rainbow = kmh >= FX.rainbow;
+    const hue = tNow * 0.25;
+
+    // 粉：石の下のすき間から外へ舞う
+    const fDust = fxk(kmh, FX.dust);
+    if (fDust > 0 && onGround()) each('dust', 30 + 150 * fDust, dt, () => {
+      const a = rand(0, Math.PI * 2), r = MILL_R;
+      const x = r * Math.cos(a), z = r * Math.sin(a);
+      const tv = Math.min(w * r, 4);  // 回転に引っぱられる分（速すぎると粉が見えなくなるので頭打ち）
+      dustP.emit(x, MILL_Y + 0.02, z,
+        Math.cos(a) * rand(0.5, 1.5) + z / r * tv, rand(0, 0.8), Math.sin(a) * rand(0.5, 1.5) - x / r * tv,
+        C_DUST, 0.35, 0.22 * zk, rand(1, 2), 0.8, 2);
+    });
+
+    // 光の輪：押し棒の先の軌跡
+    const fRing = fxk(kmh, FX.ring);
+    ring.visible = fRing > 0 && onGround();
+    ring.scale.setScalar(armLen);
+    ringMat.opacity = 0.95 * fRing;
+    ringMat.color.copy(rainbow ? rainbowAt(hue) : C_RING);
+
+    // 火花：上下の石がこすれる所から飛び散る
+    const fSpark = fxk(kmh, FX.spark);
+    if (fSpark > 0 && onGround()) each('spark', 80 + 500 * fSpark, dt, () => {
+      const a = rand(0, Math.PI * 2), r = MILL_R - WALL / 2;
+      const x = r * Math.cos(a), z = r * Math.sin(a);
+      const v = rand(2, 6) * (1 + fSpark) * Math.sqrt(zk);
+      const tv = Math.min(w * r, 12);
+      glowP.emit(x, MILL_Y, z,
+        Math.cos(a) * v + z / r * tv, rand(2, 5) * Math.sqrt(zk), Math.sin(a) * v - x / r * tv,
+        rainbow ? rainbowAt(Math.random()) : C_SPARK, 1, 0.05 * zk, rand(0.4, 0.9), 9.8);
+    });
+
+    // 石が光る
+    const fGlow = fxk(kmh, FX.glow);
+    stoneMat.emissive.copy(rainbow ? rainbowAt(hue + 0.5) : C_GLOW);
+    stoneMat.emissiveIntensity = 2.5 * fGlow;
+
+    // 光の柱：中心から空へ（脈打つ）
+    const fPillar = fxk(kmh, FX.pillar);
+    pillar.visible = core.visible = fPillar > 0;
+    if (fPillar > 0){
+      const pulse = 1 + 0.12 * Math.sin(tNow * 8);
+      pillar.scale.set(1.1 * zk * pulse, 1, 1.1 * zk * pulse);
+      core.scale.set(0.3 * zk * pulse, 1, 0.3 * zk * pulse);
+      pillarMat.opacity = 0.5 * fPillar;
+      coreMat.opacity = 0.95 * fPillar;
+      pillarMat.color.copy(rainbow ? rainbowAt(hue) : C_PILLAR);
+    }
+
+    // 炎の尾：押し棒の先から。1フレームで大きく回るので、前のフレームからの角度の間にばらまいて輪にする
+    const fFire = fxk(kmh, FX.fire);
+    if (fFire > 0 && onGround()){
+      const span = Math.min(rot - prevRot, Math.PI * 2);
+      each('fire', 300 * fFire, dt, () => {
+        const a = arms[(Math.random() * armCount) | 0];
+        const th = rot + a.ang - Math.random() * span;
+        const r = a.len * rand(0.92, 1.0);
+        glowP.emit(r * Math.cos(th), WAIST_Y + rand(-0.1, 0.1) * zk, -r * Math.sin(th),
+          rand(-0.5, 0.5) * zk, rand(1, 3) * zk, rand(-0.5, 0.5) * zk,
+          rainbow ? rainbowAt(Math.random()) : C_FIRE[(Math.random() * 3) | 0], 0.9, 0.3 * zk, rand(0.4, 0.9), -2 * zk);
+      });
+    }
+
+    // 画面の揺れ
+    const fShake = fxk(kmh, FX.shake);
+    if (fShake > 0){
+      const amp = 0.011 * camDist * fShake;
+      camera.position.x += rand(-amp, amp);
+      camera.position.y += rand(-amp, amp);
+    }
+
+    // 目標達成：一度だけ大きく打ち上げて文字を出す
+    if (!goalDone && kmh >= GOAL_KMH){
+      goalDone = true;
+      launchAt = tNow + LAUNCH_DELAY;
+      document.documentElement.setAttribute('data-howto-hidden', '');   // 打ち上げから決着までは「遊び方」を隠す
+      turnsAtGoal = turnCount();  // 回転数は目標達成で止める
+      for (let i = 0; i < 3500; i++){
+        const th = rand(0, Math.PI * 2), up = rand(0.2, 1), v = rand(8, 25) * zk;
+        const h = Math.sqrt(1 - up * up);
+        glowP.emit(0, WAIST_Y + 1, 0, Math.cos(th) * h * v, up * v, Math.sin(th) * h * v,
+          rainbowAt(Math.random()), 1, 0.35 * zk, rand(1.5, 3), 6 * zk);
+      }
+    }
+
+    updateExtra(dt, kmh, rot, prevRot, w, zk, clamp01(k1 * 0.4 + k2), light);
+
+    // ブルーム：速いほど強く、暗いほど弱い光までにじむ
+    if (bloom){
+      bloom.strength = BLOOM_STRENGTH[0] + (BLOOM_STRENGTH[1] - BLOOM_STRENGTH[0]) * clamp01(kmh / GOAL_KMH);
+      bloom.threshold = BLOOM_THRESHOLD[1] + (BLOOM_THRESHOLD[0] - BLOOM_THRESHOLD[1]) * clamp01((light - 0.35) / 0.65);
+    }
+
+    dustP.update(dt);
+    glowP.update(dt);
+
+    // 画面の光はすぐに消えていく
+  }
+
+  // ---------- 目標達成後：打ち上げ → 宇宙で UFO とベイゴマバトル → 吹き飛んだ UFO が惑星を壊す ----------
+  let phase = 'ground';   // ground：地上 → launch：打ち上げ → space：宇宙
+  let phaseT = 0;         // 今の段階に入ってからの秒数
+  let launchAt = Infinity;
+  const onGround = () => phase === 'ground';
+  const inBattle = () => phase === 'space' && space && space.stage === 'battle';
+  let shakeT = 0;         // 宇宙での画面の揺れの残り時間（秒）
+  const C_BLACK = new THREE.Color(0x000000);
+  const camLook = new THREE.Vector3();
+  const v3 = new THREE.Vector3(), v3b = new THREE.Vector3(), v2 = new THREE.Vector2();
+  let space = null;
+
+  // 光の粒を全方向に飛び散らせる（c が null なら虹色）
+  function burst(x, y, z, n, c, sp, size){
+    for (let i = 0; i < n; i++){
+      const th = rand(0, Math.PI * 2), u = rand(-1, 1), h = Math.sqrt(1 - u * u), v = rand(0.3, 1) * sp * 20;
+      glowP.emit(x, y, z, Math.cos(th) * h * v, u * v, Math.sin(th) * h * v, c || rainbowAt(Math.random()), 1, size, rand(0.4, 1.2), 0);
+    }
+  }
+
+  // 打ち上げ：ゴゴゴと揺れてから、石臼が人ごと空へ飛んでいく
+  function updateLaunch(dt){
+    phaseT += dt;
+    const t = Math.max(phaseT - LAUNCH_HOLD, 0);
+    const alt = 0.5 * LAUNCH_ACC * t * t;
+    const jit = phaseT < LAUNCH_HOLD ? 0.06 : 0;
+    rotor.position.set(rand(-jit, jit), alt, rand(-jit, jit));
+    // 噴射：石の下から炎
+    const by = alt + MILL_Y;
+    each('exhaust', 500, dt, () => {
+      const a = rand(0, Math.PI * 2), r = rand(0, MILL_R);
+      glowP.emit(r * Math.cos(a), by, r * Math.sin(a), rand(-3, 3), -rand(15, 40), rand(-3, 3), C_FIRE[(Math.random() * 3) | 0], 1, rand(0.6, 1.4), rand(0.3, 0.7), 0);
+    });
+    // 地面近くでは土ぼこりが大きく広がる
+    if (alt < 40) each('liftDust', 160, dt, () => {
+      const a = rand(0, Math.PI * 2), v = rand(8, 22);
+      dustP.emit(Math.cos(a) * 2, 0.3, Math.sin(a) * 2, Math.cos(a) * v, rand(0.5, 3), Math.sin(a) * v, C_DUST, 0.5, 2.5, rand(1.5, 3), 0, 2);
+    });
+    // カメラ：石臼を少し下から見上げながら追いかける
+    const D = camDist, k = 1 - Math.exp(-3 * dt);
+    camera.position.lerp(v3b.set(0, Math.max(alt + WAIST_Y - D * 0.3, CAM_MIN_Y), D), k);
+    camera.position.y = Math.max(camera.position.y, CAM_MIN_Y);  // 地面より下に行かない
+    camLook.lerp(v3.set(0, alt + WAIST_Y, 0), Math.min(1, k * 2));
+    camera.lookAt(camLook);
+    camera.near = 0.5; camera.far = alt + 6000; camera.updateProjectionMatrix();
+    const amp = 0.02 * D * (phaseT < LAUNCH_HOLD ? 1 : Math.max(0, 1 - t / 3));
+    camera.position.x += rand(-amp, amp); camera.position.y += rand(-amp, amp);
+    if (alt >= LAUNCH_TOP) enterSpace();
+    return alt;
+  }
+
+  function buildSpace(){
+    const S = new THREE.Scene();
+    S.background = col('--space');
+    S.add(new THREE.AmbientLight(0xffffff, 0.35));
+    const key = new THREE.DirectionalLight(0xffffff, 1.1);
+    key.position.set(30, 60, 40);
+    S.add(key);
+    // 星
+    {
+      const n = 2500, R = 6000, p = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++){
+        const u = rand(-1, 1), th = rand(0, Math.PI * 2), h = Math.sqrt(1 - u * u);
+        p[i*3] = h * Math.cos(th) * R; p[i*3+1] = u * R; p[i*3+2] = h * Math.sin(th) * R;
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+      const st = new THREE.Points(g, new THREE.PointsMaterial({ color:0xffffff, size:2, sizeAttenuation:false }));
+      st.frustumCulled = false;
+      S.add(st);
+    }
+    // ベイゴマ台：円い台に同心円の模様、ふちが光る
+    const floorTex = makeTex(512, 512, (g, w) => {
+      const c = w / 2;
+      g.fillStyle = css('--arena'); g.fillRect(0, 0, w, w);
+      g.strokeStyle = css('--arena-rim'); g.globalAlpha = 0.35;
+      for (let i = 1; i <= 6; i++){ g.lineWidth = 2; g.beginPath(); g.arc(c, c, c * i / 6.2, 0, Math.PI * 2); g.stroke(); }
+      for (let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2; g.beginPath(); g.moveTo(c, c); g.lineTo(c + Math.cos(a) * c, c + Math.sin(a) * c); g.stroke(); }
+    });
+    const sideMat = new THREE.MeshStandardMaterial({ color:col('--arena'), roughness:0.6, metalness:0.4 });
+    const arena = new THREE.Mesh(new THREE.CylinderGeometry(ARENA_R, ARENA_R * 0.85, 2, 64),
+      [sideMat, new THREE.MeshStandardMaterial({ map:floorTex, roughness:0.7, metalness:0.2 }), sideMat]);
+    arena.position.y = -1;
+    S.add(arena);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(ARENA_R, 0.35, 8, 96), new THREE.MeshBasicMaterial({ color:col('--arena-rim') }));
+    rim.rotation.x = -Math.PI / 2; rim.position.y = 0.2;
+    S.add(rim);
+
+    // UFO：下の先端でベイゴマのように立つ円盤
+    const ufo = new THREE.Group(), ufoSpin = new THREE.Group();
+    ufo.add(ufoSpin);
+    const prof = [[0, 0], [0.5, 0.15], [1.3, 0.45], [UFO_R, 0.75], [UFO_R, 0.95], [2.6, 1.4], [0, 1.45]].map(([x, y]) => new THREE.Vector2(x, y));
+    ufoSpin.add(new THREE.Mesh(new THREE.LatheGeometry(prof, 32), new THREE.MeshStandardMaterial({ color:col('--ufo'), roughness:0.3, metalness:0.8, side:THREE.DoubleSide })));
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(1.8, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color:col('--ufo-dome'), emissive:col('--ufo-dome'), emissiveIntensity:0.6, transparent:true, opacity:0.85, roughness:0.1 }));
+    dome.position.y = 1.4;
+    ufoSpin.add(dome);
+    const lights = [];
+    for (let i = 0; i < 12; i++){
+      const a = i / 12 * Math.PI * 2, m = new THREE.MeshBasicMaterial({ color:0xffffff });
+      const o = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 6), m);
+      o.position.set(Math.cos(a) * (UFO_R - 0.1), 0.85, Math.sin(a) * (UFO_R - 0.1));
+      ufoSpin.add(o);
+      lights.push(m);
+    }
+    ufo.visible = false;
+    S.add(ufo);
+
+    // 惑星と、壊れたときのかけら・衝撃波
+    const planets = PLANETS.map(([c, r, dist]) => {
+      const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 2), new THREE.MeshStandardMaterial({ color:col(c), roughness:0.9, flatShading:true }));
+      S.add(m);
+      const N = 70;
+      const deb = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0),
+        new THREE.MeshStandardMaterial({ color:col(c), roughness:0.9, flatShading:true, emissive:col('--lava'), emissiveIntensity:0.6 }), N);
+      deb.frustumCulled = false; deb.visible = false;
+      S.add(deb);
+      const parts = [...Array(N)].map(() => ({ p:new THREE.Vector3(), v:new THREE.Vector3(), s:1, rx:rand(-3, 3), ry:rand(-3, 3) }));
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 64),
+        new THREE.MeshBasicMaterial({ color:col('--lava'), transparent:true, opacity:0, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending }));
+      ring.visible = false;
+      S.add(ring);
+      return { m, r, dist, deb, parts, ring, broken:false, t:0 };
+    });
+    // 3つ目は輪のある惑星にする
+    {
+      const p = planets[2];
+      const ringM = new THREE.Mesh(new THREE.RingGeometry(p.r * 1.4, p.r * 2.2, 64),
+        new THREE.MeshStandardMaterial({ color:col(PLANETS[2][0]), side:THREE.DoubleSide, transparent:true, opacity:0.7 }));
+      ringM.rotation.x = -Math.PI / 2 + 0.4;
+      p.m.add(ringM);
+    }
+
+    // UFO が爆発したときに飛び散る破片（銀の機体とドームのかけら）
+    const UFO_DEB = 90;
+    const ufoDeb = new THREE.InstancedMesh(new THREE.TetrahedronGeometry(1, 0),
+      new THREE.MeshStandardMaterial({ color:0xffffff, roughness:0.4, metalness:0.6, emissive:col('--lava'), emissiveIntensity:0.5, flatShading:true }), UFO_DEB);
+    ufoDeb.frustumCulled = false; ufoDeb.visible = false;
+    for (let i = 0; i < UFO_DEB; i++) ufoDeb.setColorAt(i, col(i % 4 ? '--ufo' : '--ufo-dome'));
+    S.add(ufoDeb);
+    const ufoParts = [...Array(UFO_DEB)].map(() => ({ p:new THREE.Vector3(), v:new THREE.Vector3(), s:1, rx:rand(-6, 6), ry:rand(-6, 6) }));
+    // 爆発の衝撃波（2重の輪）
+    const ufoRings = ['--lava', '--ufo-dome'].map(c => {
+      const m = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 64),
+        new THREE.MeshBasicMaterial({ color:col(c), transparent:true, opacity:0, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending }));
+      m.visible = false;
+      S.add(m);
+      return m;
+    });
+
+    space = {
+      S, ufo, ufoSpin, lights, planets, ufoDeb, ufoParts, ufoRings, booms:[], boomT:-1,
+      A:{ p:new THREE.Vector2(-9, 0), v:new THREE.Vector2() },  // 石臼
+      B:{ p:new THREE.Vector2(9, 0), v:new THREE.Vector2() },   // UFO
+      hp:UFO_HP, cool:0, stage:'enter', t:0, tilt:0, hits:0,
+      d:new THREE.Vector3(1, 0.12, -1).normalize(), pos:new THREE.Vector3(), speed:0, lastPlanetT:-1, kira:false, endT:0,
+    };
+    placePlanets(new THREE.Vector3(), space.d);
+  }
+
+  // 吹き飛ぶ UFO の通り道に惑星を並べる
+  function placePlanets(o, d){
+    const side = v3b.set(-d.z, 0, d.x).normalize();
+    space.planets.forEach((p, i) => {
+      const sg = i % 2 ? 1 : -1;
+      p.m.position.copy(o).addScaledVector(d, p.dist).addScaledVector(side, sg * p.r * 0.3);
+      p.m.position.y += -sg * p.r * 0.2;
+    });
+  }
+
+  function enterSpace(){
+    buildSpace();
+    space.S.add(rotor);  // 石臼を宇宙へ移す
+    rotor.position.set(space.A.p.x, 60, space.A.p.y);
+    space.S.add(glowP.pts);
+    glowP.clear();  // 地上の花火などが宇宙に残らないように
+    setGlowMode(true);
+    curScene = space.S;
+    if (renderPass) renderPass.scene = space.S;
+    if (bloom){ bloom.threshold = BLOOM_THRESHOLD[1]; bloom.strength = BLOOM_STRENGTH[1]; }
+
+    phase = 'space'; phaseT = 0;
+    space.startSpeed = speed;  // 戦いからやり直すときは、この速さに戻す
+  }
+
+  // ベイゴマの動き：台の中心へ戻る力・相手へ向かう力・回り込む力
+  function stepTop(me, other, seek, dt){
+    if (other){
+      const to = v2.copy(other.p).sub(me.p);
+      to.divideScalar(to.length() || 1);
+      me.v.x += (seek * to.x - BATTLE.swirl * to.y) * dt;
+      me.v.y += (seek * to.y + BATTLE.swirl * to.x) * dt;
+    }
+    me.v.x -= BATTLE.bowl * me.p.x * dt;
+    me.v.y -= BATTLE.bowl * me.p.y * dt;
+  }
+  // 指の位置へ向かって動く（台の外は狙わない）
+  function steerTop(me, rMe, dt){
+    const lim = ARENA_R - rMe * 0.7;
+    const tgt = v2.copy(fingerPt);
+    if (tgt.length() > lim) tgt.setLength(lim);
+    const to = tgt.sub(me.p), d = to.length();
+    if (d > 0.001) me.v.addScaledVector(to.divideScalar(d), MOVE.accel * Math.min(d / 4, 1) * dt);
+    me.v.multiplyScalar(Math.exp(-MOVE.brake * dt));
+  }
+  function moveTop(me, rMe, dt){
+    me.v.multiplyScalar(Math.exp(-BATTLE.damp * dt));
+    if (me.v.length() > BATTLE.vmax) me.v.setLength(BATTLE.vmax);
+    me.p.addScaledVector(me.v, dt);
+    // 台のふちで跳ね返る
+    const lim = ARENA_R - rMe * 0.7, l = me.p.length();
+    if (l > lim){
+      me.p.multiplyScalar(lim / l);
+      const nx = me.p.x / lim, ny = me.p.y / lim, vn = me.v.x * nx + me.v.y * ny;
+      if (vn > 0){ me.v.x -= 2 * vn * nx; me.v.y -= 2 * vn * ny; }
+    }
+  }
+
+  function startSmash(n){
+    const s = space;
+    s.stage = 'smash'; s.t = 0;
+    s.d.set(n.x, 0.12, n.y).normalize();
+    s.pos.set(s.B.p.x, 0, s.B.p.y);
+    s.speed = SMASH_SPEED;
+    placePlanets(s.pos, s.d);  // 大きな光に紛れて、惑星を通り道へ並べ直す
+    s.A.v.addScaledVector(n, -30);
+    shakeT = 0.6;
+    burst(s.pos.x, WAIST_Y, s.pos.z, 1200, null, 2, 1);
+  }
+
+  function startKO(){
+    const s = space, A = s.A, B = s.B;
+    const n = v2.copy(A.p).sub(B.p);  // UFO から石臼へ向かう向きに吹き飛ぶ
+    n.divideScalar(n.length() || 1);
+    s.stage = 'ko'; s.t = 0;
+    s.d.set(n.x, 0.3, n.y).normalize();
+    s.pos.set(A.p.x, 0, A.p.y);
+    shakeT = 0.6;
+    burst(s.pos.x, WAIST_Y, s.pos.z, 800, null, 1.5, 0.8);
+  }
+
+  let resultShown = false, resultWin = false;
+  const resultEl = $('result'), resultTitle = $('resultTitle'), shareBtn = $('shareBtn');
+  function showResult(win){
+    if (resultShown) return;
+    resultShown = true; resultWin = win;
+    document.documentElement.removeAttribute('data-howto-hidden');
+    resultTitle.style.color = css(win ? '--win' : '--lose');
+    const btns = $('resultBtns');
+    if (win){
+      // 一文字ずつ出す
+      resultTitle.textContent = '';
+      [...'防衛成功'].forEach((c, i) => {
+        const sp = document.createElement('span');
+        sp.className = 'ch'; sp.textContent = c;
+        sp.style.animationDelay = `${i * TITLE_STEP}s, ${i * TITLE_STEP}s`;
+        resultTitle.appendChild(sp);
+      });
+      btns.classList.add('later');
+      btns.style.animationDelay = `${4 * TITLE_STEP + 0.5}s`;
+    } else {
+      resultTitle.textContent = '防衛失敗';
+      btns.classList.remove('later');
+    }
+    resultEl.hidden = false;
+  }
+  // ---------- 共有 ----------
+  // 文面：見出し（成績） → 詳細 → このページの URL → ハッシュタグ の順に1行ずつ
+  function shareText(){
+    return (resultWin ? '防衛成功' : '防衛失敗') + '！\n'
+      + '回転数 : ' + turnCount().toLocaleString('ja-JP') + ' 回\n'
+      + location.href.split(/[?#]/)[0] + '\n#回すやつシミュレーター';
+  }
+  // 今の3D画面の上に結果の文字を書き込んだ画像を作る。
+  // 描画バッファを残していないので、直前に描き直してから同じ処理の中でコピーする
+  function drawResultImage(){
+    if (composer) composer.render(); else renderer.render(curScene, camera);
+    const c = document.createElement('canvas');
+    c.width = cv.width; c.height = cv.height;
+    const g = c.getContext('2d');
+    g.drawImage(cv, 0, 0);
+    const k = cv.width / cv.clientWidth;   // CSSピクセル → 画像のピクセル
+    const font = getComputedStyle(document.body).fontFamily;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.shadowColor = 'rgba(0,0,0,.8)';
+    g.shadowBlur = 8 * k;
+    g.shadowOffsetY = 2 * k;
+    g.fillStyle = css(resultWin ? '--win' : '--lose');
+    g.font = `bold ${48 * k}px ${font}`;
+    g.fillText(resultWin ? '防衛成功' : '防衛失敗', c.width / 2, c.height / 2 - 20 * k);
+    g.fillStyle = '#fff';
+    g.font = `bold ${22 * k}px ${font}`;
+    g.fillText(`回転数 ${turnCount().toLocaleString('ja-JP')} 回`, c.width / 2, c.height / 2 + 30 * k);
+    return c;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(){
+    const bin = atob(drawResultImage().toDataURL('image/png').split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type:'image/png' });
+  }
+  // 背景（石臼のキャンバス）のドラッグ判定に吸われないようにする
+  shareBtn.addEventListener('pointerdown', e => e.stopPropagation());
+  shareBtn.addEventListener('click', () => {
+    const text = shareText();
+    let file = null;
+    try { file = resultImageFile(); } catch (e){}   // 画像が作れなくても文面だけは共有する
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (file && navigator.canShare && navigator.canShare({ files:[file] })){
+      navigator.share({ text, files:[file] }).catch(() => {});
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share){
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    navigator.clipboard?.writeText(text).then(() => {
+      shareBtn.textContent = 'コピーしました';
+      setTimeout(() => { shareBtn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+  // リトライ：成功したときは最初から、失敗したときは宇宙での戦いの始めから
+  $('retryBtn').addEventListener('click', () => { if (!resultWin && space) retryBattle(); else location.reload(); });
+  function retryBattle(){
+    const s = space;
+    resultShown = false; resultEl.hidden = true;
+    document.documentElement.setAttribute('data-howto-hidden', '');
+    speed = s.startSpeed;
+    rotor.rotation.x = rotor.rotation.z = 0;
+    rotor.position.set(-9, 60, 0);
+    s.A.p.set(-9, 0); s.A.v.set(0, 0);
+    s.B.p.set(9, 0); s.B.v.set(0, 0);
+    Object.assign(s, { hp:UFO_HP, cool:0, stage:'enter', t:0, tilt:0, hits:0, speed:0, lastPlanetT:-1, kira:false, endT:0, landedA:false, landedB:false });
+    s.ufo.visible = false;
+    s.ufo.rotation.set(0, 0, 0);
+    s.ufoDeb.visible = false; s.ufoRings.forEach(m => { m.visible = false; }); s.booms = []; s.boomT = -1;
+    s.d.set(1, 0.12, -1).normalize();
+    for (const p of s.planets){ p.broken = false; p.t = 0; p.m.visible = true; p.deb.visible = false; p.ring.visible = false; }
+    placePlanets(v3.set(0, 0, 0), s.d);
+    glowP.clear();
+    camLook.set(0, 0, 0);
+
+  }
+
+  function explodeUfo(){
+    const s = space, P = s.pos;
+    s.boomT = s.t;
+    s.ufoDeb.visible = true;
+    s.ufoParts.forEach(o => {
+      v3.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize();
+      o.p.copy(P).addScaledVector(v3, rand(0, 3));
+      o.v.copy(v3).multiplyScalar(rand(20, 70)).addScaledVector(s.d, s.speed * 0.15);
+      o.s = rand(0.3, 1.3);
+    });
+    // 火の玉：大きな炎の粒と、白く光る芯
+    for (let i = 0; i < 2500; i++){
+      const th = rand(0, Math.PI * 2), u = rand(-1, 1), h = Math.sqrt(1 - u * u), v = Math.pow(Math.random(), 0.6) * 60;
+      glowP.emit(P.x, P.y, P.z, Math.cos(th) * h * v, u * v, Math.sin(th) * h * v,
+        Math.random() < 0.15 ? C_BOLT : C_FIRE[(Math.random() * 3) | 0], 1, rand(2, 6), rand(0.8, 2.5), 0);
+    }
+    for (let i = 0; i < 60; i++) glowP.emit(P.x, P.y, P.z, 0, 0, 0, C_BOLT, 1, rand(15, 40), rand(0.3, 0.8), 0);
+    burst(P.x, P.y, P.z, 800, null, 4, 1.2);  // 虹色の火花
+    // あとから続く連鎖爆発
+    s.booms = [0.25, 0.5, 0.8, 1.1, 1.4].map(t => ({ t:s.t + t, p:P.clone().add(v3.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(rand(8, 22))) }));
+    shakeT = 1;
+  }
+
+  function breakPlanet(p){
+    const s = space, P = p.m.position;
+    p.broken = true; p.m.visible = false; p.deb.visible = true;
+    p.ring.visible = true; p.ring.position.copy(P);
+    p.parts.forEach(o => {
+      v3.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize();
+      o.p.copy(P).addScaledVector(v3, p.r * rand(0.2, 0.9));
+      o.v.copy(v3).multiplyScalar(p.r * rand(1.5, 4)).addScaledVector(s.d, s.speed * 0.2);
+      o.s = p.r * rand(0.08, 0.22);
+    });
+    const c = p.m.material.color;
+    for (let i = 0; i < 700; i++){
+      const th = rand(0, Math.PI * 2), u = rand(-1, 1), h = Math.sqrt(1 - u * u), v = rand(0.2, 1) * p.r * 3;
+      glowP.emit(P.x, P.y, P.z, Math.cos(th) * h * v, u * v, Math.sin(th) * h * v,
+        Math.random() < 0.5 ? c : C_FIRE[(Math.random() * 3) | 0], 1, p.r * rand(0.15, 0.35), rand(0.8, 2), 0);
+    }
+    shakeT = 0.5;
+    s.speed *= 1.15;  // 壊すたびに勢いを増す
+    s.lastPlanetT = s.t;
+  }
+
+  function updateSpace(dt, kmh){
+    const s = space, A = s.A, B = s.B, rA = armLen;
+    s.t += dt; phaseT += dt;
+    s.lights.forEach((m, i) => m.color.copy(rainbowAt(tNow * 0.8 + i / 12)));
+    s.ufoSpin.rotation.y -= (12 + s.hits * 4) * dt;
+
+    if (s.stage === 'enter'){
+      // 石臼が台に落ちてくる → UFO が降りてくる
+      const kA = clamp01(s.t / 1.2);
+      rotor.position.set(A.p.x, 60 * (1 - kA * kA), A.p.y);
+      if (kA >= 1 && !s.landedA){ s.landedA = true; burst(A.p.x, 0.5, A.p.y, 250, C_SPARK, 1, 0.6); shakeT = 0.4; }
+      if (s.t > 1.0){
+        s.ufo.visible = true;
+        const kB = clamp01((s.t - 1.0) / 1.5), e = 1 - Math.pow(1 - kB, 3);
+        s.ufo.position.set(B.p.x, 40 * (1 - e), B.p.y);
+        if (kB >= 1 && !s.landedB){ s.landedB = true; burst(B.p.x, 0.5, B.p.y, 250, C_BOLT, 1, 0.6); shakeT = 0.4; }
+      }
+      if (s.t > 3.0) s.stage = 'battle';
+    } else if (s.stage === 'battle'){
+      if (fingerOn) steerTop(A, rA, dt); else stepTop(A, B, BATTLE.seek, dt);  // 触れている間は指の位置へ動く
+      moveTop(A, rA, dt);
+      stepTop(B, A, BATTLE.seek, dt);
+      moveTop(B, UFO_R, dt);
+      // 回転はどんどん落ちる。下回ったら負け
+      speed = Math.max(0, speed - BATTLE_DRAIN / (PUSH_R * 3.6) * dt);
+      if (kmh < LOSE_KMH){ startKO(); }
+      // ぶつかり合い
+      s.cool -= dt;
+      const n = v2.copy(B.p).sub(A.p), dist = n.length() || 1;
+      n.divideScalar(dist);
+      const minD = rA + UFO_R * 0.8;
+      if (s.stage === 'battle' && dist < minD){
+        const over = minD - dist;
+        A.p.addScaledVector(n, -over / 2); B.p.addScaledVector(n, over / 2);
+        if (s.cool <= 0){
+          s.cool = 0.3; s.hits++;
+          s.hp -= HIT_DMG * kmh / GOAL_KMH;
+          speed *= 1 - HIT_COST;
+          burst(A.p.x + n.x * rA, WAIST_Y, A.p.y + n.y * rA, 350, null, 1.2, 0.7);
+          shakeT = 0.35;
+          s.tilt = Math.min(0.5, s.tilt + 0.08);  // 当たるたびに UFO のふらつきが大きくなる
+          if (s.hp <= 0) startSmash(n.clone());
+          else { A.v.addScaledVector(n, -BATTLE.kick * 0.6); B.v.addScaledVector(n, BATTLE.kick); }
+        }
+      }
+      if (s.stage === 'battle'){
+        s.ufo.position.set(B.p.x, 0, B.p.y);
+        s.ufo.rotation.x = s.tilt * Math.sin(tNow * 7);
+        s.ufo.rotation.z = s.tilt * Math.cos(tNow * 7);
+      }
+      if (s.stage === 'battle') rotor.position.set(A.p.x, 0, A.p.y);
+    } else if (s.stage === 'smash'){
+      // 石臼は台の上で回り続ける
+      stepTop(A, null, 0, dt);
+      moveTop(A, rA, dt);
+      rotor.position.set(A.p.x, 0, A.p.y);
+      if (!s.kira){
+        // UFO はくるくる回りながら吹き飛び、通り道の惑星を壊していく
+        s.pos.addScaledVector(s.d, s.speed * dt);
+        s.ufo.position.copy(s.pos);
+        s.ufo.rotation.x += 9 * dt; s.ufo.rotation.z += 6 * dt;
+        each('trail', 300, dt, () => glowP.emit(s.pos.x + rand(-2, 2), s.pos.y + rand(-2, 2), s.pos.z + rand(-2, 2), 0, 0, 0,
+          C_FIRE[(Math.random() * 3) | 0], 1, rand(1.5, 3), rand(0.3, 0.6), 0));
+        for (const p of s.planets) if (!p.broken && s.pos.distanceTo(p.m.position) < p.r + UFO_R * 0.5) breakPlanet(p);
+        // 全部壊したら、UFO 自身も大爆発する
+        if (s.planets.every(p => p.broken) && s.t - s.lastPlanetT > UFO_BOOM_DELAY){
+          s.kira = true; s.ufo.visible = false;
+          explodeUfo();
+          s.endT = s.t;
+        }
+      } else if (s.t - s.endT > RESULT_DELAY) showResult(true);
+    } else if (s.stage === 'ko'){
+      // 負け：石臼がくるくる回りながら吹き飛ばされる。UFO は台の上で回り続ける
+      s.pos.addScaledVector(s.d, KO_SPEED * dt);
+      rotor.position.copy(s.pos);
+      rotor.rotation.x += 5 * dt; rotor.rotation.z += 3 * dt;
+      each('trail', 200, dt, () => glowP.emit(s.pos.x + rand(-2, 2), s.pos.y + rand(-2, 2), s.pos.z + rand(-2, 2), 0, 0, 0,
+        C_SPARK, 1, rand(1, 2), rand(0.3, 0.6), 0));
+      stepTop(B, null, 0, dt);
+      moveTop(B, UFO_R, dt);
+      s.ufo.position.set(B.p.x, 0, B.p.y);
+      if (s.t > RESULT_DELAY) showResult(false);
+    }
+
+    // UFO の爆発：破片・衝撃波・あとから続く連鎖爆発
+    if (s.boomT >= 0){
+      const bt = s.t - s.boomT;
+      s.ufoParts.forEach((o, i) => {
+        o.p.addScaledVector(o.v, dt);
+        s.ufoDeb.setMatrixAt(i, rm.compose(o.p, rq.setFromEuler(re.set(o.rx * bt, o.ry * bt, 0)), rs.setScalar(o.s)));
+      });
+      s.ufoDeb.instanceMatrix.needsUpdate = true;
+      s.ufoRings.forEach((m, i) => {
+        const k = clamp01((bt - i * 0.15) / 1.6);
+        m.visible = k > 0 && k < 1;
+        m.scale.setScalar(2 + k * (90 - i * 30));
+        m.material.opacity = (1 - k) * 0.9;
+        m.lookAt(camera.position);
+      });
+      for (let i = s.booms.length - 1; i >= 0; i--){
+        const b = s.booms[i];
+        if (s.t < b.t) continue;
+        burst(b.p.x, b.p.y, b.p.z, 400, C_FIRE[(Math.random() * 3) | 0], 1.6, rand(2, 4));
+        burst(b.p.x, b.p.y, b.p.z, 150, null, 2.5, 1);
+        shakeT = Math.max(shakeT, 0.4);
+        s.booms.splice(i, 1);
+      }
+    }
+
+    // 壊れた惑星のかけらと衝撃波
+    for (const p of s.planets){
+      if (!p.broken) continue;
+      p.t += dt;
+      p.parts.forEach((o, i) => {
+        o.p.addScaledVector(o.v, dt);
+        p.deb.setMatrixAt(i, rm.compose(o.p, rq.setFromEuler(re.set(o.rx * p.t, o.ry * p.t, 0)), rs.setScalar(o.s)));
+      });
+      p.deb.instanceMatrix.needsUpdate = true;
+      const k = clamp01(p.t / 1.5);
+      p.ring.visible = k < 1;
+      p.ring.scale.setScalar(p.r * (1 + k * 6));
+      p.ring.material.opacity = 1 - k;
+      p.ring.lookAt(camera.position);
+    }
+
+    // カメラ
+    if (s.stage !== 'smash' && s.stage !== 'ko'){
+      // 台全体が収まる距離から斜めに見下ろす
+      const vHalf = THREE.MathUtils.degToRad(FOV / 2), hHalf = Math.atan(Math.tan(vHalf) * camera.aspect);
+      const dist = (ARENA_R + 3) / Math.sin(Math.min(vHalf, hHalf));
+      camera.position.set(0, Math.sin(0.75) * dist, Math.cos(0.75) * dist);
+      camLook.set(0, 0, 0);
+    } else {
+      // UFO を斜め後ろから追いかける。全部壊した少し後からは止まって見送る
+      const done = s.stage === 'ko' ? s.t > 1.2 : s.kira;  // 勝ちのときは UFO が爆発したら止まって見届ける
+      if (!done){
+        const side = v3b.set(-s.d.z, 0, s.d.x).normalize();
+        v3.copy(s.pos).addScaledVector(s.d, -45).addScaledVector(side, 18);
+        v3.y += 14;
+        camera.position.lerp(v3, 1 - Math.exp(-5 * dt));
+      }
+      camLook.lerp(s.pos, 1 - Math.exp(-8 * dt));
+    }
+    camera.lookAt(camLook);
+    camera.near = 0.5; camera.far = 15000; camera.updateProjectionMatrix();
+    if (shakeT > 0){
+      shakeT -= dt;
+      const amp = camera.position.distanceTo(camLook) * 0.03 * shakeT;
+      camera.position.x += rand(-amp, amp); camera.position.y += rand(-amp, amp);
+    }
+  }
+
+  // ---------- ループ ----------
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);  // タブ復帰時の大ジャンプを防ぐ
+    last = now;
+    tNow = now / 1000;
+    if (keyRight) speed += KEY_ACCEL * lateBoost() * dt;
+    const prevRot = rotor.rotation.y;
+    rotor.rotation.y += speed * ROT_MULT * dt;
+    const kmh = speed * PUSH_R * 3.6;  // いちばん内側の人の歩く速さ。1単位＝1mとして、速さ＝角速度×半径
+
+    // 押し棒を人数に合わせて伸ばし、カメラも遅れて引く
+    const zk = Math.pow(camFit / BASE_FIT, 0.8);  // 引いた分だけ粒を大きくして見えるようにする
+    checkPeople(kmh, zk);
+    placeArms(dt);
+    updatePeople(tNow);
+    if (phase === 'space'){
+      updateSpace(dt, kmh);
+      glowP.update(dt);
+    } else {
+      camFit += (armLen + 0.4 - camFit) * (1 - Math.exp(-CAM_EASE * dt));
+      camTilt += (clamp01((kmh - TILT_KMH[0]) / (TILT_KMH[1] - TILT_KMH[0])) - camTilt) * (1 - Math.exp(-CAM_EASE * dt));
+      if (phase === 'ground'){
+        placeCamera();
+        if (tNow >= launchAt){ phase = 'launch'; phaseT = 0; camLook.copy(camTarget); }
+      }
+      let alt = 0;
+      if (phase === 'launch') alt = updateLaunch(dt);  // 高く上がると中で宇宙へ切り替わる
+      if (phase !== 'space'){
+        updateShadow();
+        updateEffects(dt, kmh, prevRot, zk);
+        updateTown(kmh, tNow);
+        if (phase === 'launch') scene.background.lerp(C_BLACK, clamp01(alt / LAUNCH_TOP));  // 上がるほど空が暗くなる
+      }
+    }
+
+    // 現在の速さを表示（文字が変わったときだけ書き換える）
+    const txt = `${kmh.toFixed(1)} km/h`;
+    if (speedEl.textContent !== txt) speedEl.textContent = txt;
+    const turns = `回転数 ${turnCount().toLocaleString('ja-JP')} 回`;
+    if (turnsEl.textContent !== turns) turnsEl.textContent = turns;
+    if (composer) composer.render(); else renderer.render(curScene, camera);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

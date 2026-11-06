@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/train-time-attack/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>トレインタイムアタック</title>
+<meta name="description" content="環状線を電車で一周するタイム勝負">
+<style>
+  :root{
+    --bg:#dfe6ea; --ground:#9da296; --ground-dark:#7f857a; --ground-light:#b3b7ab; --ballast:#8a847b; --sleeper:#b3aea5;
+    --sky-top:#7eaed6; --sky-horizon:#dfe8ee;   /* 空（真上・地平線） */
+    --platform:#c9c6bf; --platform-edge:#e8d24a; --roof:#8d949b; --pole:#7d8389; --wire:#3a3d40;   /* ホーム・屋根・架線柱・架線 */
+    --window:#5d6b78; --window-lit:#9fb4c6;   /* ビルの窓 */
+    --tower1:#e8462e; --tower2:#f4f1ea; --tree-white:#5b95dc;   /* 東京タワー（赤・白）、スカイツリー */
+    --bld1:#c8c3b8; --bld2:#b3b8bf; --bld3:#d9d4c8; --bld4:#9ea5ad; --bld5:#e4e0d6; --bld6:#8f969e;   /* まわりのビル */
+    --cloth1:#2c3440; --cloth2:#4a5560; --cloth3:#e6e6e2; --cloth4:#6b5a4a; --cloth5:#1f2226;   /* ホームの人の服 */
+    --board:#ffffff; --board-ink:#1d2329; --board-line:var(--line);   /* 駅名標（山手線の色の帯） */
+    --fg:#1d2329; --panel:rgba(255,255,255,.92);
+    --howto-bg:#2c2f33; --howto-fg:#e6e6e6;
+    --line:#80c241;                    /* 山手線の色（ボタン・地図の線路） */
+    --led-bg:#0e0f10; --led-frame:#2c2f33; --led-edge:#4a4e53; --led-label:#e6e6e6;   /* 電光掲示板（表示面・きょう体・ふち・見出し） */
+    --led-red:#ff3b2f; --led-orange:#ffb52e; --led-green:#8cff5a; --led-yellow:#f2ff3a;
+    --map-bg:#ffffff; --map-line:var(--line); --map-st:#ffffff; --map-st-edge:#2c2f33; --map-car:#e0251b;   /* 地図（線路・駅・電車） */
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg);color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #wrap{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden}   /* 縦持ちスマホの幅に固定（PCでは中央に置く） */
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  .hud{position:absolute;pointer-events:none;font-weight:700;line-height:1.15;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+  /* 上の電光掲示板（駅の発車案内のように、種別・状況・時刻・乗客を出す） */
+  #led{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 4px) 6px 6px;background:var(--led-frame);
+    border-bottom:3px solid var(--led-edge);pointer-events:none}
+  #led .cols{display:grid;grid-template-columns:74px 1fr 74px 62px;gap:4px}
+  #led .lbl{color:var(--led-label);font-size:10px;font-weight:700;text-align:center;letter-spacing:.2em;padding-bottom:2px}
+  #led .cell,.led-cell{position:relative;height:34px;background:var(--led-bg);overflow:hidden;white-space:nowrap;
+    display:flex;align-items:center;justify-content:center;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  #led-msg{justify-content:flex-start}   /* 状況の欄は右から左へ流す */
+  #led-msg span{will-change:transform}
+  #led .cell::after,.led-cell::after{content:"";position:absolute;inset:0;pointer-events:none;   /* LEDの粒に見せる格子 */
+    background:radial-gradient(circle,transparent 45%,var(--led-bg) 75%) 0 0/3px 3px}
+  #led-type{color:var(--led-red)}
+  #led-msg{color:var(--led-orange)}
+  #led-time,#led-pax{color:var(--led-green)}
+  /* 左上のメニュー（ハンバーガー）と、開いたときの中身 */
+  #menu-btn{position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 70px);width:44px;height:44px;padding:0;
+    border:0;border-radius:8px;background:var(--led-frame);color:var(--led-label);font:inherit;font-size:22px;line-height:44px;cursor:pointer}
+  #menu{position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 120px);z-index:2;width:min(260px,calc(100vw - 24px));
+    padding:12px 14px;border-radius:8px;background:var(--led-frame);color:var(--led-label);font-size:13px;line-height:1.6}
+  #menu[hidden]{display:none}
+  #menu button{display:block;width:100%;min-height:44px;margin-bottom:10px;border:0;border-radius:6px;background:var(--led-edge);
+    color:var(--led-label);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+  #menu-btn:focus-visible{outline:3px solid var(--line);outline-offset:2px}
+  /* 地図（右上、掲示板の下。北が上の路線図） */
+  #map{position:absolute;right:12px;top:calc(env(safe-area-inset-top,0px) + 70px);width:120px;height:120px;border-radius:8px;
+    background:var(--map-bg);border:2px solid var(--led-frame);pointer-events:none}
+  /* 速度（左下。掲示板と同じLEDの表示で、緑の数字） */
+  #speed-box{left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);padding:4px 6px 6px;border-radius:8px;background:var(--led-frame);text-shadow:none}
+  #speed-box{padding:6px}
+  #meter{display:block;width:140px;height:140px}
+  /* 駅を通るときに画面の真ん中に大きく出す駅名と残りの駅の数 */
+  #pass{position:absolute;left:0;right:0;top:30%;text-align:center;color:#fff;font-weight:900;line-height:1.1;pointer-events:none;
+    text-shadow:0 0 6px rgba(0,0,0,.55),0 2px 0 rgba(0,0,0,.6)}
+  #pass[hidden]{display:none}
+  #pass-name{display:inline-block;font-size:64px;white-space:nowrap}   /* 長い駅名も折り返さず、幅に収まるよう文字を小さくする */
+  #pass-left{font-size:28px;margin-top:6px}
+  #pass-pax{font-size:22px;margin-top:4px;min-height:1.1em;font-variant-numeric:tabular-nums}
+  /* 駅名（と残りの駅の数）は右から入って左へ出ていく。乗降の人数は動かさずにそのまま出す */
+  #pass.in #pass-slide{animation:pass-in .15s cubic-bezier(.2,.9,.3,1.1)}
+  #pass.out #pass-slide{animation:pass-out .12s ease-in forwards}
+  #pass.out #pass-pax{visibility:hidden}
+  @keyframes pass-in{from{transform:translateX(110%)}to{transform:none}}
+  @keyframes pass-out{to{transform:translateX(-110%)}}
+  @media (prefers-reduced-motion:reduce){#pass.in #pass-slide,#pass.out #pass-slide{animation-duration:.01s}}
+  #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35)}
+  #over[hidden]{display:none}
+  #over .panel{background:var(--led-frame);border-bottom:4px solid var(--led-edge);border-radius:10px;padding:14px 14px 16px;width:min(84vw,320px);text-align:center}
+  #over h2{margin:0 0 6px;color:var(--led-label);font-size:13px;letter-spacing:.2em}
+  #final{height:64px;margin-bottom:10px;color:var(--led-orange);font-size:44px}
+  #best{height:40px;margin-bottom:14px;color:var(--led-green);font-size:26px}
+  #over button{display:block;width:100%;min-height:48px;margin-top:10px;border:0;border-radius:10px;font:inherit;font-size:17px;font-weight:700;cursor:pointer}
+  #retry{background:var(--line);color:var(--fg)}
+  #share{background:transparent;color:var(--led-label);box-shadow:inset 0 0 0 2px var(--led-edge)}
+  #over button:focus-visible{outline:3px solid var(--led-label);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="led" role="status">
+    <div class="cols"><div class="lbl">残り</div><div class="lbl">状況</div><div class="lbl">時刻</div><div class="lbl">乗客</div></div>
+    <div class="cols">
+      <div class="cell" id="led-type"><span></span></div>
+      <div class="cell" id="led-msg" aria-live="polite"><span></span></div>
+      <div class="cell" id="led-time"><span>0:00.0</span></div>
+      <div class="cell" id="led-pax"><span>空き</span></div>
+    </div>
+  </div>
+  <canvas id="map" aria-label="路線の地図と今の位置"></canvas>
+  <button id="menu-btn" type="button" aria-label="メニュー" aria-expanded="false" aria-controls="menu">☰</button>
+  <div id="menu" hidden><button id="sound" type="button" aria-pressed="true">音：ON</button><button type="button" data-howto-open>遊び方</button><div>出典：国土数値情報（鉄道データ）（国土交通省）を加工して作成</div></div>
+  <div class="hud" id="speed-box"><canvas id="meter" role="img" aria-label="速度計"></canvas></div>
+  <div id="pass" aria-live="polite" hidden><div id="pass-slide"><div id="pass-name"></div><div id="pass-left"></div></div><div id="pass-pax"></div></div>
+  <div id="over" hidden>
+    <div class="panel" role="dialog" aria-label="結果">
+      <h2>一周タイム</h2>
+      <div class="led-cell" id="final"><span>0:00.0</span></div>
+      <h2>最速タイム</h2>
+      <div class="led-cell" id="best"><span>-:--.-</span></div>
+      <button id="retry" type="button">もう一回</button>
+      <button id="share" type="button">共有</button>
+    </div>
+  </div>
+  <section class="howto" data-pos="none" hidden>
+    <h2>遊び方</h2>
+    <p>環状線を電車で一周するタイムアタックです。最初に押した瞬間から計測が始まり、10駅を回って最初の駅に戻るとタイムが決まります。電車は駅に止まらず、乗客は走っている電車に跳び乗り、跳び降ります。最速タイムはこのブラウザに保存されます。</p>
+    <h2>操作</h2>
+    <p>画面のどこかを押している間は加速し、離すと減速します。操作はこれだけです。PC ではスペース、上キー、W キーで同じように動かせます。</p>
+    <h2>コツ</h2>
+    <p>前方の線路に出る帯の色は、今の速さのまま進んだときの車体の傾きを示し、緑から黄色、赤へと変わります。速すぎるとカーブの外側へ倒れて脱線し、止まった状態から走り直す間も時計は進みます。離したときの減速は加速の3倍以上強いので、カーブの手前まで押して短く離すのが基本です。乗客が増えると車体が重くなり、加速も減速も鈍ります。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  // コース（実際の山手線の線路の形。一周の長さだけ縮める）
+  // 線路と駅の位置の出典：国土数値情報（鉄道データ 令和6年度）（国土交通省）を加工して作成（CC BY 4.0）
+  //   山手線（品川〜新宿〜田端）・東北線（田端〜東京）・東海道線（東京〜品川）の線を駅の順につなぎ、データのつなぎ目の角を少しならしたもの（ずれは最大10m）
+  const COURSE_LEN = 5000;        // 一周の長さ
+  // 線路の中心線（東京駅を起点に外回りの順。東京駅付近を原点に、東が x、南が z の向きのメートル単位。x, z の順に並べる）
+  const TRACK_XY = [2464,-113,2447,-60,2427,-3,2406,53,2385,110,2364,166,2340,221,2311,273,2282,325,2254,378,2221,427,2181,471,2135,509,2085,543,2039,579,2004,624,1971,672,1931,716,1891,761,1856,809,1828,862,1804,917,1780,972,1756,1027,1732,1082,1706,1136,1680,1190,1658,1245,1646,1303,1642,1363,1642,1423,1644,1483,1648,1543,1653,1603,1658,1662,1664,1722,1671,1782,1677,1841,1681,1901,1682,1961,1680,2021,1674,2081,1665,2140,1654,2199,1643,2258,1631,2316,1618,2375,1606,2434,1593,2493,1581,2551,1569,2610,1557,2669,1547,2728,1536,2787,1524,2846,1510,2904,1497,2963,1482,3021,1463,3077,1442,3134,1420,3190,1395,3244,1366,3296,1331,3344,1291,3389,1248,3431,1203,3471,1155,3506,1105,3538,1053,3569,1001,3599,949,3629,897,3659,845,3689,793,3719,742,3750,692,3784,643,3818,593,3851,544,3885,494,3919,446,3954,400,3993,359,4036,326,4085,305,4140,294,4199,287,4258,278,4318,267,4377,254,4435,240,4493,224,4551,209,4609,192,4667,173,4723,151,4780,131,4836,112,4893,93,4950,73,5006,54,5063,34,5120,14,5177,-4,5234,-21,5291,-38,5349,-57,5406,-75,5463,-85,5521,-80,5579,-66,5637,-58,5695,-57,5755,-62,5814,-74,5873,-89,5930,-101,5989,-113,6048,-126,6106,-137,6165,-148,6224,-159,6283,-170,6342,-181,6401,-193,6460,-204,6519,-218,6577,-236,6634,-257,6690,-282,6744,-313,6795,-350,6842,-391,6886,-437,6923,-490,6952,-546,6971,-604,6982,-664,6984,-722,6976,-779,6958,-833,6932,-880,6897,-922,6854,-957,6805,-990,6755,-1022,6704,-1054,6653,-1085,6603,-1117,6552,-1148,6500,-1178,6449,-1209,6397,-1239,6345,-1269,6293,-1300,6241,-1330,6190,-1361,6138,-1392,6087,-1424,6036,-1457,5986,-1489,5935,-1524,5887,-1563,5841,-1606,5800,-1653,5763,-1703,5731,-1756,5701,-1808,5672,-1861,5644,-1914,5615,-1966,5585,-2013,5550,-2056,5508,-2091,5460,-2121,5408,-2143,5353,-2161,5295,-2176,5238,-2191,5179,-2203,5121,-2215,5062,-2226,5003,-2238,4944,-2249,4885,-2261,4826,-2274,4768,-2287,4709,-2299,4651,-2312,4592,-2325,4534,-2342,4476,-2364,4421,-2389,4366,-2414,4312,-2439,4257,-2464,4202,-2489,4148,-2515,4094,-2541,4040,-2566,3985,-2591,3931,-2615,3876,-2640,3821,-2664,3766,-2689,3712,-2713,3657,-2738,3602,-2763,3548,-2788,3493,-2813,3439,-2838,3384,-2863,3330,-2888,3275,-2915,3221,-2945,3170,-2980,3121,-3016,3073,-3052,3025,-3086,2976,-3120,2927,-3155,2878,-3191,2830,-3226,2781,-3261,2733,-3296,2684,-3332,2635,-3367,2587,-3402,2538,-3435,2488,-3461,2435,-3482,2379,-3497,2321,-3506,2262,-3507,2202,-3501,2143,-3495,2083,-3489,2023,-3483,1964,-3477,1904,-3471,1844,-3465,1785,-3459,1725,-3453,1665,-3447,1605,-3441,1546,-3434,1486,-3428,1426,-3422,1367,-3416,1307,-3409,1247,-3404,1188,-3398,1128,-3391,1068,-3382,1009,-3371,950,-3357,892,-3340,834,-3321,778,-3302,721,-3285,663,-3268,606,-3254,547,-3247,488,-3244,428,-3246,368,-3251,309,-3258,249,-3266,190,-3272,130,-3278,71,-3287,11,-3299,-48,-3311,-106,-3323,-165,-3336,-224,-3348,-283,-3360,-341,-3372,-400,-3385,-459,-3397,-517,-3409,-576,-3425,-634,-3445,-690,-3467,-746,-3485,-803,-3501,-861,-3516,-919,-3531,-977,-3546,-1035,-3561,-1093,-3576,-1151,-3592,-1209,-3606,-1267,-3614,-1327,-3619,-1386,-3628,-1445,-3639,-1504,-3651,-1563,-3661,-1622,-3668,-1682,-3668,-1741,-3662,-1801,-3651,-1860,-3639,-1918,-3627,-1977,-3618,-2036,-3611,-2096,-3606,-2156,-3601,-2216,-3596,-2275,-3592,-2335,-3588,-2395,-3582,-2455,-3575,-2514,-3567,-2574,-3557,-2633,-3544,-2691,-3527,-2749,-3510,-2806,-3494,-2864,-3477,-2922,-3460,-2979,-3443,-3037,-3427,-3095,-3410,-3152,-3393,-3210,-3376,-3267,-3360,-3325,-3343,-3383,-3327,-3440,-3310,-3498,-3294,-3556,-3277,-3613,-3261,-3671,-3245,-3729,-3229,-3787,-3213,-3845,-3197,-3903,-3181,-3960,-3165,-4018,-3150,-4076,-3134,-4134,-3119,-4192,-3103,-4250,-3088,-4308,-3074,-4366,-3059,-4425,-3045,-4483,-3030,-4541,-3011,-4598,-2988,-4653,-2964,-4708,-2940,-4763,-2915,-4817,-2891,-4872,-2867,-4927,-2843,-4982,-2819,-5037,-2795,-5093,-2773,-5148,-2751,-5204,-2729,-5260,-2708,-5316,-2686,-5372,-2664,-5428,-2643,-5484,-2621,-5540,-2600,-5596,-2578,-5652,-2555,-5707,-2531,-5762,-2504,-5816,-2472,-5866,-2432,-5910,-2386,-5947,-2334,-5976,-2279,-6000,-2222,-6017,-2163,-6026,-2103,-6027,-2044,-6020,-1986,-6007,-1928,-5991,-1870,-5974,-1813,-5957,-1755,-5939,-1698,-5920,-1641,-5902,-1584,-5883,-1527,-5865,-1470,-5846,-1413,-5828,-1356,-5809,-1299,-5790,-1242,-5772,-1185,-5753,-1128,-5736,-1070,-5718,-1013,-5701,-955,-5683,-898,-5666,-840,-5649,-782,-5635,-723,-5626,-663,-5625,-604,-5632,-546,-5646,-490,-5666,-435,-5691,-382,-5719,-329,-5747,-276,-5775,-223,-5803,-170,-5831,-117,-5860,-64,-5888,-11,-5916,42,-5944,95,-5972,149,-5999,202,-6025,256,-6051,311,-6077,365,-6103,419,-6129,473,-6156,527,-6182,581,-6206,634,-6232,686,-6261,738,-6291,790,-6322,841,-6352,893,-6383,944,-6415,995,-6446,1046,-6478,1097,-6509,1148,-6540,1200,-6571,1251,-6602,1303,-6633,1356,-6660,1412,-6680,1470,-6687,1529,-6680,1587,-6665,1643,-6645,1693,-6616,1737,-6576,1779,-6533,1821,-6490,1863,-6446,1904,-6403,1945,-6359,1986,-6316,2027,-6272,2068,-6228,2108,-6183,2149,-6139,2189,-6094,2229,-6050,2267,-6004,2303,-5955,2337,-5906,2368,-5855,2397,-5803,2425,-5750,2453,-5697,2483,-5645,2515,-5594,2547,-5543,2581,-5493,2615,-5444,2650,-5396,2688,-5349,2728,-5304,2768,-5260,2811,-5218,2856,-5179,2905,-5145,2955,-5111,3004,-5076,3052,-5041,3100,-5004,3143,-4963,3182,-4918,3220,-4871,3259,-4826,3298,-4780,3338,-4735,3378,-4690,3417,-4646,3457,-4601,3497,-4556,3537,-4511,3573,-4464,3600,-4411,3613,-4354,3616,-4295,3610,-4236,3592,-4179,3565,-4126,3534,-4075,3501,-4024,3468,-3975,3434,-3925,3397,-3878,3355,-3836,3317,-3792,3290,-3740,3269,-3684,3248,-3627,3225,-3572,3199,-3518,3178,-3463,3167,-3404,3165,-3345,3170,-3285,3176,-3225,3179,-3166,3177,-3106,3170,-3046,3162,-2987,3154,-2928,3145,-2868,3136,-2809,3126,-2750,3117,-2690,3108,-2631,3099,-2572,3087,-2513,3071,-2456,3055,-2398,3044,-2339,3038,-2280,3032,-2220,3026,-2160,3019,-2101,3012,-2041,3003,-1982,2994,-1922,2981,-1864,2966,-1806,2951,-1748,2933,-1691,2913,-1634,2891,-1578,2870,-1522,2849,-1466,2829,-1409,2809,-1353,2790,-1296,2771,-1239,2751,-1182,2732,-1126,2712,-1069,2693,-1012,2673,-955,2654,-899,2636,-841,2618,-784,2600,-727,2583,-669,2565,-612,2548,-555,2530,-497,2513,-440,2507,-382,2505,-323,2499,-264,2486,-206,2474,-149];
+  const STATIONS = [              // 外回りの順（実際の東京から有楽町・新橋…と回って東京に戻る順。駅名は実在の駅名を一文字ずつ変えたもの）。[駅名, 駅の位置 x, z（メートル）, 乗る人の多さ, 降りる割合]
+    ['西京', 2434, -134, 0, 0], ['無楽町', 2103, 548, 100, 0.15], ['旧橋', 1670, 1515, 140, 0.2],
+    ['浜竹町', 1549, 2718, 90, 0.15], ['畑町', 688, 3787, 90, 0.15], ['低輪ゲートウェイ', 58, 4932, 40, 0.08],
+    ['品池', -79, 5675, 220, 0.3], ['小崎', -1063, 6638, 90, 0.15], ['六反田', -1474, 5963, 90, 0.15],
+    ['耳黒', -2195, 5151, 100, 0.15], ['恵比寺', -2701, 3683, 100, 0.15], ['甘谷', -3461, 2423, 250, 0.35],
+    ['原泊', -3372, 959, 80, 0.12], ['代々草', -3417, -419, 60, 0.1], ['古宿', -3543, -1055, 300, 0.4],
+    ['新小久保', -3594, -2314, 60, 0.1], ['高田牛場', -3258, -3682, 140, 0.2], ['目赤', -3049, -4465, 50, 0.08],
+    ['池箱', -2615, -5557, 280, 0.38], ['中塚', -1091, -5724, 60, 0.1], ['巣鶏', 32, -5938, 70, 0.12],
+    ['駒出', 760, -6304, 50, 0.08], ['田隅', 1951, -6353, 50, 0.1], ['東日暮里', 2416, -5767, 70, 0.15],
+    ['月暮里', 2801, -5258, 100, 0.18], ['雀谷', 3439, -4582, 30, 0.06], ['下野', 3326, -3733, 150, 0.25],
+    ['御走町', 3139, -3006, 70, 0.12], ['春葉原', 2988, -2049, 150, 0.25], ['仏田', 2792, -1301, 90, 0.15],
+  ];
+  const PAX_START = 150;          // 東京で最初に乗っている人数
+  const PAX_MAX = 1600;           // 乗れる人数の上限
+  const PAX_RANDOM = 0.25;        // 乗る人数のばらつき（±この割合）
+  // 電光掲示板の「乗客」に出す車内の様子（乗っている人数がこの数以上なら、その言葉。上から順に見る）
+  // 一周の間の人数はおよそ 150〜800 人（真ん中あたりで 600 人）なので、その中で4つとも出るように区切る
+  // 文字の色は空いているほど緑、混むほど赤
+  const PAX_LEVELS = [[700, '満員', '--led-red'], [500, '混雑', '--led-orange'], [300, '普通', '--led-yellow'], [0, '空き', '--led-green']];
+
+  // 走行（1秒あたりに進む距離。表示は ×3.6 で km/h）
+  // 操作はスロットカーと同じ：画面を押している間は加速、離すと減速する
+  const ACC_MAX = 15;             // 空車で押しているときの加速
+  const RELEASE_BRAKE = 50;       // 空車で離しているときの減速
+  const GOAL_BRAKE = 20;          // 一周したあとに止まるときの減速
+  const PAX_WEIGHT = 1 / 800;     // 乗客1人ぶんの重さ（空車の重さを1として）。重いほど加速もブレーキも鈍る
+
+  // カーブでの傾き（外側のレールを軸にした車体の回転を力で計算する。倒れきったら脱線）
+  // 遠心力（速さ² × 曲がり具合）が車体を外へ倒そうとし、重力が戻そうとする。
+  // 遠心力 × 重心の高さ ＞ 重力 × レールの半分の間隔 になると内側の車輪が浮いて傾き始め、
+  // 傾くほど戻す力（TIP_SPRING）が強くなるので、遠心力が勝っている分だけ傾く。減速すれば遠心力が減ってすぐ戻り始める
+  const TIP_B = 0.5;              // 外側のレールから車体の中心までの横の距離（レールの間隔の半分）
+  const TIP_H = 1.8;              // 重心の高さ（レールの上から）
+  const TIP_G = 17;               // 重力（大きいほど傾きにくい。傾き始める遠心力 ＝ TIP_G × TIP_B ÷ TIP_H）
+  const TIP_SPRING = 6;           // 傾くほど強くなる戻す力（小さいほど少しの速すぎで大きく傾く）
+  const TIP_RATE = 2.2;           // 傾きが力のつり合う角度へ近づく速さ（大きいほどすぐ傾く・すぐ戻る。小さいほど傾いたまま粘る）
+  const TIP_FALL = 85;            // ここまで傾いたら倒れきったとして脱線（度）
+  // 見た目の傾き（脱線の判定とは別。判定より早く、大きく傾けて見せる）
+  // 遠心力が脱線する強さに対してどれだけかで傾ける：脱線する強さで TIP_FALL、その手前でもこの乗に比例して傾く
+  const TILT_SHOW_POW = 0.7;
+
+  // 脱線（カーブの外へ転がっていき、地球を一周して反対側から転がって戻ってくる）
+  const DERAIL_DIST = 90;         // 見えなくなるまで転がる距離（戻ってくるときも同じ距離）
+  const DERAIL_OUT_T = 0.45;      // 転がって出ていく時間（秒）
+  const DERAIL_BACK_T = 0.4;      // 反対側から戻ってくる時間（秒）
+  const ROLL_R = 1.4;             // 転がるときの半径（回る速さ）
+  const DERAIL_BLEND_T = 0.25;    // 脱線した瞬間の傾いた姿勢から、転がる動きへつなぐ時間（秒）
+
+  // 線路
+  const GAUGE = 1.0;              // 左右のレールの間隔
+  const SLEEPER_STEP = 0.8;       // 枕木の間隔
+  const BALLAST_H = 0.18;         // 砂利（バラスト）の盛り土の高さ
+  const RAIL_BASE = 0.23;         // レールの底の高さ（枕木の上面）
+  const RAIL_H = 0.14;            // レールの高さ
+  const RAIL_TOP = RAIL_BASE + RAIL_H;
+  const PLATFORM_LEN = 50;        // ホームの長さ
+  const PLATFORM_IN = 1.3, PLATFORM_OUT = 4.3;   // ホームの線路側・外側の端（線路の中心から、カーブの内側へ）
+  const PLATFORM_SIDE_RANGE = 40;  // 駅の前後この距離の曲がり方で、どちらがカーブの内側かを決める
+  const PLATFORM_H = 1.0;         // ホームの高さ
+  const PEOPLE_PER = 8;           // ホームに立たせる人1人が表す人数
+  const PEOPLE_MAX = 80;          // 1つのホームに立たせる人の数の上限（待っている人と降りた人の合計）
+  const JUMP_T = 0.32;            // ホームと扉の間を跳んで移る時間（秒）
+  const JUMP_H = 1.6;             // 跳ぶときの高さ
+  const MOVERS_MAX = 120;         // 同時に跳んでいる人の数の上限
+
+  // 車両（1両）
+  const BOGIE = 3.8;              // 車両中心から台車中心までの距離
+  const OVERHANG = 0.9;           // 台車の中心から車両の端までの長さ
+  const CAR_LEN = (BOGIE + OVERHANG) * 2;
+  const CAR_W = 1.7;
+  const SIDE_H = 1.75;
+  const AXLE = 0.5;
+  const WHEEL_R = 0.3;
+  const WC = RAIL_TOP + WHEEL_R;
+  const BODY_Y = WC + 0.39;
+  const W2 = CAR_W / 2;
+  const ROOF_Y = BODY_Y + SIDE_H + 0.34;
+  const DOOR_PITCH = CAR_LEN / 4;
+  const DOORS = [-1.5, -0.5, 0.5, 1.5].map(k => k * DOOR_PITCH);
+  const AC_X = [-BOGIE + 0.6, -0.3];
+  const PANTA_X = BOGIE - 0.8;
+
+  // カメラ（電車の後ろ斜め上から、進む先を見る）
+  const CAM_BACK = 15, CAM_UP = 6.5, CAM_LOOK = 12;
+  const CAM_AHEAD = 40;           // カメラは、線路をこの距離だけ先へ進んだ点の方を向く（カーブの先を見る）
+  const CAM_TURN = 3;             // カメラの向きが線路の向きに追いつく速さ（小さいほどカーブでゆっくり振り向く）
+  // 速いときのカメラの揺れ（SHAKE_FROM km/h から揺れ始め、SHAKE_FULL km/h でいちばん大きく揺れる）
+  const SHAKE_FROM = 100, SHAKE_FULL = 250;
+  const SHAKE_AMP = 0.07;         // いちばん大きいときの揺れ幅
+  const SHAKE_FREQ = 16;          // 揺れの細かさ（1秒あたりの回数の目安）
+
+  // 曲がれるかどうかの線（線路の真ん中に、今の速さでその先を曲がれるかを緑〜赤で薄く出す）
+  const GUIDE_AHEAD = 200;        // 先のどこまで出すか
+  const GUIDE_STEP = 1;           // 点の間隔
+  const GUIDE_W = 0.3;            // 線の幅
+  const GUIDE_ALPHA = 0.6;        // 線の濃さ
+  const GUIDE_FROM = BOGIE + 1;   // 電車の真ん中からどれだけ前から出すか（車体の下に隠れるところは出さない）
+
+  // エフェクト（パンタグラフの火花・台車の火花・加速の風）
+  const SPARK_MAX = 400;          // 同時に飛んでいる火花の数の上限
+  const SPARK_LIFE = 0.35;        // 火花が消えるまでの時間（秒）
+  const SPARK_SIZE = 0.2;         // 火花の粒の大きさ
+  const SPARK_STREAK = 0.08;      // 火花の光の線の長さ（電車から見た速さ × この秒数）
+  const ARC_SIZE = 0.45;          // パンタグラフの光の大きさ
+  const ARC_HALO = 3;             // パンタグラフの光のにじみの大きさ
+  const SPARK_HALO = 0.9;         // 火花の光のにじみの大きさ
+  const ARC_SEGS = 5, ARC_LEN = 0.7;   // パンタグラフの放電の折れ目の数と長さ
+  const PANTA_SPARK_RATE = 160;   // 加速中にパンタグラフから出る火花の数（1秒あたり、いちばん多いとき）
+  const PANTA_SPARK_V = 10;       // パンタグラフの火花が出始める速さ
+  const WHEEL_SPARK_RATE = 260;   // ブレーキ中や車輪が浮きかけたときに台車から出る火花の数（1秒あたり、いちばん強いとき）
+  const WHEEL_SPARK_V = 8;        // 台車の火花が出始める速さ
+  const WIND_N = 60;              // 加速の風の筋の数
+  const WIND_V = 20;              // 風の筋が見え始める速さ
+  const WIND_FULL = 70;           // 風の筋がいちばん濃くなる速さ
+  const WIND_ALPHA = 0.85;        // 風の筋のいちばん濃いときの濃さ
+
+  // 表示
+  const PASS_NAME_SIZE = 64;      // 駅名を大きく出すときの文字の大きさ（ピクセル。長い駅名は幅に収まるまで小さくする）
+  const PASS_SHOW = 0.6;          // 駅の真ん中を過ぎたあとも、駅名を出しておく時間（秒）
+
+  // 効果音（Web Audio で合成）
+  const SE_VOL = 0.7;             // 全体の音量
+  const SE_V_FULL = 45;           // この速さ（×3.6 で km/h）で走行音がいちばん大きくなる
+  const JOINT_GAP = 18;           // レールのつなぎ目の間隔（車輪が通るたびに「タタン」と鳴る）
+  const JOINT_VOL = 0.35;         // つなぎ目の音の大きさ
+  const MOTOR_F0 = 70, MOTOR_F_PER = 9;   // モーター音の高さ（止まっているとき、速さ1あたりに上がる分）
+  const MOTOR_VOL = 0.07;         // モーター音（押している間だけ）の大きさ
+  const RUMBLE_VOL = 0.25;        // 走っているときのゴーという音の大きさ
+  const MAP_VIEW = 500;           // 地図に映す範囲（電車を真ん中にした一辺の長さ。小さいほど寄る）
+  const MAP_ST_R = 4;             // 地図の駅の点の大きさ（半径・ピクセル）
+  const MAP_CAR_R = 5;            // 地図の電車の点の大きさ（半径・ピクセル）
+  const GROUND_ENV = 0.3;         // 地面まわりの映り込みの強さ（強いと白っぽくなる）
+
+  // 沿線（空・架線・ビル・ホームの屋根）
+  const POLE_STEP = 30;           // 架線柱の間隔
+  const POLE_L = 2.4;             // 架線柱の線路の中心からの距離（カーブの内側に立てる。外側だと傾いた車体がぶつかる）
+  const WIRE_Y = 4.15;            // 下の線（トロリ線。パンタグラフが触れる）の高さ
+  const MESSENGER_Y = 5.0;        // 上の線（吊架線。下の線を吊る）の柱のところの高さ
+  const MESSENGER_SAG = 0.35;     // 上の線が柱と柱の間でたるむ深さ
+  const DROPPER_STEP = 5;         // 上の線から下の線を吊る細い線の間隔
+  const POLE_H = 5.4;             // 架線柱の高さ
+  const BLD_GAP = 7;              // 線路の中心からビルの壁までの最小の間（傾いた車体や架線柱に当たらないように）
+  const BLD_BANDS = [             // 線路からの距離の帯ごとの並べ方 [近い端, 遠い端, 線路に沿った間隔, 置く割合, 幅の範囲, 高さの範囲]
+    [BLD_GAP, 30, 4, 0.95, [5, 12], [5, 16]],      // 線路ぎわ：低めの建物がびっしり
+    [30, 110, 6, 0.9, [8, 18], [10, 40]],          // 中くらいの距離：中層のビル
+    [110, 320, 8, 0.8, [10, 22], [15, 70]],        // 遠く：高いビルも混じる
+  ];
+  const ROOF_H = 3.3;             // ホームの屋根の高さ（ホームの上から）
+  const ROOF_LEN = 30;            // ホームの屋根の長さ（ホームの真ん中に）
+  const BOARD_W = 7.8, BOARD_H = 3;   // 駅名標の大きさ（幅・高さ）
+  const BOARD_UP = 1.9;           // 駅名標の下の端の、ホームからの高さ
+  const BOARD_L = PLATFORM_OUT + 1.5;   // 駅名標の中心の、線路の中心からの距離（ホーム側。電車にかからないように外へ出す）
+  const BLD_CLASSES = [[0, 9, 3], [9, 14, 4], [14, 25, 7], [25, 45, 11], [45, 70, 18]];   // ビルの高さの区分 [低い方, 高い方, 窓の段数]（区分ごとに窓の数をそろえる）
+  const BLD_WIN_COLS = 4;         // ビルの1面の窓の列数
+  const LANDMARKS = [             // 実際の位置と高さ（メートル）に置く目印 [名前, 緯度, 経度, 高さ]
+    ['tower', 35.6586, 139.7454, 333],
+    ['skytree', 35.7101, 139.8107, 634],
+  ];
+  const LANDMARK_SCALE = 3;       // 目印の高さの倍率（コースと同じ縮め方だとビルに隠れて見えないので、大きくする）
+  const BALLAST_TEX_LEN = 4;      // 砂利の模様1枚ぶんの長さ
+  const GROUND_TEX_SIZE = 12;     // 地面の模様1枚ぶんの大きさ
+
+  const $ = id => document.getElementById(id);
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const UP = V(0, 1, 0);
+  const cssColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  // 左下の速度計（針で表す。上限を超えても針は止まらずに回る）
+  const METER_MAX = 300;          // 目盛りの上限（km/h）
+  const METER_STEP = 50;          // 数字を書く間隔（km/h）
+  const METER_A0 = Math.PI * 0.75, METER_SWEEP = Math.PI * 1.5;   // 0 の向き（左下）と、上限までの回る角度
+  const fmtTime = t => { const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); };
+
+  // ---------- 描画の準備 ----------
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  $('wrap').prepend(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(cssColor('--sky-horizon'));
+  scene.fog = new THREE.Fog(cssColor('--sky-horizon'), 250, 1100);
+  // 空：カメラを囲む大きな球を、上ほど濃い青にする（カメラに付いて動かす）
+  const skyDome = (() => {
+    const geo = new THREE.SphereGeometry(1500, 32, 16), pos = geo.attributes.position, col = [];
+    const top = new THREE.Color(cssColor('--sky-top')), hor = new THREE.Color(cssColor('--sky-horizon')), c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) { c.copy(hor).lerp(top, Math.pow(Math.max(0, pos.getY(i) / 1500), 0.3)); col.push(c.r, c.g, c.b); }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors:true, side:THREE.BackSide, fog:false, depthWrite:false }));
+    m.renderOrder = -1;
+    scene.add(m);
+    return m;
+  })();
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 3000);   // コースの反対側にある目印まで映るように遠くまで描く
+
+  // 金属やガラスの映り込み用に、上が明るく下が暗いグラデーションを環境マップにする
+  function makeEnv(){
+    const s = new THREE.Scene();
+    const geo = new THREE.SphereGeometry(10, 32, 16);
+    const pos = geo.attributes.position, col = [];
+    const top = new THREE.Color(0xeef3f7), mid = new THREE.Color(0xc4c9cc), bot = new THREE.Color(0x6a6f64), c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const t = pos.getY(i) / 10;
+      if (t > 0) c.copy(mid).lerp(top, t); else c.copy(mid).lerp(bot, -t);
+      col.push(c.r, c.g, c.b);
+    }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    s.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors:true, side:THREE.BackSide })));
+    const pm = new THREE.PMREMGenerator(renderer);
+    const tex = pm.fromScene(s, 0.02).texture;
+    pm.dispose();
+    return tex;
+  }
+  scene.environment = makeEnv();
+
+  scene.add(new THREE.HemisphereLight(0xd6e6f2, 0x7c7a6c, 0.45));   // 空からの青っぽい光と、地面からの照り返し
+  const sun = new THREE.DirectionalLight(0xfff1dc, 0.85);             // 少し暖かい色の日差し
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left:-14, right:14, top:14, bottom:-14, near:1, far:80 });
+  sun.shadow.camera.updateProjectionMatrix();
+  sun.shadow.bias = -0.0004;
+  sun.shadow.normalBias = 0.02;
+  const SUN_OFFSET = V(10, 25, 12);   // 電車から見た太陽の位置（影を落とす範囲を電車に付いて動かす）
+  scene.add(sun, sun.target);
+
+  // ---------- 部品づくりの道具 ----------
+  const std = (color, metalness, roughness, extra) =>
+    new THREE.MeshStandardMaterial(Object.assign({ color, metalness, roughness }, extra || {}));
+  const geoCache = new Map();
+  const cached = (key, make) => { if (!geoCache.has(key)) geoCache.set(key, make()); return geoCache.get(key); };
+  const box  = (w, h, d)        => cached(`b${w},${h},${d}`, () => new THREE.BoxGeometry(w, h, d));
+  const cyl  = (r, len, seg=12) => cached(`c${r},${len},${seg}`, () => new THREE.CylinderGeometry(r, r, len, seg));
+  const xCyl = (r, len, seg=12) => cached(`x${r},${len},${seg}`, () => new THREE.CylinderGeometry(r, r, len, seg).rotateZ(Math.PI / 2));
+  const zCyl = (r, len, seg=12) => cached(`z${r},${len},${seg}`, () => new THREE.CylinderGeometry(r, r, len, seg).rotateX(Math.PI / 2));
+  function rod(parent, a, b, r, mat){
+    const d = new THREE.Vector3().subVectors(b, a);
+    const m = new THREE.Mesh(cyl(r, +d.length().toFixed(3), 8), mat);
+    m.position.addVectors(a, b).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(UP, d.normalize());
+    parent.add(m);
+    return m;
+  }
+
+  // ---------- コース（駅の位置を通るなめらかな輪を、長さ1ごとの点に並べ直す） ----------
+  // 距離 s の地点の位置 (x, z) と進む向き h（進む方向は (cos h, sin h)）。横の位置 l は進む方向の右手側を正とする
+  const N = COURSE_LEN;                 // 点の数（長さ1ごと）
+  const PX = new Float32Array(N), PZ = new Float32Array(N), PH = new Float32Array(N);
+  const stationS = [];                  // 各駅の中心の距離
+  let realScale = 1;                    // ゲームの長さ1が実際の何メートルか の逆数（コースを縮めた割合）
+  {
+    const pts = [];
+    for (let i = 0; i < TRACK_XY.length; i += 2) pts.push(V(TRACK_XY[i], 0, TRACK_XY[i + 1]));
+    const curve = new THREE.CatmullRomCurve3(pts, true, 'centripetal');   // 角を取ってなめらかにつなぐ
+    // 細かく刻んで、始点からの道のりを測る
+    const M = pts.length * 40, cum = [0], raw = [];
+    for (let i = 0; i <= M; i++) raw.push(curve.getPoint(i / M));
+    for (let i = 1; i <= M; i++) cum.push(cum[i - 1] + raw[i].distanceTo(raw[i - 1]));
+    const total = cum[M], scale = COURSE_LEN / total;
+    realScale = scale;
+    // 駅の位置にいちばん近い線路上の点の道のり（東京駅をコースの始点にする）
+    const near = (x, z) => { let bi = 0, bd = Infinity; raw.forEach((p, i) => { const d = (p.x - x) ** 2 + (p.z - z) ** 2; if (d < bd) { bd = d; bi = i; } }); return cum[bi]; };
+    const d0 = near(STATIONS[0][1], STATIONS[0][2]);
+    STATIONS.forEach(([, x, z]) => stationS.push((((near(x, z) - d0) % total + total) % total) * scale));
+    // 長さ1ごとに並べ直す
+    let j = 0;
+    for (let k = 0; k < N; k++) {
+      const d = (k / scale + d0) % total;
+      if (cum[j] > d) j = 0;
+      while (j < M - 1 && cum[j + 1] < d) j++;
+      const f = (d - cum[j]) / (cum[j + 1] - cum[j]);
+      PX[k] = (raw[j].x + (raw[j + 1].x - raw[j].x) * f) * scale;
+      PZ[k] = (raw[j].z + (raw[j + 1].z - raw[j].z) * f) * scale;
+    }
+    for (let k = 0; k < N; k++) {
+      const a = (k - 1 + N) % N, b = (k + 1) % N;
+      PH[k] = Math.atan2(PZ[b] - PZ[a], PX[b] - PX[a]);
+    }
+  }
+  const wrapS = s => ((s % N) + N) % N;
+  const angDiff = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
+  // 距離 s の地点（輪なので何周目でもよい）
+  function pathAt(s){
+    s = wrapS(s);
+    const i = Math.floor(s), f = s - i, i2 = (i + 1) % N;
+    return { x:PX[i] + (PX[i2] - PX[i]) * f, z:PZ[i] + (PZ[i2] - PZ[i]) * f, h:PH[i] + angDiff(PH[i], PH[i2]) * f };
+  }
+  const offsetPt = (p, l) => ({ x:p.x - Math.sin(p.h) * l, z:p.z + Math.cos(p.h) * l });
+
+  // ---------- カーブ（各地点の曲がり具合と外側の向き。車体の傾きと脱線に使う） ----------
+  const KAP = new Float32Array(N), OUT = new Int8Array(N);   // 曲がり具合（向きの変わり方をならしたもの）と、外側の向き（右=1, 左=-1）
+  {
+    const W = 12;
+    for (let i = 0; i < N; i++) {
+      let sum = 0, sg = 0;
+      for (let j = -W; j <= W; j++) {
+        const d = angDiff(PH[(i + j - 1 + N) % N], PH[(i + j + N) % N]);
+        sum += Math.abs(d); sg += d;
+      }
+      KAP[i] = sum / (2 * W + 1);
+      OUT[i] = sg > 0 ? -1 : 1;
+    }
+  }
+
+  // ---------- 地面と線路 ----------
+  // 地面の模様：舗装のような細かいざらつきに、色むらのしみを散らす（つなぎ目が出ないよう端で折り返して描く）
+  function groundTexture(){
+    const S = 256, cv = document.createElement('canvas');
+    cv.width = cv.height = S;
+    const g = cv.getContext('2d');
+    g.fillStyle = cssColor('--ground'); g.fillRect(0, 0, S, S);
+    const dot = (x, y, r, col, a) => {
+      g.globalAlpha = a; g.fillStyle = col;
+      [-S, 0, S].forEach(ox => [-S, 0, S].forEach(oy => { g.beginPath(); g.arc(x + ox, y + oy, r, 0, Math.PI * 2); g.fill(); }));
+    };
+    for (let i = 0; i < 40; i++) dot(Math.random() * S, Math.random() * S, 10 + Math.random() * 30, Math.random() < 0.5 ? cssColor('--ground-dark') : cssColor('--ground-light'), 0.12);   // 色むら
+    for (let i = 0; i < 4000; i++) dot(Math.random() * S, Math.random() * S, 0.6 + Math.random() * 0.9, Math.random() < 0.5 ? cssColor('--ground-dark') : cssColor('--ground-light'), 0.5);   // ざらつき
+    g.globalAlpha = 1;
+    const tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(6000 / GROUND_TEX_SIZE, 6000 / GROUND_TEX_SIZE);
+    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return tex;
+  }
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), std(0xffffff, 0, 1, { map:groundTexture(), envMapIntensity:GROUND_ENV }));
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // 断面（横ずれ, 高さ）を、距離 a〜b の道筋に沿って押し出した形
+  function sweep(profile, a, b, step, closed, uLen = 1){
+    const n = Math.max(1, Math.ceil((b - a) / step)), m = profile.length;
+    const pos = [], idx = [], uv = [];
+    for (let i = 0; i <= n; i++) {
+      const p = pathAt(a + (b - a) * i / n);
+      profile.forEach(([l, y], j) => { const q = offsetPt(p, l); pos.push(q.x, y, q.z); uv.push(j / (m - 1), (b - a) * i / n / uLen); });
+    }
+    const sides = closed ? m : m - 1;
+    for (let i = 0; i < n; i++) for (let j = 0; j < sides; j++) {
+      const j2 = (j + 1) % m, a0 = i * m + j, b0 = i * m + j2, c0 = (i + 1) * m + j, d0 = (i + 1) * m + j2;
+      idx.push(a0, c0, b0, b0, c0, d0);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }
+  // 砂利の模様（小石の明暗をちらした絵）
+  function ballastTexture(){
+    const S = 128, cv = document.createElement('canvas');
+    cv.width = cv.height = S;
+    const g = cv.getContext('2d'), base = new THREE.Color(cssColor('--ballast'));
+    g.fillStyle = cssColor('--ballast'); g.fillRect(0, 0, S, S);
+    for (let i = 0; i < 900; i++) {
+      const k = 0.75 + Math.random() * 0.5, c = base.clone().multiplyScalar(k);
+      g.fillStyle = '#' + c.getHexString();
+      g.beginPath(); g.arc(Math.random() * S, Math.random() * S, 1 + Math.random() * 2.2, 0, Math.PI * 2); g.fill();
+    }
+    const tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.anisotropy = 4;
+    return tex;
+  }
+  {
+    const ballast = new THREE.Mesh(sweep([[-1.7, 0.01], [-1.15, BALLAST_H], [1.15, BALLAST_H], [1.7, 0.01]], 0, N, 2, false, BALLAST_TEX_LEN),
+      std(0xffffff, 0, 1, { map:ballastTexture(), side:THREE.DoubleSide, envMapIntensity:GROUND_ENV }));
+    ballast.receiveShadow = true;
+    scene.add(ballast);
+    const railMat = std(0x9a9da1, 0.9, 0.3, { side:THREE.DoubleSide });
+    [-GAUGE / 2, GAUGE / 2].forEach(l => {
+      const rail = new THREE.Mesh(sweep([[l - 0.05, RAIL_BASE], [l - 0.03, RAIL_TOP], [l + 0.03, RAIL_TOP], [l + 0.05, RAIL_BASE]], 0, N, 2), railMat);
+      rail.castShadow = rail.receiveShadow = true;
+      scene.add(rail);
+    });
+    const count = Math.floor(N / SLEEPER_STEP);
+    const sleepers = new THREE.InstancedMesh(box(0.24, 0.1, GAUGE + 0.8), std(cssColor('--sleeper'), 0, 0.9, { envMapIntensity:GROUND_ENV }), count);
+    const d = new THREE.Object3D();
+    for (let i = 0; i < count; i++) {
+      const p = pathAt(i * SLEEPER_STEP);
+      d.position.set(p.x, RAIL_BASE - 0.05, p.z);
+      d.rotation.y = -p.h;
+      d.updateMatrix();
+      sleepers.setMatrixAt(i, d.matrix);
+    }
+    sleepers.receiveShadow = true;
+    scene.add(sleepers);
+  }
+
+  // ---------- 架線と架線柱（カーブの内側に柱を立て、腕を線路の上へ伸ばす） ----------
+  {
+    // 架線は上下2本：下の線（トロリ線）はまっすぐ、上の線（吊架線）は柱から柱へたるみ、間を細い線で吊る
+    const wireMat = std(cssColor('--wire'), 0.5, 0.5, { side:THREE.DoubleSide });
+    scene.add(new THREE.Mesh(sweep([[-0.015, WIRE_Y], [0.015, WIRE_Y]], 0, N, 2), wireMat));
+    const messengerY = ss => MESSENGER_Y - MESSENGER_SAG * Math.sin(Math.PI * (wrapS(ss) % POLE_STEP) / POLE_STEP);
+    const messenger = sweep([[-0.015, 0], [0.015, 0]], 0, N, 1);
+    {
+      const pos = messenger.attributes.position, n1 = pos.count / 2;
+      for (let i = 0; i < n1; i++) { const y = messengerY(N * i / (n1 - 1)); pos.setY(i * 2, y); pos.setY(i * 2 + 1, y); }
+      messenger.computeVertexNormals();
+    }
+    scene.add(new THREE.Mesh(messenger, wireMat));
+    const dp = [];
+    for (let ss = DROPPER_STEP / 2; ss < N; ss += DROPPER_STEP) {
+      const p = pathAt(ss);
+      dp.push(p.x, WIRE_Y, p.z, p.x, messengerY(ss), p.z);
+    }
+    const dg = new THREE.BufferGeometry();
+    dg.setAttribute('position', new THREE.Float32BufferAttribute(dp, 3));
+    scene.add(new THREE.LineSegments(dg, new THREE.LineBasicMaterial({ color:cssColor('--wire') })));
+    const poleMat = std(cssColor('--pole'), 0.4, 0.6);
+    const n = Math.floor(N / POLE_STEP);
+    const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.1, 0.12, POLE_H, 8).translate(0, POLE_H / 2, 0), poleMat, n);
+    const arms = new THREE.InstancedMesh(new THREE.BoxGeometry(0.08, 0.1, POLE_L + 0.3).translate(0, 0, -(POLE_L + 0.3) / 2), poleMat, n);
+    const d = new THREE.Object3D();
+    let k = 0;
+    for (let i = 0; i < n; i++) {
+      const ss = i * POLE_STEP;
+      if (stationS.some(x => Math.abs(wrapS(ss - x + N / 2) - N / 2) < PLATFORM_LEN / 2 + 4)) continue;   // ホームのあるところには立てない
+      const p = pathAt(ss), side = -OUT[Math.floor(ss)];   // カーブの内側
+      const q = offsetPt(p, side * POLE_L);
+      d.position.set(q.x, 0, q.z); d.rotation.set(0, -p.h + (side > 0 ? 0 : Math.PI), 0); d.updateMatrix();
+      poles.setMatrixAt(k, d.matrix);
+      d.position.y = MESSENGER_Y + 0.05; d.updateMatrix();   // 腕は上の線を支える高さ
+      arms.setMatrixAt(k, d.matrix);
+      k++;
+    }
+    poles.count = arms.count = k;
+    poles.castShadow = arms.castShadow = true;
+    scene.add(poles, arms);
+  }
+
+  // ---------- まわりのビル（線路から離れたところに、高さや色を変えて並べる） ----------
+  {
+    // 線路の近くかどうかを速く調べるため、線路の点を区画に分けておく
+    const CELL = 60, grid = new Map(), key = (x, z) => Math.floor(x / CELL) + ',' + Math.floor(z / CELL);
+    for (let i = 0; i < N; i += 2) { const k = key(PX[i], PZ[i]); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(i); }
+    const nearTrack = (x, z, r) => {
+      const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL), n = Math.ceil(r / CELL);
+      for (let a = -n; a <= n; a++) for (let b = -n; b <= n; b++) {
+        const list = grid.get((cx + a) + ',' + (cz + b));
+        if (list && list.some(i => (PX[i] - x) ** 2 + (PZ[i] - z) ** 2 < r * r)) return true;
+      }
+      return false;
+    };
+    const cols = [1, 2, 3, 4, 5, 6].map(i => new THREE.Color(cssColor('--bld' + i)));
+    const list = [];
+    const rnd = ([a, b], k = 1) => a + Math.pow(Math.random(), k) * (b - a);
+    BLD_BANDS.forEach(([near, far, step, rate, wr, hr]) => {
+      for (let ss = 0; ss < N; ss += step) for (const side of [-1, 1]) {
+        if (Math.random() > rate) continue;
+        const w = rnd(wr), dd = rnd(wr), half = Math.max(w, dd) / 2;
+        const dist = Math.max(near + half, rnd([near, far]));   // 線路側の壁が帯の近い端より手前に出ないように
+        const p = pathAt(ss + Math.random() * step), q = offsetPt(p, side * dist);
+        if (nearTrack(q.x, q.z, BLD_GAP + half * 1.42)) continue;   // ほかの区間の線路にもかからないように（斜めでも収まるよう対角の半分）
+        if (stationS.some(x => Math.hypot(PX[Math.floor(x)] - q.x, PZ[Math.floor(x)] - q.z) < PLATFORM_LEN / 2 + half + 4)) continue;   // 駅のまわりは空ける
+        list.push({ x:q.x, z:q.z, w, d:dd, h:rnd(hr, 1.8), rot:-p.h });
+      }
+    });
+    // 窓の模様（白地に窓の並び。ビルの色をかけて使う）。屋上と底は窓のない白
+    const winTex = (() => {
+      const cv = document.createElement('canvas'), W = 64, H = 64;
+      cv.width = W; cv.height = H;
+      const g = cv.getContext('2d');
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+      g.fillStyle = cssColor('--window'); g.fillRect(8, 14, 48, 34);
+      g.fillStyle = cssColor('--window-lit'); g.fillRect(8, 14, 48, 8);   // 空が映った上の方
+      const tex = new THREE.CanvasTexture(cv);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.anisotropy = 4;
+      return tex;
+    })();
+    const bldMat = std(0xffffff, 0.1, 0.8, { map:winTex, envMapIntensity:GROUND_ENV });
+    const d = new THREE.Object3D();
+    BLD_CLASSES.forEach(([h0, h1, rows]) => {
+      const group = list.filter(b => b.h >= h0 && (b.h < h1 || h1 === BLD_CLASSES[BLD_CLASSES.length - 1][1]));
+      if (!group.length) return;
+      // 側面の4面は窓をくり返し、屋上と底は窓の外の白いところだけを使う
+      const geo = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0), uv = geo.attributes.uv;
+      for (let i = 0; i < uv.count; i++) {
+        const face = Math.floor(i / 4);
+        if (face === 2 || face === 3) uv.setXY(i, 0.05, 0.05);
+        else uv.setXY(i, uv.getX(i) * BLD_WIN_COLS, uv.getY(i) * rows);
+      }
+      const mesh = new THREE.InstancedMesh(geo, bldMat, group.length);
+      group.forEach((b, i) => {
+        d.position.set(b.x, 0, b.z); d.rotation.set(0, b.rot, 0); d.scale.set(b.w, b.h, b.d); d.updateMatrix();
+        mesh.setMatrixAt(i, d.matrix);
+        mesh.setColorAt(i, cols[Math.floor(Math.random() * cols.length)]);
+      });
+      scene.add(mesh);
+    });
+  }
+
+  // ---------- 目印（東京タワーとスカイツリー。実際の位置に、コースと同じ割合で縮めた高さの LANDMARK_SCALE 倍で置く） ----------
+  {
+    const lat0 = 35.68, lon0 = 139.74, c = Math.cos(lat0 * Math.PI / 180);   // 線路の座標と同じ取り方
+    // 遠くからでも目印になるよう、霧で薄くしない
+    const red = std(cssColor('--tower1'), 0.2, 0.6, { fog:false }), white = std(cssColor('--tower2'), 0.2, 0.6, { fog:false }), tw = std(cssColor("--tree-white"), 0.1, 0.5, { fog:false });
+    LANDMARKS.forEach(([kind, la, lo, height]) => {
+      const x = (lo - lon0) * c * 111320 * realScale, z = -(la - lat0) * 110540 * realScale, H = height * realScale * LANDMARK_SCALE;
+      const grp = new THREE.Group();
+      grp.position.set(x, 0, z);
+      grp.name = kind;
+      if (kind === 'tower') {
+        // 四本脚の塔：裾の広がった4本の脚が大展望台を支え、その上は赤と白を交互に重ねた細い塔、てっぺんにアンテナ
+        const leg = (x0, z0, x1, z1, y0, y1, w, mat) => {
+          const a = V(x0, y0, z0), b = V(x1, y1, z1), dir = b.clone().sub(a);
+          const m = new THREE.Mesh(new THREE.BoxGeometry(w, dir.length(), w), mat);
+          m.position.copy(a).add(b).multiplyScalar(0.5);
+          m.quaternion.setFromUnitVectors(UP, dir.normalize());
+          grp.add(m);
+        };
+        const B = H * 0.13, D = H * 0.04, DECK = H * 0.37;
+        [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([sx, sz]) => {
+          leg(sx * B, sz * B, sx * B * 0.55, sz * B * 0.55, 0, DECK * 0.35, H * 0.022, red);         // 裾
+          leg(sx * B * 0.55, sz * B * 0.55, sx * D, sz * D, DECK * 0.35, DECK, H * 0.016, red);      // 大展望台まで
+        });
+        grp.add(new THREE.Mesh(new THREE.BoxGeometry(H * 0.12, H * 0.035, H * 0.12).translate(0, DECK, 0), white));   // 大展望台
+        // 赤を太く、白を細く交互に重ねる（WHITE_RATIO：赤1に対する白の太さ）
+        const bands = 7, top = H * 0.78, WHITE_RATIO = 0.35;
+        const unit = (top - DECK) / (Math.ceil(bands / 2) + Math.floor(bands / 2) * WHITE_RATIO);
+        const r = y => D * 1.4 * (1 - 0.75 * (y - DECK) / (top - DECK));
+        for (let i = 0, y0 = DECK; i < bands; i++) {
+          const y1 = y0 + unit * (i % 2 ? WHITE_RATIO : 1);
+          grp.add(new THREE.Mesh(new THREE.CylinderGeometry(r(y1), r(y0), y1 - y0, 4).rotateY(Math.PI / 4).translate(0, (y0 + y1) / 2, 0), i % 2 ? white : red));
+          y0 = y1;
+        }
+        grp.add(new THREE.Mesh(new THREE.BoxGeometry(H * 0.05, H * 0.025, H * 0.05).translate(0, H * 0.68, 0), white));   // 特別展望台
+        grp.add(new THREE.Mesh(new THREE.CylinderGeometry(H * 0.004, H * 0.01, H - top, 6).translate(0, (top + H) / 2, 0), red));   // アンテナ
+      } else {
+        // 細く高い塔：根元は太く、上へ行くほど細い。途中に2つの展望台
+        grp.add(new THREE.Mesh(new THREE.CylinderGeometry(H * 0.012, H * 0.05, H * 0.9, 12).translate(0, H * 0.45, 0), tw));
+        grp.add(new THREE.Mesh(new THREE.CylinderGeometry(0.2, H * 0.012, H * 0.1, 8).translate(0, H * 0.95, 0), tw));
+        [[0.55, 0.05], [0.71, 0.035]].forEach(([y, r]) => grp.add(new THREE.Mesh(new THREE.CylinderGeometry(H * r, H * r, H * 0.025, 16).translate(0, H * y, 0), tw)));
+      }
+      grp.traverse(o => { if (o.isMesh) o.castShadow = true; });
+      scene.add(grp);
+    });
+  }
+
+  // ---------- 駅（左側のホーム、手前の駅名標、ホームで待つ人） ----------
+  function boardTexture(name){
+    const W = 1024, H = 384, cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const g = cv.getContext('2d');
+    g.fillStyle = cssColor('--board'); g.fillRect(0, 0, W, H);
+    g.fillStyle = cssColor('--board-line'); g.fillRect(0, H - 68, W, 68);
+    g.fillStyle = cssColor('--board-ink');
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    const font = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif';
+    let size = 192;
+    do { g.font = `800 ${size}px ${font}`; size -= 8; } while (g.measureText(name).width > W - 80);
+    g.fillText(name, W / 2, (H - 68) / 2 + 8);
+    const t = new THREE.CanvasTexture(cv);
+    t.anisotropy = 4;
+    return t;
+  }
+  const platMat = std(cssColor('--platform'), 0, 0.9, { envMapIntensity:GROUND_ENV, side:THREE.DoubleSide });
+  const edgeMat = std(cssColor('--platform-edge'), 0, 0.7, { side:THREE.DoubleSide });
+  const postMat = std(0x8a8f96, 0.6, 0.5);
+  const roofMat = std(cssColor('--roof'), 0.3, 0.6, { side:THREE.DoubleSide });
+  // ホームの人：胴（服の色）と頭をひとつの形にまとめる。服の色は人ごとに変える
+  const personGeo = (() => {
+    const parts = [new THREE.CylinderGeometry(0.2, 0.17, 1.3, 8).translate(0, 0.65, 0), new THREE.SphereGeometry(0.17, 8, 6).translate(0, 1.5, 0)];
+    const pos = [], nor = [];
+    parts.forEach(g => { const n = g.toNonIndexed(); pos.push(...n.attributes.position.array); nor.push(...n.attributes.normal.array); });
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    return g;
+  })();
+  const personMat = std(0xffffff, 0, 0.8);
+  const clothCols = [1, 2, 3, 4, 5].map(i => new THREE.Color(cssColor('--cloth' + i)));
+  const clothOf = k => clothCols[k % clothCols.length];   // 人ごとに決まった服の色
+  // 人ごとの色を入れる場所を最初から用意しておく（あとから作ると色が反映されないため）
+  const withColors = (mesh, n) => { mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3); return mesh; };
+  const stations = STATIONS.map(([name], i) => {
+    const s = stationS[i];
+    // ホームはカーブの内側に置く（外側だと、傾いた車体や脱線した電車がホームにぶつかる）。右=1, 左=-1
+    const side = angDiff(PH[Math.floor(wrapS(s - PLATFORM_SIDE_RANGE))], PH[Math.floor(wrapS(s + PLATFORM_SIDE_RANGE))]) > 0 ? 1 : -1;
+    const L = l => side * l;
+    // 角の点を2つずつ置いて、側面と上面の陰影が混ざらないようにする（混ざると側面が上面と同じ明るさになって見えなくなる）
+    const platProf = [[L(PLATFORM_IN), 0], [L(PLATFORM_IN), PLATFORM_H], [L(PLATFORM_IN), PLATFORM_H],
+                      [L(PLATFORM_OUT), PLATFORM_H], [L(PLATFORM_OUT), PLATFORM_H], [L(PLATFORM_OUT), 0]];
+    const plat = new THREE.Mesh(sweep(platProf, s - PLATFORM_LEN / 2, s + PLATFORM_LEN / 2, 2), platMat);
+    plat.receiveShadow = true;
+    scene.add(plat);
+    // ホームの前後の端の面
+    [s - PLATFORM_LEN / 2, s + PLATFORM_LEN / 2].forEach(e => {
+      const p = pathAt(e), pos = [];
+      [[L(PLATFORM_IN), 0], [L(PLATFORM_IN), PLATFORM_H], [L(PLATFORM_OUT), PLATFORM_H], [L(PLATFORM_OUT), 0]].forEach(([l, y]) => { const q = offsetPt(p, l); pos.push(q.x, y, q.z); });
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setIndex([0, 1, 2, 0, 2, 3]);
+      g.computeVertexNormals();
+      const cap = new THREE.Mesh(g, platMat);
+      cap.receiveShadow = true;
+      scene.add(cap);
+    });
+    // ホームの端の黄色い線
+    scene.add(new THREE.Mesh(sweep([[L(PLATFORM_IN + 0.15), PLATFORM_H + 0.01], [L(PLATFORM_IN + 0.45), PLATFORM_H + 0.01]],
+      s - PLATFORM_LEN / 2, s + PLATFORM_LEN / 2, 2), edgeMat));
+    // ホームの屋根（真ん中あたりに、柱で支える）
+    const roof = new THREE.Mesh(sweep([[L(PLATFORM_IN + 0.3), PLATFORM_H + ROOF_H], [L(PLATFORM_OUT + 0.2), PLATFORM_H + ROOF_H + 0.35]],
+      s - ROOF_LEN / 2, s + ROOF_LEN / 2, 2), roofMat);
+    roof.castShadow = true;
+    scene.add(roof);
+    for (let x = -ROOF_LEN / 2 + 3; x <= ROOF_LEN / 2 - 3; x += 6) {
+      const r = offsetPt(pathAt(s + x), L((PLATFORM_IN + PLATFORM_OUT) / 2 + 0.6));
+      const post = new THREE.Mesh(cyl(0.08, ROOF_H + 0.2, 8), postMat);
+      post.position.set(r.x, PLATFORM_H + (ROOF_H + 0.2) / 2, r.z);
+      post.castShadow = true;
+      scene.add(post);
+    }
+    // ホームの手前の端に、走ってくる電車のほうを向けて立てる駅名標
+    const p = pathAt(s - PLATFORM_LEN / 2 + 3), q = offsetPt(p, L(BOARD_L));
+    const tex = boardTexture(name);
+    const faceMat = std(0xffffff, 0, 0.6, { map:tex });
+    const board = new THREE.Mesh(new THREE.BoxGeometry(0.1, BOARD_H, BOARD_W), [faceMat, faceMat, postMat, postMat, postMat, postMat]);
+    board.position.set(q.x, PLATFORM_H + BOARD_UP + BOARD_H / 2, q.z);
+    board.rotation.y = -p.h;
+    board.castShadow = true;
+    scene.add(board);
+    // 柱は地面から立てる（駅名標がホームの外にはみ出すので）
+    [-1, 1].forEach(sd => {
+      const post = new THREE.Mesh(box(0.12, PLATFORM_H + BOARD_UP, 0.16), postMat);
+      const r = offsetPt(p, L(BOARD_L) + sd * (BOARD_W / 2 - 0.8));
+      post.position.set(r.x, (PLATFORM_H + BOARD_UP) / 2, r.z);
+      post.rotation.y = -p.h;
+      scene.add(post);
+    });
+    const people = withColors(new THREE.InstancedMesh(personGeo, personMat, PEOPLE_MAX), PEOPLE_MAX);
+    people.castShadow = true;
+    people.count = 0;
+    scene.add(people);
+    // figs：ホームにいる人（wait：乗るのを待っている / stand：降りた人）。1人で PEOPLE_PER 人以下を表す
+    return { name, s, side, people, figs:[], offQueue:[], on:0, off:0, started:false };
+  });
+  // ホームの人の並びを描き直す
+  const pd = new THREE.Object3D();
+  function drawPeople(st){
+    let c = 0;
+    st.figs.forEach(f => {
+      if (f.state === 'gone' || c >= PEOPLE_MAX) return;
+      pd.position.set(f.x, PLATFORM_H, f.z);
+      pd.updateMatrix();
+      st.people.setColorAt(c, clothOf(f.cloth));
+      st.people.setMatrixAt(c++, pd.matrix);
+    });
+    st.people.count = c;
+    st.people.instanceMatrix.needsUpdate = true;
+    st.people.instanceColor.needsUpdate = true;
+  }
+  // ホームの上の、距離 s・線路から少し離れたところの点（乗る人も降りた人もここに立つ）
+  function platformPt(st, s){
+    const q = offsetPt(pathAt(s), st.side * (PLATFORM_IN + 0.7 + Math.random() * (PLATFORM_OUT - PLATFORM_IN - 1.1)));
+    return { x:q.x, z:q.z };
+  }
+  // 駅で待つ n 人を、ホームに散らして立たせる
+  function setupStation(st, n){
+    st.figs = []; st.offQueue = []; st.on = st.off = 0; st.started = false;
+    for (let left = n; left > 0; left -= PEOPLE_PER) {
+      const fs = st.s + (Math.random() - 0.5) * (PLATFORM_LEN - 6);
+      st.figs.push(Object.assign(platformPt(st, fs), { s:fs, n:Math.min(PEOPLE_PER, left), state:'wait', cloth:Math.floor(Math.random() * 1000) }));
+    }
+    drawPeople(st);
+  }
+
+  // ---------- 跳んで乗り降りする人（ホームと扉の間を弧を描いて跳ぶ） ----------
+  const movers = [];   // { kind:'on'|'off', t, from, to, n, st, door }
+  const moverMesh = withColors(new THREE.InstancedMesh(personGeo, personMat, MOVERS_MAX), MOVERS_MAX);
+  moverMesh.castShadow = true;
+  moverMesh.count = 0;
+  moverMesh.frustumCulled = false;
+  scene.add(moverMesh);
+
+  // ---------- 電車の材質 ----------
+  const M = {
+    body:    std(0xcfd4d8, 0.6, 0.3),            // ステンレスの車体
+    door:    std(0xbcc2c7, 0.6, 0.36),
+    band:    std(cssColor('--line'), 0.1, 0.45),  // 前面の色（山手線の色）
+    roof:    std(0x9ea4aa, 0.3, 0.6),
+    ac:      std(0xb4b9bd, 0.4, 0.5),            // 屋根上の冷房装置
+    frame:   std(0x4a4f55, 0.3, 0.5),            // 窓枠
+    glass:   std(0x17212b, 0.3, 0.08),
+    black:   std(0x1c1c1e, 0.1, 0.85),           // ゴム・ライトの枠
+    under:   std(0x2e3033, 0.2, 0.7),            // 床下機器
+    bogie:   std(0x2a2c2f, 0.3, 0.6),
+    wheel:   std(0x62656a, 0.75, 0.35),
+    mark:    std(0xd8d8d8, 0.2, 0.5),
+    spring:  std(0x44484c, 0.4, 0.5),
+    skirt:   std(0x3a3d40, 0.3, 0.6),
+    insul:   std(0xe6e2d6, 0.0, 0.3),            // がいし
+    panta:   std(0x9aa0a6, 0.6, 0.4),
+    shoe:    std(0x3b3d40, 0.5, 0.5),
+    dest:    std(0x111111, 0, 0.5, { emissive:0xffa040, emissiveIntensity:0.9 }),  // 行先表示
+    headOn:  std(0xffffff, 0, 0.2, { emissive:0xfff2cc, emissiveIntensity:1.2 }),
+    headOff: std(0xcfcfcf, 0.3, 0.2),
+    tailOn:  std(0xff2a1a, 0, 0.3, { emissive:0xff1a0a, emissiveIntensity:1.0 }),
+    tailOff: std(0x5a1a14, 0.2, 0.3),
+  };
+
+  // 車体：角を丸めた箱に、丸い屋根の断面を前後に押し出す
+  // 前面の絵：上は車体と同じ銀色、下は山手線の色。黒い窓は下の縁が真ん中へ下がるV字。ライトは窓の下に横長の灯り
+  // 横は前から見て左→右、縦は下→上（v）。glow は光る部分だけを描いた絵（lit：'head'＝前照灯、'tail'＝尾灯を点ける）
+  const FRONT_WIN_V0 = 0.46, FRONT_WIN_V1 = 0.94;   // 窓の下（真ん中）と上の端（前面の高さに対する割合）
+  const FRONT_GREEN_V = 0.4;                         // ここから下を山手線の色にする
+  function frontTextures(lit){
+    const S = 512, mk = () => { const cv = document.createElement('canvas'); cv.width = cv.height = S; return cv; };
+    const cv = mk(), gl = mk(), g = cv.getContext('2d'), q = gl.getContext('2d');
+    const X = u => (u + 1) / 2 * S, Y = v => (1 - v) * S;   // u：-1〜1（左右）、v：0〜1（下〜上）
+    g.fillStyle = '#cfd4d8'; g.fillRect(0, 0, S, S);                                  // 銀色
+    g.fillStyle = cssColor('--line'); g.fillRect(0, Y(FRONT_GREEN_V), S, S);          // 下は山手線の色
+    g.fillStyle = '#2a3036'; g.fillRect(0, Y(FRONT_GREEN_V) - 4, S, 4);               // 境目の細い線
+    q.fillStyle = '#000'; q.fillRect(0, 0, S, S);
+    // 黒い窓（上の角は丸く、下の縁はV字）
+    g.fillStyle = '#141a20';
+    g.beginPath();
+    g.moveTo(X(-0.86), Y(FRONT_WIN_V0 + 0.1));
+    g.lineTo(X(0), Y(FRONT_WIN_V0));
+    g.lineTo(X(0.86), Y(FRONT_WIN_V0 + 0.1));
+    g.lineTo(X(0.86), Y(FRONT_WIN_V1) + 30);
+    g.quadraticCurveTo(X(0.86), Y(FRONT_WIN_V1), X(0.86) - 30, Y(FRONT_WIN_V1));
+    g.lineTo(X(-0.86) + 30, Y(FRONT_WIN_V1));
+    g.quadraticCurveTo(X(-0.86), Y(FRONT_WIN_V1), X(-0.86), Y(FRONT_WIN_V1) + 30);
+    g.closePath(); g.fill();
+    // 窓の上の真ん中に行先表示
+    const vL0 = FRONT_WIN_V1 - 0.085, vL1 = FRONT_WIN_V1 - 0.035;
+    g.fillStyle = '#0b0b0b'; g.fillRect(X(-0.3), Y(vL1), X(0.3) - X(-0.3), Y(vL0) - Y(vL1));
+    // ライト：山手線の色の部分に、外側へ横長の前照灯、その内側に尾灯
+    const lv0 = 0.27, lv1 = 0.32;
+    const lamp = (u0, u1, col, on) => {
+      [g].concat(on ? [q] : []).forEach(c => { c.fillStyle = col; c.fillRect(X(u0), Y(lv1), X(u1) - X(u0), Y(lv0) - Y(lv1)); });
+    };
+    [-1, 1].forEach(sd => {
+      g.fillStyle = '#1d2122'; g.fillRect(X(sd < 0 ? -0.86 : 0.24), Y(lv1) - 5, X(-0.24) - X(-0.86), Y(lv0) - Y(lv1) + 10);   // ライトの枠
+      const a = sd < 0 ? [-0.82, -0.5] : [0.5, 0.82], b = sd < 0 ? [-0.44, -0.28] : [0.28, 0.44];
+      lamp(a[0], a[1], lit === 'head' ? '#fffbe8' : '#c9c9c9', lit === 'head');
+      lamp(b[0], b[1], lit === 'tail' ? '#ff2a1a' : '#5a1a14', lit === 'tail');
+    });
+    // ワイパー
+    g.strokeStyle = '#3a4048'; g.lineWidth = 3;
+    [[-0.5, -0.33], [0.25, 0.42]].forEach(([u0, u1]) => { g.beginPath(); g.moveTo(X(u0), Y(FRONT_WIN_V0 + 0.07)); g.lineTo(X(u1), Y(FRONT_WIN_V0 + 0.3)); g.stroke(); });
+    const tex = c => { const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t; };
+    return { map:tex(cv), glow:tex(gl) };
+  }
+  // 車体の断面（角を丸めた箱に丸い屋根）
+  function bodyShape(){
+    const s = new THREE.Shape(), r = 0.3;
+    s.moveTo(-W2, 0);
+    s.lineTo(W2, 0);
+    s.lineTo(W2, SIDE_H);
+    s.quadraticCurveTo(W2, SIDE_H + r, W2 - r, SIDE_H + r + 0.02);
+    s.quadraticCurveTo(0, SIDE_H + r + 0.12, -(W2 - r), SIDE_H + r + 0.02);
+    s.quadraticCurveTo(-W2, SIDE_H + r, -W2, SIDE_H);
+    return s;
+  }
+  function makeBodyGeo(){
+    const s = bodyShape();
+    const bt = 0.05;
+    const geo = new THREE.ExtrudeGeometry(s, {
+      depth:CAR_LEN - bt * 2, curveSegments:10,
+      bevelEnabled:true, bevelThickness:bt, bevelSize:0.03, bevelOffset:-0.03, bevelSegments:3
+    });
+    geo.translate(0, 0, -(CAR_LEN - bt * 2) / 2);
+    geo.rotateY(Math.PI / 2);   // 押し出し方向を車両の前後（x）にする
+    return geo;
+  }
+
+  // ---------- 台車 ----------
+  function makeBogie(){
+    const b = new THREE.Group();
+    const add = (geo, mat, x, y, z, parent = b) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+    const wheelsets = [];
+    const SZ = GAUGE / 2 + 0.12;   // 軸箱と側梁の横位置
+
+    [-AXLE, AXLE].forEach(ax => {
+      // 輪軸（車軸＋左右の車輪）：これをまとめて回す
+      const ws = new THREE.Group();
+      ws.position.set(ax, WC, 0);
+      add(zCyl(0.05, GAUGE + 0.26, 10), M.wheel, 0, 0, 0, ws);
+      [-1, 1].forEach(sd => {
+        const z = sd * GAUGE / 2;
+        add(zCyl(WHEEL_R, 0.1, 28), M.wheel, 0, 0, z, ws);                     // 踏面
+        add(zCyl(WHEEL_R + 0.03, 0.022, 28), M.wheel, 0, 0, z - sd * 0.055, ws); // フランジ（内側のつば）
+        add(zCyl(0.12, 0.012, 16), M.bogie, 0, 0, z + sd * 0.055, ws);         // 車輪の中心部
+        add(box(0.05, 0.1, 0.012), M.mark, 0, 0.19, z + sd * 0.056, ws);       // 回転が分かる目印
+      });
+      b.add(ws);
+      wheelsets.push(ws);
+
+      [-1, 1].forEach(sd => {
+        add(box(0.16, 0.12, 0.1), M.bogie, ax, WC, sd * SZ);               // 軸箱
+        add(cyl(0.045, 0.09, 10), M.spring, ax, WC + 0.1, sd * SZ);        // 軸ばね
+      });
+      add(box(0.22, 0.2, 0.14), M.bogie, ax - Math.sign(ax) * 0.12, WC, -0.22);  // 歯車箱
+    });
+
+    [-1, 1].forEach(sd => {
+      add(box(1.45, 0.1, 0.07), M.bogie, 0, WC + 0.19, sd * SZ);           // 側梁
+      add(cyl(0.11, 0.15, 18), M.black, 0, BODY_Y - 0.075, sd * SZ);       // 空気ばね
+    });
+    add(box(0.3, 0.12, GAUGE + 0.36), M.bogie, 0, WC + 0.19, 0);           // 横はり
+    b.userData.wheelsets = wheelsets;
+    return b;
+  }
+
+  // ---------- 車両（1両。前後とも運転台付きで、前は前照灯・後ろは尾灯を点ける） ----------
+  function makeCar(){
+    const car = new THREE.Group();        // 台車を含む電車全体
+    // 車体（空気ばねの上に載る部分）。床の高さを支点にして、台車の上で沈んだり揺れたりできるようにする
+    const bodyPivot = new THREE.Group();
+    bodyPivot.position.y = BODY_Y;
+    const g = new THREE.Group();
+    g.position.y = -BODY_Y;
+    bodyPivot.add(g);
+    car.add(bodyPivot);
+    const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
+    // 車体の両側面に同じ部品を貼る（d は側面から外への厚み）
+    const onSides = (w, h, d, mat, x, y) => [-1, 1].forEach(sd => add(box(w, h, d), mat, x, y, sd * (W2 + d / 2)));
+
+    add(makeBodyGeo(), M.body, 0, BODY_Y, 0);
+
+    // 扉（両開き、縁取り・合わせ目・窓つき）
+    DOORS.forEach(x => {
+      onSides(0.62, 1.56, 0.01, M.frame, x, BODY_Y + 0.88);
+      onSides(0.56, 1.5, 0.02, M.door, x, BODY_Y + 0.87);
+      onSides(0.012, 1.5, 0.028, M.frame, x, BODY_Y + 0.87);
+      [-0.13, 0.13].forEach(dx => onSides(0.17, 0.5, 0.03, M.glass, x + dx, BODY_Y + 1.22));
+    });
+
+    // 窓（扉の間は仕切り付きの大きな窓、両端は乗務員室の窓）
+    const wins = [[-DOOR_PITCH, 1.25], [0, 1.25], [DOOR_PITCH, 1.25], [CAR_LEN / 2 - 0.32, 0.3], [-(CAR_LEN / 2 - 0.32), 0.3]];
+    wins.forEach(([x, w]) => {
+      onSides(w + 0.07, 0.67, 0.012, M.frame, x, BODY_Y + 1.2);
+      onSides(w, 0.6, 0.02, M.glass, x, BODY_Y + 1.2);
+      if (w > 0.6) onSides(0.035, 0.6, 0.026, M.frame, x, BODY_Y + 1.2);
+    });
+
+    // 側面の行先表示と帯
+    onSides(0.36, 0.1, 0.02, M.dest, -DOOR_PITCH, BODY_Y + 1.6);
+    onSides(CAR_LEN - 0.04, 0.2, 0.036, M.band, 0, BODY_Y + 0.72);   // 窓の下の太い帯
+
+    // 雨どい
+    [-1, 1].forEach(sd => rod(g, V(-CAR_LEN / 2 + 0.08, BODY_Y + SIDE_H + 0.2, sd * (W2 - 0.04)),
+                                 V( CAR_LEN / 2 - 0.08, BODY_Y + SIDE_H + 0.2, sd * (W2 - 0.04)), 0.018, M.roof));
+
+    // 屋根上の冷房装置（送風口と側面のスリット）とパンタグラフ
+    AC_X.forEach(x => {
+      add(box(1.0, 0.2, 0.95), M.ac, x, ROOF_Y + 0.08, 0);
+      [-0.25, 0.25].forEach(dx => add(cyl(0.17, 0.02, 24), M.bogie, x + dx, ROOF_Y + 0.185, 0));
+      [0.02, 0.07, 0.12].forEach(dy => [-1, 1].forEach(sd => add(box(0.88, 0.014, 0.01), M.bogie, x, ROOF_Y + dy, sd * 0.48)));
+    });
+    addPanta(g, PANTA_X);
+    [-1, 1].forEach(s => add(box(0.25, 0.03, 0.08), M.bogie, s * (CAR_LEN / 2 - 0.5), ROOF_Y + 0.02, 0.3));  // 無線アンテナ
+
+    // 床下機器
+    [[-1.6, 1.0, 0.36, 1.0, 0.05], [-0.2, 0.7, 0.28, 0.8, -0.2], [0.8, 0.6, 0.3, 0.9, 0.1], [1.9, 1.1, 0.42, 1.1, 0]].forEach(([x, w, h, d, z]) => {
+      add(box(w, h, d), M.under, x, BODY_Y - h / 2, z);
+    });
+
+    // 前後の運転台
+    addCabFront(g, 1, 'head');
+    addCabFront(g, -1, 'tail');
+
+    // 台車
+    const bogies = [makeBogie(), makeBogie()];
+    bogies[0].position.x = BOGIE;    // 台車は車体に対して固定（向きだけ線路に合わせて振る）
+    bogies[1].position.x = -BOGIE;
+    bogies.forEach(b => car.add(b));
+    car.userData.body = bodyPivot;
+    car.userData.bogies = bogies;
+    car.userData.wheelsets = bogies.flatMap(b => b.userData.wheelsets);
+
+    car.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    scene.add(car);
+    return car;
+  }
+
+  // 運転台の前面（s: 1=前, -1=後ろ）。車体の端から前へふくらんだ前面。窓のあたりから上は後ろへ傾き、屋根につながる
+  const NOSE = 0.42;              // 前面がいちばん前へ出ている長さ（窓の下の真ん中）
+  // 車体の断面の、横位置 z での上の端の高さ
+  const bodyTopAt = (() => {
+    const pts = bodyShape().getPoints(24).filter(p => p.y >= SIDE_H - 1e-6).sort((a, b) => a.x - b.x);
+    return z => {
+      for (let i = 1; i < pts.length; i++) if (z <= pts[i].x) { const a = pts[i - 1], b = pts[i], k = (z - a.x) / Math.max(1e-6, b.x - a.x); return a.y + (b.y - a.y) * k; }
+      return SIDE_H;
+    };
+  })();
+  function addCabFront(g, s, lit){
+    const e = s * CAR_LEN / 2, NU = 28, NV = 28;
+    // 前へ出る長さ：横は真ん中が平らで角が丸く、縦は窓の下までまっすぐ、そこから上は後ろへ下がって屋根で0
+    const out = (u, v) => NOSE * (1 - Math.pow(Math.abs(u), 4)) * (v <= FRONT_WIN_V0 ? 1 : 1 - Math.pow((v - FRONT_WIN_V0) / (1 - FRONT_WIN_V0), 1.6));
+    const pos = [], uv = [], idx = [];
+    for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) {
+      const u = i / NU * 2 - 1, v = j / NV, z = u * W2;
+      pos.push(e + s * out(u, v), v * bodyTopAt(z), z);
+      uv.push((1 - s * u) / 2, v);   // 前から見て左→右になるように
+    }
+    for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) {
+      const a0 = j * (NU + 1) + i, b0 = a0 + 1, c0 = a0 + NU + 1, d0 = c0 + 1;
+      if (s > 0) idx.push(a0, c0, b0, b0, c0, d0); else idx.push(a0, b0, c0, b0, d0, c0);
+    }
+    // 下の面（車体の端から前へ出た部分の底をふさぐ）
+    const base = pos.length / 3;
+    for (let i = 0; i <= NU; i++) { const u = i / NU * 2 - 1; pos.push(e, 0, u * W2); uv.push((1 - s * u) / 2, 0); }
+    for (let i = 0; i < NU; i++) {
+      const a0 = i, b0 = i + 1, c0 = base + i, d0 = base + i + 1;
+      if (s > 0) idx.push(a0, b0, c0, b0, d0, c0); else idx.push(a0, c0, b0, b0, c0, d0);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    const tx = frontTextures(lit);
+    const face = new THREE.Mesh(geo, std(0xffffff, 0.15, 0.4, { map:tx.map, emissive:0xffffff, emissiveMap:tx.glow, emissiveIntensity:1.1 }));
+    face.position.y = BODY_Y;
+    g.add(face);
+
+    // スカート（線路上の障害物をはねのける板。下が外に出るように傾ける）
+    const sk = new THREE.Mesh(box(0.04, 0.5, CAR_W - 0.3), M.skirt);
+    sk.position.set(e + s * NOSE * 0.6, BODY_Y - 0.3, 0);
+    sk.rotation.z = s * 0.3;
+    g.add(sk);
+  }
+
+  // シングルアーム式パンタグラフ
+  function addPanta(g, px){
+    const Y = ROOF_Y;
+    const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
+    [-1, 1].forEach(sx => [-1, 1].forEach(sz => add(cyl(0.035, 0.1, 10), M.insul, px + sx * 0.3, Y + 0.03, sz * 0.25)));  // がいし
+    add(box(0.72, 0.04, 0.6), M.bogie, px, Y + 0.1, 0);   // 台枠
+    const knee = V(px - 0.32, Y + 0.5, 0), top = V(px + 0.12, Y + 0.86, 0);
+    [-0.1, 0.1].forEach(z => rod(g, V(px + 0.28, Y + 0.14, z), knee, 0.022, M.panta));  // 下わく
+    rod(g, V(px + 0.2, Y + 0.14, 0), V(px - 0.12, Y + 0.42, 0), 0.012, M.panta);        // 釣り合い棒
+    rod(g, knee, top, 0.018, M.panta);                                                   // 上わく
+    add(box(0.14, 0.04, 0.1), M.panta, top.x, top.y, 0);
+    // 架線に触れる舟（2本）と、端の曲がった角
+    [-0.05, 0.05].forEach(dx => {
+      rod(g, V(top.x + dx, top.y + 0.03, -0.42), V(top.x + dx, top.y + 0.03, 0.42), 0.018, M.shoe);
+      [-1, 1].forEach(sz => rod(g, V(top.x + dx, top.y + 0.03, sz * 0.42), V(top.x + dx, top.y - 0.05, sz * 0.56), 0.014, M.shoe));
+    });
+  }
+
+  const car = makeCar();
+  // ホーム側（side：右=1, 左=-1）の扉 i の、扉の外の位置
+  const doorPos = (i, side) => car.localToWorld(V(DOORS[i], BODY_Y + 0.1, side * (W2 + 0.15)));
+  const Q_ROLL = new THREE.Quaternion(), Q_YAW = new THREE.Quaternion(), X_AXIS = V(1, 0, 0);
+
+  // ---------- ゲームの状態 ----------
+  // ready：走り出す前 / run：走行中 / derail：脱線して転がっている / goal：一周した
+  let mode = 'ready';
+  let s = 0, v = 0, time = 0, pax = PAX_START, nextSt = 1;
+  let der = null;   // 脱線の様子 { t, x, z, h, out(横の向き), dir(転がる向き) }
+
+  function resetGame(){
+    s = 0; v = 0; time = 0; tilt = 0; visTilt = 0; passT = 0; sparks.n = 0; pax = PAX_START; nextSt = 1; der = null;
+    jointPrev.fill(null);
+    mode = 'ready';
+    stations.forEach((st, i) => setupStation(st, i === 0 ? 0 : Math.round(STATIONS[i][3] * (1 + (Math.random() * 2 - 1) * PAX_RANDOM))));
+    movers.length = 0;
+    moverMesh.count = 0;
+    $('over').hidden = true;
+    presses.clear();
+    placeCar(0);
+    camInit = false;
+  }
+
+  // ---------- 操作（画面のどこかを押している間は加速、離すと減速。PCはスペースか↑キー） ----------
+  const presses = new Set();   // 押している指（pointerId）とキー
+  const pressing = () => presses.size > 0;
+  // メニューや結果画面のボタンを押したときは加速しない
+  const isControl = e => !(e.target instanceof Element && e.target.closest('button, #menu, #over'));
+  function press(id){
+    presses.add(id);
+    if (mode === 'ready') mode = 'run';   // 最初に押したら計測を始める
+  }
+  const wrapEl = $('wrap');
+  wrapEl.addEventListener('pointerdown', e => {
+    if (!isControl(e)) return;
+    e.preventDefault();
+    wrapEl.setPointerCapture(e.pointerId);
+    press(e.pointerId);
+  });
+  ['pointerup', 'pointercancel'].forEach(type => wrapEl.addEventListener(type, e => presses.delete(e.pointerId)));
+  const PRESS_KEYS = [' ', 'ArrowUp', 'w', 'W'];
+  addEventListener('keydown', e => { if (PRESS_KEYS.includes(e.key)) { if (!e.repeat) press('key'); e.preventDefault(); } });
+  addEventListener('keyup', e => { if (PRESS_KEYS.includes(e.key)) presses.delete('key'); });
+  addEventListener('blur', () => presses.clear());   // 別の画面に移ったら離したことにする
+
+  // ---------- メニュー（右上のボタンで開け閉めする。外側を触ると閉じる） ----------
+  const menuBtn = $('menu-btn'), menu = $('menu');
+  const setMenu = open => { menu.hidden = !open; menuBtn.setAttribute('aria-expanded', String(open)); };
+  menuBtn.addEventListener('click', () => setMenu(menu.hidden));
+  document.addEventListener('pointerdown', e => { if (!menu.hidden && !e.target.closest('#menu, #menu-btn')) setMenu(false); }, true);
+  addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+
+  // ---------- 効果音（Web Audio で合成。ブラウザの制限があるので、最初の操作で鳴らせるようにする） ----------
+  // 走行音（つなぎ目の「タタン」とゴーという音）、押している間のモーター音、駅の通過・脱線・一周の音
+  let actx = null, master = null, noiseBuf = null, soundOn = true;
+  let motorOsc, motorFilt, motorGain, rumbleFilt, rumbleGain;
+  const AXLES = [BOGIE + AXLE, BOGIE - AXLE, -BOGIE + AXLE, -BOGIE - AXLE];   // 車輪の位置（車両の中心から）
+  const jointPrev = AXLES.map(() => null);   // 車輪ごとに、前に通ったつなぎ目の番号
+  function initAudio(){
+    if (actx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    actx = new AC();
+    master = actx.createGain();
+    master.gain.value = soundOn ? SE_VOL : 0;
+    master.connect(actx.destination);
+    noiseBuf = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    // モーター音：のこぎり波を帯域で絞る
+    motorOsc = actx.createOscillator(); motorOsc.type = 'sawtooth';
+    motorFilt = actx.createBiquadFilter(); motorFilt.type = 'bandpass'; motorFilt.Q.value = 3;
+    motorGain = actx.createGain(); motorGain.gain.value = 0;
+    motorOsc.connect(motorFilt).connect(motorGain).connect(master);
+    motorOsc.start();
+    // ゴーという音：雑音の低いところだけ
+    const rn = actx.createBufferSource(); rn.buffer = noiseBuf; rn.loop = true;
+    rumbleFilt = actx.createBiquadFilter(); rumbleFilt.type = 'lowpass';
+    rumbleGain = actx.createGain(); rumbleGain.gain.value = 0;
+    rn.connect(rumbleFilt).connect(rumbleGain).connect(master);
+    rn.start();
+  }
+  const unlockAudio = () => { initAudio(); if (actx && actx.state !== 'running' && !document.hidden) actx.resume(); };
+  ['pointerdown', 'touchend', 'keydown'].forEach(type => document.addEventListener(type, unlockAudio, true));
+  document.addEventListener('visibilitychange', () => { if (actx) document.hidden ? actx.suspend() : actx.resume(); });   // 裏に回ったら止める
+  const soundReady = () => actx && soundOn && actx.state === 'running';
+  // 短い音を1つ鳴らす（周波数 f、始まり at 秒後、長さ dur、波形、大きさ）
+  function tone(f, at, dur, type, vol){
+    const t = actx.currentTime + at, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(master);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  // 雑音を1回鳴らす（フィルタの周波数 f0→f1、長さ dur、大きさ）
+  function noiseHit(f0, f1, dur, vol, type = 'bandpass'){
+    const t = actx.currentTime, src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    src.buffer = noiseBuf;
+    f.type = type; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f).connect(g).connect(master);
+    src.start(t, Math.random(), dur + 0.02);
+  }
+  // つなぎ目を車輪が通る音（速いほど大きい）
+  function seJoint(k){
+    const vol = JOINT_VOL * (0.35 + 0.65 * k);
+    noiseHit(1400, 700, 0.06, vol);
+    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+    o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.08);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    o.connect(g).connect(master); o.start(t); o.stop(t + 0.11);
+  }
+  // 駅を通るとき（ピンポン）
+  function seStation(){ if (!soundReady()) return; tone(1046, 0, 0.35, 'sine', 0.18); tone(784, 0.18, 0.5, 'sine', 0.18); }
+  // 脱線（ガシャーン）
+  function seDerail(){
+    if (!soundReady()) return;
+    noiseHit(4000, 150, 0.9, 0.6, 'lowpass');
+    [0, 0.12, 0.3, 0.5].forEach((at, i) => tone(420 - i * 60, at, 0.25, 'square', 0.08));
+  }
+  // 一周（ド・ミ・ソ・ド）
+  function seGoal(){ if (!soundReady()) return; [523, 659, 784, 1046].forEach((f, i) => tone(f, i * 0.12, i === 3 ? 0.6 : 0.2, 'square', 0.07)); }
+  // 走行中に鳴り続ける音を、速さ・操作に合わせる
+  function stepSound(){
+    if (!actx || actx.state !== 'running') return;
+    const t = actx.currentTime, k = Math.min(1, v / SE_V_FULL), moving = mode !== 'derail';
+    const mf = MOTOR_F0 + v * MOTOR_F_PER;
+    motorOsc.frequency.setTargetAtTime(mf, t, 0.05);
+    motorFilt.frequency.setTargetAtTime(mf * 2, t, 0.05);
+    motorGain.gain.setTargetAtTime(mode === 'run' && pressing() ? MOTOR_VOL : 0, t, 0.06);
+    rumbleFilt.frequency.setTargetAtTime(150 + 450 * k, t, 0.1);
+    rumbleGain.gain.setTargetAtTime(moving ? RUMBLE_VOL * k : 0, t, 0.1);
+    // 車輪がレールのつなぎ目を通るたびに鳴らす
+    AXLES.forEach((off, i) => {
+      const j = Math.floor((s + off) / JOINT_GAP);
+      if (moving && soundOn && jointPrev[i] !== null && j !== jointPrev[i]) seJoint(k);
+      jointPrev[i] = j;
+    });
+  }
+  // メニューの音の ON/OFF
+  $('sound').addEventListener('click', () => {
+    soundOn = !soundOn;
+    if (master) master.gain.setTargetAtTime(soundOn ? SE_VOL : 0, actx.currentTime, 0.02);
+    $('sound').textContent = soundOn ? '音：ON' : '音：OFF';
+    $('sound').setAttribute('aria-pressed', String(soundOn));
+  });
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て、押している操作が奪われるのを防ぐ
+  document.addEventListener('touchstart', e => { if (isControl(e)) e.preventDefault(); }, { passive:false });
+  document.addEventListener('touchmove', e => { if (pressing()) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+
+  // ---------- 走行 ----------
+  // 乗客が多いほど重く、加速もブレーキも鈍る
+  const massOf = () => 1 + pax * PAX_WEIGHT;
+  function stepRun(dt){
+    const m = massOf();
+    const a = pressing() ? ACC_MAX / m : -RELEASE_BRAKE / m;
+    v = Math.max(0, v + a * dt);
+    s += v * dt;
+    // 駅の真ん中を過ぎたら、次の駅の表示を進める
+    while (nextSt <= STATIONS.length && s >= (nextSt < STATIONS.length ? stationS[nextSt] : N)) {
+      if (nextSt === STATIONS.length) { goal(); return; }
+      nextSt++;
+    }
+  }
+  // 車体の傾きを進める（遠心力と重力がつり合う角度へ近づける。遠心力が足りないときは0＝両方の車輪がレールに乗っている）
+  let tilt = 0, tiltSide = 1;   // 傾き（ラジアン）、傾いている向き（右=1, 左=-1）
+  function stepTilt(dt){
+    const i = Math.floor(wrapS(s));
+    if (tilt <= 0) tiltSide = OUT[i];      // 浮いていないときは、今のカーブの外側へ傾く
+    // 傾いている向きへの遠心力（逆向きのカーブなら戻す力になる）。
+    // コースは実際の長さを縮めてあるのでカーブも縮んできつくなっている。速さは実際の km/h なので、曲がり具合は実際の大きさに戻して計算する
+    const ac = v * v * KAP[i] * realScale * (OUT[i] === tiltSide ? 1 : -1);
+    const eq = Math.max(0, (ac * TIP_H - TIP_G * TIP_B) / TIP_SPRING);
+    tilt += (eq - tilt) * Math.min(1, dt * TIP_RATE);
+    if (tilt < 1e-4) tilt = 0;
+    // 見た目の傾き：脱線する強さの遠心力に対する割合で傾ける（判定に使う傾きより早くから大きく傾く）
+    if (visTilt < 0.02) visSide = OUT[i];
+    const acVis = v * v * KAP[i] * realScale * (OUT[i] === visSide ? 1 : -1);
+    const visTarget = fallRad * Math.pow(Math.min(1, Math.max(0, acVis / A_DERAIL)), TILT_SHOW_POW);
+    visTilt += (visTarget - visTilt) * Math.min(1, dt * TIP_RATE);
+    if (mode === 'run' && tilt >= TIP_FALL * Math.PI / 180) derail();   // 倒れきったら脱線（判定は見た目ではなく、力から計算した傾きで行う）
+  }
+  let visTilt = 0, visSide = 1;   // 見た目の傾き（ラジアン）と向き
+  const fallRad = TIP_FALL * Math.PI / 180;
+  const A_DERAIL = (fallRad * TIP_SPRING + TIP_G * TIP_B) / TIP_H;   // 脱線する強さの遠心力（つり合う傾きがちょうど TIP_FALL になる強さ）
+  // ---------- 乗り降り（止まらないまま、ホームの横を通る間に人が跳んで乗り降りする） ----------
+  // 待っている人は、車両がその人の横を通るときに扉へ跳び乗る。降りる人は、車両がホームを通る間に少しずつ扉から跳び降りる
+  let passSt = -1, passT = 0;   // 大きく出している駅と、出しておく残りの時間
+  function stepExchange(){
+    if (mode !== 'run') return;
+    const i = nextSt <= STATIONS.length - 1 && s >= stationS[nextSt] - PLATFORM_LEN / 2 - CAR_LEN / 2 ? nextSt
+            : nextSt - 1 >= 1 && s <= stationS[nextSt - 1] + PLATFORM_LEN / 2 + CAR_LEN / 2 ? nextSt - 1 : -1;
+    if (i < 1) return;
+    const st = stations[i];
+    // ホームに入ってから駅の真ん中までは、この駅の名前を大きく出し続ける（そのあとは PASS_SHOW で消える）
+    if (s <= stationS[i]) { passSt = i; passT = PASS_SHOW; }
+    if (!st.started) {   // ホームに入ったところで、降りる人数を決めて、ホームに沿って降りる場所を割り振る
+      st.started = true;
+      const off = Math.round(pax * STATIONS[i][4]);
+      const k = Math.ceil(off / PEOPLE_PER);
+      for (let j = 0; j < k; j++) st.offQueue.push({ s:st.s - PLATFORM_LEN / 2 + 4 + (PLATFORM_LEN - 8) * (j + 0.5) / k, n:Math.min(PEOPLE_PER, off - j * PEOPLE_PER) });
+      // 乗る人もここで決めておく（降りたあとの空きに、電車が通る順に入るだけ）。人数はここで決まった数をそのまま出す
+      let room = PAX_MAX - (pax - off), on = 0;
+      st.figs.filter(f => f.state === 'wait').sort((a, b) => a.s - b.s).forEach(f => { f.board = f.n <= room; if (f.board) { room -= f.n; on += f.n; } });
+      st.planOn = on; st.planOff = off;
+    }
+    // 降りる：車両の真ん中が割り振った場所を過ぎたら、いちばん近い扉から跳び降りる
+    while (st.offQueue.length && s >= st.offQueue[0].s && movers.length < MOVERS_MAX) {
+      const q = st.offQueue.shift();
+      const door = Math.floor(Math.random() * DOORS.length);
+      const from = doorPos(door, st.side);
+      const to = platformPt(st, s + DOORS[door] + 1.5);
+      pax -= q.n;
+      st.off += q.n;
+      movers.push({ kind:'off', t:0, from, to:V(to.x, PLATFORM_H, to.z), n:q.n, st, cloth:Math.floor(Math.random() * 1000) });
+    }
+    // 乗る：車両がその人の横にいれば、いちばん近い扉へ跳び乗る（乗りきれないときは残る）
+    st.figs.forEach(f => {
+      if (f.state !== 'wait' || Math.abs(wrapS(f.s - s + N / 2) - N / 2) > CAR_LEN / 2 - 0.3 || movers.length >= MOVERS_MAX) return;
+      if (!f.board) return;   // 乗りきれないと決まった人は残る
+      let door = 0;
+      DOORS.forEach((x, d) => { if (Math.abs(s + x - f.s) < Math.abs(s + DOORS[door] - f.s)) door = d; });
+      f.state = 'gone';
+      movers.push({ kind:'on', t:0, from:V(f.x, PLATFORM_H, f.z), to:null, n:f.n, st, door, cloth:f.cloth });
+    });
+    drawPeople(st);
+  }
+  // 跳んでいる人を進める。乗る人は動いている扉を追いかけ、着いたら乗客に数える。降りた人はホームに立つ
+  const mq = new THREE.Vector3();
+  function stepMovers(dt){
+    let c = 0;
+    for (let k = movers.length - 1; k >= 0; k--) {
+      const m = movers[k];
+      m.t = Math.min(1, m.t + dt / JUMP_T);
+      const to = m.kind === 'on' ? doorPos(m.door, m.st.side) : m.to;
+      const e = m.t * m.t * (3 - 2 * m.t);
+      mq.lerpVectors(m.from, to, e);
+      mq.y += Math.sin(Math.PI * m.t) * JUMP_H;
+      if (m.t >= 1) {
+        if (m.kind === 'on') { pax += m.n; m.st.on += m.n; }
+        else { m.st.figs.push({ x:m.to.x, z:m.to.z, s:0, n:m.n, state:'stand', cloth:m.cloth }); drawPeople(m.st); }
+        movers.splice(k, 1);
+        continue;
+      }
+      pd.position.copy(mq);
+      pd.updateMatrix();
+      moverMesh.setColorAt(c, clothOf(m.cloth));
+      moverMesh.setMatrixAt(c++, pd.matrix);
+    }
+    moverMesh.count = c;
+    moverMesh.instanceMatrix.needsUpdate = true;
+    moverMesh.instanceColor.needsUpdate = true;
+  }
+
+  // ---------- 脱線（カーブの外へ転がっていき、反対側から転がって戻ってくる） ----------
+  function derail(){
+    const p = pathAt(s);
+    mode = 'derail';
+    seDerail();
+    // 転がる向きは必ず遠心力で倒れた側（カーブの外側）。見た目の傾きが同じ側のときだけ、その傾きから続けて転がす
+    der = { t:0, x:p.x, z:p.z, h:p.h, out:tiltSide, tilt0:visSide === tiltSide ? visTilt : 0, gap:V(0, 0, 0) };
+    // 脱線した瞬間の位置（線路の上で傾いた姿勢）と、転がる動きの始めの位置のずれ。少しずつ0にして、急に飛ばないようにする
+    const before = car.position.clone();
+    placeDerailed();
+    der.gap.subVectors(before, car.position);
+    placeDerailed();
+    v = 0;
+    tilt = 0;
+  }
+  function stepDerail(dt){
+    der.t += dt;
+    if (der.t >= DERAIL_OUT_T + DERAIL_BACK_T) {   // 線路に戻った（止まった状態から走り直す）
+      der = null;
+      mode = 'run';
+      placeCar(0);
+    }
+  }
+  // 脱線中の電車の置き方：外へ向かって転がり続け、見えなくなったら反対側から同じ向きに転がって戻ってくる
+  // 電車全体（台車・パンタグラフを含む）の大きさ。転がるときはこの箱の真ん中を軸にして、どの向きでも地面にめり込まないようにする
+  const carBox = new THREE.Box3().setFromObject(car);
+  const CAR_CY = (carBox.min.y + carBox.max.y) / 2;                       // 箱の真ん中の高さ（電車の原点から）
+  const CAR_HALF_H = (carBox.max.y - carBox.min.y) / 2;                  // 箱の高さの半分
+  const CAR_HALF_W = Math.max(-carBox.min.z, carBox.max.z);              // 箱の幅の半分
+  const derailTmp = V(0, 0, 0);
+  function placeDerailed(){
+    const n = { x:-Math.sin(der.h) * der.out, z:Math.cos(der.h) * der.out };   // 外側の向き
+    let d;   // 線路からの横の距離（外側が正）
+    if (der.t < DERAIL_OUT_T) {
+      const u = der.t / DERAIL_OUT_T;
+      d = DERAIL_DIST * u * (0.25 + 0.75 * u);               // 飛び出して、だんだん勢いを増しながら転がっていく
+    } else {
+      const u = (der.t - DERAIL_OUT_T) / DERAIL_BACK_T;
+      d = -DERAIL_DIST * (1 - u) * (1 - u);                  // 反対側から近づいて、線路の上でちょうど止まる
+    }
+    const rolled = der.t < DERAIL_OUT_T ? d : DERAIL_DIST * 2 + d;   // 転がった道のり（回る角度はこれで決まる）
+    const turns = Math.round(DERAIL_DIST * 2 / (2 * Math.PI * ROLL_R));
+    const ang = (der.tilt0 + rolled / (DERAIL_DIST * 2) * (turns * 2 * Math.PI - der.tilt0)) * der.out;   // 倒れかけた傾きから転がり始め、戻ったときにちょうど起き上がる
+    const hop = der.t < DERAIL_OUT_T ? Math.max(0, Math.sin(Math.min(1, der.t / (DERAIL_OUT_T * 0.4)) * Math.PI)) * 2.5 : 0;
+    // 車体の真ん中を軸に回す。真ん中の高さは、その向きで地面に触れる高さ（立っていれば車体の高さの半分、横倒しなら幅の半分）
+    const cy = Math.abs(Math.cos(ang)) * CAR_HALF_H + Math.abs(Math.sin(ang)) * CAR_HALF_W + hop;
+    Q_YAW.setFromAxisAngle(UP, -der.h);
+    Q_ROLL.setFromAxisAngle(X_AXIS, ang);
+    car.quaternion.copy(Q_YAW).multiply(Q_ROLL);
+    derailTmp.set(0, -CAR_CY, 0).applyQuaternion(car.quaternion);       // 真ん中から電車の原点まで
+    car.position.set(der.x + n.x * d, cy, der.z + n.z * d).add(derailTmp);
+    car.position.addScaledVector(der.gap, Math.max(0, 1 - der.t / DERAIL_BLEND_T));
+    car.userData.bogies.forEach(b => b.rotation.y = 0);
+  }
+
+  // ---------- 電車を線路に置く（前後の台車を線路の上に乗せ、車体はその2点を結ぶ向きにする） ----------
+  const tiltPivot = V(0, 0, 0), tiltTmp = V(0, 0, 0);
+  function placeCar(dt){
+    const f = pathAt(s + BOGIE), r = pathAt(s - BOGIE);
+    const h = Math.atan2(f.z - r.z, f.x - r.x);
+    car.position.set((f.x + r.x) / 2, 0, (f.z + r.z) / 2);
+    Q_YAW.setFromAxisAngle(UP, -h);
+    // 外側のレールを軸にして、車体ごと傾ける（内側の車輪が浮く）
+    const out = visSide, ang = visTilt * out;   // 見た目の傾きで置く
+    Q_ROLL.setFromAxisAngle(X_AXIS, ang);
+    tiltPivot.set(0, RAIL_TOP, out * GAUGE / 2);
+    tiltTmp.copy(tiltPivot).applyQuaternion(Q_ROLL);
+    car.position.add(tiltPivot.sub(tiltTmp).applyQuaternion(Q_YAW));
+    car.quaternion.copy(Q_YAW).multiply(Q_ROLL);
+    const [bf, br] = car.userData.bogies;
+    bf.rotation.y = -angDiff(h, f.h);
+    br.rotation.y = -angDiff(h, r.h);
+    car.userData.wheelsets.forEach(w => w.rotation.z -= v * dt / WHEEL_R);
+  }
+
+  // ---------- エフェクト ----------
+  // 火花：くっきりした光の粒と、動いてきた向きに伸びる短い光の線。電車の進む勢いの一部を持って飛び出し、後ろへ流れながら落ちて消える
+  const sparks = { pos:new Float32Array(SPARK_MAX * 3), col:new Float32Array(SPARK_MAX * 3), vel:new Float32Array(SPARK_MAX * 3), life:new Float32Array(SPARK_MAX), life0:new Float32Array(SPARK_MAX), base:[], n:0 };
+  const sparkGeo = new THREE.BufferGeometry();
+  sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparks.pos, 3));
+  sparkGeo.setAttribute('color', new THREE.BufferAttribute(sparks.col, 3));
+  // 光の粒の絵（ふちまでくっきり明るい丸。ぼやけさせない）
+  const dotTex = (() => {
+    const S = 32, cv = document.createElement('canvas');
+    cv.width = cv.height = S;
+    const g = cv.getContext('2d'), gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.55, 'rgba(255,255,255,1)'); gr.addColorStop(0.7, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    return new THREE.CanvasTexture(cv);
+  })();
+  // 明るい背景でも消えないよう、光を足すのではなく色そのものを塗る（くっきり見せる）
+  const sparkPts = new THREE.Points(sparkGeo, new THREE.PointsMaterial({ size:SPARK_SIZE, map:dotTex, vertexColors:true, transparent:true, alphaTest:0.5, depthWrite:false, fog:false }));
+  sparkPts.frustumCulled = false;
+  scene.add(sparkPts);
+  // 光のにじみ：くっきりした粒の外側に、ぼんやり明るい輪を重ねて光って見せる（粒と同じ位置を使う）
+  const glowTex = (() => {
+    const S = 64, cv = document.createElement('canvas');
+    cv.width = cv.height = S;
+    const g = cv.getContext('2d'), gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.2, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    return new THREE.CanvasTexture(cv);
+  })();
+  const haloCol = new Float32Array(SPARK_MAX * 3);
+  const haloGeo = new THREE.BufferGeometry();
+  haloGeo.setAttribute('position', sparkGeo.attributes.position);
+  haloGeo.setAttribute('color', new THREE.BufferAttribute(haloCol, 3));
+  const halo = new THREE.Points(haloGeo, new THREE.PointsMaterial({ size:SPARK_HALO, map:glowTex, vertexColors:true, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, fog:false }));
+  halo.frustumCulled = false;
+  scene.add(halo);
+  // 光の線（粒から、電車に対して動いてきた向きへ伸ばす。先が明るく、後ろへ暗くなる）
+  const streakPos = new Float32Array(SPARK_MAX * 6), streakCol = new Float32Array(SPARK_MAX * 6);
+  const streakGeo = new THREE.BufferGeometry();
+  streakGeo.setAttribute('position', new THREE.BufferAttribute(streakPos, 3));
+  streakGeo.setAttribute('color', new THREE.BufferAttribute(streakCol, 3));
+  const streaks = new THREE.LineSegments(streakGeo, new THREE.LineBasicMaterial({ vertexColors:true, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, fog:false }));
+  streaks.frustumCulled = false;
+  scene.add(streaks);
+  const SPARK_BLUE = new THREE.Color(0x4aa8ff), SPARK_ORANGE = new THREE.Color(0xff9a1a);
+  const sparkTmp = V(0, 0, 0);
+  // keep：電車の速さのうち、火花が持っていく割合（小さいほど後ろへ長く流れて見える）
+  // side：進む向きに対して右（正）へ飛ばす速さ（台車の火花を車体の横へ吹き出すため）
+  function emitSpark(at, color, spread, up, keep, life, side = 0){
+    if (sparks.n >= SPARK_MAX) return;
+    const i = sparks.n++, h = pathAt(s).h;
+    const hx = Math.cos(h), hz = Math.sin(h), k = v * keep * (0.6 + Math.random() * 0.8);
+    sparks.pos.set([at.x, at.y, at.z], i * 3);
+    sparks.vel.set([hx * k + (Math.random() - 0.5) * spread - hz * side, up * (0.3 + Math.random()), hz * k + (Math.random() - 0.5) * spread + hx * side], i * 3);
+    sparks.life[i] = life * (0.5 + Math.random() * 0.5);
+    sparks.life0[i] = life;
+    sparks.base[i] = color;
+  }
+  let pantaAcc = 0, wheelAcc = 0;
+  // パンタグラフと架線が触れるところの光（加速中にちらつく小さな光と、ぎざぎざの放電）
+  const arc = new THREE.Sprite(new THREE.SpriteMaterial({ map:dotTex, color:0xeaf6ff, transparent:true, alphaTest:0.5, depthWrite:false, fog:false }));
+  arc.visible = false;
+  scene.add(arc);
+  const arcHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex, color:0x3d9bff, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, fog:false }));
+  arcHalo.visible = false;
+  scene.add(arcHalo);
+  const boltPos = new Float32Array(ARC_SEGS * 6);
+  const boltGeo = new THREE.BufferGeometry();
+  boltGeo.setAttribute('position', new THREE.BufferAttribute(boltPos, 3));
+  const bolt = new THREE.LineSegments(boltGeo, new THREE.LineBasicMaterial({ color:0x8fd0ff, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, fog:false }));
+  bolt.frustumCulled = false;
+  bolt.visible = false;
+  scene.add(bolt);
+  // 放電：触れるところから、ぎざぎざに折れながら横へ伸びる線
+  function drawBolt(at, h){
+    const sx = -Math.sin(h), sz = Math.cos(h), dir = Math.random() < 0.5 ? 1 : -1;
+    let x = at.x, y = at.y, z = at.z;
+    for (let i = 0; i < ARC_SEGS; i++) {
+      const step = ARC_LEN / ARC_SEGS, j = (Math.random() - 0.5) * ARC_LEN * 0.35;
+      const nx = x + sx * step * dir + Math.cos(h) * j, ny = y + (Math.random() - 0.3) * ARC_LEN * 0.3, nz = z + sz * step * dir + Math.sin(h) * j;
+      boltPos.set([x, y, z, nx, ny, nz], i * 6);
+      x = nx; y = ny; z = nz;
+    }
+    boltGeo.attributes.position.needsUpdate = true;
+  }
+  function stepSparks(dt){
+    arc.visible = arcHalo.visible = bolt.visible = false;
+    if (mode === 'run' || mode === 'goal') {
+      // パンタグラフ：加速している間、架線との間で青白い火花（速いほど多い）
+      const arcOn = pressing() && v > PANTA_SPARK_V;
+      arc.visible = arcOn && Math.random() < 0.85;
+      bolt.visible = arcOn && Math.random() < 0.6;
+      if (arcOn) {
+        const k = Math.min(1, (v - PANTA_SPARK_V) / 30);
+        pantaAcc += dt * PANTA_SPARK_RATE * k;
+        const top = car.localToWorld(sparkTmp.set(PANTA_X + 0.12, ROOF_Y + 0.9, 0));
+        arc.position.copy(top);
+        arc.scale.setScalar(ARC_SIZE * (0.6 + Math.random() * 0.8));
+        arcHalo.visible = true;
+        arcHalo.position.copy(top);
+        arcHalo.scale.setScalar(ARC_HALO * (0.7 + Math.random() * 0.6) * (0.5 + k));
+        if (bolt.visible) drawBolt(top, pathAt(s).h);
+        while (pantaAcc >= 1) { pantaAcc--; emitSpark(top, SPARK_BLUE, 3, 2.5, 0.6, SPARK_LIFE); }
+      }
+      // 台車：ブレーキ中（離している間）と、内側の車輪が浮きかけているときに、車輪とレールの間から橙の火花
+      const brake = !pressing() && v > WHEEL_SPARK_V ? Math.min(1, v / 30) : 0;
+      const strength = Math.max(brake, Math.min(1, tilt * 6));
+      if (strength > 0 && v > WHEEL_SPARK_V) {
+        wheelAcc += dt * WHEEL_SPARK_RATE * strength;
+        while (wheelAcc >= 1) {
+          wheelAcc--;
+          const b = Math.random() < 0.5 ? 1 : -1, a = Math.random() < 0.5 ? 1 : -1, sd = Math.random() < 0.5 ? 1 : -1;
+          emitSpark(car.localToWorld(sparkTmp.set(b * BOGIE + a * AXLE, RAIL_TOP + 0.05, sd * (GAUGE / 2 + 0.1))), SPARK_ORANGE, 0, 1.5, 0.75, SPARK_LIFE * 1.6, sd * (3 + Math.random() * 4));   // 車体の横へ吹き出す
+        }
+      }
+    }
+    // 動かして、古いものから消す（消えたら最後のものと入れ替えて詰める）
+    for (let i = sparks.n - 1; i >= 0; i--) {
+      sparks.life[i] -= dt;
+      if (sparks.life[i] <= 0) {
+        const last = --sparks.n;
+        sparks.pos.copyWithin(i * 3, last * 3, last * 3 + 3);
+        sparks.vel.copyWithin(i * 3, last * 3, last * 3 + 3);
+        sparks.life[i] = sparks.life[last];
+        sparks.life0[i] = sparks.life0[last];
+        sparks.base[i] = sparks.base[last];
+        continue;
+      }
+      sparks.vel[i * 3 + 1] -= 9 * dt;
+      for (let k = 0; k < 3; k++) sparks.pos[i * 3 + k] += sparks.vel[i * 3 + k] * dt;
+      // 粒の芯は白に近い色（光の中心）、にじみは火花の色。にじみは寿命とともに弱める
+      const c = sparks.base[i], fade = sparks.life[i] / sparks.life0[i];
+      sparks.col.set([c.r + (1 - c.r) * 0.65, c.g + (1 - c.g) * 0.65, c.b + (1 - c.b) * 0.65], i * 3);
+      haloCol.set([c.r * fade, c.g * fade, c.b * fade], i * 3);
+    }
+    // 光の線：電車から見た動き（火花の速さ − 電車の速さ）の逆向きへ伸ばす
+    const h = pathAt(s).h, cvx = Math.cos(h) * v, cvz = Math.sin(h) * v;
+    for (let i = 0; i < sparks.n; i++) {
+      const o = i * 3, w = i * 6, c = sparks.base[i];
+      streakPos[w] = sparks.pos[o]; streakPos[w + 1] = sparks.pos[o + 1]; streakPos[w + 2] = sparks.pos[o + 2];
+      streakPos[w + 3] = sparks.pos[o] - (sparks.vel[o] - cvx) * SPARK_STREAK;
+      streakPos[w + 4] = sparks.pos[o + 1] - sparks.vel[o + 1] * SPARK_STREAK;
+      streakPos[w + 5] = sparks.pos[o + 2] - (sparks.vel[o + 2] - cvz) * SPARK_STREAK;
+      streakCol[w] = c.r; streakCol[w + 1] = c.g; streakCol[w + 2] = c.b;
+      streakCol[w + 3] = 0; streakCol[w + 4] = 0; streakCol[w + 5] = 0;   // 光を足す描き方なので、黒は透明になる
+    }
+    sparkGeo.setDrawRange(0, sparks.n);
+    haloGeo.setDrawRange(0, sparks.n);
+    sparkGeo.attributes.position.needsUpdate = true;
+    sparkGeo.attributes.color.needsUpdate = true;
+    haloGeo.attributes.color.needsUpdate = true;
+    streakGeo.setDrawRange(0, sparks.n * 2);
+    streakGeo.attributes.position.needsUpdate = true;
+    streakGeo.attributes.color.needsUpdate = true;
+  }
+
+  // 加速の風：電車のまわりの空中に細い筋を置き（地面に対して止まっている）、通り過ぎたら前へ置き直す。速いほど長く濃くなる
+  const windMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0, depthWrite:false, fog:false });
+  const winds = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.025, 0.025), windMat, WIND_N);
+  winds.frustumCulled = false;
+  scene.add(winds);
+  const windList = [];
+  const windDummy = new THREE.Object3D();
+  function placeWind(w, ahead){
+    w.s = s + ahead;
+    w.l = (Math.random() < 0.5 ? -1 : 1) * (1.8 + Math.random() * 5);
+    w.y = 0.5 + Math.random() * 6;
+  }
+  for (let i = 0; i < WIND_N; i++) { const w = {}; placeWind(w, -10 + Math.random() * 70); windList.push(w); }
+  function stepWinds(){
+    const a = Math.max(0, Math.min(1, (v - WIND_V) / (WIND_FULL - WIND_V))) * (mode === 'run' ? 1 : 0);
+    windMat.opacity = a * WIND_ALPHA;
+    winds.visible = a > 0;
+    if (!winds.visible) return;
+    const len = 1 + v * 0.2;
+    windList.forEach((w, i) => {
+      if (w.s < s - 20) placeWind(w, 40 + Math.random() * 30);   // カメラの後ろへ抜けたら前へ
+      const p = pathAt(w.s), q = offsetPt(p, w.l);
+      windDummy.position.set(q.x, w.y, q.z);
+      windDummy.rotation.set(0, -p.h, 0);
+      windDummy.scale.set(len, 1, 1);
+      windDummy.updateMatrix();
+      winds.setMatrixAt(i, windDummy.matrix);
+    });
+    winds.instanceMatrix.needsUpdate = true;
+  }
+
+  // ---------- 曲がれるかどうかの線 ----------
+  // その地点を今の速さで通ったときの傾き（倒れきる角度を1とした割合）で色を決める：0なら緑、半分で黄、1以上で赤
+  const GUIDE_N = Math.floor(GUIDE_AHEAD / GUIDE_STEP) + 1;
+  const guidePos = new Float32Array(GUIDE_N * 2 * 3), guideCol = new Float32Array(GUIDE_N * 2 * 3);
+  const guideGeo = new THREE.BufferGeometry();
+  guideGeo.setAttribute('position', new THREE.BufferAttribute(guidePos, 3));
+  guideGeo.setAttribute('color', new THREE.BufferAttribute(guideCol, 3));
+  {
+    const idx = [];
+    for (let i = 0; i < GUIDE_N - 1; i++) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+    guideGeo.setIndex(idx);
+  }
+  const guide = new THREE.Mesh(guideGeo, new THREE.MeshBasicMaterial({ vertexColors:true, transparent:true, opacity:GUIDE_ALPHA, depthWrite:false, side:THREE.DoubleSide, fog:false }));
+  guide.frustumCulled = false;
+  guide.renderOrder = 1;
+  scene.add(guide);
+  const GUIDE_OK = new THREE.Color(0x3ddc5a), GUIDE_MID = new THREE.Color(0xffd23a), GUIDE_NG = new THREE.Color(0xff3b2f), guideC = new THREE.Color();
+  function updateGuide(){
+    guide.visible = mode === 'run' || mode === 'ready';
+    if (!guide.visible) return;
+    const y = RAIL_BASE + 0.02;
+    for (let i = 0; i < GUIDE_N; i++) {
+      const ss = s + GUIDE_FROM + i * GUIDE_STEP, p = pathAt(ss), k = KAP[Math.floor(wrapS(ss))];
+      // 傾きの計算（stepTilt）と同じ式で、今の速さのまま通ったときにつり合う傾き
+      const eq = Math.max(0, (v * v * k * realScale * TIP_H - TIP_G * TIP_B) / TIP_SPRING) / fallRad;
+      if (eq < 0.5) guideC.copy(GUIDE_OK).lerp(GUIDE_MID, eq / 0.5); else guideC.copy(GUIDE_MID).lerp(GUIDE_NG, Math.min(1, (eq - 0.5) / 0.5));
+      const sx = -Math.sin(p.h) * GUIDE_W / 2, sz = Math.cos(p.h) * GUIDE_W / 2;
+      guidePos.set([p.x - sx, y, p.z - sz, p.x + sx, y, p.z + sz], i * 6);
+      guideCol.set([guideC.r, guideC.g, guideC.b, guideC.r, guideC.g, guideC.b], i * 6);
+    }
+    guideGeo.attributes.position.needsUpdate = true;
+    guideGeo.attributes.color.needsUpdate = true;
+  }
+
+  // 最速タイム：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  const BEST_KEY = 'trainTimeAttack.bestTime';
+  let bestTime = 0;
+  try { bestTime = parseFloat(localStorage.getItem(BEST_KEY)) || 0; } catch(e) {}
+  function goal(){
+    mode = 'goal';
+    seGoal();
+    if (!bestTime || time < bestTime) {
+      bestTime = time;
+      try { localStorage.setItem(BEST_KEY, String(bestTime)); } catch(e) {}
+    }
+    $('final').firstChild.textContent = fmtTime(time);
+    $('best').firstChild.textContent = fmtTime(bestTime);
+    $('over').hidden = false;
+    $('retry').focus();
+  }
+  $('retry').addEventListener('click', resetGame);
+
+  // 共有：文面を共有シートへ。使えない環境では文面をコピーする
+  const shareText = () => `一周 ${fmtTime(time)}！\n${location.href.split(/[?#]/)[0]}\n#トレインタイムアタック`;
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    // 1) 共有シート（スマホなど）
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 2) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+
+  // ---------- 表示 ----------
+  // 電光掲示板：状況の欄は次の駅を出す（乗り降りの人数は駅名の大きな表示に出す）。欄に収まらないときは文字を小さくする
+  const LED_SIZE = 20;       // 掲示板の文字の大きさ（収まるときの大きさ）
+  const LED_SCROLL = 150;    // 状況の欄の文字が右から左へ流れる速さ（ピクセル/秒）
+  const LED_DOT = 3;         // LEDの粒の間隔（流れる文字はこの間隔ずつ動かして、粒の上を動くように見せる）
+  let ledMsgX = 0;           // 状況の欄の文字の左端の位置（欄の左端から）
+  function ledStatus(){
+    if (mode === 'ready') return 'まもなく発車';
+    if (mode === 'goal') return '一周しました';
+    return '次は ' + (nextSt < STATIONS.length ? STATIONS[nextSt][0] : STATIONS[0][0]);
+  }
+  // 欄の文字を変える（変わったときだけ。欄の幅に収まるように文字の大きさを合わせる）
+  function setLed(id, text, force){
+    const cell = $(id), span = cell.firstChild;
+    if (span.textContent === text && !force) return;
+    span.textContent = text;
+    span.style.fontSize = LED_SIZE + 'px';
+    const room = cell.clientWidth - 6;
+    if (span.offsetWidth > room) span.style.fontSize = Math.floor(LED_SIZE * room / span.offsetWidth) + 'px';
+  }
+  // 状況の欄：文字が変わったら右端から流し始める（大きさは変えず、長い文字もそのまま流す）
+  function setLedMsg(text){
+    const cell = $('led-msg'), span = cell.firstChild;
+    if (span.textContent === text) return;
+    span.textContent = text;
+    span.style.fontSize = LED_SIZE + 'px';
+    ledMsgX = cell.clientWidth;
+  }
+  // 状況の欄の文字を左へ流す。左へ出きったら、また右端から
+  function stepLedScroll(dt){
+    const cell = $('led-msg'), span = cell.firstChild;
+    ledMsgX -= LED_SCROLL * dt;
+    if (ledMsgX < -span.offsetWidth) ledMsgX = cell.clientWidth;
+    span.style.transform = `translateX(${Math.round(ledMsgX / LED_DOT) * LED_DOT}px)`;
+  }
+  // 通過中の駅名と、その駅を過ぎたあとに残る駅の数（東京を含む）を大きく出す
+  // 出始めと、別の駅に変わったときは入りの動きをやり直し、消えるときは消える動きのあとで隠す
+  let passShown = -1, passHideTimer = 0;
+  function updatePass(dt){
+    if (passT > 0) passT -= dt;
+    const el = $('pass'), show = passT > 0 && passSt >= 1 && mode === 'run';
+    if (show) {
+      if (passShown !== passSt) {
+        clearTimeout(passHideTimer);
+        el.hidden = false;
+        el.classList.remove('in', 'out');
+        void el.offsetWidth;   // 同じ動きをもう一度始めるため
+        el.classList.add('in');
+        passShown = passSt;
+        seStation();
+      }
+      const st = stations[passSt];
+      const nameEl = $('pass-name'), name = STATIONS[passSt][0];
+      if (nameEl.textContent !== name) {
+        nameEl.textContent = name;
+        nameEl.style.fontSize = PASS_NAME_SIZE + 'px';
+        const room = el.clientWidth - 24;
+        if (nameEl.offsetWidth > room) nameEl.style.fontSize = Math.floor(PASS_NAME_SIZE * room / nameEl.offsetWidth) + 'px';
+      }
+      setText('pass-left', `残り${STATIONS.length - passSt}駅`);
+      setText('pass-pax', `乗車 +${st.planOn}　降車 −${st.planOff}`);
+    } else if (passShown !== -1) {
+      passShown = -1;
+      el.classList.remove('in');
+      el.classList.add('out');
+      passHideTimer = setTimeout(() => { el.hidden = true; el.classList.remove('out'); }, 120);   // 消える動き（.out）の長さに合わせる
+    }
+  }
+  function setText(id, text){ const el = $(id); if (el.textContent !== text) el.textContent = text; }
+  function updateHud(force){
+    drawMeter();
+    // 東京に戻るまでに通る駅の数（東京を含む）。駅を通っている間は、その駅を数えない（大きく出す数とそろえる）
+    const left = passT > 0 && passSt >= 1 ? STATIONS.length - passSt : STATIONS.length - nextSt + 1;
+    setLed('led-type', `${Math.max(1, left)}駅`, force);   // 見出しが「残り」なので、数と「駅」だけ
+    setLedMsg(ledStatus());
+    setLed('led-time', fmtTime(time), force);
+    const lv = PAX_LEVELS.find(([n]) => pax >= n);
+    setLed('led-pax', lv[1], force);
+    $('led-pax').style.color = `var(${lv[2]})`;
+  }
+
+  // ---------- カメラ ----------
+  const camPos = V(0, 0, 0), camLook = V(0, 0, 0);
+  let camInit = false, camH = 0, shakeT = 0;
+  function updateCamera(dt){
+    if (mode === 'derail') return;   // 脱線中は、脱線したときの位置と向きのまま動かさない
+    const p = pathAt(s);
+    const q = pathAt(s + CAM_AHEAD), aheadH = Math.atan2(q.z - p.z, q.x - p.x);   // 線路の先の点の方向
+    if (!camInit) camH = aheadH;
+    camH += angDiff(camH, aheadH) * Math.min(1, dt * CAM_TURN);   // 向きはゆっくり追いかける（カーブで振り回さない）
+    const tx = p.x - Math.cos(camH) * CAM_BACK, tz = p.z - Math.sin(camH) * CAM_BACK;
+    camPos.set(tx, CAM_UP, tz);
+    camLook.set(p.x + Math.cos(camH) * CAM_LOOK, 1.2, p.z + Math.sin(camH) * CAM_LOOK);
+    // 速いときは揺らす（いくつかの波を重ねて、規則的に見えないようにする。見る点は少しだけ揺らして向きもぶれさせる）
+    shakeT += dt;
+    const k = Math.min(1, Math.max(0, (v * 3.6 - SHAKE_FROM) / (SHAKE_FULL - SHAKE_FROM)));
+    if (k > 0) {
+      const a = SHAKE_AMP * k * k, w = shakeT * SHAKE_FREQ * Math.PI * 2;
+      const sx = a * (Math.sin(w * 1.0) * 0.6 + Math.sin(w * 1.73 + 1.1) * 0.4);   // 左右
+      const sy = a * (Math.sin(w * 1.31 + 2.3) * 0.6 + Math.sin(w * 2.17 + 0.4) * 0.4);   // 上下
+      const rx = -Math.sin(camH), rz = Math.cos(camH);   // カメラの右向き
+      camPos.x += rx * sx; camPos.z += rz * sx; camPos.y += sy;
+      camLook.x += rx * sx * 0.4; camLook.z += rz * sx * 0.4; camLook.y += sy * 0.4;
+    }
+    camInit = true;
+    camera.position.copy(camPos);
+    camera.lookAt(camLook);
+    sun.position.set(p.x + SUN_OFFSET.x, SUN_OFFSET.y, p.z + SUN_OFFSET.z);
+    sun.target.position.set(p.x, 0, p.z);
+  }
+
+  // ---------- 速度計 ----------
+  // 文字盤は大きさが変わったときだけ描き、毎フレームは針だけを重ねる
+  const meterCv = $('meter'), meterG = meterCv.getContext('2d'), meterFace = document.createElement('canvas');
+  const NEEDLE = cssColor('--led-red'), HUB = cssColor('--led-label');
+  function resizeMeter(){
+    const dpr = Math.min(devicePixelRatio || 1, 2), W = meterCv.clientWidth;
+    meterCv.width = meterCv.height = meterFace.width = meterFace.height = Math.round(W * dpr);
+    const g = meterFace.getContext('2d'), c = W / 2, R = W / 2 - 2;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = cssColor('--led-bg');
+    g.beginPath(); g.arc(c, c, R, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = g.fillStyle = cssColor('--led-label');
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = `700 ${Math.round(W * 0.07)}px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif`;
+    for (let k = 0; k <= METER_MAX; k += METER_STEP / 2) {
+      const a = METER_A0 + METER_SWEEP * k / METER_MAX, big = k % METER_STEP === 0;
+      const r0 = R * (big ? 0.78 : 0.84), r1 = R * 0.92;
+      g.lineWidth = big ? 2 : 1;
+      g.beginPath(); g.moveTo(c + Math.cos(a) * r0, c + Math.sin(a) * r0); g.lineTo(c + Math.cos(a) * r1, c + Math.sin(a) * r1); g.stroke();
+      if (big) g.fillText(String(k), c + Math.cos(a) * R * 0.64, c + Math.sin(a) * R * 0.64);
+    }
+    g.font = `700 ${Math.round(W * 0.075)}px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif`;
+    g.fillText('km/h', c, c + R * 0.42);
+  }
+  function drawMeter(){
+    const dpr = meterCv.width / meterCv.clientWidth, W = meterCv.clientWidth, c = W / 2, R = W / 2 - 2;
+    const g = meterG;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, meterCv.width, meterCv.height);
+    g.drawImage(meterFace, 0, 0);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const a = METER_A0 + METER_SWEEP * v * 3.6 / METER_MAX;   // 上限を超えても止めずに回り続ける
+    g.strokeStyle = NEEDLE; g.lineWidth = 3; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(c - Math.cos(a) * R * 0.12, c - Math.sin(a) * R * 0.12); g.lineTo(c + Math.cos(a) * R * 0.86, c + Math.sin(a) * R * 0.86); g.stroke();
+    g.fillStyle = HUB;
+    g.beginPath(); g.arc(c, c, R * 0.07, 0, Math.PI * 2); g.fill();
+  }
+  resizeMeter();
+  addEventListener('resize', resizeMeter);
+
+  // ---------- 地図（電車のまわりを寄りで映す。北が上で、電車がいつも真ん中） ----------
+  const mapCv = $('map'), mapG = mapCv.getContext('2d');
+  function resizeMap(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), W = mapCv.clientWidth;
+    mapCv.width = mapCv.height = Math.round(W * dpr);
+  }
+  function drawMap(){
+    const dpr = mapCv.width / mapCv.clientWidth, W = mapCv.clientWidth;
+    const c = mode === 'derail' ? { x:der.x, z:der.z } : pathAt(s);
+    const k = W / MAP_VIEW, pt = (x, z) => [W / 2 + (x - c.x) * k, W / 2 + (z - c.z) * k];
+    const g = mapG;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, W, W);
+    // 線路（映る範囲の近くだけ描く）
+    g.strokeStyle = cssColor('--map-line'); g.lineWidth = 4; g.lineJoin = g.lineCap = 'round';
+    g.beginPath();
+    let pen = false;
+    const R = MAP_VIEW * 0.8;
+    for (let i = 0; i <= N; i += 3) {
+      const j = i % N;
+      if (Math.abs(PX[j] - c.x) > R || Math.abs(PZ[j] - c.z) > R) { pen = false; continue; }
+      const [x, y] = pt(PX[j], PZ[j]);
+      pen ? g.lineTo(x, y) : g.moveTo(x, y);
+      pen = true;
+    }
+    g.stroke();
+    // 駅は路線図のように、白い丸にふちを付ける
+    g.fillStyle = cssColor('--map-st'); g.strokeStyle = cssColor('--map-st-edge'); g.lineWidth = 1.5;
+    stationS.forEach(ss => {
+      const p = pathAt(ss);
+      if (Math.abs(p.x - c.x) > R || Math.abs(p.z - c.z) > R) return;
+      const [x, y] = pt(p.x, p.z);
+      g.beginPath(); g.arc(x, y, MAP_ST_R, 0, Math.PI * 2); g.fill(); g.stroke();
+    });
+    // 電車（真ん中）
+    g.fillStyle = cssColor('--map-car'); g.strokeStyle = cssColor('--map-bg'); g.lineWidth = 2;
+    g.beginPath(); g.arc(W / 2, W / 2, MAP_CAR_R, 0, Math.PI * 2); g.fill(); g.stroke();
+  }
+
+  function resize(){
+    resizeMap();
+    updateHud(true);   // 掲示板の文字の大きさを合わせ直す
+    const w = $('wrap').clientWidth, h = $('wrap').clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  // ---------- ゲームループ ----------
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.max(0, Math.min((now - last) / 1000, 1 / 30));   // タブ復帰時の大ジャンプ防止
+    last = now;
+    if (mode === 'run' || mode === 'derail') time += dt;
+    if (mode === 'run' || mode === 'ready') { stepRun(dt); if (mode !== 'derail') stepTilt(dt); if (mode !== 'derail') placeCar(dt); }
+    else if (mode === 'goal') { v = Math.max(0, v - GOAL_BRAKE * dt); s += v * dt; placeCar(dt); }   // 一周したら止まる
+    if (mode === 'derail') { stepDerail(dt); if (der) placeDerailed(); }
+    stepExchange();
+    stepMovers(dt);
+    stepSparks(dt);
+    stepWinds();
+    updateGuide();
+    stepSound();
+    updateCamera(dt);
+    skyDome.position.copy(camera.position);   // 空はカメラに付いて動かす（近づくことがないように）
+    updateHud();
+    updatePass(dt);
+    stepLedScroll(dt);
+    drawMap();
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+  resetGame();
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

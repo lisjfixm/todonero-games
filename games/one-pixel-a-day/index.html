@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/one-pixel-a-day/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>みんなで1マス</title>
+<meta name="description" content="みんなで1マスずつ塗る共有お絵かき">
+<style>
+  :root{--bg:#fff;--fg:#222;--sub:#666;--line:#ddd;--accent:#222;--focus:#0083c7;--howto-bg:#fff;--howto-fg:#222}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg);color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;              /* ダブルタップ拡大を殺す */
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #app{display:flex;flex-direction:column;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;padding-top:env(safe-area-inset-top,0px)}
+  #status{margin:0;padding:10px 12px;min-height:40px;font-size:14px;color:var(--sub)}
+  #stage{position:relative;flex:1;min-height:0;background:var(--line)}
+  #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+  #controls{padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
+  #stamina{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;color:var(--sub)}
+  #stBar{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;flex:1;height:10px}
+  .st{background:var(--line);border-radius:2px}
+  .st.on{background:var(--accent)}
+  #stText{white-space:nowrap;font-variant-numeric:tabular-nums}
+  #palette{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+  button{font:inherit;color:inherit;cursor:pointer}
+  .sw{height:44px;padding:0;border:1px solid var(--line);border-radius:6px}
+  .sw[aria-pressed="true"]{outline:3px solid var(--accent);outline-offset:1px}
+  #paint{display:block;width:100%;height:48px;margin-top:8px;border:0;border-radius:8px;background:var(--accent);color:var(--bg);font-size:16px}
+  #paint:disabled{opacity:.35;cursor:default}
+  :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="app">
+  <p id="status" aria-live="polite">読み込み中…</p>
+  <div id="stage">
+    <canvas id="cv" aria-label="キャンバス"></canvas>
+    <section class="howto" data-pos="top-right" hidden>
+      <h2>遊び方</h2>
+      <p>32×32マスのキャンバスを、訪れた人みんなで1マスずつ塗っていく共有お絵かきです。勝ち負けや完成はありません。1マス塗ると体力を1使います。体力は最大16で、60分に1ずつ回復します。他の人が塗った色は数秒ごとに届きます。</p>
+      <h2>操作</h2>
+      <p>マスをタップして選び、16色から色を選んで「塗る」を押します。1本指のドラッグで移動し、2本指で拡大します。PC はホイールで拡大し、矢印キーでマスを動かし、Enter かスペースで塗り、Esc で選択を解除できます。</p>
+      <h2>楽しみ方</h2>
+      <p>塗ってあるマスも上から塗り替えられます。体力は回線ごとに決まるので、1マスずつ、どこに置くか考えながら少しずつ絵を育ててください。</p>
+      <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    </section>
+  </div>
+  <div id="controls">
+    <div id="stamina"><div id="stBar" aria-hidden="true"></div><span id="stText" aria-label="体力"></span></div>
+    <div id="palette" role="group" aria-label="色"></div>
+    <button id="paint" type="button" disabled>塗る</button>
+  </div>
+</div>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  const API = 'one-pixel-a-day.php';   // 同じフォルダに置くPHP
+  const SIZE = 32;                     // マス数（縦横）。PHP側の SIZE と合わせる
+  const POLL_MS = 5000;                // 他の人の変更を取りに行く間隔（ミリ秒）
+  const MAX_SCALE = 40;                // 最大拡大率（1マスあたりのCSSピクセル）
+  const TAP_SLOP = 8;                  // この距離以内で指を離したらタップ扱い（px）
+  const WHEEL_ZOOM = 0.0015;           // PCのホイール拡大の効き
+  const MIN_MARK = 10;                 // 選択枠の最小サイズ（縮小時でも見えるように）（px）
+  // 色はパレット番号で保存する（数はPHP側の COLORS と合わせる。0番が初期色）
+  const PALETTE = [
+    '#ffffff','#e4e4e4','#888888','#222222','#ffa7d1','#e50000','#e59500','#a06a42',
+    '#e5d900','#94e044','#02be01','#00d3dd','#0083c7','#0000ea','#cf6ee4','#820080'
+  ];
+
+  const $ = id => document.getElementById(id);
+  const cv = $('cv'), ctx = cv.getContext('2d');
+  const statusEl = $('status'), paintBtn = $('paint'), paletteEl = $('palette');
+  const stBar = $('stBar'), stText = $('stText');
+
+  // ---------- 状態 ----------
+  let mode = 'loading';            // loading / ready / error
+  const data = new Uint8Array(SIZE * SIZE);
+  let version = -1;               // サーバーの盤面の版（同じなら盤面を送ってこない）
+  let busy = false, loading = false;
+  let sel = null;                  // 選択中のマス {x, y}
+  let color = 5;                   // 最初は赤（黒だと下絵の線と見分けがつきにくいため）
+
+  // 体力：本体はサーバー（回線ごと）。手元では次の回復時刻を覚えて秒読みし、
+  // 時刻が来たら1増やして見せる（ずれてもサーバーから取り直した時に揃う）
+  let stamina = 0, staminaMax = 16;
+  let regenMs = 0;                 // 体力1の回復にかかる時間（ミリ秒）
+  let nextAt = 0;                  // 次に1回復する時刻（Date.now() 基準。満タンなら0）
+  const canPaint = () => mode === 'ready' && stamina > 0;
+
+  function fmtRemain(ms){
+    const s = Math.max(0, Math.ceil(ms / 1000));
+    const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, sec = s % 60;
+    const mm = String(m).padStart(h ? 2 : 1, '0'), ss = String(sec).padStart(2, '0');
+    return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+  }
+  // 回復時刻が来ていたら手元の体力を進める（1秒ごとに呼ぶ）
+  function tickStamina(){
+    let changed = false;
+    while (nextAt && regenMs > 0 && Date.now() >= nextAt && stamina < staminaMax) {
+      stamina++; changed = true;
+      nextAt = stamina < staminaMax ? nextAt + regenMs : 0;
+    }
+    if (stamina >= staminaMax) nextAt = 0;
+    updateUI();
+    if (changed) requestDraw();
+  }
+
+  // ---------- 盤面の画像 ----------
+  const img = document.createElement('canvas');
+  img.width = img.height = SIZE;
+  const ictx = img.getContext('2d');
+  const idata = ictx.createImageData(SIZE, SIZE);
+  const rgb = PALETTE.map(h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)));
+  function updateImage(){
+    for (let i = 0; i < data.length; i++) {
+      const c = rgb[data[i]] || rgb[0];
+      idata.data[i*4] = c[0]; idata.data[i*4+1] = c[1]; idata.data[i*4+2] = c[2]; idata.data[i*4+3] = 255;
+    }
+    ictx.putImageData(idata, 0, 0);
+  }
+
+  // ---------- 表示位置（拡大・移動） ----------
+  let W = 0, H = 0, dpr = 1, scale = 1, ox = 0, oy = 0, minScale = 1, fitted = false;
+
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    minScale = Math.min(W, H) / SIZE;
+    if (!fitted || scale < minScale) { scale = minScale; fitted = W > 0; }
+    clampView();
+    requestDraw();
+  }
+  // 画面より小さい時は中央に置き、大きい時は端が内側に入り込まないようにする
+  function clampView(){
+    const s = SIZE * scale;
+    ox = s <= W ? (W - s) / 2 : Math.min(0, Math.max(W - s, ox));
+    oy = s <= H ? (H - s) / 2 : Math.min(0, Math.max(H - s, oy));
+  }
+  function zoomAt(px, py, k){
+    const ns = Math.min(MAX_SCALE, Math.max(minScale, scale * k));
+    const r = ns / scale;
+    ox = px - (px - ox) * r; oy = py - (py - oy) * r;
+    scale = ns;
+    clampView();
+    requestDraw();
+  }
+
+  // ---------- 描画（変化があった時だけ） ----------
+  let drawQueued = false;
+  function requestDraw(){
+    if (drawQueued) return;
+    drawQueued = true;
+    requestAnimationFrame(() => { drawQueued = false; draw(); });
+  }
+  function draw(){
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, ox, oy, SIZE * scale, SIZE * scale);
+    if (!sel) return;
+    const x = ox + sel.x * scale, y = oy + sel.y * scale;
+    // 塗れる時は選んだ色で仮に塗って見せる
+    if (canPaint()) { ctx.fillStyle = PALETTE[color]; ctx.fillRect(x, y, scale, scale); }
+    const m = Math.max(scale, MIN_MARK);
+    const mx = x + scale / 2 - m / 2, my = y + scale / 2 - m / 2;
+    ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeRect(mx - 1.5, my - 1.5, m + 3, m + 3);
+    ctx.lineWidth = 1; ctx.strokeStyle = '#fff'; ctx.strokeRect(mx - 0.5, my - 0.5, m + 1, m + 1);
+  }
+
+  // ---------- 画面の文言・ボタン ----------
+  function updateUI(){
+    paintBtn.disabled = !(canPaint() && sel && !busy);
+    let msg;
+    if (mode === 'loading') msg = '読み込み中…';
+    else if (mode === 'error') msg = '通信できませんでした';
+    else if (stamina <= 0) msg = `体力がありません（あと ${fmtRemain(nextAt - Date.now())} で1回復）`;
+    else if (!sel) msg = '塗るマスをタップしてください（2本指で拡大）';
+    else msg = `(${sel.x + 1}, ${sel.y + 1}) 色を選んで「塗る」`;
+    if (statusEl.textContent !== msg) statusEl.textContent = msg;
+    for (const b of paletteEl.children) b.setAttribute('aria-pressed', String(+b.dataset.c === color));
+
+    // 体力ゲージ：マス目の数は上限ぶん、たまっている数だけ色を付ける
+    if (stBar.children.length !== staminaMax) {
+      stBar.replaceChildren(...Array.from({ length: staminaMax }, () => {
+        const d = document.createElement('div'); d.className = 'st'; return d;
+      }));
+    }
+    [...stBar.children].forEach((d, i) => d.classList.toggle('on', i < stamina));
+    const t = mode !== 'ready' ? '' :
+      `体力 ${stamina}/${staminaMax}` + (nextAt ? `　回復まで ${fmtRemain(nextAt - Date.now())}` : '　満タン');
+    if (stText.textContent !== t) stText.textContent = t;
+  }
+
+  // ---------- 通信 ----------
+  function apply(j){
+    if (typeof j.version !== 'number' || typeof j.stamina !== 'number') throw new Error('bad response');
+    stamina = j.stamina;
+    if (typeof j.max === 'number' && j.max > 0) staminaMax = j.max;
+    if (typeof j.regen === 'number') regenMs = j.regen * 1000;
+    nextAt = (typeof j.next === 'number' && j.next > 0) ? Date.now() + j.next * 1000 : 0;
+    if (typeof j.data === 'string') {
+      const bin = atob(j.data);
+      if (bin.length === data.length) {
+        for (let i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i);
+        version = j.version;
+        updateImage();
+      }
+    }
+    mode = 'ready';
+    updateUI();
+    requestDraw();
+  }
+  async function load(){
+    if (loading || busy) return;
+    loading = true;
+    try {
+      const r = await fetch(`${API}?v=${version}`, { cache:'no-store' });
+      if (!r.ok) throw new Error(r.status);
+      apply(await r.json());
+    } catch(e) {
+      mode = 'error'; updateUI(); requestDraw();
+    } finally {
+      loading = false;
+    }
+  }
+  async function paint(){
+    if (!canPaint() || !sel || busy) return;
+    busy = true; updateUI();
+    try {
+      const r = await fetch(API, {
+        method:'POST', cache:'no-store',
+        headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify({ x:sel.x, y:sel.y, c:color })
+      });
+      if (!r.ok) throw new Error(r.status);
+      const j = await r.json();
+      if (j.ok) sel = null;
+      apply(j);
+    } catch(e) {
+      mode = 'error';
+    } finally {
+      busy = false; updateUI(); requestDraw();
+    }
+  }
+
+  // ---------- 入力（Pointer Events） ----------
+  const ptrs = new Map();   // pointerId → 位置
+  let tapOk = false;        // 1本指で動かさずに離したらマス選択
+  const local = e => { const r = cv.getBoundingClientRect(); return { x:e.clientX - r.left, y:e.clientY - r.top }; };
+
+  function selectAt(p){
+    const x = Math.floor((p.x - ox) / scale), y = Math.floor((p.y - oy) / scale);
+    if (x < 0 || y < 0 || x >= SIZE || y >= SIZE) return;
+    sel = { x, y };
+    updateUI(); requestDraw();
+  }
+
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    const p = local(e);
+    tapOk = ptrs.size === 0;   // 2本目が置かれたらタップではない
+    ptrs.set(e.pointerId, { x:p.x, y:p.y, x0:p.x, y0:p.y });
+  });
+  cv.addEventListener('pointermove', e => {
+    const q = ptrs.get(e.pointerId);
+    if (!q) return;
+    const before = [...ptrs.values()].map(v => ({ x:v.x, y:v.y }));
+    const p = local(e);
+    q.x = p.x; q.y = p.y;
+    if (Math.hypot(q.x - q.x0, q.y - q.y0) > TAP_SLOP) tapOk = false;
+    const after = [...ptrs.values()];
+    if (after.length === 1) {
+      // 1本指：移動
+      ox += after[0].x - before[0].x; oy += after[0].y - before[0].y;
+      clampView(); requestDraw();
+    } else {
+      // 2本指：2点の中点を中心に拡大し、中点の動きぶん移動
+      const [a0, b0] = before, [a1, b1] = after;
+      const d0 = Math.hypot(b0.x - a0.x, b0.y - a0.y), d1 = Math.hypot(b1.x - a1.x, b1.y - a1.y);
+      const m0x = (a0.x + b0.x) / 2, m0y = (a0.y + b0.y) / 2;
+      const m1x = (a1.x + b1.x) / 2, m1y = (a1.y + b1.y) / 2;
+      ox += m1x - m0x; oy += m1y - m0y;
+      zoomAt(m1x, m1y, d0 > 0 ? d1 / d0 : 1);
+    }
+  });
+  function endPointer(e){
+    if (!ptrs.has(e.pointerId)) return;
+    if (e.type === 'pointerup' && tapOk && ptrs.size === 1) selectAt(local(e));
+    ptrs.delete(e.pointerId);
+    tapOk = false;
+  }
+  cv.addEventListener('pointerup', endPointer);
+  cv.addEventListener('pointercancel', endPointer);
+
+  // PC：ホイールで拡大縮小
+  cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    const p = local(e);
+    zoomAt(p.x, p.y, Math.exp(-e.deltaY * WHEEL_ZOOM));
+  }, { passive:false });
+
+  // PC：矢印キーでマス移動、Enter/スペースで塗る、Escで選択解除
+  document.addEventListener('keydown', e => {
+    const dir = { ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,-1], ArrowDown:[0,1] }[e.key];
+    if (dir) {
+      e.preventDefault();
+      const c = sel || { x:SIZE / 2, y:SIZE / 2 };
+      sel = { x:Math.min(SIZE - 1, Math.max(0, Math.floor(c.x + (sel ? dir[0] : 0)))),
+              y:Math.min(SIZE - 1, Math.max(0, Math.floor(c.y + (sel ? dir[1] : 0)))) };
+      updateUI(); requestDraw();
+    } else if ((e.key === 'Enter' || e.key === ' ') && !(e.target instanceof HTMLButtonElement)) {
+      e.preventDefault(); paint();
+    } else if (e.key === 'Escape') {
+      sel = null; updateUI(); requestDraw();
+    }
+  });
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て
+  // キャンバスの操作が奪われるのを防ぐ
+  cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
+  document.addEventListener('touchmove', e => { if (ptrs.size) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => e.preventDefault());
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+
+  // ---------- パレットとボタン ----------
+  PALETTE.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'sw'; b.dataset.c = String(i);
+    b.style.background = c;
+    b.setAttribute('aria-label', `色${i + 1}`);
+    b.addEventListener('click', () => { color = i; updateUI(); requestDraw(); });
+    paletteEl.appendChild(b);
+  });
+  paintBtn.addEventListener('click', paint);
+
+  // ---------- 開始 ----------
+  resize();
+  addEventListener('resize', resize);
+  updateImage();
+  updateUI();
+  load();
+  // 他の人の変更を取り込む（裏にある間は止める）
+  setInterval(() => { if (!document.hidden) load(); }, POLL_MS);
+  // 体力の秒読み表示と回復
+  setInterval(() => { if (!document.hidden) tickStamina(); }, 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/speed-cards/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>スピード物理</title>
+<meta name="description" content="トランプのスピードでCPUと対戦">
+<style>
+:root{--bg:#2a2a2a;--light:#fff;--felt:#1d6b3a;--wood:#6d4527;--shirt:#f2f2f2;--vest:#4a4a4a;--vest-line:#2b2b2b;--button:#1c1c1c;--skin:#f1c7a5;--hair:#3b2a20;--tie:#1a1a1a;--pants:#2b2b2b;--fist:#ffc83d;--flash:#fff;--spark1:#fff;--spark2:#ffe066;--spark3:#ff8a00;--burst:#ffd23f;--burst-edge:#ff5a1f;--power:#ffb300;--fg:#fff;--sub:#d5e8da;--card:#fff;--line:#999;--red:#c62828;--black:#222;--back:#2f5d9e;--back-line:rgba(255,255,255,.35);--hl:#f9a825;--panel:rgba(0,0,0,.6);--howto-bg:#1d6b3a;--howto-fg:#fff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--fg);font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#game{position:relative;margin:0 auto;width:100%;max-width:420px;height:100vh;height:100dvh}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.info{position:absolute;transform:translate(-50%,0);white-space:nowrap;font-size:15px;font-weight:bold;color:var(--fg);pointer-events:none}   /* 山札のすぐ手前に置く（位置は resize で決める） */
+#flash{position:absolute;inset:0;background:var(--flash);opacity:0;pointer-events:none;z-index:10}
+#power{position:absolute;left:0;right:0;top:38%;text-align:center;white-space:nowrap;pointer-events:none;z-index:15;font-size:min(15vw,64px);font-weight:900;color:var(--burst);-webkit-text-stroke:3px var(--burst-edge);text-shadow:0 5px 0 var(--burst-edge),0 0 28px var(--burst);opacity:0}
+#power.show{animation:powerPop 1.1s ease-out forwards}   /* パンチが当たった瞬間：大きく叩きつけて弾み、膨らみながら消える */
+@keyframes powerPop{
+  0%{opacity:0;transform:translateY(-50%) scale(3.2) rotate(-14deg)}
+  10%{opacity:1;transform:translateY(-50%) scale(.82) rotate(-5deg)}
+  18%{transform:translate(-6px,-50%) scale(1.15) rotate(-7deg)}
+  26%{transform:translate(5px,-50%) scale(.97) rotate(-4deg)}
+  34%{transform:translate(-3px,-50%) scale(1.03) rotate(-6deg)}
+  42%{transform:translate(0,-50%) scale(1) rotate(-5deg)}
+  75%{opacity:1;transform:translateY(-50%) scale(1.06) rotate(-5deg)}
+  100%{opacity:0;transform:translateY(-50%) scale(1.6) rotate(-5deg)}
+}
+#msg{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:56px;font-weight:bold;text-shadow:0 2px 8px var(--panel);pointer-events:none}   /* 「よーい」「スタート！」を画面の中央に大きく。影は白いカードの上でも読めるように */
+#over{position:absolute;inset:0;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;z-index:20}
+#over.hidden{display:none}
+#result{font-size:32px;font-weight:bold}
+#detail{font-size:18px}
+.btns{display:flex;gap:12px;margin-top:8px}
+button{min-width:120px;min-height:48px;font-size:18px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--black);font-family:inherit}
+button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="cv"></canvas>
+  <div class="info" id="cInfo"><span id="cDeck">0</span>枚</div>
+  <div id="flash"></div>
+  <div id="power" aria-hidden="true">パワー！！！</div>
+  <div id="msg" aria-live="assertive"></div>
+  <div class="info" id="pInfo"><span id="pDeck">0</span>枚</div>
+
+  <div id="over" class="hidden">
+    <div id="result" aria-live="polite"></div>
+    <div id="detail"></div>
+    <div class="btns">
+      <button id="share">共有</button>
+      <button id="retry">もう一回</button>
+    </div>
+  </div>
+<section class="howto" data-pos="top-left" hidden>
+  <h2>遊び方</h2>
+  <p>CPUと同時にカードを出し合い、先に全部出し切ったほうが勝ちのスピードです。あなたは赤、CPUは黒のカードを使い、手前の場札4枚から、中央の台札と数字が1つ違うカードを重ねます。KとAもつながります。両者とも出せないと、1秒後に台札がめくられます。</p>
+  <h2>操作</h2>
+  <p>場札をドラッグして台札の上で離すと出せます。タップだけでは出ません。パワーカードは画面の上半分まで運んで離すと、ディーラーへのパンチになります。吹き飛んで散らばったカードは、スワイプで押しのけられます。PC はマウスで同じ操作です。</p>
+  <h2>コツ</h2>
+  <p>出せる場札には枠が付きますが、どの台札に出せるかは自分で見ます。パワーカードは補充のときに出ることがあり、枚数には数えません。当てると約5秒CPUが止まるので、その間に一気に減らしましょう。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  const CPU_INTERVAL = 0.55; // CPUがカードを出す平均間隔（秒）。小さいほど強い
+  const CPU_JITTER = 0.2;   // CPUの間隔のばらつき（秒）
+  const CPU_FLY = 0.25;     // CPUのカードが台札まで飛ぶ時間（秒）
+  const MOVE_TIME = 0.2;    // あなたのカードや、めくったカードが移動する時間（秒）
+  const READY_TIME = 1.0;   // 開始してから最初の台札を出すまでの時間（秒）
+  const START_MSG_TIME = 0.8; // 「スタート！」を出しておく時間（秒）
+  const STALL_TIME = 1.0;   // 両者とも出せないとき、台札をめくり直すまでの時間（秒）
+  const TAP_MOVE = 8;       // これ以下の移動ならドラッグではなくタップ扱い（px）
+
+  const CW = 1, CH = 1.4, CT = 0.012;         // カードの幅・縦・厚み
+  const FIELD_X = [-1.65, -0.55, 0.55, 1.65]; // 場札4枚の横位置
+  const FIELD_Z = 2.0;      // 場札の列の奥行き（あなたは手前、CPUは奥）
+  const PILE_X = [-0.6, 0.6]; // 台札の横位置（左がCPU側、右があなた側）
+  const DECK_X = 1.8;       // 山札の横位置（あなたは右、CPUは左）
+  const DROP_RANGE = 0.8;   // 台札の中心からこの距離以内で離すと、その台札に出す
+  const DRAG_Y = 0.35;      // ドラッグ中にカードを浮かせる高さ
+  const CAM_TILT = 45;      // カメラの見下ろし角度（度）
+  const TABLE_W = 5.4, TABLE_D = 7.0; // 羅紗（緑の布）の幅・奥行き
+  const RIM = 0.3;          // テーブルの木のふちの幅
+  const BODY_W = 0.75;      // ディーラーの胴の横幅の倍率
+  const BODY_D = 0.5;       // ディーラーの胴の前後の厚みの倍率
+  const DEALER_Z = -4.85;    // ディーラーの立ち位置（奥行き）
+  const POWER_CHANCE = 0.25; // 場札を補充するとき、山札からパワーカードが出る確率
+  const POWER_MAX = 5;      // この回数補充しても出なければ次は必ず出す
+  const PUNCH_TIME = 0.2;   // パンチがディーラーに届くまでの時間（秒）
+  const STUN_TIME = 5.0;    // ディーラーが倒れている時間（秒）。この間CPUはカードを出せない
+  const RECOVER_TIME = 0.7; // ディーラーが起き上がり、散らばったカードが山札に戻る時間（秒）
+  const PUNCH_ZONE = 0.5;   // パワーカードを画面の上からこの割合までの範囲で離すとパンチ
+  const RAG_G = 20;         // ぶっ飛んだディーラーと散らばるカードにかかる重力
+  const FLOOR_Y = -3.6;     // 床の高さ（テーブルの奥の床は画面にほぼ映らない）
+  const WINDUP_TIME = 0.1;  // パンチを放つ前にこぶしを引く時間（秒）
+  const HIT_STOP = 0.12;    // 当たった瞬間に全体を止める時間（秒）
+  const SHAKE_TIME = 0.55;  // 画面の揺れが収まるまでの時間（秒）
+  const SHAKE_AMP = 0.6;    // 画面の揺れの大きさ
+  const FOV_PUNCH = 7;      // 当たった瞬間にカメラが寄る量（画角の度数）
+  const FLASH_TIME = 0.25;  // 画面が白く光ってから消えるまでの時間（秒）
+  const SPARK_COUNT = 70;   // 火花の数
+  const SHOT_DELAY = 0.06;  // パンチが当たってから共有用の画像を撮るまでの時間（秒）。爆発が広がりかけた瞬間を撮る
+  const SHOT_W = 600;       // 共有用の画像の横幅（px）
+  const VIEW_SIDE = 0.85;   // 吹っ飛んだディーラーが出られない画面の左右の端（画面の幅の割合、1で端）
+  const VIEW_FLOOR_TOP = 0.85; // 奥の壁の足元が、画面の上からはみ出さない高さ（画面の高さの割合）
+  const SWIPE_GAIN = 1.3;   // スワイプの速さに対して、カードを押し出す速さの倍率
+  const SWIPE_MAX = 30;     // スワイプで押し出す速さの上限
+  const RANKS = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+  const $ = id => document.getElementById(id);
+  const css = getComputedStyle(document.documentElement);
+  const col = name => css.getPropertyValue(name).trim();
+
+  // ---------- 3D ----------
+  const cv = $('cv');
+  const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(col('--bg'));
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+
+  const cardGeo = new THREE.BoxGeometry(CW, CT, CH);
+  const edgeMat = new THREE.MeshBasicMaterial({ color: col('--line') });
+  const hlGeo = new THREE.PlaneGeometry(CW + 0.14, CH + 0.14).rotateX(-Math.PI / 2);
+  const hlMat = new THREE.MeshBasicMaterial({ color: col('--hl') });
+
+  // ---------- テーブルとディーラー ----------
+  scene.add(new THREE.AmbientLight(col('--light'), 0.55));
+  const sun = new THREE.DirectionalLight(col('--light'), 0.6);
+  sun.position.set(2, 6, 4);
+  scene.add(sun);
+  const lambert = name => new THREE.MeshLambertMaterial({ color: col(name) });
+
+  // 角の丸い長方形（テーブルの天板・ふち用）
+  function roundRect(w, d, r){
+    const s = new THREE.Shape(), x = -w / 2, y = -d / 2;
+    s.moveTo(x + r, y);
+    s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+    s.lineTo(x + w, y + d - r); s.quadraticCurveTo(x + w, y + d, x + w - r, y + d);
+    s.lineTo(x + r, y + d); s.quadraticCurveTo(x, y + d, x, y + d - r);
+    s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+    return s;
+  }
+  // 平面の形を厚みのある板にして寝かせ、上面の高さを topY に合わせる
+  function slab(shape, depth, topY, mat){
+    const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 12 });
+    g.rotateX(-Math.PI / 2);
+    g.translate(0, topY - depth, 0);
+    return new THREE.Mesh(g, mat);
+  }
+  // 羅紗（緑の布）の上面はカードより少し下にする（ハイライト枠が埋もれないように）
+  scene.add(slab(roundRect(TABLE_W, TABLE_D, 0.9), 0.3, -0.012, lambert('--felt')));
+  const rimShape = roundRect(TABLE_W + RIM * 2, TABLE_D + RIM * 2, 0.9 + RIM);
+  rimShape.holes.push(roundRect(TABLE_W, TABLE_D, 0.9));
+  scene.add(slab(rimShape, 0.3, 0.06, lambert('--wood')));
+
+  // ---------- ディーラー（ラグドール） ----------
+  // 関節を点で持ち、点どうしを長さの変わらない棒でつなぐ。ふだんは立ち姿の位置のまま動かさず、
+  // パンチを受けたら重力と棒の長さだけで動かす（ぶっ飛ぶ）
+  const V3 = THREE.Vector3;
+  const REST = {
+    head: [0, 2.4, 0], neck: [0, 1.4, 0], pelvis: [0, -1.2, 0],
+    shL: [-0.8, 1.2, 0], shR: [0.8, 1.2, 0], hipL: [-0.4, -1.2, 0], hipR: [0.4, -1.2, 0],
+    elL: [-1.0, 0.55, 0.6], elR: [1.0, 0.55, 0.6], wrL: [-0.95, 0.22, 1.35], wrR: [0.95, 0.22, 1.35],
+    knL: [-0.45, -2.4, 0.1], knR: [0.45, -2.4, 0.1], ftL: [-0.45, -3.5, 0], ftR: [0.45, -3.5, 0],
+  };
+  const J = {};
+  for (const k in REST) {
+    const r = new V3(...REST[k]); r.z += DEALER_Z;
+    J[k] = { rest: r, pos: r.clone(), prev: r.clone() };
+  }
+  const links = [];
+  const link = (a, b) => links.push({ a: J[a], b: J[b], len: J[a].rest.distanceTo(J[b].rest) });
+  const rigid = ['head', 'neck', 'pelvis', 'shL', 'shR', 'hipL', 'hipR'];   // 頭と胴は形を崩さない
+  rigid.forEach((a, i) => rigid.slice(i + 1).forEach(b => link(a, b)));
+  ['L', 'R'].forEach(s => { link('sh' + s, 'el' + s); link('el' + s, 'wr' + s); link('hip' + s, 'kn' + s); link('kn' + s, 'ft' + s); });
+
+  const dealer = new THREE.Group();
+  scene.add(dealer);
+  const shirt = lambert('--shirt'), skin = lambert('--skin'), button = lambert('--button');
+  const hairMat = lambert('--hair'), tie = lambert('--tie'), eye = lambert('--black'), pants = lambert('--pants');
+  const addTo = (grp, geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); grp.add(m); return m; };
+  // 胴：首と腰の中点を原点にした部品のまとまり
+  // ベストの柄：胸元だけV字に開けて（透明）下のシャツを見せる。V字のふち・前の合わせ目・裾に線を入れる
+  function vestTexture(){
+    const w = 1024, h = 400, cx = w / 2, half = w * 0.065, depth = h * 0.45;
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    g.fillStyle = col('--vest'); g.fillRect(0, 0, w, h);
+    const vee = () => { g.beginPath(); g.moveTo(cx - half, 0); g.lineTo(cx, depth); g.lineTo(cx + half, 0); };
+    g.globalCompositeOperation = 'destination-out';
+    vee(); g.closePath(); g.fill();
+    g.globalCompositeOperation = 'source-over';
+    g.strokeStyle = col('--vest-line'); g.lineCap = 'round';
+    g.lineWidth = 10; vee(); g.stroke();
+    g.lineWidth = 5; g.beginPath(); g.moveTo(cx, depth); g.lineTo(cx, h); g.stroke();
+    g.lineWidth = 10; g.beginPath(); g.moveTo(0, h - 5); g.lineTo(w, h - 5); g.stroke();
+    return new THREE.CanvasTexture(c);
+  }
+  // 胴：首と腰の中点を原点にした部品のまとまり（白い長袖シャツ＋グレーのベスト＋黒い蝶ネクタイ）
+  const torso = new THREE.Group(); dealer.add(torso);
+  // 胴体は人の体のように横長・薄めにする（円柱を横 BODY_W 倍、前後 BODY_D 倍につぶす）
+  const body = new THREE.Group(); body.scale.set(BODY_W, 1, BODY_D); torso.add(body);
+  addTo(body, new THREE.CylinderGeometry(1.0, 0.95, 2.6, 24), shirt, 0, 0, 0);   // シャツ（胴）
+  addTo(body, new THREE.SphereGeometry(1.0, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), shirt, 0, 1.3, 0).scale.set(1, 0.12, 1);   // 肩（シャツ）
+  // ベスト：テクスチャの横中央が正面に来るよう、円柱の継ぎ目を背中側にする（thetaStart = π）
+  const VEST_BOTTOM = -1.3, VEST_TOP = 1.26;
+  addTo(body, new THREE.CylinderGeometry(1.03, 0.98, VEST_TOP - VEST_BOTTOM, 32, 1, true, Math.PI, Math.PI * 2),
+    new THREE.MeshLambertMaterial({ map: vestTexture(), alphaTest: 0.5, side: THREE.DoubleSide }), 0, (VEST_TOP + VEST_BOTTOM) / 2, 0);
+  // ベストのボタン4つ（V字の下に縦に並べる）
+  [-0.1, -0.4, -0.7, -1.0].forEach(y => {
+    const r = 0.98 + 0.05 * (y - VEST_BOTTOM) / (VEST_TOP - VEST_BOTTOM);   // その高さでのベストの半径
+    addTo(torso, new THREE.SphereGeometry(0.06, 12, 8), button, 0, y, r * BODY_D + 0.01).scale.z = 0.5;
+  });
+  addTo(torso, new THREE.CylinderGeometry(0.28, 0.3, 0.4, 16), skin, 0, 1.5, 0);   // 首
+  addTo(torso, new THREE.CylinderGeometry(0.34, 0.38, 0.16, 20), shirt, 0, 1.47, 0);   // シャツの襟
+  // 蝶ネクタイ：襟の前に、左右の羽と真ん中の結び目
+  [-1, 1].forEach(sx => {
+    const w = addTo(torso, new THREE.ConeGeometry(0.11, 0.24, 4), tie, sx * 0.14, 1.5, 0.42);
+    w.rotation.z = sx * Math.PI / 2;
+    w.scale.z = 0.6;
+  });
+  addTo(torso, new THREE.SphereGeometry(0.06, 10, 8), tie, 0, 1.5, 0.44);
+  // 頭：頭の点を原点にする
+  const headG = new THREE.Group(); dealer.add(headG);
+  addTo(headG, new THREE.SphereGeometry(0.72, 24, 18), skin, 0, 0, 0);
+  const cap = addTo(headG, new THREE.SphereGeometry(0.76, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), hairMat, 0, 0.05, -0.05);
+  cap.rotation.x = -0.35;   // 髪は後ろ寄りにかぶせて額を出す
+  [-0.25, 0.25].forEach(x => addTo(headG, new THREE.SphereGeometry(0.07, 10, 8), eye, x, 0.05, 0.66));   // 目
+  // 腕と脚：2つの関節をつなぐ円柱
+  const segs = [], hands = [], feet = [];
+  const seg = (a, b, r, mat) => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, J[a].rest.distanceTo(J[b].rest), 12), mat);
+    dealer.add(m); segs.push({ m, a: J[a], b: J[b] });
+  };
+  ['L', 'R'].forEach(s => {
+    seg('sh' + s, 'el' + s, 0.19, shirt); seg('el' + s, 'wr' + s, 0.16, shirt);
+    seg('hip' + s, 'kn' + s, 0.25, pants); seg('kn' + s, 'ft' + s, 0.22, pants);
+    hands.push({ m: addTo(dealer, new THREE.SphereGeometry(0.19, 16, 12), skin, 0, 0, 0), el: J['el' + s], wr: J['wr' + s] });
+    feet.push({ m: addTo(dealer, new THREE.SphereGeometry(0.25, 16, 12), eye, 0, 0, 0), ft: J['ft' + s] });
+  });
+
+  // 関節の位置から各部品を置く
+  const vA = new V3(), vB = new V3(), vC = new V3(), basis = new THREE.Matrix4(), UP = new V3(0, 1, 0);
+  function frame(obj, origin, yDir, xHint){
+    vA.copy(yDir).normalize();
+    vB.copy(xHint).addScaledVector(vA, -xHint.dot(vA)).normalize();
+    vC.crossVectors(vB, vA);
+    basis.makeBasis(vB, vA, vC);
+    obj.quaternion.setFromRotationMatrix(basis);
+    obj.position.copy(origin);
+  }
+  function updateDealer(){
+    const side = new V3().subVectors(J.shR.pos, J.shL.pos);
+    frame(torso, new V3().addVectors(J.neck.pos, J.pelvis.pos).multiplyScalar(0.5), new V3().subVectors(J.neck.pos, J.pelvis.pos), side);
+    frame(headG, J.head.pos, new V3().subVectors(J.head.pos, J.neck.pos), side);
+    segs.forEach(g => {
+      vA.subVectors(g.b.pos, g.a.pos);
+      g.m.position.copy(g.a.pos).addScaledVector(vA, 0.5);
+      g.m.quaternion.setFromUnitVectors(UP, vA.normalize());
+    });
+    hands.forEach(h => { vA.subVectors(h.wr.pos, h.el.pos).normalize(); h.m.position.copy(h.wr.pos).addScaledVector(vA, 0.15); });
+    feet.forEach(f => f.m.position.copy(f.ft.pos));
+  }
+
+  // ラグドールの物理（位置ベースの簡易シミュレーション）
+  const RAG_H = 1 / 120;
+  let ragOn = false, ragAcc = 0, ragBack = null;
+  // 吹っ飛んでも画面の外へ出ないようにする見えない壁（画面の上・左右の端と、テーブルの奥の壁）。
+  // 値はカメラが決まったとき（resize）に計算する
+  let camView = null, camWorld = null, tanV = 0.36, tanH = 0.17, backZ = -11;
+  const vKeep = new V3();
+  // 左右にはみ出した分は真横へ戻す（奥行きは変えない）。奥は壁で止める
+  function keepInView(p){
+    if (p.z < backZ) p.z = backZ;
+    if (!camView) return;
+    const e = camView.elements;
+    const q = vKeep.copy(p).applyMatrix4(camView), depth = -q.z;
+    if (depth < 0.1) return;
+    const kx = tanH * VIEW_SIDE, rx = e[0], fx = -e[2];   // 世界の x を動かしたときのカメラ座標の横・奥の変化
+    if (q.x > kx * depth) p.x += (kx * depth - q.x) / (rx - kx * fx);
+    else if (q.x < -kx * depth) p.x += (-kx * depth - q.x) / (rx + kx * fx);
+  }
+  const onRim = p => Math.abs(p.x) < TABLE_W / 2 + RIM && Math.abs(p.z) < TABLE_D / 2 + RIM;
+  function ragKick(){
+    const side = (Math.random() * 2 - 1) * 7;     // 左右どちらに飛ぶかは毎回大きく変える
+    const twist = (Math.random() * 2 - 1) * 9;    // 体をひねって横回転させる
+    // 頭は後ろへ、足は前へ蹴り上げて、後ろ宙返りしながら吹っ飛ぶ
+    const vel = {
+      head: [0, 20, -28], neck: [0, 18, -24], shL: [0, 17, -22 + twist], shR: [0, 17, -22 - twist],
+      pelvis: [0, 13, -12], hipL: [0, 13, -12 + twist * 0.5], hipR: [0, 13, -12 - twist * 0.5],
+      knL: [0, 15, -2], knR: [0, 15, -2], ftL: [0, 17, 8], ftR: [0, 17, 8],
+    };
+    for (const k in J) {
+      // 腕はばらばらに振り回す
+      const v = vel[k] || [(Math.random() * 2 - 1) * 14, 12 + Math.random() * 12, -16 + (Math.random() * 2 - 1) * 12];
+      J[k].prev.copy(J[k].pos).sub(new V3(v[0] + side, v[1], v[2]).multiplyScalar(RAG_H));
+    }
+    ragOn = true; ragAcc = 0; ragBack = null;
+  }
+  function ragStep(h){
+    for (const k in J) {
+      const n = J[k];
+      vA.subVectors(n.pos, n.prev).multiplyScalar(0.998);
+      n.prev.copy(n.pos);
+      n.pos.add(vA);
+      n.pos.y -= RAG_G * h * h;
+    }
+    for (let it = 0; it < 8; it++) {
+      for (const l of links) {
+        vA.subVectors(l.b.pos, l.a.pos);
+        const d = vA.length() || 1e-6, k = (d - l.len) / d * 0.5;
+        l.a.pos.addScaledVector(vA, k);
+        l.b.pos.addScaledVector(vA, -k);
+      }
+      for (const key in J) {
+        const n = J[key];
+        keepInView(n.pos);
+        if (n.pos.y < FLOOR_Y) n.pos.y = FLOOR_Y;
+        else if (n.pos.y < 0.1 && n.prev.y >= 0.1 && onRim(n.pos)) n.pos.y = 0.1;   // テーブルの上に落ちた
+      }
+    }
+    // 床やテーブルに触れている点は滑りにくくする
+    for (const k in J) {
+      const n = J[k];
+      if (n.pos.y <= FLOOR_Y + 1e-4 || (n.pos.y <= 0.1 + 1e-4 && onRim(n.pos))) {
+        n.prev.x += (n.pos.x - n.prev.x) * 0.3;
+        n.prev.z += (n.pos.z - n.prev.z) * 0.3;
+      }
+    }
+  }
+  // 起き上がり：今の姿勢から立ち姿へなめらかに戻す
+  function ragRecover(){
+    ragOn = false;
+    ragBack = { t: 0, from: {} };
+    for (const k in J) ragBack.from[k] = J[k].pos.clone();
+  }
+  function ragReset(){
+    for (const k in J) { J[k].pos.copy(J[k].rest); J[k].prev.copy(J[k].rest); }
+    ragOn = false; ragBack = null;
+  }
+  function ragUpdate(dt){
+    if (ragOn) {
+      ragAcc += dt;
+      while (ragAcc >= RAG_H) { ragStep(RAG_H); ragAcc -= RAG_H; }
+    } else if (ragBack) {
+      ragBack.t += dt;
+      const p = Math.min(ragBack.t / RECOVER_TIME, 1), e = p * p * (3 - 2 * p);
+      for (const k in J) { J[k].pos.lerpVectors(ragBack.from[k], J[k].rest, e); J[k].prev.copy(J[k].pos); }
+      if (p >= 1) ragBack = null;
+    }
+    updateDealer();
+  }
+  updateDealer();
+
+  // 👊のこぶし：パワーカードをドラッグし始めるとこれに持ち替え、離すとディーラーへ飛ぶ。
+  // 右手を甲を上にして握った形。向きは lookAt で合わせるので、指の付け根側をローカルの +z に作る。
+  // 指や親指を距離関数（表面までの距離）でなめらかにつなぎ、そこから三角形の面を作る
+  const fistSDF = (() => {
+    const cap = (x, y, z, a, b, r) => {   // 線分 a-b を太らせた形
+      const px = x - a[0], py = y - a[1], pz = z - a[2];
+      const bx = b[0] - a[0], by = b[1] - a[1], bz = b[2] - a[2];
+      const h = Math.min(Math.max((px * bx + py * by + pz * bz) / (bx * bx + by * by + bz * bz), 0), 1);
+      return Math.hypot(px - bx * h, py - by * h, pz - bz * h) - r;
+    };
+    const rbox = (x, y, z, c, he, r) => {   // 角の丸い箱
+      const qx = Math.abs(x - c[0]) - (he[0] - r), qy = Math.abs(y - c[1]) - (he[1] - r), qz = Math.abs(z - c[2]) - (he[2] - r);
+      return Math.hypot(Math.max(qx, 0), Math.max(qy, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qy, qz), 0) - r;
+    };
+    const ell = (x, y, z, c, rd) => {   // だ円体（近似）
+      const qx = (x - c[0]) / rd[0], qy = (y - c[1]) / rd[1], qz = (z - c[2]) / rd[2];
+      const k0 = Math.hypot(qx, qy, qz), k1 = Math.hypot(qx / rd[0], qy / rd[1], qz / rd[2]);
+      return k0 * (k0 - 1) / Math.max(k1, 1e-6);
+    };
+    const smin = (a, b, k) => { const h = Math.min(Math.max(0.5 + 0.5 * (b - a) / k, 0), 1); return b * (1 - h) + a * h - k * h * (1 - h); };
+    // 4本の指：付け根→前→下→手のひらへ折り返す3節（x位置, 太さ, 高さのずれ, 長さの倍率）
+    const fingers = [[-0.36, 0.15, 0.0, 0.95], [-0.12, 0.158, 0.03, 1.0], [0.12, 0.15, 0.01, 0.97], [0.35, 0.13, -0.04, 0.86]].map(([x, r, dy, k]) => {
+      const y = 0.1 + dy;
+      return { r, K: [x, y, 0.22], J1: [x, y - 0.01, 0.22 + 0.4 * k], J2: [x, y - 0.34 * k, 0.26 + 0.42 * k], T: [x, -0.3, 0.22 + 0.2 * k] };
+    });
+    return (x, y, z) => {
+      let d = rbox(x, y, z, [0, -0.02, -0.08], [0.44, 0.24, 0.32], 0.2);   // 手の甲と手のひら
+      let fd = Infinity;
+      for (const f of fingers) {
+        const v = Math.min(cap(x, y, z, f.K, f.J1, f.r), cap(x, y, z, f.J1, f.J2, f.r * 0.97), cap(x, y, z, f.J2, f.T, f.r * 0.92));
+        fd = fd === Infinity ? v : smin(fd, v, 0.03);   // 指どうしは溝が残るよう控えめにつなぐ
+      }
+      d = smin(d, fd, 0.1);
+      // 親指：手の横から前へ伸び、人さし指の中ほどに先を軽く添える（付け根は手のひらになじませる）
+      const th = Math.min(cap(x, y, z, [-0.44, -0.14, -0.05], [-0.54, -0.16, 0.42], 0.15),
+        cap(x, y, z, [-0.54, -0.16, 0.42], [-0.3, -0.16, 0.74], 0.135));
+      return smin(d, th, 0.12);
+    };
+  })();
+
+  // 距離関数から面を作る（格子の各マスに頂点を1つ置き、符号が変わる辺ごとに四角形を張る）
+  function meshFromSDF(f, min, max, step){
+    const nx = Math.ceil((max[0] - min[0]) / step) + 1, ny = Math.ceil((max[1] - min[1]) / step) + 1, nz = Math.ceil((max[2] - min[2]) / step) + 1;
+    const at = (i, j, k) => i + nx * (j + ny * k);
+    const val = new Float32Array(nx * ny * nz);
+    for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++)
+      val[at(i, j, k)] = f(min[0] + i * step, min[1] + j * step, min[2] + k * step);
+    const C = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0, 0, 1], [1, 0, 1], [0, 1, 1], [1, 1, 1]];
+    const E = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]];
+    const cellAt = (i, j, k) => i + (nx - 1) * (j + (ny - 1) * k);
+    const cellV = new Int32Array((nx - 1) * (ny - 1) * (nz - 1)).fill(-1);
+    const pos = [], nor = [], idx = [];
+    const v = new Array(8);
+    for (let k = 0; k < nz - 1; k++) for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+      let neg = 0;
+      for (let c = 0; c < 8; c++) { v[c] = val[at(i + C[c][0], j + C[c][1], k + C[c][2])]; if (v[c] < 0) neg++; }
+      if (neg === 0 || neg === 8) continue;
+      let sx = 0, sy = 0, sz = 0, n = 0;
+      for (const [a, b] of E) {
+        if ((v[a] < 0) === (v[b] < 0)) continue;
+        const t = v[a] / (v[a] - v[b]);
+        sx += C[a][0] + (C[b][0] - C[a][0]) * t; sy += C[a][1] + (C[b][1] - C[a][1]) * t; sz += C[a][2] + (C[b][2] - C[a][2]) * t; n++;
+      }
+      const x = min[0] + (i + sx / n) * step, y = min[1] + (j + sy / n) * step, z = min[2] + (k + sz / n) * step;
+      cellV[cellAt(i, j, k)] = pos.length / 3;
+      pos.push(x, y, z);
+      const e = step * 0.5;   // 法線は距離関数の傾きから取る（なめらかな陰影になる）
+      const gx = f(x + e, y, z) - f(x - e, y, z), gy = f(x, y + e, z) - f(x, y - e, z), gz = f(x, y, z + e) - f(x, y, z - e);
+      const gl = Math.hypot(gx, gy, gz) || 1;
+      nor.push(gx / gl, gy / gl, gz / gl);
+    }
+    // 四角形を2枚の三角形にする。向きは法線と合うように揃える
+    const tri = (a, b, c) => {
+      const ax = pos[a * 3], ay = pos[a * 3 + 1], az = pos[a * 3 + 2];
+      const ux = pos[b * 3] - ax, uy = pos[b * 3 + 1] - ay, uz = pos[b * 3 + 2] - az;
+      const wx = pos[c * 3] - ax, wy = pos[c * 3 + 1] - ay, wz = pos[c * 3 + 2] - az;
+      const cx = uy * wz - uz * wy, cy = uz * wx - ux * wz, cz = ux * wy - uy * wx;
+      if (cx * nor[a * 3] + cy * nor[a * 3 + 1] + cz * nor[a * 3 + 2] < 0) idx.push(a, c, b); else idx.push(a, b, c);
+    };
+    const quad = (a, b, c, d) => { if (a < 0 || b < 0 || c < 0 || d < 0) return; tri(a, b, c); tri(a, c, d); };
+    for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const s0 = val[at(i, j, k)] < 0;
+      if (i < nx - 1 && j > 0 && k > 0 && s0 !== (val[at(i + 1, j, k)] < 0))
+        quad(cellV[cellAt(i, j - 1, k - 1)], cellV[cellAt(i, j, k - 1)], cellV[cellAt(i, j, k)], cellV[cellAt(i, j - 1, k)]);
+      if (j < ny - 1 && i > 0 && k > 0 && s0 !== (val[at(i, j + 1, k)] < 0))
+        quad(cellV[cellAt(i - 1, j, k - 1)], cellV[cellAt(i, j, k - 1)], cellV[cellAt(i, j, k)], cellV[cellAt(i - 1, j, k)]);
+      if (k < nz - 1 && i > 0 && j > 0 && s0 !== (val[at(i, j, k + 1)] < 0))
+        quad(cellV[cellAt(i - 1, j - 1, k)], cellV[cellAt(i, j - 1, k)], cellV[cellAt(i, j, k)], cellV[cellAt(i - 1, j, k)]);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    geo.setIndex(idx);
+    return geo;
+  }
+
+  function makeFist(){
+    const geo = meshFromSDF(fistSDF, [-0.8, -0.6, -0.55], [0.8, 0.5, 1.15], 0.03);   // 格子の細かさ（小さいほどなめらかで重い）
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col('--fist'), roughness: 0.55, metalness: 0 }));
+    m.visible = false;
+    scene.add(m);
+    return m;
+  }
+  const glove = makeFist();
+
+  const FONT = '"Hiragino Sans","Noto Sans JP",system-ui,sans-serif';
+
+  // カードの表面を canvas に描く（上下どちらから見ても数字が読めるよう四隅の2か所に書く）
+  function faceTexture(c){
+    const w = 256, h = 358;
+    const cvs = document.createElement('canvas');
+    cvs.width = w; cvs.height = h;
+    const g = cvs.getContext('2d');
+    g.fillStyle = col('--card'); g.fillRect(0, 0, w, h);
+    g.strokeStyle = col('--line'); g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6);
+    g.fillStyle = c.red ? col('--red') : col('--black');
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    const corner = () => {
+      g.font = `bold 58px ${FONT}`; g.fillText(RANKS[c.r], 46, 46);
+      g.font = `42px ${FONT}`; g.fillText(c.s, 46, 98);
+    };
+    corner();
+    g.save(); g.translate(w, h); g.rotate(Math.PI); corner(); g.restore();
+    g.font = `130px ${FONT}`; g.fillText(c.s, w / 2, h / 2 + 6);
+    const t = new THREE.CanvasTexture(cvs);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+
+  // カードの裏面：白いふちの内側を塗りつぶし、斜めの格子模様を入れる（全カード共通）
+  function backTexture(){
+    const w = 256, h = 358, m = 16;   // m = 白いふちの幅
+    const cvs = document.createElement('canvas');
+    cvs.width = w; cvs.height = h;
+    const g = cvs.getContext('2d');
+    g.fillStyle = col('--card'); g.fillRect(0, 0, w, h);
+    g.strokeStyle = col('--line'); g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6);
+    g.fillStyle = col('--back'); g.fillRect(m, m, w - m * 2, h - m * 2);
+    g.save();
+    g.beginPath(); g.rect(m, m, w - m * 2, h - m * 2); g.clip();
+    g.strokeStyle = col('--back-line'); g.lineWidth = 3;
+    for (let k = -h; k < w + h; k += 18) {
+      g.beginPath(); g.moveTo(k, 0); g.lineTo(k + h, h); g.stroke();
+      g.beginPath(); g.moveTo(k, h); g.lineTo(k + h, 0); g.stroke();
+    }
+    g.restore();
+    g.strokeStyle = col('--card'); g.lineWidth = 3; g.strokeRect(m + 8, m + 8, w - (m + 8) * 2, h - (m + 8) * 2);
+    const t = new THREE.CanvasTexture(cvs);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  const backMat = new THREE.MeshBasicMaterial({ map: backTexture() });
+
+  // パワーカードの表面
+  function powerTexture(){
+    const w = 256, h = 358;
+    const cvs = document.createElement('canvas');
+    cvs.width = w; cvs.height = h;
+    const g = cvs.getContext('2d');
+    g.fillStyle = col('--power'); g.fillRect(0, 0, w, h);
+    g.strokeStyle = col('--line'); g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6);
+    g.fillStyle = col('--black');
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = `150px ${FONT}`; g.fillText('👊', w / 2, h / 2 + 8);
+    const t = new THREE.CanvasTexture(cvs);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+
+  function makeCard(r, s, red, tex){
+    const c = { r, s, red, tw: null, phys: null };
+    // BoxGeometry の面の順: +x, -x, +y(表), -y(裏), +z, -z
+    c.mesh = new THREE.Mesh(cardGeo, [edgeMat, edgeMat, new THREE.MeshBasicMaterial({ map: tex || faceTexture(c) }), backMat, edgeMat, edgeMat]);
+    // 出せる場札の下に敷く枠（ハイライト）
+    c.hl = new THREE.Mesh(hlGeo, hlMat);
+    c.hl.position.y = -CT / 2 - 0.002;
+    c.hl.visible = false;
+    c.mesh.add(c.hl);
+    scene.add(c.mesh);
+    return c;
+  }
+  const suitCards = suits => suits.flatMap(([s, red]) => Array.from({ length: 13 }, (_, k) => makeCard(k + 1, s, red)));
+  const pCards = suitCards([['♥', true], ['♦', true]]);
+  const cCards = suitCards([['♠', false], ['♣', false]]);
+  // パワーカードは1枚だけ用意して使い回す（場に出ていないときは隠す）
+  const powerCard = makeCard(0, '', false, powerTexture());
+  powerCard.power = true;
+  powerCard.mesh.visible = false;
+  const allCards = [...pCards, ...cCards, powerCard];
+
+  // ---------- カードの移動（目標の位置・向きへ補間する） ----------
+  const qFor = (yaw, faceUp) => new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, faceUp ? 0 : Math.PI, 'YXZ'));
+  function setTarget(c, x, y, z, yaw, faceUp, dur){
+    if (c.phys) return;   // 吹き飛んでいる間は物理に任せる
+    const pos = new THREE.Vector3(x, y, z), q = qFor(yaw, faceUp), m = c.mesh;
+    if (c.tw && c.tw.pos.distanceToSquared(pos) < 1e-8 && c.tw.q.angleTo(q) < 1e-4) return;
+    if (dur <= 0) {
+      m.position.copy(pos); m.quaternion.copy(q);
+      c.tw = { pos, q, t: 0, dur: 0 };
+      return;
+    }
+    const dist = m.position.distanceTo(pos);
+    c.tw = { pos, q, p0: m.position.clone(), q0: m.quaternion.clone(), t: 0, dur, arc: Math.min(0.8, 0.1 + dist * 0.2) };
+  }
+  function stepTween(c, dt){
+    const tw = c.tw;
+    if (!tw || tw.t >= tw.dur) return;
+    tw.t = Math.min(tw.t + dt, tw.dur);
+    const p = tw.t / tw.dur, e = p * (2 - p);   // 着地に向けて減速
+    c.mesh.position.lerpVectors(tw.p0, tw.pos, e);
+    c.mesh.position.y += tw.arc * Math.sin(Math.PI * p);   // 持ち上げて運ぶ
+    c.mesh.quaternion.copy(tw.q0).slerp(tw.q, e);
+  }
+
+  // 吹き飛んだカード：重力で落ち、テーブルに当たったら平らに寝かせて止める
+  const qTmp = new THREE.Quaternion(), vTmp = new V3(), vTmp2 = new V3();
+  const onFelt = p => Math.abs(p.x) < TABLE_W / 2 && Math.abs(p.z) < TABLE_D / 2;
+  function scatterCard(c){
+    c.tw = null;
+    const w = new V3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(15 + Math.random() * 25);
+    // 四方八方へ。手前（画面のこちら側）にも飛んでくる
+    c.phys = { v: new V3((Math.random() * 2 - 1) * 12, 8 + Math.random() * 12, -8 + Math.random() * 20), w, lift: Math.random() * 0.03, rest: false };
+  }
+  function stepPhys(c, dt){
+    const f = c.phys, m = c.mesh;
+    if (f.rest) return;
+    f.v.y -= RAG_G * dt;
+    m.position.addScaledVector(f.v, dt);
+    const wl = f.w.length();
+    if (wl > 1e-4) { qTmp.setFromAxisAngle(vTmp.copy(f.w).divideScalar(wl), wl * dt); m.quaternion.premultiply(qTmp); }
+    const p = m.position;
+    if (p.y < CT / 2 + f.lift && f.v.y < 0 && onFelt(p)) {
+      p.y = CT / 2 + f.lift;
+      if (f.v.y < -1.2) {
+        f.v.y *= -0.5; f.v.x *= 0.75; f.v.z *= 0.75; f.w.multiplyScalar(0.6);   // よく跳ねる
+      } else {
+        // 着地したら平らに寝かせ、テーブルの上を滑らせて止める（ふちから出たら床へ落ちる）
+        if (!f.flat) {
+          const up = vTmp.set(0, 1, 0).applyQuaternion(m.quaternion), fwd = vTmp2.set(0, 0, 1).applyQuaternion(m.quaternion);
+          m.quaternion.copy(qFor(Math.atan2(fwd.x, fwd.z), up.y > 0));
+          f.flat = true;
+        }
+        f.v.y = 0; f.w.set(0, 0, 0);
+        const k = Math.exp(-4 * dt);
+        f.v.x *= k; f.v.z *= k;
+        if (Math.hypot(f.v.x, f.v.z) < 0.2) f.rest = true;
+      }
+    } else if (p.y < FLOOR_Y) {
+      p.y = FLOOR_Y; f.rest = true;
+    }
+  }
+
+  // 吹き飛んだカードを押し出す（タップ・スワイプ）。少し浮かせて回しながら滑らせる
+  function pushCard(c, vx, vz){
+    const f = c.phys;
+    if (!f) return;
+    f.v.set(vx, 3 + Math.random() * 2, vz);
+    f.w.set((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 6);
+    f.rest = false; f.flat = false;
+    f.pushedAt = performance.now();
+  }
+  const scattered = () => cDeck.filter(c => c.phys);
+
+  // ---------- 状態 ----------
+  // 台札 piles[0] は CPU 側、piles[1] はあなた側（行き詰まったときにそれぞれの山札からめくって乗せる）
+  let pDeck, cDeck, pField, cField, piles;
+  let mode;          // 'ready' | 'playing' | 'over'
+  let timer = 0;     // ready の残り時間
+  let cpuTimer = 0;  // CPUが次に出すまでの時間
+  let startMsgT = 0; // 「スタート！」を消すまでの残り時間
+  let stallTimer = 0;
+  let playTime = 0;
+  let drag = null;
+  let sweep = null;  // 吹き飛んだカードをどかすタップ・スワイプ
+  let cpuFly = null; // CPUが台札へ飛ばしている途中のカード
+  let punch = null;  // ディーラーへ飛んでいる途中のパンチ
+  let powerWait = 0; // パワーカードが出ないまま補充した回数
+  let gloveHide = 0; // 当たったあとグローブを消すまでの時間
+  let stun = 0;      // ディーラーが倒れている残り時間
+  let recT = 0;      // ディーラーが起き上がっている残り時間
+  const dealerDown = () => !!punch || stun > 0 || recT > 0;
+
+  const top = p => p[p.length - 1];
+  // 数字が1つ違いなら出せる（KとAもつながる）
+  const adjacent = (a, b) => { const d = Math.abs(a.r - b.r); return d === 1 || d === 12; };
+  const validPiles = card => [0, 1].filter(pi => card && !card.power && piles[pi].length && adjacent(card, top(piles[pi])));
+  const hasMove = field => field.some(c => validPiles(c).length);
+  const remain = (deck, field) => deck.length + field.filter(c => c && !c.power).length;   // パワーカードは数えない
+  function shuffled(a){
+    a = a.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+
+  // 状態に合わせて全カードの行き先を決める
+  function layout(dur = MOVE_TIME){
+    if (drag && pField[drag.i] !== drag.card) drag = null;
+    pDeck.forEach((c, k) => setTarget(c, DECK_X, CT / 2 + k * CT, 0, 0, false, dur));
+    cDeck.forEach((c, k) => setTarget(c, -DECK_X, CT / 2 + k * CT, 0, Math.PI, false, dur));
+    piles.forEach((p, pi) => p.forEach((c, k) => setTarget(c, PILE_X[pi], CT / 2 + k * CT, 0, 0, true, dur)));
+    pField.forEach((c, i) => {
+      if (c && !(drag && drag.card === c)) setTarget(c, FIELD_X[i], CT / 2, FIELD_Z, 0, true, dur);
+    });
+    cField.forEach((c, i) => {
+      if (!c) return;
+      if (cpuFly && cpuFly.card === c) {
+        const p = piles[cpuFly.pi];
+        setTarget(c, PILE_X[cpuFly.pi], CT / 2 + p.length * CT, 0, 0, true, Math.max(0.05, CPU_FLY - cpuFly.t));
+      } else {
+        setTarget(c, FIELD_X[3 - i], CT / 2, -FIELD_Z, Math.PI, true, dur);   // CPUは向かい側に座っている
+      }
+    });
+    // 出せる場札だけ枠で知らせる（どの台札に出せるかは見せない）
+    allCards.forEach(c => { c.hl.visible = false; });
+    pField.forEach(c => { if (c) c.hl.visible = mode === 'playing' && (c.power ? !dealerDown() : validPiles(c).length > 0); });
+    $('pDeck').textContent = pDeck.length;
+    $('cDeck').textContent = cDeck.length;
+  }
+
+  // ---------- 進行 ----------
+  function start(){
+    pDeck = shuffled(pCards); cDeck = shuffled(cCards);
+    pField = pDeck.splice(-4); cField = cDeck.splice(-4);
+    piles = [[], []];
+    mode = 'ready'; timer = READY_TIME; stallTimer = 0; playTime = 0; drag = null; sweep = null; cpuFly = null;
+    punch = null; gloveHide = 0; stun = 0; recT = 0; powerWait = 0;
+    glove.visible = false;
+    powerCard.mesh.visible = false;
+    ragReset();
+    resetFx();
+    hasShot = false; shotT = 0;
+    allCards.forEach(c => { c.tw = null; c.phys = null; });
+    $('msg').textContent = 'よーい';
+    document.documentElement.removeAttribute('data-howto-hidden');
+    startMsgT = 0;
+    $('over').classList.add('hidden');
+    layout(0);
+  }
+
+  // 台札を1枚ずつめくる。山札が無ければ場札から出す（ディーラーが倒れている間はあなたの分だけ）
+  function flip(onlyPlayer){
+    const sides = [[pDeck, pField, 1]];
+    if (!onlyPlayer) sides.unshift([cDeck, cField, 0]);
+    sides.forEach(([deck, field, pi]) => {
+      if (deck.length) { piles[pi].push(deck.pop()); return; }
+      const i = field.findIndex(c => c && !c.power);
+      if (i >= 0) { piles[pi].push(field[i]); field[i] = null; }
+    });
+    layout();
+    checkEnd();
+  }
+
+  function place(deck, field, i, pi){
+    piles[pi].push(field[i]);
+    refill(deck, field, i);
+    layout();
+    checkEnd();
+  }
+
+  // 空いた場札は山札から補充する。あなたの場札には一定の確率でパワーカードが出る
+  function refill(deck, field, i){
+    const canPower = field === pField && deck.length && !field.includes(powerCard) && !dealerDown();
+    if (canPower && (Math.random() < POWER_CHANCE || ++powerWait > POWER_MAX)) {
+      powerWait = 0;
+      field[i] = powerCard;
+      const m = powerCard.mesh;
+      m.visible = true;
+      m.position.set(DECK_X, CT / 2 + deck.length * CT, 0);   // 山札の上からめくれて出てくる
+      m.quaternion.copy(qFor(0, false));
+      powerCard.tw = null;
+      return;
+    }
+    field[i] = deck.length ? deck.pop() : null;
+  }
+
+  // パワーカードをディーラーへ：パンチを飛ばす
+  function usePower(i){
+    if (mode !== 'playing' || dealerDown()) return false;
+    const m = powerCard.mesh;
+    if (!glove.visible) glove.position.copy(m.position);
+    glove.visible = true;
+    const from = glove.position.clone();
+    const back = new V3().subVectors(from, J.head.pos).setY(0).normalize().multiplyScalar(0.7);
+    back.y = 0.4;
+    punch = { t: 0, from, back, wound: false };
+    m.visible = false;
+    pField[i] = pDeck.length ? pDeck.pop() : null;
+    layout();
+    return true;
+  }
+  // パンチが当たった：ディーラーがぶっ飛び、CPUのカードがバラバラになる。
+  // CPUの場札も山札に戻して全部吹き飛ばし、起き上がるまでCPUはカードを出せない
+  function impact(){
+    punch = null;
+    gloveHide = 0.12;
+    cpuFly = null;
+    cField.forEach(c => { if (c) cDeck.push(c); });
+    cField = [null, null, null, null];
+    cDeck = shuffled(cDeck);
+    cDeck.forEach(scatterCard);
+    ragKick();
+    stun = STUN_TIME;
+    layout();
+    impactFx(J.head.pos);
+  }
+
+  function playerPlay(i, pi){
+    if (mode !== 'playing') return;
+    if (!validPiles(pField[i]).includes(pi)) return;
+    place(pDeck, pField, i, pi);
+  }
+
+  // CPUは出すカードを選んだら台札まで飛ばし、着いた時点で置く（何を出したか見えるように）
+  function cpuPlay(){
+    const moves = [];
+    cField.forEach((c, i) => validPiles(c).forEach(pi => moves.push([i, pi])));
+    if (!moves.length) return false;
+    const [i, pi] = moves[Math.floor(Math.random() * moves.length)];
+    cpuFly = { i, pi, card: cField[i], t: 0 };
+    layout();
+    return true;
+  }
+  function cpuLand(){
+    const f = cpuFly;
+    cpuFly = null;
+    // 飛んでいる間にあなたが同じ台札へ出していたら、置けないので場札に戻す
+    if (cField[f.i] === f.card && validPiles(f.card).includes(f.pi)) place(cDeck, cField, f.i, f.pi);
+    else layout();
+    cpuTimer = nextCpu();
+  }
+
+  function checkEnd(){
+    if (mode === 'over') return;
+    const pr = remain(pDeck, pField), cr = remain(cDeck, cField);
+    if (pr && cr) return;
+    mode = 'over';
+    drag = null;
+    cpuFly = null;
+    layout();
+    const win = pr === 0;
+    $('msg').textContent = '';
+    $('result').textContent = win ? 'あなたの勝ち！' : 'CPUの勝ち';
+    $('detail').textContent = win ? `タイム : ${playTime.toFixed(1)}秒` : `あなたの残り : ${pr}枚`;
+    $('over').classList.remove('hidden');
+    document.documentElement.removeAttribute('data-howto-hidden');
+  }
+
+  const nextCpu = () => CPU_INTERVAL + (Math.random() * 2 - 1) * CPU_JITTER;
+
+  function update(dt){
+    if (mode === 'ready') {
+      timer -= dt;
+      if (timer <= 0) {
+        $('msg').textContent = 'スタート！';
+        startMsgT = START_MSG_TIME;
+        mode = 'playing';
+        document.documentElement.setAttribute('data-howto-hidden', '');
+        cpuTimer = nextCpu();
+        flip();
+      }
+      return;
+    }
+    if (mode !== 'playing') return;
+    playTime += dt;
+    if (startMsgT > 0) { startMsgT -= dt; if (startMsgT <= 0) $('msg').textContent = ''; }
+
+    // パンチ：だんだん速くなりながらディーラーの頭へ
+    // 先にこぶしを手前へ引いて溜め、そこから一気に打ち込む
+    if (punch) {
+      punch.t += dt;
+      if (punch.t < WINDUP_TIME) {
+        const w = punch.t / WINDUP_TIME, e = w * (2 - w);
+        glove.position.copy(punch.from).addScaledVector(punch.back, e);
+        glove.scale.setScalar(1 + 0.35 * e);
+      } else {
+        if (!punch.wound) { punch.wound = true; punch.start = glove.position.clone(); }
+        const p = Math.min((punch.t - WINDUP_TIME) / PUNCH_TIME, 1);
+        glove.position.lerpVectors(punch.start, J.head.pos, p * p);
+        spawnGhost();
+        if (p >= 1) impact();
+      }
+      glove.lookAt(J.head.pos);
+    }
+    // 倒れている時間が過ぎたら起き上がり、散らばったカードを山札へ集める
+    if (stun > 0) {
+      stun -= dt;
+      if (stun <= 0) {
+        stun = 0;
+        recT = RECOVER_TIME;
+        ragRecover();
+        cDeck.forEach(c => { c.phys = null; c.tw = null; });
+        layout(RECOVER_TIME);
+      }
+    } else if (recT > 0) {
+      recT -= dt;
+      if (recT <= 0) {
+        recT = 0;
+        cField = cDeck.splice(-4);   // 場札を配り直して再開
+        while (cField.length < 4) cField.push(null);
+        cpuTimer = nextCpu();
+        layout();
+      }
+    }
+    const down = dealerDown();
+
+    if (!down) {
+      cpuTimer -= dt;
+      if (cpuFly) {
+        cpuFly.t += dt;
+        if (cpuFly.t >= CPU_FLY) cpuLand();
+      } else if (cpuTimer <= 0 && !cpuPlay()) {
+        cpuTimer = nextCpu();
+      }
+    }
+    if (mode !== 'playing' || cpuFly) return;   // CPUのカードが飛んでいる間は行き詰まり判定をしない
+
+    // どちらも出せなければ、少し待って台札をめくり直す（ディーラーが倒れている間はあなただけで判定）
+    if (!hasMove(pField) && (down || !hasMove(cField))) {
+      stallTimer += dt;
+      if (stallTimer >= STALL_TIME) {
+        stallTimer = 0;
+        cpuTimer = nextCpu();
+        flip(down);
+      }
+    } else {
+      stallTimer = 0;
+    }
+  }
+
+  // ---------- パンチの演出 ----------
+  let hitStop = 0, shakeT = 0, flashT = 0, camBase = null, fovBase = 40;
+  const fxAdd = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending };
+  // 丸くぼけた点（火花用）
+  function dotTexture(){
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,0.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  }
+  // 漫画の「ドカッ」のようなギザギザの爆発形
+  function burstTexture(){
+    const n = 256, c = document.createElement('canvas'); c.width = c.height = n;
+    const g = c.getContext('2d'), spikes = 14;
+    const star = (rOut, rIn, jitter) => {
+      g.beginPath();
+      for (let i = 0; i < spikes * 2; i++) {
+        const a = i / (spikes * 2) * Math.PI * 2, r = (i % 2 ? rIn : rOut) * (1 - jitter * ((i * 7919) % 5) / 5);
+        g.lineTo(n / 2 + Math.cos(a) * r, n / 2 + Math.sin(a) * r);
+      }
+      g.closePath();
+    };
+    star(124, 62, 0.25); g.fillStyle = col('--burst-edge'); g.fill();
+    star(100, 50, 0.2); g.fillStyle = col('--burst'); g.fill();
+    g.beginPath(); g.arc(n / 2, n / 2, 34, 0, Math.PI * 2); g.fillStyle = col('--flash'); g.fill();
+    return new THREE.CanvasTexture(c);
+  }
+  const fx = [];   // 動いている演出（毎フレーム更新し、終わったら消す）
+
+  // 火花：頭から四方へ飛び散って消える
+  const sparkGeo = new THREE.BufferGeometry();
+  sparkGeo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(SPARK_COUNT * 3), 3));
+  const sparkCols = new Float32Array(SPARK_COUNT * 3);
+  const palette = ['--spark1', '--spark2', '--spark3'].map(n => new THREE.Color(col(n)));
+  for (let i = 0; i < SPARK_COUNT; i++) palette[i % 3].toArray(sparkCols, i * 3);
+  sparkGeo.setAttribute('color', new THREE.Float32BufferAttribute(sparkCols, 3));
+  const sparkMat = new THREE.PointsMaterial({ size: 0.6, map: dotTexture(), vertexColors: true, ...fxAdd });
+  const sparks = new THREE.Points(sparkGeo, sparkMat);
+  sparks.visible = false; sparks.frustumCulled = false;
+  scene.add(sparks);
+  const sparkVel = Array.from({ length: SPARK_COUNT }, () => new V3());
+
+  // 衝撃波の輪（2重）とギザギザの爆発
+  const rings = [0, 1].map(k => {
+    const m = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 64), new THREE.MeshBasicMaterial({ color: col(k ? '--spark2' : '--spark1'), side: THREE.DoubleSide, ...fxAdd }));
+    m.visible = false; scene.add(m); return m;
+  });
+  const burst = new THREE.Sprite(new THREE.SpriteMaterial({ map: burstTexture(), transparent: true, depthWrite: false, depthTest: false }));
+  burst.visible = false; burst.renderOrder = 5;
+  scene.add(burst);
+
+  // こぶしの残像
+  function spawnGhost(){
+    const mat = new THREE.MeshBasicMaterial({ color: col('--fist'), ...fxAdd, opacity: 0.45 });
+    const g = new THREE.Mesh(glove.geometry, mat);
+    g.position.copy(glove.position); g.quaternion.copy(glove.quaternion); g.scale.copy(glove.scale);
+    scene.add(g);
+    fx.push({ t: 0, life: 0.18, step: p => { mat.opacity = 0.45 * (1 - p); g.scale.copy(glove.scale).multiplyScalar(1 + p * 0.3); },
+      end: () => { scene.remove(g); mat.dispose(); } });
+  }
+
+  function impactFx(at){
+    hitStop = HIT_STOP; shakeT = SHAKE_TIME; flashT = FLASH_TIME;
+    shotT = SHOT_DELAY;   // 少しあとのフレームで画面を撮る（共有用）
+    // 「パワー！！！」を画面に大きく出す（クラスを付け直してアニメーションを最初から再生）
+    const pw = $('power');
+    pw.classList.remove('show'); void pw.offsetWidth; pw.classList.add('show');
+    const pos = sparkGeo.attributes.position;
+    for (let i = 0; i < SPARK_COUNT; i++) {
+      pos.setXYZ(i, at.x, at.y, at.z);
+      sparkVel[i].set(Math.random() - 0.5, Math.random() - 0.3, Math.random() - 0.5).normalize().multiplyScalar(6 + Math.random() * 14);
+    }
+    pos.needsUpdate = true;
+    sparks.visible = true; sparkMat.opacity = 1;
+    fx.push({ t: 0, life: 0.7, step: (p, dt) => {
+      for (let i = 0; i < SPARK_COUNT; i++) {
+        sparkVel[i].y -= 18 * dt; sparkVel[i].multiplyScalar(Math.exp(-2.5 * dt));
+        pos.setXYZ(i, pos.getX(i) + sparkVel[i].x * dt, pos.getY(i) + sparkVel[i].y * dt, pos.getZ(i) + sparkVel[i].z * dt);
+      }
+      pos.needsUpdate = true;
+      sparkMat.opacity = 1 - p * p;
+    }, end: () => { sparks.visible = false; } });
+    rings.forEach((r, k) => {
+      r.position.copy(at); r.visible = false;
+      fx.push({ t: -0.06 * k, life: 0.4, step: p => {
+        r.visible = true;
+        r.quaternion.copy(camera.quaternion);
+        r.scale.setScalar(0.3 + (1 - (1 - p) * (1 - p)) * (6 + k * 2));
+        r.material.opacity = 1 - p;
+      }, end: () => { r.visible = false; } });
+    });
+    burst.position.copy(at);
+    burst.material.rotation = Math.random() * Math.PI * 2;
+    fx.push({ t: 0, life: 0.35, step: p => {
+      burst.visible = true;
+      burst.scale.setScalar(p < 0.25 ? 1 + p / 0.25 * 4 : 5 + (p - 0.25) * 1.5);
+      burst.material.opacity = p < 0.5 ? 1 : 1 - (p - 0.5) / 0.5;
+    }, end: () => { burst.visible = false; } });
+  }
+
+  // 演出の更新（当たった瞬間の一時停止中も動かす）
+  function updateFx(dt){
+    for (let i = fx.length - 1; i >= 0; i--) {
+      const f = fx[i];
+      f.t += dt;
+      if (f.t < 0) continue;
+      const p = Math.min(f.t / f.life, 1);
+      f.step(p, dt);
+      if (p >= 1) { f.end(); fx.splice(i, 1); }
+    }
+    // 画面の白い光
+    if (flashT > 0) flashT = Math.max(flashT - dt, 0);
+    $('flash').style.opacity = (flashT / FLASH_TIME * 0.85).toFixed(3);
+    // 画面の揺れとカメラの寄り（だんだん収まる）
+    if (camBase) {
+      const k = shakeT > 0 ? shakeT / SHAKE_TIME : 0;
+      if (shakeT > 0) shakeT = Math.max(shakeT - dt, 0);
+      camera.position.copy(camBase);
+      if (k > 0) camera.position.add(new V3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(SHAKE_AMP * k * k * 2));
+      const fov = fovBase - FOV_PUNCH * k * k;
+      if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); }
+    }
+  }
+  function resetFx(){
+    fx.forEach(f => f.end()); fx.length = 0;
+    $('power').classList.remove('show');
+    hitStop = 0; shakeT = 0; flashT = 0;
+    glove.scale.setScalar(1);
+  }
+
+  // ---------- 画面サイズ ----------
+  // 盤面全体（場札の外側まで）が収まる距離までカメラを引く（ディーラーは奥に入る分だけ見える）
+  function resize(){
+    const W = cv.clientWidth, H = cv.clientHeight;
+    renderer.setSize(W, H, false);
+    camera.aspect = W / H;
+    camera.updateProjectionMatrix();
+    const a = CAM_TILT * Math.PI / 180;
+    const target = new THREE.Vector3(0, 0, 0.15);
+    const dir = new THREE.Vector3(0, Math.sin(a), Math.cos(a));
+    const ex = DECK_X + CW / 2 + 0.05, ez = FIELD_Z + CH / 2 + 0.05;
+    const pts = [[-ex, -ez], [ex, -ez], [-ex, ez], [ex, ez]].map(([x, z]) => new THREE.Vector3(x, 0, z));
+    let d = 10;
+    for (let k = 0; k < 6; k++) {
+      camera.position.copy(target).addScaledVector(dir, d);
+      camera.lookAt(target);
+      camera.updateMatrixWorld();
+      let m = 0;
+      for (const p of pts) { const v = p.clone().project(camera); m = Math.max(m, Math.abs(v.x) / 0.95, Math.abs(v.y) / 0.8); }
+      d *= m;
+    }
+    // 山札の残り枚数は、それぞれの山札のすぐ手前に出す
+    [['pInfo', DECK_X], ['cInfo', -DECK_X]].forEach(([id, x]) => {
+      const q = new THREE.Vector3(x, 0, CH / 2 + 0.08).project(camera);
+      $(id).style.left = ((q.x + 1) / 2 * W) + 'px';
+      $(id).style.top = ((1 - q.y) / 2 * H) + 'px';
+    });
+    camBase = camera.position.clone(); fovBase = camera.fov;   // 画面の揺れはここを基準にする
+    // ディーラーが画面内に残るための見えない壁。奥の壁は、テーブルの陰に隠れない床の位置より少し奥に置く
+    camView = camera.matrixWorldInverse.clone(); camWorld = camera.matrixWorld.clone();
+    tanV = Math.tan(camera.fov * Math.PI / 360); tanH = tanV * camera.aspect;
+    const C = camera.position, edgeZ = -(TABLE_D / 2 + RIM);
+    const hideZ = C.z + (edgeZ - C.z) * (C.y - FLOOR_Y) / C.y;   // これより手前の床はテーブルの陰になる
+    // 奥の壁の足元が画面の上からはみ出さない一番奥の位置
+    let near = hideZ, far = hideZ - 30;
+    for (let k = 0; k < 30; k++) {
+      const mid = (near + far) / 2;
+      if (new THREE.Vector3(0, FLOOR_Y, mid).project(camera).y > VIEW_FLOOR_TOP) far = mid; else near = mid;
+    }
+    // 倒れた体がテーブルの陰に隠れないよう、隠れる所より十分奥（ただし画面内）に壁を置く
+    backZ = Math.min(Math.max(hideZ - 5, near), hideZ - 2, DEALER_Z - 1);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  // ---------- ループ ----------
+  const PHYS_H = 1 / 120;
+  let physAcc = 0;
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    // 当たった瞬間はゲームを一瞬止める（演出だけ動かす）
+    let gdt = dt;
+    if (hitStop > 0) { hitStop -= dt; gdt = 0; }
+    update(gdt);
+    // 吹き飛んだカードの物理は固定の刻み幅で進める（フレームの間隔で動きが変わらないように）
+    physAcc += gdt;
+    while (physAcc >= PHYS_H) {
+      allCards.forEach(c => { if (c.phys) stepPhys(c, PHYS_H); });
+      physAcc -= PHYS_H;
+    }
+    allCards.forEach(c => { if (!c.phys && !(drag && drag.card === c && drag.moved)) stepTween(c, gdt); });
+    ragUpdate(gdt);
+    if (gloveHide > 0) { gloveHide -= gdt; if (gloveHide <= 0) { glove.visible = false; glove.scale.setScalar(1); } }
+    updateFx(dt);
+    renderer.render(scene, camera);
+    // パンチの瞬間を共有用に撮る。WebGLの画面は描いた直後でないと読めないので、ここで写し取る
+    if (shotT > 0 && (shotT -= dt) <= 0) takeShot();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- 入力 ----------
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hitPt = new THREE.Vector3();
+  const dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -DRAG_Y);
+  function setRay(e){
+    const r = cv.getBoundingClientRect();
+    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+  }
+  const planePoint = e => { setRay(e); return ray.ray.intersectPlane(dragPlane, hitPt); };
+  const tablePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const tablePoint = e => { setRay(e); return ray.ray.intersectPlane(tablePlane, hitPt); };
+
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (mode !== 'playing' || drag || sweep) return;
+    setRay(e);
+    const loose = scattered();
+    const hit = ray.intersectObjects([...pField.filter(Boolean), ...loose].map(c => c.mesh), false)[0];
+    const looseHit = hit && loose.find(c => c.mesh === hit.object);
+    // 吹き飛んだカードが散らばっている間は、カードの上でも空いた所でもスワイプでどかせる
+    if (looseHit || (!hit && loose.length)) {
+      cv.setPointerCapture(e.pointerId);
+      const pt = tablePoint(e);
+      sweep = { id: e.pointerId, card: looseHit, x0: e.clientX, y0: e.clientY, moved: false,
+        last: pt ? pt.clone() : null, t: performance.now() };
+      return;
+    }
+    if (!hit) return;
+    const i = pField.findIndex(c => c && c.mesh === hit.object);
+    const card = pField[i];
+    cv.setPointerCapture(e.pointerId);
+    const pt = planePoint(e);
+    // 指の位置とカード中心のずれを保って動かす（カードが指の下に隠れないように）
+    drag = { id: e.pointerId, i, card, x0: e.clientX, y0: e.clientY, moved: false,
+      ox: pt ? card.mesh.position.x - pt.x : 0, oz: pt ? card.mesh.position.z - pt.z : 0 };
+  });
+  cv.addEventListener('pointermove', e => {
+    if (sweep && e.pointerId === sweep.id) { moveSweep(e); return; }
+    if (!drag || e.pointerId !== drag.id) return;
+    if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > TAP_MOVE) drag.moved = true;
+    if (!drag.moved) return;
+    const pt = planePoint(e);
+    if (!pt) return;
+    const m = drag.card.mesh;
+    drag.card.tw = null;
+    m.position.set(pt.x + drag.ox, DRAG_Y, pt.z + drag.oz);
+    m.quaternion.copy(qFor(0, true));
+    // パワーカードは動かし始めたらこぶしに持ち替え、ディーラーの方へ向ける
+    if (drag.card.power) {
+      m.visible = false;
+      glove.visible = true;
+      glove.position.set(m.position.x, DRAG_Y + 0.3, m.position.z);
+      glove.lookAt(J.head.pos);
+    }
+  });
+  function endDrag(e, cancel){
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag;
+    drag = null;
+    if (d.card.power) {
+      // 画面の上半分まで運んで離すとパンチ。届かなければカードに戻して場札へ
+      const r = cv.getBoundingClientRect();
+      const hit = !cancel && d.moved && (e.clientY - r.top) < r.height * PUNCH_ZONE && usePower(d.i);
+      if (!hit) { glove.visible = false; d.card.mesh.visible = true; }
+    }
+    else if (!cancel && d.moved) {
+      // 場札はドラッグして台札の上で離したときだけ出す（タップでは出さない）
+      const p = d.card.mesh.position;
+      let best = -1, bestD = DROP_RANGE;
+      PILE_X.forEach((x, pi) => { const dd = Math.hypot(p.x - x, p.z); if (dd < bestD) { bestD = dd; best = pi; } });
+      if (best >= 0) playerPlay(d.i, best);
+    }
+    layout();   // 出せなかったときは場札に戻す
+  }
+  // スワイプ：指が通ったところのカードを、指の動きの向きと速さで押し出す
+  function moveSweep(e){
+    if (Math.hypot(e.clientX - sweep.x0, e.clientY - sweep.y0) > TAP_MOVE) sweep.moved = true;
+    const pt = tablePoint(e), now = performance.now();
+    if (!pt) return;
+    if (sweep.last && sweep.moved) {
+      const dt = Math.max((now - sweep.t) / 1000, 1 / 120);
+      let vx = (pt.x - sweep.last.x) / dt * SWIPE_GAIN, vz = (pt.z - sweep.last.z) / dt * SWIPE_GAIN;
+      const sp = Math.hypot(vx, vz);
+      if (sp > SWIPE_MAX) { vx *= SWIPE_MAX / sp; vz *= SWIPE_MAX / sp; }
+      if (sp > 1) {
+        setRay(e);
+        const loose = scattered();
+        ray.intersectObjects(loose.map(c => c.mesh), false).forEach(h => {
+          const c = loose.find(k => k.mesh === h.object);
+          if (c && !(c.phys.pushedAt > now - 150)) pushCard(c, vx, vz);   // 同じカードを続けて押しすぎない
+        });
+      }
+    }
+    sweep.last = pt.clone(); sweep.t = now;
+  }
+  function endSweep(e){
+    if (sweep && e.pointerId === sweep.id) sweep = null;
+  }
+  cv.addEventListener('pointerup', e => { endSweep(e); endDrag(e, false); });
+  cv.addEventListener('pointercancel', e => { endSweep(e); endDrag(e, true); });
+
+  // PC用：結果画面ではEnter/スペースでもう一回
+  document.addEventListener('keydown', e => {
+    if (mode === 'over' && (e.key === 'Enter' || e.key === ' ') && document.activeElement.tagName !== 'BUTTON') start();
+  });
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  const isDraggable = t => t instanceof Element && !!t.closest('#cv');
+  document.addEventListener('touchstart', e => { if (isDraggable(e.target)) e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchmove', e => { if (drag || sweep) e.preventDefault(); }, { passive: false });
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => { if (isDraggable(e.target)) e.preventDefault(); });
+
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350 && !(e.target instanceof Element && e.target.closest('button'))) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  // ---------- 結果の共有 ----------
+  // パンチが当たった瞬間の画面（何度もパンチしたら最後の1回）。パンチしなかったときは画像なしで共有する
+  const shot = document.createElement('canvas');
+  let hasShot = false, shotT = 0;
+  function takeShot(){
+    shot.width = SHOT_W;
+    shot.height = Math.round(SHOT_W * cv.height / cv.width);
+    shot.getContext('2d').drawImage(cv, 0, 0, shot.width, shot.height);
+    hasShot = true;
+  }
+  function shareText(){
+    const url = location.href.split(/[?#]/)[0];
+    const pr = remain(pDeck, pField);
+    return pr === 0
+      ? `勝ち！\nタイム : ${playTime.toFixed(1)}秒\n相手の残り : ${remain(cDeck, cField)}枚\n${url}\n#スピード物理`
+      : `負け...\n残り${pr}枚\n${url}\n#スピード物理`;
+  }
+  // パンチの瞬間の画像をPNGにする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(){
+    const bin = atob(shot.toDataURL('image/png').split(',')[1]);   // toBlob の非同期コールバックは避ける
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    const file = hasShot ? resultImageFile() : null;   // パンチしていなければ画像なし
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋パンチの瞬間の画像
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ text, files: [file] }).catch(() => {});
+      return;
+    }
+    // 2) 画像を渡せない共有シート、またはパンチしていないとき: 文面のみ
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    navigator.clipboard?.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+  $('retry').addEventListener('click', start);
+
+  start();
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

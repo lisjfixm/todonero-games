@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>トドネロのゲーム置き場</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;600&family=Noto+Sans+JP:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /*
+     * トップページ専用のスタイル(docs/design-index.md 参照)。
+     * 各ゲームのページには影響させないため、common/css は読み込まず
+     * このファイル内で完結させる。
+     */
+    :root {
+      --color-just-black: #0e100f;
+      --color-surface-cream: #fffce1;
+      --color-surface-50: #7c7c6f;
+      --color-surface-25: #42433d;
+      --color-off-black: #191919;
+      --color-shockingly-green: #0ae448;
+      --color-light-green: #abff84;
+      --color-orangey: #ff8709;
+      --color-pink: #fec5fb;
+      --color-lilac: #9d95ff;
+      --color-blue: #00bae2;
+      --font-sans: "Inter Tight", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+      --page-max-width: 1280px;
+      --section-gap: 80px;
+    }
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0;
+      background: var(--color-just-black);
+      color: var(--color-surface-cream);
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 19px;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ヒーロー */
+    .hero {
+      position: relative;
+      max-width: var(--page-max-width);
+      margin: 0 auto;
+      padding: clamp(48px, 10vh, 108px) 24px 0;
+    }
+    .hero h1 {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: clamp(56px, 11vw, 160px);
+      font-weight: 600;
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+    }
+    /* サブタイトル。実は隠しミニゲームの開始ボタン */
+    .subtitle {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      margin: 24px 0 0;
+      font-size: 23px;
+      line-height: 1.38;
+      letter-spacing: -0.23px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    /* 狭い画面では「ミニゲーム」の前で折り返す(語の途中で切れないように) */
+    .subtitle span { display: inline-block; }
+    /* サイトの紹介文 */
+    .intro {
+      position: relative;
+      z-index: 1;
+      max-width: 52ch;
+      margin: 16px 0 0;
+      font-size: 16px;
+      line-height: 1.4;
+      color: var(--color-surface-50);
+    }
+    /* ヒーローに重なる有機的なグラデーションの飾り(影は使わない) */
+    .blob {
+      position: absolute;
+      border-radius: 50% 45% 55% 50% / 55% 50% 50% 45%;
+      pointer-events: none;
+      filter: blur(2px);
+    }
+    .blob.one {
+      width: clamp(180px, 30vw, 380px);
+      height: clamp(140px, 22vw, 300px);
+      /* ビューポートからはみ出すと横スクロールが出るので、内側に収める */
+      right: 0;
+      top: -20%;
+      background: linear-gradient(135deg, var(--color-pink) 10%, var(--color-blue) 85%);
+      opacity: 0.9;
+    }
+    .blob.two {
+      width: clamp(90px, 14vw, 180px);
+      height: clamp(90px, 14vw, 180px);
+      right: 24%;
+      top: 55%;
+      background: linear-gradient(114.41deg, var(--color-orangey) 20%, var(--color-light-green) 90%);
+      opacity: 0.85;
+    }
+    /* 3Dモデルの飾り。common/models/hero.glb があるときだけブロブと差し替わる */
+    #hero-3d {
+      position: absolute;
+      /* ブロブと同じ理由で、はみ出させない */
+      right: 0;
+      top: -15%;
+      width: clamp(220px, 34vw, 440px);
+      height: clamp(180px, 28vw, 360px);
+      pointer-events: none;
+    }
+    #hero-3d model-viewer {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      --poster-color: transparent;
+    }
+
+    /* ゲーム一覧 */
+    section.games {
+      max-width: var(--page-max-width);
+      margin: 56px auto var(--section-gap);
+      padding: 0 24px;
+    }
+    .rule {
+      border: 0;
+      border-top: 1px solid var(--color-surface-25);
+      margin: 0;
+    }
+    .game-list {
+      list-style: none;
+      margin: 32px 0 0;
+      padding: 0;
+      display: grid;
+      /* 説明を1行に収める幅を確保するため、PC でも3列までにする */
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .game-card a {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 24px;
+      background: var(--color-off-black);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      transition: border-color 0.15s;
+    }
+    .game-card a:hover,
+    .game-card a:focus-visible {
+      border-color: var(--color-surface-25);
+      outline: none;
+    }
+    .game-card h2 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: -0.011em;
+      color: var(--accent, var(--color-surface-cream));
+    }
+    /* 説明は1行。狭い画面で収まらないときだけ末尾を省略する */
+    .game-card .desc {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.4;
+      letter-spacing: -0.14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .game-card .dir {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.4;
+      letter-spacing: -0.14px;
+      color: var(--color-surface-50);
+    }
+    .game-list-empty {
+      margin: 32px 0 0;
+      color: var(--color-surface-50);
+      font-size: 16px;
+    }
+
+    /* フッター: 運営者情報などの文章ページへのリンク */
+    .site-footer {
+      max-width: var(--page-max-width);
+      margin: 0 auto;
+      padding: 0 24px 48px;
+      font-size: 14px;
+      line-height: 1.4;
+      letter-spacing: -0.14px;
+      color: var(--color-surface-50);
+    }
+    .site-footer nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--color-surface-25);
+    }
+    .site-footer a:hover,
+    .site-footer a:focus-visible {
+      color: var(--color-surface-cream);
+    }
+
+    /* 隠しミニゲーム(サブタイトルのクリックで開始) */
+    #game-canvas {
+      display: none;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+    body.playing { overflow: hidden; }
+    body.playing #game-canvas { display: block; }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="blob one"></div>
+    <div class="blob two"></div>
+    <div id="hero-3d" hidden></div>
+    <h1>トドネロのゲーム置き場</h1>
+    <p class="subtitle" id="subtitle"><span>ブラウザで遊べる</span><span>ミニゲーム置き場</span></p>
+    <p class="intro">パズル、アクション、対戦、触って楽しむおもちゃまで、ブラウザですぐ遊べるミニゲームを公開しています。インストールや登録は不要で、スマートフォンでも PC でも遊べます。新しいゲームも順に追加しています。</p>
+  </header>
+
+  <section class="games">
+    <hr class="rule">
+    <ul class="game-list" id="game-list"><!-- GAME_LIST_START -->
+<li class="game-card"><a href="games/10000-bowling/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>1万ボーリング</h2><p class="dir">{ 10000-bowling }</p><p class="desc">1万本のピンを2投で倒すボウリング</p></a></li>
+<li class="game-card"><a href="games/Moji-Avoid/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>文字爆散アボイド</h2><p class="dir">{ Moji-Avoid }</p><p class="desc">入力した文字を自機にして弾をよける</p></a></li>
+<li class="game-card"><a href="games/acrobatic-train/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>アクロバティックトレイン</h2><p class="dir">{ acrobatic-train }</p><p class="desc">電車の前と後ろを別々に乗り換える</p></a></li>
+<li class="game-card"><a href="games/banjo-cat/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>バンジョーキャット</h2><p class="dir">{ banjo-cat }</p><p class="desc">バンジョーを鳴らすと猫が出てくる</p></a></li>
+<li class="game-card"><a href="games/blitz-reversi/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>超速リバーシ</h2><p class="dir">{ blitz-reversi }</p><p class="desc">順番なしで同時に石を置くリバーシ</p></a></li>
+<li class="game-card"><a href="games/blitz-tac-toe/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>超速マルバツゲーム</h2><p class="dir">{ blitz-tac-toe }</p><p class="desc">順番なしで同時に置くマルバツゲーム</p></a></li>
+<li class="game-card"><a href="games/burger-tower/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>バーガータワー</h2><p class="dir">{ burger-tower }</p><p class="desc">具材を跳ね上げてバーガーを高く積む</p></a></li>
+<li class="game-card"><a href="games/carpet-art/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>カーペットアート</h2><p class="dir">{ carpet-art }</p><p class="desc">カーペットをなぞって模様を描く</p></a></li>
+<li class="game-card"><a href="games/chitei-lever/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>地底レバー</h2><p class="dir">{ chitei-lever }</p><p class="desc">レバーで金貨を弾いて地下へ潜る</p></a></li>
+<li class="game-card"><a href="games/circle-bounce/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>Circle Bounce</h2><p class="dir">{ circle-bounce }</p><p class="desc">輪を回してボールを受け止めるブロック崩し</p></a></li>
+<li class="game-card"><a href="games/claw-draw-ufo/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>Draw Claw UFO</h2><p class="dir">{ claw-draw-ufo }</p><p class="desc">描いた形の爪で景品を取るクレーンゲーム</p></a></li>
+<li class="game-card"><a href="games/colorful-bomb-sort/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>カラフル爆弾仕分け</h2><p class="dir">{ colorful-bomb-sort }</p><p class="desc">爆弾を同じ色のエリアへ仕分ける</p></a></li>
+<li class="game-card"><a href="games/crazy-windmill/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>crazy windmill</h2><p class="dir">{ crazy-windmill }</p><p class="desc">風車の手から逃げて迷路を脱出するホラー</p></a></li>
+<li class="game-card"><a href="games/donut-maker-3d/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>ドーナツメーカー3D</h2><p class="dir">{ donut-maker-3d }</p><p class="desc">描いた形のドーナツを揚げて飾る</p></a></li>
+<li class="game-card"><a href="games/double-booking/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>ダブルブッキング</h2><p class="dir">{ double-booking }</p><p class="desc">動く予定を空き時間にねじ込む</p></a></li>
+<li class="game-card"><a href="games/draw-roll-race/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>ドローレース</h2><p class="dir">{ draw-roll-race }</p><p class="desc">描いた手足で転がって走るレース</p></a></li>
+<li class="game-card"><a href="games/draw-sumo/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>ドロースモー</h2><p class="dir">{ draw-sumo }</p><p class="desc">描いた手足で相手を押し出す相撲</p></a></li>
+<li class="game-card"><a href="games/find-1px/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>1px探し</h2><p class="dir">{ find-1px }</p><p class="desc">どこかにある1pxの点を探すタイム勝負</p></a></li>
+<li class="game-card"><a href="games/font-merge/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>フォントマージ</h2><p class="dir">{ font-merge }</p><p class="desc">同じフォントをくっつけて育てる落ちもの</p></a></li>
+<li class="game-card"><a href="games/font-sort/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>フォント仕分け</h2><p class="dir">{ font-sort }</p><p class="desc">降ってくる文字をフォントごとに仕分ける</p></a></li>
+<li class="game-card"><a href="games/giant-wall/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>巨人壁ゲーム</h2><p class="dir">{ giant-wall }</p></a></li>
+<li class="game-card"><a href="games/giraffe-fight/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>キリン喧嘩</h2><p class="dir">{ giraffe-fight }</p><p class="desc">長い首をぶつけ合うキリンの喧嘩</p></a></li>
+<li class="game-card"><a href="games/gori-or-not-gori/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>ゴリorNotゴリ</h2><p class="dir">{ gori-or-not-gori }</p><p class="desc">読みに「ごり」が入るかを見分ける</p></a></li>
+<li class="game-card"><a href="games/gori-power/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>ゴリパワー</h2><p class="dir">{ gori-power }</p><p class="desc">「ごり」「うほ」入りの言葉を探す</p></a></li>
+<li class="game-card"><a href="games/homerun-derby/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>ぼくらのホームランダービー</h2><p class="dir">{ homerun-derby }</p><p class="desc">変化球を打ってホームランの数を競う</p></a></li>
+<li class="game-card"><a href="games/human-bey/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>HumanBey</h2><p class="dir">{ human-bey }</p><p class="desc">ポーズをとった人間をコマにして戦う</p></a></li>
+<li class="game-card"><a href="games/infinite-jako/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>無限ちりめんじゃこ</h2><p class="dir">{ infinite-jako }</p><p class="desc">ちりめんじゃこの山から生き物を探す</p></a></li>
+<li class="game-card"><a href="games/inflation-hockey/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>インフレホッケー</h2><p class="dir">{ inflation-hockey }</p><p class="desc">パックがどんどん増えるエアホッケー</p></a></li>
+<li class="game-card"><a href="games/jack-o-lantern-maker/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>ジャック・オー・ランタンメーカー</h2><p class="dir">{ jack-o-lantern-maker }</p><p class="desc">かぼちゃを彫って玄関先に飾る</p></a></li>
+<li class="game-card"><a href="games/kaden-master/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>家電マスター</h2><p class="dir">{ kaden-master }</p><p class="desc">調子の悪い家電を叩いて直すタイム勝負</p></a></li>
+<li class="game-card"><a href="games/kakomi-survivor/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>かこみサバイバー</h2><p class="dir">{ kakomi-survivor }</p><p class="desc">体で地面を囲んで落とすサバイバル</p></a></li>
+<li class="game-card"><a href="games/katakana-barabara/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>カタカナバラバラ</h2><p class="dir">{ katakana-barabara }</p><p class="desc">バラバラのカタカナから単語を当てる</p></a></li>
+<li class="game-card"><a href="games/lens-warp/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>ゆがみレンズ</h2><p class="dir">{ lens-warp }</p><p class="desc">レンズを置いて写真をゆがませるおもちゃ</p></a></li>
+<li class="game-card"><a href="games/long-potato/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>ぐるぐるポテトメーカー</h2><p class="dir">{ long-potato }</p><p class="desc">じゃがいもをらせんに切って長さを競う</p></a></li>
+<li class="game-card"><a href="games/madori-drop/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>間取りドロップ</h2><p class="dir">{ madori-drop }</p><p class="desc">部屋ブロックを積んで家賃を競う落ちもの</p></a></li>
+<li class="game-card"><a href="games/mansion-simulator/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>マンションシミュレーター</h2><p class="dir">{ mansion-simulator }</p><p class="desc">写真からマンション広告風の画像を作る</p></a></li>
+<li class="game-card"><a href="games/mawasu-yatsu-simulator/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>回すやつシミュレーター</h2><p class="dir">{ mawasu-yatsu-simulator }</p><p class="desc">石臼を回して時速1000kmを目指す</p></a></li>
+<li class="game-card"><a href="games/moji-kushiyaki/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>もじ串焼き</h2><p class="dir">{ moji-kushiyaki }</p><p class="desc">好きな文字を串に刺して炭火で焼く</p></a></li>
+<li class="game-card"><a href="games/no-hole-in/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>ホールインさせない</h2><p class="dir">{ no-hole-in }</p><p class="desc">カップになってゴルフボールをよける</p></a></li>
+<li class="game-card"><a href="games/nobinobi-giraffe/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>ノビノビ・ジラフ</h2><p class="dir">{ nobinobi-giraffe }</p><p class="desc">キリンの首を伸ばして高さを競う</p></a></li>
+<li class="game-card"><a href="games/one-pixel-a-day/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>みんなで1マス</h2><p class="dir">{ one-pixel-a-day }</p><p class="desc">みんなで1マスずつ塗る共有お絵かき</p></a></li>
+<li class="game-card"><a href="games/othellis/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>オセリス - OTHELLIS</h2><p class="dir">{ othellis }</p><p class="desc">挟んで裏返して消すオセロ風の落ちもの</p></a></li>
+<li class="game-card"><a href="games/paint_breakout_image/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>塗り合いバトル</h2><p class="dir">{ paint_breakout_image }</p><p class="desc">ブロック崩しで陣地を塗り合う対戦</p></a></li>
+<li class="game-card"><a href="games/pattern-hacker/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>PatternHacker</h2><p class="dir">{ pattern-hacker }</p><p class="desc">隠されたパターンロックを推理して解く</p></a></li>
+<li class="game-card"><a href="games/phone-flipper/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>PhoneFlipper</h2><p class="dir">{ phone-flipper }</p><p class="desc">折りたたみスマホを開閉して進む</p></a></li>
+<li class="game-card"><a href="games/pointcloud-puzzle/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>PointCloudPuzzle</h2><p class="dir">{ pointcloud-puzzle }</p><p class="desc">点の集まりを回して絵が見える角度を探す</p></a></li>
+<li class="game-card"><a href="games/prefecture-derby/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>都道府県ダービー</h2><p class="dir">{ prefecture-derby }</p><p class="desc">支出額トップの県を当てる競馬風ゲーム</p></a></li>
+<li class="game-card"><a href="games/rakugaki-fighter/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>ラクガキファイター</h2><p class="dir">{ rakugaki-fighter }</p><p class="desc">描いたラクガキが立体になって戦う</p></a></li>
+<li class="game-card"><a href="games/serpentile/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>ヘキサルート</h2><p class="dir">{ serpentile }</p><p class="desc">タイルを回してコマを盤の外へ逃がす</p></a></li>
+<li class="game-card"><a href="games/serpentile-climb/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>ヘキサクライム</h2><p class="dir">{ serpentile-climb }</p><p class="desc">タイルをつないで矢印を上へ登らせる</p></a></li>
+<li class="game-card"><a href="games/serpentile-connect/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>ヘキサコネクト</h2><p class="dir">{ serpentile-connect }</p><p class="desc">タイルを回して辺の色をそろえるパズル</p></a></li>
+<li class="game-card"><a href="games/serpentile-point/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>ヘキサポイント</h2><p class="dir">{ serpentile-point }</p><p class="desc">タイルで矢印を誘導してコインを集める</p></a></li>
+<li class="game-card"><a href="games/shodo-simulator-3d/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>書道シミュレーター3D</h2><p class="dir">{ shodo-simulator-3d }</p><p class="desc">筆で字を書いて採点される書道</p></a></li>
+<li class="game-card"><a href="games/skystar/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>スカイスター</h2><p class="dir">{ skystar }</p><p class="desc">ジェット付きの車を噴射だけで操る</p></a></li>
+<li class="game-card"><a href="games/soft-poop-fall/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>うんこ図鑑</h2><p class="dir">{ soft-poop-fall }</p><p class="desc">うんこを積んで珍しい種類を集める</p></a></li>
+<li class="game-card"><a href="games/speed-cards/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>スピード物理</h2><p class="dir">{ speed-cards }</p><p class="desc">トランプのスピードでCPUと対戦</p></a></li>
+<li class="game-card"><a href="games/spinning-JP/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>47都道府県バトル</h2><p class="dir">{ spinning-JP }</p><p class="desc">都道府県のコマを場外へはじき出す</p></a></li>
+<li class="game-card"><a href="games/star-hopper/star-hopper.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>StarHopper</h2><p class="dir">{ star-hopper }</p><p class="desc">星の重力圏を次々に飛び移る</p></a></li>
+<li class="game-card"><a href="games/swing-master/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>ブランコマスター</h2><p class="dir">{ swing-master }</p><p class="desc">ブランコをこいで遠くへ跳ぶ</p></a></li>
+<li class="game-card"><a href="games/synthwave-stg/synthwave-stg.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>SynthwaveSTG</h2><p class="dir">{ synthwave-stg }</p><p class="desc">夕日のグリッドを飛ぶ3Dシューティング</p></a></li>
+<li class="game-card"><a href="games/time-schedule-simulator/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>タイムスケジュールシミュレーター</h2><p class="dir">{ time-schedule-simulator }</p><p class="desc">回る予定を止めて1日の予定を組む</p></a></li>
+<li class="game-card"><a href="games/tissue-rush/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>ティッシュラッシュ</h2><p class="dir">{ tissue-rush }</p><p class="desc">50枚のティッシュを出し切るタイム勝負</p></a></li>
+<li class="game-card"><a href="games/toilet-paper-rush/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>トイレットペーパーラッシュ</h2><p class="dir">{ toilet-paper-rush }</p><p class="desc">トイレットペーパーを出し切るタイム勝負</p></a></li>
+<li class="game-card"><a href="games/tower-climb/tower-climb.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>TowerClimber</h2><p class="dir">{ tower-climb }</p><p class="desc">足場を跳び移って塔を登る</p></a></li>
+<li class="game-card"><a href="games/train-time-attack/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>トレインタイムアタック</h2><p class="dir">{ train-time-attack }</p><p class="desc">環状線を電車で一周するタイム勝負</p></a></li>
+<li class="game-card"><a href="games/turkish-ice-cream-3d/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>トルコアイス3D</h2><p class="dir">{ turkish-ice-cream-3d }</p><p class="desc">客の手をかわすトルコアイス屋</p></a></li>
+<li class="game-card"><a href="games/typhoon-escape/index.html" target="_blank" rel="noopener" style="--accent: #ff8709;"><h2>タイフーンエスケープ</h2><p class="dir">{ typhoon-escape }</p><p class="desc">日本列島を動かして台風から逃げる</p></a></li>
+<li class="game-card"><a href="games/usb-simulator-3d/index.html" target="_blank" rel="noopener" style="--accent: #fec5fb;"><h2>USBシミュレーター3D</h2><p class="dir">{ usb-simulator-3d }</p><p class="desc">USBを刺されないように粘る</p></a></li>
+<li class="game-card"><a href="games/waffle-maker-3d/index.html" target="_blank" rel="noopener" style="--accent: #9d95ff;"><h2>ワッフルメーカー3D</h2><p class="dir">{ waffle-maker-3d }</p><p class="desc">金型を描いて好きな形のワッフルを焼く</p></a></li>
+<li class="game-card"><a href="games/walk-the-dog/index.html" target="_blank" rel="noopener" style="--accent: #00bae2;"><h2>WALK THE DOG</h2><p class="dir">{ walk-the-dog }</p><p class="desc">犬が飼い主をぶん回して放り投げる</p></a></li>
+<li class="game-card"><a href="games/zipper-finger/index.html" target="_blank" rel="noopener" style="--accent: #0ae448;"><h2>ジッパーフィンガー</h2><p class="dir">{ zipper-finger }</p><p class="desc">なぞるとジッパーが付く写真のおもちゃ</p></a></li>
+<!-- GAME_LIST_END --></ul>
+  </section>
+
+  <footer class="site-footer">
+    <nav>
+      <a href="privacy/index.html">運営者情報・プライバシーポリシー</a>
+      <a href="contact/index.html">お問い合わせ</a>
+    </nav>
+  </footer>
+
+  <script>
+    // ゲーム一覧はデプロイ時に HTML へ書き出される(scripts/generate-games-json.sh --render-index)。
+    // 書き出していないとき(ローカル確認など)だけ、games/games.json を読んでここで描画する
+    (function () {
+      // 一覧のカードに割り当てる5色(色は分類の記号。順番に循環させる)。
+      // generate-games-json.sh の ACCENTS と同じにする
+      var ACCENTS = ["#0ae448", "#ff8709", "#fec5fb", "#9d95ff", "#00bae2"];
+      var list = document.getElementById("game-list");
+      if (list.children.length) return;
+      function showEmpty(text) {
+        var p = document.createElement("p");
+        p.className = "game-list-empty";
+        p.textContent = text;
+        list.parentNode.appendChild(p);
+      }
+      fetch("games/games.json", { cache: "no-cache" })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.status);
+          return res.json();
+        })
+        .then(function (games) {
+          if (!games.length) { showEmpty("公開中のゲームはまだありません"); return; }
+          games.forEach(function (g, i) {
+            var li = document.createElement("li");
+            li.className = "game-card";
+            var a = document.createElement("a");
+            a.href = g.path;
+            // ゲームは新しいタブで開く(index に戻りやすくするため)
+            a.target = "_blank";
+            a.rel = "noopener";
+            a.style.setProperty("--accent", ACCENTS[i % ACCENTS.length]);
+            var h2 = document.createElement("h2");
+            h2.textContent = g.title;
+            var dir = document.createElement("p");
+            dir.className = "dir";
+            dir.textContent = "{ " + g.dir + " }";
+            a.appendChild(h2);
+            a.appendChild(dir);
+            // 説明はゲームの <meta name="description">(無いゲームは出さない)
+            if (g.description) {
+              var desc = document.createElement("p");
+              desc.className = "desc";
+              desc.textContent = g.description;
+              a.appendChild(desc);
+            }
+            li.appendChild(a);
+            list.appendChild(li);
+          });
+        })
+        .catch(function () {
+          // file:// で直接開いた場合など、games.json を取得できないとき
+          showEmpty("ゲーム一覧を読み込めませんでした");
+        });
+    })();
+  </script>
+  <script>
+    // common/models/hero.glb が置いてあれば、ブロブの飾りを
+    // ゆっくり自動回転する3Dモデルに差し替える(無ければ何もしない)
+    (function () {
+      var MODEL_URL = "common/models/hero.glb";
+      fetch(MODEL_URL, { method: "HEAD" })
+        .then(function (res) {
+          if (!res.ok) return;
+          var s = document.createElement("script");
+          s.type = "module";
+          s.src = "https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js";
+          document.head.appendChild(s);
+          var mv = document.createElement("model-viewer");
+          mv.setAttribute("src", MODEL_URL);
+          mv.setAttribute("alt", "");
+          mv.setAttribute("auto-rotate", "");
+          mv.setAttribute("auto-rotate-delay", "0");
+          mv.setAttribute("rotation-per-second", "12deg");
+          mv.setAttribute("interaction-prompt", "none");
+          mv.setAttribute("shadow-intensity", "0");
+          mv.setAttribute("loading", "eager");
+          var holder = document.getElementById("hero-3d");
+          holder.appendChild(mv);
+          holder.hidden = false;
+          document.querySelectorAll(".blob").forEach(function (b) { b.hidden = true; });
+        })
+        .catch(function () { /* 取得できなければブロブのまま */ });
+    })();
+  </script>
+  <canvas id="game-canvas"></canvas>
+  <script>
+    (function () {
+      var canvas = document.getElementById("game-canvas");
+      var ctx = canvas.getContext("2d");
+      var trigger = document.getElementById("subtitle");
+
+      var state = "idle"; // idle | playing | over
+      var player, cones, score, elapsed, spawnTimer, lastTime, animId;
+      var keys = {};
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resize);
+
+      function startGame() {
+        resize();
+        document.body.classList.add("playing");
+        state = "playing";
+        player = { x: canvas.width / 2, size: 40, speed: 420 };
+        cones = [];
+        score = 0;
+        elapsed = 0;
+        spawnTimer = 0;
+        lastTime = performance.now();
+        cancelAnimationFrame(animId);
+        animId = requestAnimationFrame(loop);
+      }
+
+      function endGame() {
+        state = "over";
+      }
+
+      function quitGame() {
+        state = "idle";
+        cancelAnimationFrame(animId);
+        document.body.classList.remove("playing");
+      }
+
+      // 右上の「×」(スマホには Esc が無いので、タップで戻れるようにする)
+      var QUIT_SIZE = 56;
+      function inQuit(x, y) {
+        return x >= canvas.width - QUIT_SIZE && y <= QUIT_SIZE;
+      }
+      function drawQuit() {
+        ctx.fillStyle = "#fffce1";
+        ctx.font = "28px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("×", canvas.width - QUIT_SIZE / 2, QUIT_SIZE / 2);
+      }
+
+      function spawnCone() {
+        var size = 28 + Math.random() * 20;
+        cones.push({
+          x: size / 2 + Math.random() * (canvas.width - size),
+          y: -size,
+          size: size,
+          vy: 160 + Math.random() * 120 + elapsed * 8
+        });
+      }
+
+      function update(dt) {
+        elapsed += dt;
+        score = Math.floor(elapsed * 10);
+
+        if (keys.ArrowLeft || keys.a) player.x -= player.speed * dt;
+        if (keys.ArrowRight || keys.d) player.x += player.speed * dt;
+        player.x = Math.max(player.size / 2, Math.min(canvas.width - player.size / 2, player.x));
+
+        spawnTimer -= dt;
+        if (spawnTimer <= 0) {
+          spawnCone();
+          spawnTimer = Math.max(0.15, 0.7 - elapsed * 0.02);
+        }
+
+        var py = canvas.height - 60;
+        for (var i = cones.length - 1; i >= 0; i--) {
+          var c = cones[i];
+          c.y += c.vy * dt;
+          if (c.y - c.size > canvas.height) {
+            cones.splice(i, 1);
+            continue;
+          }
+          var dx = c.x - player.x;
+          var dy = c.y - py;
+          var hit = (c.size + player.size) * 0.35;
+          if (dx * dx + dy * dy < hit * hit) {
+            endGame();
+          }
+        }
+      }
+
+      function draw() {
+        ctx.fillStyle = "#0e100f";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        var py = canvas.height - 60;
+        ctx.font = player.size + "px sans-serif";
+        ctx.fillText("👷", player.x, py);
+
+        cones.forEach(function (c) {
+          ctx.font = c.size + "px sans-serif";
+          ctx.fillText("🚧", c.x, c.y);
+        });
+
+        ctx.fillStyle = "#fffce1";
+        ctx.font = "600 20px 'Inter Tight', 'Noto Sans JP', sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("スコア: " + score, 16, 28);
+        drawQuit();
+
+        if (state === "over") {
+          ctx.fillStyle = "rgba(14, 16, 15, 0.75)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "#fffce1";
+          ctx.textAlign = "center";
+          ctx.font = "600 32px 'Inter Tight', 'Noto Sans JP', sans-serif";
+          ctx.fillText("ゲームオーバー", canvas.width / 2, canvas.height / 2 - 40);
+          ctx.font = "24px 'Inter Tight', 'Noto Sans JP', sans-serif";
+          ctx.fillText("スコア: " + score, canvas.width / 2, canvas.height / 2);
+          ctx.font = "18px 'Inter Tight', 'Noto Sans JP', sans-serif";
+          ctx.fillText("クリック / タップでリトライ", canvas.width / 2, canvas.height / 2 + 44);
+          ctx.fillText("右上の × か Esc でトップにもどる", canvas.width / 2, canvas.height / 2 + 74);
+          drawQuit();
+        }
+      }
+
+      function loop(now) {
+        var dt = Math.min((now - lastTime) / 1000, 0.05);
+        lastTime = now;
+        if (state === "playing") update(dt);
+        if (state !== "idle") {
+          draw();
+          animId = requestAnimationFrame(loop);
+        }
+      }
+
+      trigger.addEventListener("click", startGame);
+
+      canvas.addEventListener("pointerdown", function (e) {
+        if (inQuit(e.clientX, e.clientY)) {
+          quitGame();
+          return;
+        }
+        if (state === "over") {
+          startGame();
+        } else if (state === "playing") {
+          player.x = e.clientX;
+        }
+      });
+      canvas.addEventListener("pointermove", function (e) {
+        if (state === "playing" && (e.pressure > 0 || e.pointerType === "mouse")) {
+          player.x = e.clientX;
+        }
+      });
+
+      window.addEventListener("keydown", function (e) {
+        keys[e.key] = true;
+        if (e.key === "Escape" && state !== "idle") quitGame();
+      });
+      window.addEventListener("keyup", function (e) {
+        keys[e.key] = false;
+      });
+    })();
+  </script>
+</body>
+</html>

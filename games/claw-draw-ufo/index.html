@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/claw-draw-ufo/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Draw Claw UFO</title>
+<meta name="description" content="描いた形の爪で景品を取るクレーンゲーム">
+<style>
+  :root{
+    /* ページ・UI */
+    --bg:#241b3a; --fg:#fff; --sub:#cfc6ec; --accent:#ffd43b;
+    --btn:#fff; --btn-fg:#2a2140; --btn-edge:#b9b0d6;
+    --cab:#22c3e6; --cab-dark:#1690ab;            /* 筐体の枠・主なボタン */
+    /* 筐体の中 */
+    --glass-top:#fbf8ff; --glass-bot:#e4dbfa;       /* 奥の壁 */
+    --floor:#8a7fb0; --floor-top:#a79dcc;           /* 景品の台 */
+    --hole:#2a2140;                                 /* 取り出し口の穴 */
+    --acrylic:rgba(160,205,255,.35); --acrylic-edge:rgba(90,140,210,.8);
+    --rail:#4a4262; --rope:#5d5575;
+    --arm:#3f4655; --arm-hi:#c9d1de;               /* 爪（金属） */
+    --panel:#fff; --line:#999; --outline:rgba(40,20,60,.38);
+    /* 景品の色 */
+    --p1:#ff6b6b; --p2:#4dabf7; --p3:#51cf66; --p4:#ffd43b; --p5:#b197fc; --p6:#ff922b;
+    --howto-bg:#241b3a; --howto-fg:#fff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #game{position:relative;margin:0 auto;width:100%;max-width:420px;height:100vh;height:100dvh;display:flex;flex-direction:column;justify-content:center;align-items:center}
+
+  /* 上の表示：残り回数と獲得数をバッジで */
+  #hud{width:100%;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;display:flex;justify-content:center;gap:8px}
+  .badge{display:flex;align-items:baseline;gap:6px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.1);font-size:13px;color:var(--sub)}
+  .badge b{font-size:20px;color:var(--fg)}
+
+  /* 筐体：canvas の周りを枠で囲む */
+  #stage{flex:none;padding:6px;background:var(--cab);border-radius:18px}   /* 押せない所なので、ボタンのような厚み（下の影）は付けない */
+  #cv{display:block;touch-action:none;border-radius:10px}
+
+  #controls{width:100%;display:flex;gap:10px;padding:14px 0 calc(12px + env(safe-area-inset-bottom))}
+  #controls button{flex:1;height:60px;font-size:22px}
+
+  button{min-height:44px;min-width:44px;font-size:16px;font-weight:bold;font-family:inherit;border:none;border-radius:14px;
+         background:var(--btn);color:var(--btn-fg);box-shadow:0 4px 0 var(--btn-edge);touch-action:manipulation}
+  /* 押した見た目は .pressed（JS で付け外し）でも出す。:active だけだとスマホで付かないボタンがある */
+  button:active:not(:disabled),button.pressed:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--btn-edge)}
+  button.primary{background:var(--cab);color:var(--btn-fg);box-shadow:0 4px 0 var(--cab-dark)}   /* 明るい水色なので文字は濃い色にする */
+  button.primary:active:not(:disabled),button.primary.pressed:not(:disabled){box-shadow:0 1px 0 var(--cab-dark)}
+  button:disabled{opacity:.4}
+  button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+  .ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--bg);padding:16px;text-align:center}
+  /* 結果画面は全面を塗らず、遊んだ後の筐体が透けて見えるようにする */
+  #overOv{background:rgba(20,14,34,.45)}
+  /* 描く画面：枠と同じ幅に、補助ボタン4つを2列で並べ、その下に「これで遊ぶ」を全幅で置く */
+  #drawBox{width:min(84vw,300px);display:flex;flex-direction:column;gap:12px}
+  #pad{width:100%;aspect-ratio:1;border-radius:16px;touch-action:none;display:block;box-shadow:0 0 0 6px var(--cab)}
+  #tools{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+  #tools button{height:52px;padding:0 4px;font-size:14px;line-height:1.2}
+  #bStart{width:100%;height:56px;font-size:18px}
+  /* 結果画面 */
+  #resultCard{width:min(84vw,300px);padding:22px 16px;border-radius:18px;background:var(--bg);margin-bottom:6px}
+  #resNum{font-size:56px;font-weight:bold;line-height:1.2}
+  #resNum small{font-size:22px;margin-left:4px}
+  #result{margin:4px 0 0;font-size:14px;color:var(--sub)}
+  #result.best{color:var(--accent);font-weight:bold}
+  .ov > button{width:min(84vw,300px);height:52px}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hud" aria-live="polite"><span id="info" class="badge">残り<b id="hudPlays">3</b>回</span><span class="badge">獲得<b id="hudGot">0</b>個</span></div>
+  <div id="stage"><canvas id="cv"></canvas></div>
+  <div id="controls">
+    <button id="bL" aria-label="左へ移動">←</button>
+    <button id="bDrop" class="primary">降ろす</button>
+    <button id="bR" aria-label="右へ移動">→</button>
+  </div>
+
+  <div id="drawOv" class="ov">
+    <div id="drawBox">
+      <canvas id="pad"></canvas>
+      <div id="tools">
+        <button id="bMirror" aria-pressed="true">左右反転 ON</button>
+        <button id="bPreview" disabled>プレビュー</button>
+        <button id="bClear">描き直す</button>
+        <button type="button" data-howto-open>遊び方</button>
+      </div>
+      <button id="bStart" class="primary" disabled>これで遊ぶ</button>
+    </div>
+  </div>
+
+  <div id="overOv" class="ov hidden">
+    <div id="resultCard" aria-live="polite">
+      <div id="resNum"></div>
+      <p id="result"></p>
+    </div>
+    <button id="bShare" class="primary">共有</button>
+    <button id="bAgain">もう一回</button>
+  </div>
+</div>
+<section class="howto" data-pos="none" hidden>
+  <h2>遊び方</h2>
+  <p>自分で描いた形の爪で景品をつかみ、左の取り出し口へ落とすクレーンゲームです。1ゲームで爪を降ろせるのは3回で、取り出し口に落ちた景品の個数が結果になります。自己ベストはこのブラウザに保存されます。</p>
+  <h2>操作</h2>
+  <p>最初の画面の枠に爪の形を描き、「これで遊ぶ」で始めます。左右反転をオフにすると左右の爪を別々に描けます。プレイ中は「←」「→」を押している間クレーンが動き、「降ろす」で爪が降ります。PC では矢印キーで移動し、スペースキーか下キーで降ろせます。</p>
+  <h2>コツ</h2>
+  <p>クレーンは紐で吊られているので、動かした直後は揺れます。揺れが収まってから降ろすと狙いがずれにくくなります。「プレビュー」を押すと、描いた爪の開閉を遊ぶ前に確かめられます。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // ---------- 定数 ----------
+  const W = 360, H = 600;        // 筐体内の論理解像度
+  const FLOOR_Y = 570;           // 景品が乗る床の高さ
+  const CHUTE_X = 120;           // 左の取り出し口の幅
+  const WALL_H = 360;            // 取り出し口の仕切りの高さ（景品の山より高くして、山が崩れても入らないようにする）
+  const TOP_Y = 80;              // クレーン待機時の爪の付け根の高さ
+  const ROPE_TOP = 10;           // クレーンを吊っている紐の上端（レールの高さ）
+  const TROLLEY_ACC = 200;       // レール上の台車の加速・減速の強さ（大きいほど動き出し・止まるときに大きく揺れる）
+  const ROPE_DAMP = 1.5;         // 吊られたクレーンの揺れの減衰
+  const HOME_X = CHUTE_X / 2;    // 景品を離す位置（取り出し口の真上）
+  const MOVE_SPEED = 120;        // 横移動の速さ
+  const DOWN_SPEED = 110;        // 降下の速さ
+  const UP_SPEED = 90;           // 上昇の速さ
+  const CLOSE_SPEED = 1.8;       // 爪を閉じる速さの上限（rad/秒）
+  const OPEN_SPEED = 2.5;        // 爪を開く速さ（rad/秒）
+  const OPEN_ANG = 0.7;          // 描いた形（閉じた状態）から開く角度（rad）
+  const CLOSE_MAX = OPEN_ANG;    // 開いた状態から閉じる最大角度＝描いた形に戻るまで
+  const SPRING_PRELOAD = 0.6;    // バネの予圧（rad）。閉じ切る直前でも握る力が残るように、目標を描いた形より内側に置く
+  const OPEN_HOLD = 0.4;         // 描く画面の開閉再生で、開いたまま止める時間（秒）
+  const CLOSE_TIME = 0.9;        // 底で閉じている時間（秒）
+  const FINISH_MIN = 0.6;        // 最後の回のあと、結果を出すまでの最短の待ち（秒）
+  const FINISH_MAX = 5;          // 景品が落ち切らないときの待ちの上限（秒）
+  const RELEASE_WAIT = 1.2;      // 取り出し口の上で開いてから閉じ始めるまで（秒）
+  const SPRING_K = 2.5e7;        // 爪を閉じるバネの強さ（小さいほど握る力が弱い）
+  const SPRING_D = 1.3e6;        // バネの減衰（揺れの収まりやすさ）
+  const ARM_W_MAX = 1.5;         // 景品に押されて爪が開く速さの上限（rad/秒）
+  const ARM_I = 50000;           // 爪の回転しにくさ（慣性）
+  const ARM_T = 3;               // 爪・床・仕切りの太さ（半径）
+  const GRAVITY = 900;
+  const FRICTION = 0.7;          // 摩擦係数（大きいほど滑りにくい）
+  const REST = 0.1;              // 反発係数
+  const STEP = 1 / 240;          // 物理の固定タイムステップ
+  const ITER = 4;                // 衝突解決の反復回数
+  const POS_FIX = 0.5;           // めり込みを1回で押し戻す割合（全部戻すと揺れが止まらない）
+  const SLOP = 0.3;              // これ以下のめり込みは許す（積み重なった景品を落ち着かせる）
+  const SETTLE_STEPS = 900;      // 開始前に景品の山を落ち着かせるステップ数
+  const SETTLE_BUDGET = 6;       // 山づくりに1フレームで使ってよい時間（ミリ秒）
+  const REST_MIN_V = 60;         // これより遅くぶつかったときは跳ね返らない
+  const PLAYS = 3;               // 1ゲームで降ろせる回数
+  const PRIZE_N = 130;           // 景品の数（山の高さもこれで決まる）
+  const CLAW_MASS = 9000;        // クレーンの重さ。景品に下から押し返される力がこれを超えたら降下をやめる
+  const PRIZE_U_MIN = 6, PRIZE_U_MAX = 8.5;   // 景品の大きさの単位（形の定義はこの何倍かで書く）
+  const UP_V_MAX = 250;          // 景品が上へ飛ぶ速さの上限
+  const PRIZE_OUTLINE = 0.8;     // 景品の縁取りの太さ（見た目だけ。当たり判定には影響しない）
+  const ANG_DAMP = 1.5;          // 景品の回転の減衰（転がり続けないように）
+  // 景品の形：円をいくつか組み合わせた剛体。[x, y, 半径]（単位 u）と、塗りつぶしのためにつなぐ円の組
+  const SHAPES = [
+    {name:'ball',     parts:[[0,0,1.4]], links:[]},
+    {name:'capsule',  parts:[[-1.2,0,1],[0,0,1],[1.2,0,1]], links:[[0,1],[1,2]]},
+    {name:'bar',      parts:[[-2.2,0,.8],[-1.1,0,.8],[0,0,.8],[1.1,0,.8],[2.2,0,.8]], links:[[0,1],[1,2],[2,3],[3,4]]},
+    {name:'dumbbell', parts:[[-1.7,0,1.1],[-.6,0,.55],[.6,0,.55],[1.7,0,1.1]], links:[[0,1],[1,2],[2,3]]},
+    {name:'triangle', parts:[[0,-1.1,.9],[.95,.55,.9],[-.95,.55,.9],[0,0,.9]], links:[[0,1],[1,2],[2,0]]},
+    {name:'L',        parts:[[0,-1.3,1],[0,0,1],[1.3,0,1],[2.6,0,1]], links:[[0,1],[1,2],[2,3]]},
+    {name:'T',        parts:[[-1.3,0,1],[0,0,1],[1.3,0,1],[0,1.3,1]], links:[[0,1],[1,2],[1,3]]},
+    {name:'square',   parts:[[-.65,-.65,1],[.65,-.65,1],[.65,.65,1],[-.65,.65,1]], links:[[0,1],[1,2],[2,3],[3,0],[0,2]]},
+    {name:'snowman',  parts:[[0,.7,1.3],[0,-1.2,.9]], links:[[0,1]]},
+    {name:'ring',     parts:[0,1,2,3,4,5].map(i => [1.5 * Math.cos(i * Math.PI / 3), 1.5 * Math.sin(i * Math.PI / 3), .7]),
+                      links:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]]},
+  ];
+  const PUSH_SMOOTH = 0.1;       // 押し返す力をならす時間（秒）
+  const PAD = 200;               // 爪を描く枠の論理サイズ
+  const PAD_PIVOT = {x:100, y:24};  // 描く枠の中の付け根位置
+  const PAD_SCALE = 0.55;        // 描いた爪 → ゲーム内サイズの倍率
+  const PAD_MIN_DIST = 4;        // 描画点を間引く間隔
+  const ARM_SIMPLIFY = 1.0;      // 爪の線を間引くときに許すずれ（ゲーム内の長さ）
+
+  // ---------- 色（CSS変数から読む） ----------
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const COL = {
+    bg:css('--bg'), fg:css('--fg'), sub:css('--sub'), line:css('--line'), btnFg:css('--btn-fg'),
+    panel:css('--panel'), arm:css('--arm'), armHi:css('--arm-hi'), outline:css('--outline'),
+    glassTop:css('--glass-top'), glassBot:css('--glass-bot'), floor:css('--floor'), floorTop:css('--floor-top'),
+    hole:css('--hole'), acrylic:css('--acrylic'), acrylicEdge:css('--acrylic-edge'),
+    rail:css('--rail'), rope:css('--rope'), cab:css('--cab'),
+    prizes:['--p1','--p2','--p3','--p4','--p5','--p6'].map(css),
+  };
+
+  // ---------- 状態 ----------
+  let mode = 'draw';             // draw / play / over
+  let phase = 'ready';           // ready / down / close / up / home / open
+  let timer = 0;
+  let plays = PLAYS, got = 0;
+  // 自己ベスト：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  const BEST_KEY = 'clawDrawUfo.bestCount';   // 3回で取った個数の自己ベスト
+  let bestScore = 0;
+  try { bestScore = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch(e) {}
+  function saveBest(){ try { localStorage.setItem(BEST_KEY, String(bestScore)); } catch(e) {} }
+  let prizes = [];
+  const crane = {x:HOME_X, y:TOP_Y, vx:0, vy:0};   // 爪の付け根（紐の下端）の位置と速度
+  // クレーンは紐で吊られた振り子：台車の位置、紐の長さ、振れ角（右に振れると正）と角速度
+  const rope = {tx:HOME_X, tv:0, len:TOP_Y - ROPE_TOP, a:0, w:0};
+  let pendJx = 0, pendJy = 0;    // 景品がクレーンを押した力積（1ステップ分）
+  let angL = 0, angR = 0;        // 左右の爪の閉じ角
+  let velL = 0, velR = 0;        // 左右の爪の閉じる方向の角速度
+  let pushAngL = 0, pushAngR = 0; // 景品に押されて爪が動く角度（1ステップ分を貯める）
+  let pushImp = 0, pushF = 0;     // 景品がクレーンを押し返す力積（1ステップ分）と、ならした力
+  let clawContact = false;       // いま判定しているのがクレーン側の当たりか
+  let springOn = false;          // 爪がバネで動いているか（閉じている間）
+  let armPtsL = [], armPtsR = [];  // 左右の爪の形（付け根原点、開いた状態、どちらも左の爪の向き）
+  let xMax = W;
+  let iters = ITER;              // いまの衝突解決の反復回数
+  let armL = [], armR = [];
+  let holdL = false, holdR = false;
+
+  // =============================================================
+  // 爪を描く画面
+  // =============================================================
+  const pad = $('pad'), pctx = pad.getContext('2d');
+  let mirror = true;             // 左右反転：ON なら片側を描くと反対側は反転で作る。OFF なら左右を別々に描く
+  let stroke = [], drawing = false;   // 反転ONのときの線
+  let sides = {L:[], R:[]};      // 反転OFFのときの左右の線
+  let lastSide = 'L';            // 反転OFFで最後に描いた側
+  let cur = null;                // いま描いている線
+  let sidesBefore = null;        // 反転OFFで描き始める前の左右の線
+  let startPt = null;            // 押した位置（動き始めるまでは線を置き換えない）
+  let openT = 0;                 // 描く画面の爪の開き具合（0:閉じた=描いた形 〜 1:開いた）
+  let animId = 0;                // 開閉アニメーションの requestAnimationFrame ID（0なら再生していない）
+
+  function padResize(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    pad.width = Math.round(pad.clientWidth * dpr);
+    pad.height = Math.round(pad.clientHeight * dpr);
+    drawPad();
+  }
+  function padPos(e){
+    const r = pad.getBoundingClientRect();
+    return {
+      x: clamp((e.clientX - r.left) / r.width * PAD, 0, PAD),
+      y: clamp((e.clientY - r.top) / r.height * PAD, 0, PAD),
+    };
+  }
+  function validLine(st){
+    if (!st || st.length < 3) return false;
+    let len = 0;
+    for (let i = 1; i < st.length; i++) len += Math.hypot(st[i].x - st[i-1].x, st[i].y - st[i-1].y);
+    return len >= 30;
+  }
+  // 遊び始められるか：反転ONなら線が1本、OFFなら左右とも描けていること
+  const strokeValid = () => mirror ? validLine(stroke) : validLine(sides.L) && validLine(sides.R);
+  const meanX = st => st.reduce((a, p) => a + p.x, 0) / st.length;
+  const flipLine = st => st.map(p => ({x:PAD_PIVOT.x * 2 - p.x, y:p.y}));
+  // 描く枠に表示する線（閉じた状態）。[線, 濃さ] の組
+  function padLines(){
+    if (mirror){
+      if (!stroke.length) return [];
+      return [[stroke, 1], [flipLine(stroke), 0.4]];
+    }
+    const out = [];
+    for (const k of ['L', 'R']) if (sides[k].length) out.push([sides[k], 1]);
+    return out;
+  }
+  function drawPad(){
+    const s = pad.width / PAD;
+    pctx.setTransform(s, 0, 0, s, 0, 0);
+    pctx.fillStyle = COL.panel; pctx.fillRect(0, 0, PAD, PAD);
+    // 左右の目安になる中心線
+    pctx.strokeStyle = COL.glassBot; pctx.lineWidth = 1; pctx.setLineDash([4, 4]);
+    pctx.beginPath(); pctx.moveTo(PAD_PIVOT.x, 0); pctx.lineTo(PAD_PIVOT.x, PAD); pctx.stroke();
+    pctx.setLineDash([]);
+    pctx.lineCap = 'round'; pctx.lineJoin = 'round';
+    pctx.strokeStyle = COL.arm; pctx.lineWidth = ARM_T * 2 / PAD_SCALE;
+    for (const [line, alpha] of padLines()){
+      // 開閉アニメーション中は、線を付け根中心に外側へ OPEN_ANG × 開き具合 だけ回して表示する
+      let pts = line;
+      if (openT > 0){
+        const a = (meanX(line) <= PAD_PIVOT.x ? 1 : -1) * OPEN_ANG * openT;   // 左側の線は左へ、右側の線は右へ開く
+        const c = Math.cos(a), sn = Math.sin(a);
+        pts = line.map(p => {
+          const x = p.x - PAD_PIVOT.x, y = p.y - PAD_PIVOT.y;
+          return {x: PAD_PIVOT.x + x * c - y * sn, y: PAD_PIVOT.y + x * sn + y * c};
+        });
+      }
+      // 付け根から線でつなぐ
+      pctx.globalAlpha = alpha;
+      pctx.beginPath();
+      pctx.moveTo(PAD_PIVOT.x, PAD_PIVOT.y);
+      for (const p of pts) pctx.lineTo(p.x, p.y);
+      pctx.stroke();
+    }
+    pctx.globalAlpha = 1;
+    pctx.fillStyle = COL.cab;
+    pctx.beginPath(); pctx.arc(PAD_PIVOT.x, PAD_PIVOT.y, 6, 0, Math.PI * 2); pctx.fill();
+  }
+
+  // 開閉アニメーション：ゲームと同じ速さで 閉 → 開 → (OPEN_HOLD 秒止めて) → 閉 を1回だけ再生する
+  function playOpenClose(){
+    stopOpenClose();
+    const tOpen = OPEN_ANG / OPEN_SPEED, tClose = OPEN_ANG / CLOSE_SPEED;
+    const t0 = performance.now();
+    $('bPreview').disabled = true;
+    const frame = now => {
+      const t = (now - t0) / 1000;
+      if (t < tOpen) openT = t / tOpen;
+      else if (t < tOpen + OPEN_HOLD) openT = 1;
+      else if (t < tOpen + OPEN_HOLD + tClose) openT = 1 - (t - tOpen - OPEN_HOLD) / tClose;
+      else { stopOpenClose(); return; }
+      drawPad();
+      animId = requestAnimationFrame(frame);
+    };
+    animId = requestAnimationFrame(frame);
+  }
+  function stopOpenClose(){
+    if (animId) cancelAnimationFrame(animId);
+    animId = 0; openT = 0;
+    $('bPreview').disabled = !strokeValid();
+    drawPad();
+  }
+  function updateDrawButtons(){
+    const ok = strokeValid();
+    $('bStart').disabled = !ok;
+    if (!animId) $('bPreview').disabled = !ok;
+  }
+  $('bPreview').addEventListener('click', playOpenClose);
+
+  pad.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    try { pad.setPointerCapture(e.pointerId); } catch(_) {}
+    drawing = true;
+    // 描けるのは閉じた状態だけ。開閉を再生中なら止めて閉じた表示に戻してから描く
+    if (animId) stopOpenClose();
+    // タップしただけで今の爪が消えないよう、指が動き始めてから新しい線に置き換える
+    startPt = padPos(e);
+  });
+  pad.addEventListener('pointermove', e => {
+    if (!drawing) return;
+    if (startPt){
+      const p0 = padPos(e);
+      if (Math.hypot(p0.x - startPt.x, p0.y - startPt.y) < PAD_MIN_DIST) return;
+      cur = [startPt];
+      if (mirror) stroke = cur;   // 反転ONは描いている線をそのまま爪にする（前の線はこの時点で消える）
+      else sidesBefore = {L:sides.L, R:sides.R};
+      startPt = null;
+    }
+    if (!cur) return;
+    const p = padPos(e), l = cur[cur.length - 1];
+    if (Math.hypot(p.x - l.x, p.y - l.y) >= PAD_MIN_DIST){
+      cur.push(p);
+      // 反転OFF：描いている線が付け根の左右どちらにあるかで、その側の前の線をすぐ置き換える
+      // （途中で反対側に移ったら、最初の側の線は元に戻す）
+      if (!mirror){
+        lastSide = meanX(cur) <= PAD_PIVOT.x ? 'L' : 'R';
+        sides = {L:sidesBefore.L, R:sidesBefore.R};
+        sides[lastSide] = cur;
+      }
+      drawPad(); updateDrawButtons();
+    }
+  });
+  const endDraw = () => {
+    cur = null; drawing = false; startPt = null;
+    drawPad(); updateDrawButtons();
+  };
+  pad.addEventListener('pointerup', endDraw);
+  pad.addEventListener('pointercancel', endDraw);
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て描画が奪われるのを防ぐ
+  ['touchstart','touchmove','selectstart','contextmenu'].forEach(t =>
+    pad.addEventListener(t, e => e.preventDefault(), {passive:false}));
+
+  $('bClear').addEventListener('click', () => { stroke = []; sides = {L:[], R:[]}; stopOpenClose(); updateDrawButtons(); });
+
+  // 左右反転の切り替え。いま描いてある爪は引き継ぐ
+  $('bMirror').addEventListener('click', () => {
+    stopOpenClose();
+    mirror = !mirror;
+    if (!mirror){
+      // ON → OFF：描いた線とその反転を、左右それぞれの爪にする
+      sides = {L:[], R:[]};
+      if (stroke.length){
+        lastSide = meanX(stroke) <= PAD_PIVOT.x ? 'L' : 'R';
+        sides[lastSide] = stroke;
+        sides[lastSide === 'L' ? 'R' : 'L'] = flipLine(stroke);
+      }
+    } else {
+      // OFF → ON：最後に描いた側の線を使う
+      const other = lastSide === 'L' ? 'R' : 'L';
+      stroke = sides[lastSide].length ? sides[lastSide] : sides[other];
+    }
+    const b = $('bMirror');
+    b.setAttribute('aria-pressed', String(mirror));
+    b.textContent = mirror ? '左右反転 ON' : '左右反転 OFF';
+    drawPad(); updateDrawButtons();
+  });
+  $('bStart').addEventListener('click', () => { if (strokeValid()){ stopOpenClose(); buildArm(); newGame(); } });
+
+  // 折れ線の間引き（Ramer–Douglas–Peucker法）。tol より小さいずれの点を省く
+  function simplify(pts, tol){
+    if (pts.length < 3) return pts;
+    const keep = new Array(pts.length).fill(false);
+    keep[0] = keep[pts.length - 1] = true;
+    const stack = [[0, pts.length - 1]];
+    while (stack.length){
+      const [i0, i1] = stack.pop();
+      const a = pts[i0], b = pts[i1];
+      const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+      let best = -1, bi = -1;
+      for (let i = i0 + 1; i < i1; i++){
+        const d = Math.abs((pts[i].x - a.x) * dy - (pts[i].y - a.y) * dx) / len;
+        if (d > best){ best = d; bi = i; }
+      }
+      if (best > tol){ keep[bi] = true; stack.push([i0, bi], [bi, i1]); }
+    }
+    return pts.filter((_, i) => keep[i]);
+  }
+
+  // 描いた線 → ゲーム内の爪に変換。左右とも「左の爪」の向きにそろえて持つ（右の爪は描くときに反転する）
+  function buildArm(){
+    const lines = mirror ? [stroke, stroke] : [sides.L, sides.R];
+    armPtsL = lineToArm(lines[0]);
+    armPtsR = lineToArm(lines[1]);
+    const reach = Math.max(...armPtsL.map(p => Math.abs(p.x)), ...armPtsR.map(p => Math.abs(p.x))) + ARM_T;
+    xMax = Math.max(HOME_X, W - reach);
+  }
+  function lineToArm(line){
+    let pts = [{x:0, y:0}].concat(line.map(p => ({
+      x:(p.x - PAD_PIVOT.x) * PAD_SCALE, y:(p.y - PAD_PIVOT.y) * PAD_SCALE,
+    })));
+    // 右側に描かれていたら左右反転して「左の爪」として持つ
+    const mx = pts.reduce((a, p) => a + p.x, 0) / pts.length;
+    if (mx > 0) pts = pts.map(p => ({x:-p.x, y:p.y}));
+    // ゲーム内では開いた状態を角度0として持つので、閉じた状態で描いた線は外側へ OPEN_ANG 回しておく
+    {
+      const c = Math.cos(OPEN_ANG), sn = Math.sin(OPEN_ANG);
+      pts = pts.map(p => ({x: p.x * c - p.y * sn, y: p.x * sn + p.y * c}));
+    }
+    // 長く描いた線は点が多く当たり判定が重くなるので、形が変わらない程度に点を間引く
+    return simplify(pts, ARM_SIMPLIFY);
+  }
+
+  // =============================================================
+  // ゲーム本体
+  // =============================================================
+  const cv = $('cv'), ctx = cv.getContext('2d');
+  let SC = 1, OX = 0, OY = 0, DPR = 1;
+  // 筐体を画面に収まる最大サイズにし、上の表示と下のボタンをすき間なく筐体に寄せる
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    const g = $('game');
+    const FRAME = 12;       // 筐体の枠（上下の合計）
+    const availW = g.clientWidth - 24 - 12;
+    const availH = g.clientHeight - $('hud').offsetHeight - $('controls').offsetHeight - FRAME;
+    SC = Math.max(0.1, Math.min(availW / W, availH / H));
+    const cw = Math.floor(W * SC), ch = Math.floor(H * SC);
+    cv.style.width = cw + 'px'; cv.style.height = ch + 'px';
+    cv.width = Math.round(cw * DPR); cv.height = Math.round(ch * DPR);
+    OX = 0; OY = 0;
+    // ボタン列の幅も筐体に合わせる
+    $('controls').style.width = (cw + 12) + 'px';
+    if (!$('drawOv').classList.contains('hidden')) padResize();
+  }
+  addEventListener('resize', resize);
+
+  // クレーンを取り出し口の上・閉じた形に戻す
+  function resetCrane(){
+    crane.x = HOME_X; crane.y = TOP_Y; crane.vx = crane.vy = 0;
+    rope.tx = HOME_X; rope.tv = 0; rope.len = TOP_Y - ROPE_TOP; rope.a = rope.w = 0;
+    angL = angR = CLOSE_MAX; velL = velR = 0;   // 閉じた形で始める
+    setPhase('ready');
+  }
+
+  // 景品の山づくり：並べて落とすところから、落ち着くまでの計算を、爪を描いている間や結果画面の間に
+  // 1フレーム SETTLE_BUDGET ミリ秒ずつ裏で進めておく（「これで遊ぶ」を押したときに固まらないように）
+  let settleLeft = 0;            // 山が落ち着くまでに残っているステップ数
+  function preparePile(){
+    resetCrane();
+    prizes = [];
+    // 横5個ずつの段に、形・大きさ・向きをばらばらにして並べて落とし、山にする
+    const cols = 5, cellW = (W - CHUTE_X - 32) / cols, cellH = 40;
+    for (let i = 0; i < PRIZE_N; i++){
+      const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+      const b = makePrize(shape, PRIZE_U_MIN + Math.random() * (PRIZE_U_MAX - PRIZE_U_MIN));
+      b.x = CHUTE_X + 16 + cellW * ((i % cols) + 0.5);
+      b.y = FLOOR_Y - cellH * (Math.floor(i / cols) + 0.6);
+      b.a = Math.random() * Math.PI * 2;
+      b.c = COL.prizes[Math.floor(Math.random() * COL.prizes.length)];
+      prizes.push(b);
+    }
+    settleLeft = SETTLE_STEPS;
+  }
+  // 山づくりを進める。budgetMs を使い切るか、落ち着き終わるまで
+  function settlePile(budgetMs){
+    const t0 = performance.now();
+    iters = 2;   // 山づくりの間は反復回数を減らして軽くする
+    while (settleLeft > 0 && performance.now() - t0 < budgetMs){ step(STEP); settleLeft--; }
+    iters = ITER;
+  }
+
+  function newGame(){
+    $('drawOv').classList.add('hidden');
+    $('overOv').classList.add('hidden');
+    // 裏での山づくりが終わっていなければ、残りはプレイ画面で落ち着く様子を見せながら進める（その間は降ろせない）
+    if (!prizes.length) preparePile();
+    resetCrane();
+    if (settleLeft > 0) $('bDrop').disabled = true;
+    plays = PLAYS; got = 0;
+    mode = 'play';
+    updateHud();
+  }
+
+  function setPhase(p){
+    phase = p; timer = 0;
+    $('bDrop').disabled = p !== 'ready';
+  }
+  function updateHud(){ $('hudPlays').textContent = plays; $('hudGot').textContent = got; }
+
+  function endPlay(){
+    plays--;
+    updateHud();
+    // 最後の回は、取り出し口に落ちている途中の景品が落ち切るのを待ってから結果を出す
+    if (plays <= 0 || prizes.length === 0) setPhase('finish');
+    else setPhase('ready');
+  }
+  function showResult(){
+    mode = 'over';
+    const isNew = got > bestScore;
+    if (isNew){ bestScore = got; saveBest(); }
+    $('resNum').innerHTML = `${got}<small>個</small>`;
+    $('result').textContent = isNew ? '自己ベスト更新！' : `自己ベスト ${bestScore}個`;
+    $('result').classList.toggle('best', isNew);
+    $('overOv').classList.remove('hidden');
+    $('bDrop').disabled = true;
+  }
+
+
+  // ---------- 共有 ----------
+  const shareText = () => `${got}個ゲット！\n${location.href.split(/[?#]/)[0]}\n#DrawClawUFO`;
+  // 結果画像：ゲーム画面と同じ見た目のクレーン（自分で描いた爪を閉じた形）と点数。共有シートの制約で同期的に作る
+  function makeResultImageFile(){
+    const S = 600, c = document.createElement('canvas');
+    c.width = S; c.height = S;
+    const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 0, S);
+    gr.addColorStop(0, COL.glassTop); gr.addColorStop(1, COL.glassBot);
+    g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    // 爪を付け根原点で閉じた形にして大きさを測り、画像の上側 (y 60〜390) に収まる倍率を決める
+    const pts = [...armPose(-1, CLOSE_MAX, 0, 0, 0), ...armPose(1, CLOSE_MAX, 0, 0, 0), {x:0, y:0}];
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const minX = Math.min(...xs) - 8, maxX = Math.max(...xs) + 8, minY = Math.min(...ys) - 8, maxY = Math.max(...ys) + 8;
+    const k = Math.min(440 / (maxX - minX), 260 / (maxY - minY), 4);
+    const hubImgY = 390 - k * maxY;                     // 爪の下端が y=390 に来る
+    const hy = ROPE_TOP + Math.max(20, (hubImgY - 40) / k);   // レールが y=40 付近に来るよう紐の長さを決める
+    const ox = S / 2 - k * (minX + maxX) / 2;          // 付け根を x=0 に置き、爪全体の中心が画像の中央に来るようずらす
+    g.setTransform(k, 0, 0, k, ox, 40 - k * ROPE_TOP);
+    drawCrane(g, 0, 0, hy, armPose(-1, CLOSE_MAX, 0, hy, 0), armPose(1, CLOSE_MAX, 0, hy, 0), -ox / k, (S - ox) / k);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    // 点数は結果画面と同じ濃い地に白字で載せる
+    g.fillStyle = COL.bg; g.fillRect(0, 420, S, S - 420);
+    g.fillStyle = COL.fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = 'bold 64px sans-serif';
+    g.fillText(`${got}個`, S / 2, 510);
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'claw-result.png', {type:'image/png'});
+  }
+  // 画像つき → テキストのみ → クリップボード の順に試す
+  $('bShare').addEventListener('pointerdown', e => e.stopPropagation());
+  $('bShare').addEventListener('click', () => {
+    const btn = $('bShare');
+    let file = null;
+    try { file = makeResultImageFile(); } catch(e) {}
+    if (file && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({text: shareText(), files:[file]}).catch(()=>{});
+      return;
+    }
+    if (navigator.share){
+      navigator.share({text: shareText()}).catch(()=>{});
+      return;
+    }
+    navigator.clipboard?.writeText(shareText()).then(()=>{
+      btn.textContent = 'コピーしました';
+      setTimeout(()=>{ btn.textContent = '共有'; }, 1500);
+    }).catch(()=>{});
+  });
+  // もう一回：前回描いた爪が残ったままの描く画面に戻る
+  $('bAgain').addEventListener('click', () => {
+    mode = 'draw';
+    preparePile();   // 次の回の山を、爪を描いている間に作り始める（結果画面では前の回の様子を見せたままにする）
+    $('overOv').classList.add('hidden');
+    $('drawOv').classList.remove('hidden');
+    padResize();
+    updateDrawButtons();
+  });
+
+  // ---------- クレーンの動き ----------
+  // 実機と同じ流れ：閉じたまま移動 → 降りる瞬間に開く → 開いたまま降りる → 底で閉じる
+  //   → 閉じたまま上がって取り出し口の上へ → 開いて景品を落とす → 閉じて次の回へ
+  function stepCrane(h){
+    let dL = 0, dR = 0;
+    let targetV = 0;                 // 台車の目標速度
+    const len0 = rope.len, tv0 = rope.tv;
+    springOn = false;
+    // モーターで爪の角度を目標へ一定の速さで動かす
+    const motor = (tL, tR, speed) => {
+      dL = Math.abs(tL - angL) <= speed * h ? (tL - angL) / h : Math.sign(tL - angL) * speed;
+      dR = Math.abs(tR - angR) <= speed * h ? (tR - angR) / h : Math.sign(tR - angR) * speed;
+      return Math.abs(tL - angL) <= speed * h && Math.abs(tR - angR) <= speed * h;   // 目標に着いたか
+    };
+    switch (phase){
+      case 'ready': {
+        motor(CLOSE_MAX, CLOSE_MAX, CLOSE_SPEED);   // 閉じた形で移動する
+        targetV = ((holdR ? 1 : 0) - (holdL ? 1 : 0)) * MOVE_SPEED;
+        break;
+      }
+      case 'opening':
+        // 降りる前にその場で開く
+        if (motor(0, 0, OPEN_SPEED)) setPhase('down');
+        break;
+      case 'down':
+        rope.len += DOWN_SPEED * h;
+        break;
+      case 'close':
+        springOn = true;
+        timer += h;
+        if (timer >= CLOSE_TIME) setPhase('up');
+        break;
+      case 'up':
+        springOn = true;
+        rope.len -= UP_SPEED * h;
+        if (rope.len <= TOP_Y - ROPE_TOP){ rope.len = TOP_Y - ROPE_TOP; setPhase('home'); }
+        break;
+      case 'home': {
+        springOn = true;
+        // 取り出し口の上で止まれるよう、近づいたら減速する
+        const dx = HOME_X - rope.tx;
+        targetV = Math.sign(dx) * Math.min(MOVE_SPEED, Math.sqrt(2 * TROLLEY_ACC * Math.abs(dx)));
+        if (Math.abs(dx) < 0.5 && Math.abs(rope.tv) < 5){ rope.tx = HOME_X; rope.tv = 0; setPhase('open'); }
+        break;
+      }
+      case 'finish':
+        // 取り出し口の中（仕切りより左）に景品が残っていなければ終わり。引っかかって落ちない景品があっても FINISH_MAX 秒で打ち切る
+        motor(CLOSE_MAX, CLOSE_MAX, CLOSE_SPEED);
+        timer += h;
+        if ((timer >= FINISH_MIN && !prizes.some(b => b.x < CHUTE_X)) || timer >= FINISH_MAX) showResult();
+        break;
+      case 'open':
+        // 取り出し口の上で開いて RELEASE_WAIT 秒待ち、景品を落としたら閉じて次の回へ
+        timer += h;
+        if (timer < RELEASE_WAIT) motor(0, 0, OPEN_SPEED);
+        else if (motor(CLOSE_MAX, CLOSE_MAX, CLOSE_SPEED)){ dL = dR = 0; endPlay(); }
+        break;
+    }
+    // 台車：目標速度へ TROLLEY_ACC で加減速してレール上を動く
+    rope.tv += clamp(targetV - rope.tv, -TROLLEY_ACC * h, TROLLEY_ACC * h);
+    rope.tx += rope.tv * h;
+    if (rope.tx < HOME_X){ rope.tx = HOME_X; rope.tv = Math.max(rope.tv, 0); }
+    if (rope.tx > xMax){ rope.tx = xMax; rope.tv = Math.min(rope.tv, 0); }
+    // 振り子：台車の加速と紐の伸び縮みで揺れる
+    const acc = (rope.tv - tv0) / h, lenV = (rope.len - len0) / h, L = rope.len;
+    rope.w += (-(GRAVITY / L) * Math.sin(rope.a) - (acc / L) * Math.cos(rope.a)
+               - 2 * (lenV / L) * rope.w - ROPE_DAMP * rope.w) * h;
+    rope.a += rope.w * h;
+    // 爪の付け根（紐の下端）
+    const nx = rope.tx + L * Math.sin(rope.a), ny = ROPE_TOP + L * Math.cos(rope.a);
+    crane.vx = (nx - crane.x) / h; crane.vy = (ny - crane.y) / h;
+    crane.x = nx; crane.y = ny;
+
+    if (springOn){
+      // 閉じている間はバネで閉じる方向へ引くだけ。景品に押されれば開く（固定しない）
+      [angL, velL] = springArm(-1, angL, velL, h);
+      [angR, velR] = springArm(1, angR, velR, h);
+    } else {
+      // 降下・開くときはモーターで角度を直接動かす（景品に押されても動かない）
+      angL = clamp(angL + dL * h, 0, CLOSE_MAX); velL = dL;
+      angR = clamp(angR + dR * h, 0, CLOSE_MAX); velR = dR;
+    }
+  }
+
+  function springArm(side, ang, vel, h){
+    const tau = SPRING_K * (CLOSE_MAX + SPRING_PRELOAD - ang) - SPRING_D * vel;
+    vel = clamp(vel + tau / ARM_I * h, -ARM_W_MAX, CLOSE_SPEED);   // 景品に弾かれても急には開かない
+    ang += vel * h;
+    if (ang < 0){ ang = 0; vel = Math.max(vel, 0); }
+    // 閉じるのは描いた形まで（プレビューと同じ。左右の爪が交差する形でもそのまま閉じる）
+    if (ang > CLOSE_MAX){ ang = CLOSE_MAX; vel = Math.min(vel, 0); }
+    return [ang, vel];
+  }
+
+  // 爪の形をワールド座標へ（side: -1 左 / +1 右）。左爪はワールド角 -angL、右爪は +angR で回る
+  function armWorld(side, ang){
+    if (ang === undefined) ang = side < 0 ? angL : angR;
+    return armPose(side, ang, crane.x, crane.y, rope.a);   // 紐が振れた分だけクレーン全体も傾く
+  }
+  // 付け根を (ox, oy) に置き、全体を tilt だけ傾けた爪の形
+  function armPose(side, ang, ox, oy, tilt){
+    const a = (side < 0 ? -ang : ang) - tilt;
+    const c = Math.cos(a), s = Math.sin(a);
+    return (side < 0 ? armPtsL : armPtsR).map(p => {
+      const x = side < 0 ? p.x : -p.x;
+      return {x: ox + x * c - p.y * s, y: oy + x * s + p.y * c};
+    });
+  }
+  // 爪のワールド角速度の読み書き
+  const armOm = side => side < 0 ? -velL : velR;
+  const armOmW = side => armOm(side) - rope.w;   // 画面上での爪の角速度（クレーンの傾きの変化を含む）
+  function armAddOm(side, d){ if (side < 0) velL -= d; else velR += d; }
+
+  // ---------- 景品（円を組み合わせた剛体） ----------
+  function makePrize(shape, u){
+    let parts = shape.parts.map(([x, y, r]) => ({ox:x * u, oy:y * u, r:r * u, wx:0, wy:0}));
+    // 面積で重み付けした重心を原点にそろえる
+    let m = 0, cx = 0, cy = 0;
+    for (const p of parts){ const a = p.r * p.r; m += a; cx += p.ox * a; cy += p.oy * a; }
+    cx /= m; cy /= m;
+    let I = 0, br = 0;
+    for (const p of parts){
+      p.ox -= cx; p.oy -= cy;
+      const d2 = p.ox * p.ox + p.oy * p.oy, a = p.r * p.r;
+      I += a * (a / 2 + d2);
+      br = Math.max(br, Math.sqrt(d2) + p.r);
+    }
+    const b = {x:0, y:0, a:0, vx:0, vy:0, w:0, m, I, br, parts, links:shape.links, c:''};
+    for (const p of parts) p.b = b;
+    return b;
+  }
+  // 各パーツのワールド座標を、本体の位置と角度から計算し直す
+  function updateParts(b){
+    const c = Math.cos(b.a), s = Math.sin(b.a);
+    for (const p of b.parts){ p.wx = b.x + p.ox * c - p.oy * s; p.wy = b.y + p.ox * s + p.oy * c; }
+  }
+  // 本体を平行移動（めり込みの押し戻し）。パーツの座標も一緒に動かす
+  function shiftBody(b, dx, dy){
+    b.x += dx; b.y += dy;
+    for (const p of b.parts){ p.wx += dx; p.wy += dy; }
+  }
+  // 点(cx,cy)に力積(jx,jy)を与える
+  function applyImp(b, jx, jy, cx, cy){
+    b.vx += jx / b.m; b.vy += jy / b.m;
+    b.w += ((cx - b.x) * jy - (cy - b.y) * jx) / b.I;
+  }
+  // 点(cx,cy)で向き(nx,ny)に押したときの逆質量（回転のしやすさも含む）
+  function invMassAt(b, cx, cy, nx, ny){
+    const rn = (cx - b.x) * ny - (cy - b.y) * nx;
+    return 1 / b.m + rn * rn / b.I;
+  }
+  const bounce = vn => vn < -REST_MIN_V ? 1 + REST : 1;
+  const velAtX = (b, cx, cy) => b.vx - b.w * (cy - b.y);
+  const velAtY = (b, cx, cy) => b.vy + b.w * (cx - b.x);
+
+  // ---------- 衝突 ----------
+  // 景品のパーツ（円）と、太さのある線分。
+  // side を渡すと、その爪はバネで動く物体として扱い、景品に押し返される（渡さなければ動かない物体）
+  // vx,vy,om,px,py: 線分の並進速度・角速度・回転中心
+  function collideSeg(p, a, b, vx, vy, om, px, py, side){
+    const abx = b.x - a.x, aby = b.y - a.y;
+    const l2 = abx * abx + aby * aby || 1;
+    const t = clamp(((p.wx - a.x) * abx + (p.wy - a.y) * aby) / l2, 0, 1);
+    const cx = a.x + abx * t, cy = a.y + aby * t;
+    const dx = p.wx - cx, dy = p.wy - cy, d = Math.hypot(dx, dy);
+    const min = p.r + ARM_T;
+    if (d >= min) return;
+    const nx = d > 1e-6 ? dx / d : 0, ny = d > 1e-6 ? dy / d : -1;
+    const tx = -ny, ty = nx;
+    const pen = min - d;
+    const B = p.b;
+
+    // バネ爪でも、開いた状態（角度0）より外へは開かない。そこはストッパーなので動かない物体として扱う
+    if (side){
+      const k0 = (cx - px) * ny - (cy - py) * nx;
+      const opening = (side < 0 ? k0 : -k0) < 0;   // 押されて開く向きか
+      const ang = side < 0 ? angL : angR;
+      if (opening && ang <= 0){
+        if (side < 0) velL = Math.max(velL, 0); else velR = Math.max(velR, 0);
+        om = armOmW(side);
+        side = 0;
+      }
+    }
+
+    if (side){
+      // バネ爪：めり込みと衝撃を、景品と爪の動きやすさの比で分け合う
+      const rx = cx - px, ry = cy - py;
+      const k = rx * ny - ry * nx, kt = rx * ty - ry * tx;
+      const wB = invMassAt(B, cx, cy, nx, ny), wBt = invMassAt(B, cx, cy, tx, ty);
+      const ws = wB + k * k / ARM_I, wsT = wBt + kt * kt / ARM_I;
+      // めり込みは、景品と爪の動きやすさの比で分け合う。
+      // ただし爪の分はこのステップ内で貯めておき、最後に上限をつけて動かす（山に押されてガタガタ暴れないように）
+      const pc = Math.max(0, pen - SLOP) * POS_FIX;
+      shiftBody(B, nx * pc * wB / ws, ny * pc * wB / ws);
+      if (side < 0) pushAngL += pc * (k / ARM_I) / ws; else pushAngR -= pc * (k / ARM_I) / ws;
+      let w = armOmW(side);
+      let rvx = velAtX(B, cx, cy) - (vx - w * ry), rvy = velAtY(B, cx, cy) - (vy + w * rx);
+      const vn = rvx * nx + rvy * ny;
+      let jn = 0;
+      if (vn < 0){
+        jn = -bounce(vn) * vn / ws;
+        applyImp(B, jn * nx, jn * ny, cx, cy);
+        armAddOm(side, -jn * k / ARM_I);
+      }
+      w = armOmW(side);
+      rvx = velAtX(B, cx, cy) - (vx - w * ry); rvy = velAtY(B, cx, cy) - (vy + w * rx);
+      const jt = clamp(-(rvx * tx + rvy * ty) / wsT, -FRICTION * jn, FRICTION * jn);
+      applyImp(B, jt * tx, jt * ty, cx, cy);
+      armAddOm(side, -jt * kt / ARM_I);
+      if (clawContact){ pendJx -= jn * nx + jt * tx; pendJy -= jn * ny + jt * ty; }
+      return;
+    }
+
+    // 接触点での線分の速度
+    contactKin(B, cx, cy, nx, ny, pen, vx - om * (cy - py), vy + om * (cx - px));
+  }
+  // 動かない物（床・壁・降下中の爪）との接触。景品の方だけを押し戻す。sv: 相手の接触点での速度
+  function contactKin(B, cx, cy, nx, ny, pen, svx, svy){
+    const tx = -ny, ty = nx;
+    const pc = Math.max(0, pen - SLOP) * POS_FIX;
+    shiftBody(B, nx * pc, ny * pc);
+    let rvx = velAtX(B, cx, cy) - svx, rvy = velAtY(B, cx, cy) - svy;
+    const vn = rvx * nx + rvy * ny;
+    let jn = 0;
+    if (vn < 0){ jn = -bounce(vn) * vn / invMassAt(B, cx, cy, nx, ny); applyImp(B, jn * nx, jn * ny, cx, cy); }
+    // 摩擦：静かに乗っているだけの接触でも少し効くように重力分を足す
+    rvx = velAtX(B, cx, cy) - svx; rvy = velAtY(B, cx, cy) - svy;
+    const vt = rvx * tx + rvy * ty;
+    const lim = FRICTION * (jn + B.m * GRAVITY * STEP);
+    const jt = clamp(-vt / invMassAt(B, cx, cy, tx, ty), -lim, lim);
+    applyImp(B, jt * tx, jt * ty, cx, cy);
+    // クレーンが景品を下へ押した分だけ、クレーンは上へ押し返される
+    if (clawContact){
+      pushImp += Math.max(0, jn * ny + jt * ty);
+      pendJx -= jn * nx + jt * tx; pendJy -= jn * ny + jt * ty;
+    }
+  }
+  // 別の景品のパーツ同士
+  function collideParts(pa, pb){
+    const dx = pb.wx - pa.wx, dy = pb.wy - pa.wy, min = pa.r + pb.r;
+    const d2 = dx * dx + dy * dy;
+    if (d2 >= min * min || d2 < 1e-12) return;
+    const d = Math.sqrt(d2), nx = dx / d, ny = dy / d;
+    const A = pa.b, B = pb.b;
+    const wa = 1 / A.m, wb = 1 / B.m, corr = Math.max(0, min - d - SLOP) * POS_FIX / (wa + wb);
+    shiftBody(A, -nx * corr * wa, -ny * corr * wa);
+    shiftBody(B, nx * corr * wb, ny * corr * wb);
+    const cx = pa.wx + nx * pa.r, cy = pa.wy + ny * pa.r;
+    let rvx = velAtX(B, cx, cy) - velAtX(A, cx, cy), rvy = velAtY(B, cx, cy) - velAtY(A, cx, cy);
+    const vn = rvx * nx + rvy * ny;
+    if (vn >= 0) return;
+    const jn = -bounce(vn) * vn / (invMassAt(A, cx, cy, nx, ny) + invMassAt(B, cx, cy, nx, ny));
+    applyImp(A, -jn * nx, -jn * ny, cx, cy); applyImp(B, jn * nx, jn * ny, cx, cy);
+    const tx = -ny, ty = nx;
+    rvx = velAtX(B, cx, cy) - velAtX(A, cx, cy); rvy = velAtY(B, cx, cy) - velAtY(A, cx, cy);
+    const kt = invMassAt(A, cx, cy, tx, ty) + invMassAt(B, cx, cy, tx, ty);
+    const jt = clamp(-(rvx * tx + rvy * ty) / kt, -FRICTION * jn, FRICTION * jn);
+    applyImp(A, -jt * tx, -jt * ty, cx, cy); applyImp(B, jt * tx, jt * ty, cx, cy);
+  }
+
+  // 床は取り出し口より右だけ。取り出し口は底抜けで、落ちたら獲得
+  const FLOOR = [{x:CHUTE_X, y:FLOOR_Y}, {x:W, y:FLOOR_Y}];
+  const WALL  = [{x:CHUTE_X, y:FLOOR_Y - WALL_H}, {x:CHUTE_X, y:FLOOR_Y}];
+
+  // パーツ同士の当たり判定を近いものだけに絞るための格子
+  const CELL = 2 * 1.4 * PRIZE_U_MAX + 2;
+  const grid = new Map();
+  function buildGrid(allParts){
+    grid.clear();
+    for (const p of allParts){
+      const key = Math.floor(p.wx / CELL) + Math.floor(p.wy / CELL) * 4096;
+      let list = grid.get(key);
+      if (!list) grid.set(key, list = []);
+      list.push(p);
+    }
+  }
+
+  function collideClaw(pts, om, side){
+    const pad = ARM_T + 1.4 * PRIZE_U_MAX;
+    for (let i = 0; i < pts.length - 1; i++){
+      const a = pts[i], b = pts[i + 1];
+      const gx0 = Math.floor((Math.min(a.x, b.x) - pad) / CELL), gx1 = Math.floor((Math.max(a.x, b.x) + pad) / CELL);
+      const gy0 = Math.floor((Math.min(a.y, b.y) - pad) / CELL), gy1 = Math.floor((Math.max(a.y, b.y) + pad) / CELL);
+      for (let gy = gy0; gy <= gy1; gy++) for (let gx = gx0; gx <= gx1; gx++){
+        const list = grid.get(gx + gy * 4096);
+        if (!list) continue;
+        for (const p of list) collideSeg(p, a, b, crane.vx, crane.vy, om, crane.x, crane.y, side);
+      }
+    }
+  }
+
+  // ---------- 1ステップ ----------
+  function step(h){
+    stepCrane(h);
+    armL = armWorld(-1); armR = armWorld(1);
+
+    const allParts = [];
+    const damp = 1 / (1 + ANG_DAMP * h);
+    for (const b of prizes){
+      b.vy += GRAVITY * h;
+      const sp = Math.hypot(b.vx, b.vy);
+      if (sp > 1500){ b.vx *= 1500 / sp; b.vy *= 1500 / sp; }
+      if (b.vy < -UP_V_MAX) b.vy = -UP_V_MAX;   // 山から弾き出されて仕切りを越えないように、上向きの速さを抑える
+      b.w = clamp(b.w * damp, -40, 40);
+      b.x += b.vx * h; b.y += b.vy * h; b.a += b.w * h;
+      updateParts(b);
+      for (const p of b.parts) allParts.push(p);
+    }
+    allParts.forEach((p, i) => p.id = i);
+    buildGrid(allParts);
+
+
+    pushImp = 0; pushAngL = pushAngR = 0; pendJx = pendJy = 0;
+    for (let it = 0; it < iters; it++){
+      for (const p of allParts){
+        const gx = Math.floor(p.wx / CELL), gy = Math.floor(p.wy / CELL);
+        for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++){
+          const list = grid.get(gx + ox + (gy + oy) * 4096);
+          if (!list) continue;
+          for (const q of list) if (q.id > p.id && q.b !== p.b) collideParts(p, q);
+        }
+      }
+      for (const p of allParts){
+        collideSeg(p, FLOOR[0], FLOOR[1], 0, 0, 0, 0, 0);
+        // 仕切り：上端より下では、景品の重心がある側へ押し出す（パーツが仕切りをまたいで刺さらないように）
+        if (p.wy > FLOOR_Y - WALL_H){
+          const right = p.b.x > CHUTE_X, edge = CHUTE_X + (right ? 1 : -1) * (ARM_T + p.r);
+          const pen = right ? edge - p.wx : p.wx - edge;
+          if (pen > 0) contactKin(p.b, CHUTE_X + (right ? ARM_T : -ARM_T), p.wy, right ? 1 : -1, 0, pen, 0, 0);
+        } else collideSeg(p, WALL[0], WALL[1], 0, 0, 0, 0, 0);
+        if (p.wx < p.r){ shiftBody(p.b, p.r - p.wx, 0); if (p.b.vx < 0) p.b.vx *= -REST; }
+        if (p.wx > W - p.r){ shiftBody(p.b, W - p.r - p.wx, 0); if (p.b.vx > 0) p.b.vx *= -REST; }
+      }
+      // 爪：線分ごとに、格子で近くにあるパーツだけを調べる（長い爪を描いても重くならないように）
+      clawContact = true;
+      collideClaw(armL, armOmW(-1), springOn ? -1 : 0);
+      collideClaw(armR, armOmW(1), springOn ? 1 : 0);
+      clawContact = false;
+    }
+
+    // 景品に押された分だけ、吊られたクレーンが振れる（紐と直角な向きの成分だけが効く）
+    rope.w += (pendJx * Math.cos(rope.a) - pendJy * Math.sin(rope.a)) / (CLAW_MASS * rope.len);
+
+    // 景品に押された分だけ爪の角度を動かす（1ステップで動ける量に上限）
+    if (springOn){
+      const lim = ARM_W_MAX * h;
+      angL = clamp(angL + clamp(pushAngL, -lim, lim), 0, CLOSE_MAX);
+      angR = clamp(angR + clamp(pushAngR, -lim, lim), 0, CLOSE_MAX);
+    }
+
+    // 爪と床に挟まれた景品が床を突き抜けないよう、床の上に戻す（突き抜けてしまった景品も含めて）
+    for (const p of allParts){
+      const lim = FLOOR_Y - ARM_T - p.r;
+      if (p.wx > CHUTE_X && p.wy > lim){
+        shiftBody(p.b, 0, lim - p.wy);
+        if (p.b.vy > 0) p.b.vy = 0;
+      }
+    }
+
+    // 画面下へ落ちた景品を回収（取り出し口側なら獲得）
+    for (let i = prizes.length - 1; i >= 0; i--){
+      const b = prizes[i];
+      if (b.y - b.br > H){
+        if (b.x < CHUTE_X){ got++; updateHud(); }
+        prizes.splice(i, 1);
+      }
+    }
+
+    // 降下中：開いたまま下がり、下がり切ったら閉じる。
+    // 下がり切る＝爪の先が床に届く、または景品の山に押し返されてクレーンの重さで沈めなくなる
+    // （押し返す力は一瞬の衝突で跳ねるので、PUSH_SMOOTH 秒くらいでならして見る）
+    if (phase === 'down'){
+      pushF += (pushImp / h - pushF) * Math.min(1, h / PUSH_SMOOTH);
+      let low = crane.y;
+      for (const q of armL) low = Math.max(low, q.y);
+      for (const q of armR) low = Math.max(low, q.y);
+      if (low >= FLOOR_Y - ARM_T * 2 || pushF > CLAW_MASS * GRAVITY) setPhase('close');
+    } else pushF = 0;
+  }
+
+  // ---------- 描画 ----------
+  function drawLine(g, pts){
+    g.beginPath(); g.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y);
+    g.stroke();
+  }
+  // レール・台車・紐・爪・ハブ。ゲーム画面と共有画像で同じ見た目にする
+  function drawCrane(g, tx, hx, hy, aL, aR, x0, x1){
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    g.fillStyle = COL.rail; g.fillRect(x0, ROPE_TOP - 5, x1 - x0, 6);
+    g.fillRect(tx - 14, ROPE_TOP - 8, 28, 12);
+    // 紐
+    g.strokeStyle = COL.rope; g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(tx, ROPE_TOP); g.lineTo(hx, hy); g.stroke();
+    // 爪：濃い金属色の上に細い明るい線を重ねて、金属っぽく見せる（太さは当たり判定と同じ）
+    g.strokeStyle = COL.arm; g.lineWidth = ARM_T * 2;
+    drawLine(g, aL); drawLine(g, aR);
+    g.strokeStyle = COL.armHi; g.lineWidth = ARM_T * 0.7;
+    drawLine(g, aL); drawLine(g, aR);
+    // 付け根のハブ
+    g.fillStyle = COL.arm; g.beginPath(); g.arc(hx, hy, 6, 0, Math.PI * 2); g.fill();
+    g.fillStyle = COL.armHi; g.beginPath(); g.arc(hx, hy, 2.5, 0, Math.PI * 2); g.fill();
+  }
+  function draw(){
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = COL.bg; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(DPR * SC, 0, 0, DPR * SC, DPR * OX, DPR * OY);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+    // 奥の壁
+    const gr = ctx.createLinearGradient(0, 0, 0, H);
+    gr.addColorStop(0, COL.glassTop); gr.addColorStop(1, COL.glassBot);
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+    // 取り出し口：床より下は穴、上は透明な仕切りの箱
+    ctx.fillStyle = COL.hole; ctx.fillRect(0, FLOOR_Y, CHUTE_X, H - FLOOR_Y);
+    ctx.fillStyle = COL.acrylic; ctx.fillRect(0, FLOOR_Y - WALL_H, CHUTE_X, WALL_H);
+    // 景品の台
+    ctx.fillStyle = COL.floor; ctx.fillRect(CHUTE_X, FLOOR_Y, W - CHUTE_X, H - FLOOR_Y);
+    ctx.fillStyle = COL.floorTop; ctx.fillRect(CHUTE_X, FLOOR_Y - ARM_T, W - CHUTE_X, ARM_T * 2);
+    // 景品
+    for (const b of prizes){
+      updateParts(b);
+      // 同じ形を「アウトラインの色で少し太く」→「本来の色」の順に重ねて、薄い縁取りにする
+      for (const [col, grow] of [[COL.outline, PRIZE_OUTLINE], [b.c, 0]]){
+        ctx.fillStyle = col; ctx.strokeStyle = col;
+        // 隣り合うパーツを太い線でつないで、一つの形に見せる
+        for (const [i, j] of b.links){
+          const p = b.parts[i], q = b.parts[j];
+          ctx.lineWidth = (Math.min(p.r, q.r) + grow) * 2;
+          ctx.beginPath(); ctx.moveTo(p.wx, p.wy); ctx.lineTo(q.wx, q.wy); ctx.stroke();
+        }
+        for (const p of b.parts){ ctx.beginPath(); ctx.arc(p.wx, p.wy, p.r + grow, 0, Math.PI * 2); ctx.fill(); }
+      }
+      // つや（光は常に左上から）。一番大きいパーツに1つだけ入れる
+      let big = b.parts[0];
+      for (const p of b.parts) if (p.r > big.r) big = p;
+      ctx.fillStyle = 'rgba(255,255,255,.35)';
+      ctx.beginPath(); ctx.arc(big.wx - big.r * 0.35, big.wy - big.r * 0.35, big.r * 0.3, 0, Math.PI * 2); ctx.fill();
+    }
+    // 仕切り（透明な板）
+    ctx.fillStyle = COL.acrylic; ctx.strokeStyle = COL.acrylicEdge; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.rect(CHUTE_X - ARM_T, FLOOR_Y - WALL_H, ARM_T * 2, WALL_H); ctx.fill(); ctx.stroke();
+    // クレーン
+    if (armPtsL.length) drawCrane(ctx, rope.tx, crane.x, crane.y, armWorld(-1), armWorld(1), 0, W);
+    else { ctx.fillStyle = COL.rail; ctx.fillRect(0, ROPE_TOP - 5, W, 6); ctx.fillRect(rope.tx - 14, ROPE_TOP - 8, 28, 12); }
+    ctx.restore();
+  }
+
+
+  // ---------- ループ ----------
+  let last = performance.now(), acc = 0;
+  const drawOv = $('drawOv');
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    if (mode === 'play' && settleLeft > 0){
+      acc = 0;
+      settlePile(SETTLE_BUDGET * 2);   // プレイ画面ではほかに計算がないので多めに進める
+      if (settleLeft === 0) $('bDrop').disabled = phase !== 'ready';
+    } else if (mode === 'play'){
+      acc += dt;
+      while (acc >= STEP && mode === 'play'){ step(STEP); acc -= STEP; }
+    } else {
+      acc = 0;
+      if (settleLeft > 0) settlePile(SETTLE_BUDGET);   // 描く画面・結果画面の間に次の山を作っておく
+    }
+    if (drawOv.classList.contains('hidden')) draw();   // 描く画面は不透明で盤面を隠すので、その間は描かない
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- 入力 ----------
+  // ボタンの押した見た目：iOS Safari は touch のリスナーがない要素に :active を付けず、
+  // ←/→ は pointerdown・touchstart の preventDefault で :active が付かないので、class で付け外しする
+  document.querySelectorAll('button').forEach(el => {
+    el.addEventListener('pointerdown', () => el.classList.add('pressed'));
+    ['pointerup','pointercancel','pointerleave','lostpointercapture'].forEach(t =>
+      el.addEventListener(t, () => el.classList.remove('pressed')));
+  });
+  function holdButton(el, set){
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      try { el.setPointerCapture(e.pointerId); } catch(_) {}
+      set(true);
+    });
+    ['pointerup','pointercancel','lostpointercapture'].forEach(t => el.addEventListener(t, () => set(false)));
+    ['touchstart','touchmove','selectstart','contextmenu'].forEach(t =>
+      el.addEventListener(t, e => e.preventDefault(), {passive:false}));
+  }
+  holdButton($('bL'), v => { holdL = v; });
+  holdButton($('bR'), v => { holdR = v; });
+  const drop = () => { if (mode === 'play' && phase === 'ready' && settleLeft === 0) setPhase('opening'); };
+  $('bDrop').addEventListener('click', drop);
+
+  document.addEventListener('keydown', e => {
+    if (mode !== 'play') return;
+    if (e.key === 'ArrowLeft'){ holdL = true; e.preventDefault(); }
+    else if (e.key === 'ArrowRight'){ holdR = true; e.preventDefault(); }
+    else if (e.key === ' ' || e.key === 'ArrowDown'){ drop(); e.preventDefault(); }
+  });
+  document.addEventListener('keyup', e => {
+    if (e.key === 'ArrowLeft') holdL = false;
+    if (e.key === 'ArrowRight') holdR = false;
+  });
+
+  // ---------- 開始 ----------
+  resize();
+  padResize();
+  updateHud();
+  $('bDrop').disabled = true;
+  preparePile();   // 爪を描いている間に最初の山を作り始める
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

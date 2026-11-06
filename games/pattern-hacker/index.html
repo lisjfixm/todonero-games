@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/pattern-hacker/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>PatternHacker</title>
+<meta name="description" content="隠されたパターンロックを推理して解く">
+<style>
+:root{
+  --bg:#121213; --fg:#eee; --sub:#999; --line:#3a3a3c;
+  --green:#538d4e; --yellow:#b59f3b; --gray:#3a3a3c;
+  --pad:#eee; --dot:#777; --ink:#fff;
+  --howto-bg:#121213; --howto-fg:#eee;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+canvas{display:block}
+#game{
+  position:relative;
+  width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;
+  display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top,0px) + 56px) 12px calc(env(safe-area-inset-bottom,0px) + 12px);
+}
+/* 右上の「?」: いつでも説明を開ける */
+#helpBtn{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:12px;width:44px;height:44px;min-width:0;padding:0;border:2px solid var(--sub);border-radius:50%;background:transparent;color:var(--sub);font-size:22px;line-height:1}
+#helpBtn:active{background:var(--line)}
+#histWrap{flex:none;margin:0 auto;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#status{flex:none;height:36px;line-height:36px;text-align:center;font-size:15px;color:var(--sub)}
+#padWrap{position:relative;flex:1;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#pad{touch-action:none;transition:opacity .25s}
+#over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(18,18,19,.92);opacity:0;transition:opacity .35s}
+#over.show{opacity:1}
+/* 正解時のアンロック演出: 画面全体を覆って鍵が現れ、ツルが外れて上へ抜ける */
+#unlock{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:var(--bg);opacity:0;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
+#unlock.on{opacity:1;visibility:visible;transition:opacity .25s}
+#lock{width:96px;height:120px;overflow:visible;color:var(--green);transform:scale(.8);transition:opacity .4s,transform .4s}
+#shackle{transition:transform .3s ease-out}
+#unlock.on #lock{transform:none}
+#unlock.open #shackle{transform:translateY(-12px)}
+#unlock.gone #lock{opacity:0;transform:translateY(-120px)}
+#padWrap.unlocked #pad{opacity:0}
+/* 初回だけ出す説明画面 */
+#help{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px 20px;background:rgba(18,18,19,.96);overflow-y:auto}
+#help .box{width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px;font-size:15px;line-height:1.6}
+#help h1{margin:0;font-size:24px;text-align:center}
+#help p{margin:0}
+#help ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+#help li{display:flex;align-items:center;gap:10px}
+.sw{flex:none;width:22px;height:22px;border-radius:4px}
+#help button{margin:6px auto 0;width:160px}
+.hidden{display:none!important}
+#resTitle{font-size:20px;font-weight:bold}
+.btns{display:flex;gap:12px}
+button{min-width:120px;height:48px;border:0;border-radius:8px;background:var(--fg);color:var(--bg);font:inherit;font-size:16px;font-weight:bold}
+#share{background:var(--green);color:var(--ink)}
+button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="game">
+  <button id="helpBtn" aria-label="遊び方">?</button>
+  <div id="histWrap"><canvas id="hist" role="img" aria-label="これまでの回答"></canvas></div>
+  <div id="status" aria-live="polite"></div>
+  <div id="padWrap">
+    <canvas id="pad" aria-label="パターン入力"></canvas>
+    <div id="over" class="hidden">
+      <div id="resTitle" aria-live="assertive"></div>
+      <canvas id="ans" aria-hidden="true"></canvas>
+      <div class="btns"><button id="share">共有</button><button id="again">もう一回</button></div>
+    </div>
+  </div>
+</div>
+<div id="help" class="hidden" role="dialog" aria-labelledby="helpTitle">
+  <div class="box">
+    <h1 id="helpTitle">PatternHacker</h1>
+    <p>隠されたパターンロックを解くゲームです。9つの点をすべて通るパターンを描いて回答すると、線ごとに正解と比べた結果が上の履歴に出ます。</p>
+    <ul>
+      <li><span class="sw" style="background:var(--green)"></span>同じ手番に同じ線がある</li>
+      <li><span class="sw" style="background:var(--yellow)"></span>正解の別の手番に同じ向きの線がある</li>
+      <li><span class="sw" style="background:var(--gray)"></span>正解にない線（向きが逆でも灰）</li>
+    </ul>
+    <p>緑になった線は次の回答から自動でつながります。できるだけ少ない回数で解きましょう。</p>
+    <button type="button" data-howto-open>遊び方</button>
+    <button id="start">スタート</button>
+  </div>
+</div>
+<section class="howto" hidden data-pos="none">
+  <h2>遊び方</h2>
+  <p>隠されたパターンロックを、色のヒントから推理して解くパズルです。9つの点をすべて1回ずつ通る線を描くと、8本の線それぞれの判定が履歴に並びます。回答回数に上限はなく、全部の線が緑になるまでにかかった回数が結果になります。</p>
+  <h2>操作</h2>
+  <p>スマホは盤を指でなぞり、指を離すと回答になります。9点を通らずに離した場合は回答になりません。まだ通っていない点を飛び越えると、その点も自動でつながります。PC はマウスで同じように描け、Esc で描きかけを消せます。</p>
+  <h2>コツ</h2>
+  <p>灰色は同じ向きの線が正解にないという意味なので、逆向きの線ならまだ正解の可能性があります。緑の線は次の回答から自動でつながり、黄色の線は別の順番へ動かせば緑になります。履歴の右端では、その回に点を通った順番を確かめられます。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+<div id="unlock" aria-hidden="true">
+  <svg id="lock" viewBox="0 0 64 80">
+    <path id="shackle" d="M18 46V24a14 14 0 0 1 28 0v12" fill="none" stroke="currentColor" stroke-width="7"/>
+    <rect x="8" y="34" width="48" height="40" rx="7" fill="currentColor"/>
+  </svg>
+</div>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  const VIEW_ROWS = 6;      // 回答の履歴欄に一度に見える行数（回答数に上限はなく、超えた分はスクロールで見る）
+  const SEGS = 8;           // 9点を結ぶ線の本数
+  const COLS = SEGS + 1;    // 履歴の列数（線8本＋右端の通過順の図）
+  const HIT_R = 0.3;        // 点の当たり判定の半径（点の間隔に対する比率）。斜めに1つずらす線が途中の点に触れないよう 0.44 未満にする
+  const SAMPLE_STEP = 6;    // 指の移動を何pxごとに刻んで判定するか（速く動かしても点を取りこぼさないため）
+  const HIST_RATE = 0.42;   // 画面の高さのうち回答履歴に使う割合の上限（入力盤を狭くしすぎないため）
+  const GAP_RATE = 0.015;   // 履歴のマス同士の隙間（履歴の幅に対する比率）
+  const TITLE = 'PatternHacker';
+  const HELP_KEY = 'patternHacker.helpShown';   // 説明画面を見たかどうかの保存キー
+  const UNLOCK_T = [400, 750, 1150];   // アンロック演出の各段階の開始時刻（ミリ秒）: 鍵が出る / ツルが外れる / 鍵が抜けて結果を出す
+  const DOT_ANIM_MS = 280;   // 点に触れたとき、膨らんで元の大きさに戻るまでの時間（ミリ秒）
+  const DOT_POP = 0.6;       // 点に触れたときの膨らみの最大値（半径の増加率）
+  const LINE_ANIM_MS = 360;  // 線がつながったとき、太く光って元に戻るまでの時間（ミリ秒）
+  const LINE_GLOW = 0.05;    // 線がつながった瞬間の光の太さ（盤の一辺に対する比率。通常の線幅に足す）
+  const REVEAL_STAGGER = 90; // 回答後、黄・緑の線を1本ずつ色付けしていく間隔（ミリ秒）
+  const REVEAL_MS = 320;     // 1本の線が太く光ってから色付きの線に落ち着くまでの時間（ミリ秒）
+
+  const $ = id => document.getElementById(id);
+  const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const C = {};
+  ['bg','fg','sub','line','green','yellow','gray','pad','dot','ink'].forEach(k => { C[k] = cssVar('--' + k); });
+
+  // ---------- パターンの規則 ----------
+  // 点の番号は左上から 0..8。a→b の線がちょうど真上を通る点があればその番号を返す
+  function midOf(a, b){
+    const ax = a % 3, ay = (a / 3) | 0, bx = b % 3, by = (b / 3) | 0;
+    if ((ax + bx) % 2 || (ay + by) % 2) return -1;
+    return ((ay + by) / 2) * 3 + (ax + bx) / 2;
+  }
+  // 実機と同じく、まだ通っていない点を飛び越える線は引けない
+  const canMove = (a, b, used) => { const m = midOf(a, b); return m < 0 || used[m]; };
+
+  function shuffle(a){
+    for (let i = a.length - 1; i > 0; i--){ const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+
+  // 9点すべてを通る正解パターンを作る（ランダムな順に試し、行き詰まったら戻る）
+  function makeSecret(){
+    const used = Array(9).fill(false), path = [];
+    const dfs = () => {
+      if (path.length === 9) return true;
+      const last = path[path.length - 1];
+      for (const c of shuffle([...Array(9).keys()])){
+        if (used[c]) continue;
+        if (path.length && !canMove(last, c, used)) continue;
+        used[c] = true; path.push(c);
+        if (dfs()) return true;
+        used[c] = false; path.pop();
+      }
+      return false;
+    };
+    dfs();
+    return path;
+  }
+
+  // 線ごとの判定（Wordle の色分けに対応）
+  // 2 = 同じ手番で同じ向きの線（緑） / 1 = 正解の別の手番に同じ向きの線がある（黄） / 0 = ない（灰）
+  // 向きが逆の線は黄にしない（始点→終点をそのままキーにする）
+  const segKey = (a, b) => a * 9 + b;
+  function judge(g){
+    const pairs = new Set();
+    for (let i = 0; i < SEGS; i++) pairs.add(segKey(secret[i], secret[i + 1]));
+    const fb = [];
+    for (let i = 0; i < SEGS; i++){
+      if (g[i] === secret[i] && g[i + 1] === secret[i + 1]) fb.push(2);
+      else if (pairs.has(segKey(g[i], g[i + 1]))) fb.push(1);
+      else fb.push(0);
+    }
+    return fb;
+  }
+
+  // ---------- 状態 ----------
+  let secret = [], guesses = [], mode = 'playing';   // mode: playing / over
+  let path = [];                       // 入力中のパターン
+  const used = Array(9).fill(false);
+  // 緑になった線で確定した点。fixed[k] = k 番目に通る点（未確定は -1）
+  const fixed = Array(9).fill(-1);
+  const fixedSegs = new Set();         // 緑になった線の手番
+  let activeId = null, finger = null, lastPt = null;
+  // 演出の起点となる時刻（performance.now 基準）。-Infinity は演出なし
+  const dotAt = Array(9).fill(-Infinity);      // 各点に触れた時刻（膨らむ演出）
+  const segAt = Array(SEGS).fill(-Infinity);   // 各手番の線がつながった時刻（光る演出）
+  // 回答直後の判定表示。{ fb, at } で、at から手番順に黄・緑の線を盤の上に色付けしていく（次の入力まで残す）
+  let reveal = null;
+  // 動きを減らす設定の端末では点・線の演出も省く
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+  const hist = $('hist'), hctx = hist.getContext('2d');
+  const pad = $('pad'), pctx = pad.getContext('2d');
+  const ans = $('ans'), actx = ans.getContext('2d');
+  let HW = 0, S = 0;
+
+  function setStatus(msg){
+    $('status').textContent = msg !== undefined ? msg : `${guesses.length + 1}回目`;
+  }
+
+  // ---------- 描画 ----------
+  function circle(ctx, x, y, r){ ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+
+  // 履歴の高さ（幅 W、行数 rows のとき）
+  function histH(W, rows){
+    const gap = W * GAP_RATE, t = (W - gap * (COLS - 1)) / COLS;
+    return rows * t + (rows - 1) * gap;
+  }
+
+  // 1マス = 1本の線。小さな3×3の中にその手番の線を描く（始点を大きい丸にして向きを示す）
+  function drawSeg(ctx, x, y, t, a, b){
+    const P = i => [x + t * (0.2 + 0.3 * (i % 3)), y + t * (0.2 + 0.3 * ((i / 3) | 0))];
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    for (let i = 0; i < 9; i++){ const [px, py] = P(i); circle(ctx, px, py, t * 0.045); }
+    const [ax, ay] = P(a), [bx, by] = P(b);
+    ctx.strokeStyle = C.ink; ctx.lineWidth = t * 0.07; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    ctx.fillStyle = C.ink;
+    circle(ctx, ax, ay, t * 0.1);
+    circle(ctx, bx, by, t * 0.055);
+  }
+
+  // 右端のマス: その回答でどの点を何番目に通ったかを番号で示す
+  function drawOrder(ctx, x, y, t, p){
+    const P = i => [x + t * (0.18 + 0.32 * (i % 3)), y + t * (0.18 + 0.32 * ((i / 3) | 0))];
+    ctx.strokeStyle = C.sub; ctx.lineWidth = t * 0.03; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    p.forEach((d, i) => { const [px, py] = P(d); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+    ctx.stroke();
+    ctx.font = `bold ${Math.round(t * 0.21)}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    p.forEach((d, i) => {
+      const [px, py] = P(d);
+      ctx.fillStyle = C.pad; circle(ctx, px, py, t * 0.145);
+      ctx.fillStyle = C.bg; ctx.fillText(String(i + 1), px, py + t * 0.01);
+    });
+  }
+
+  function drawHistory(ctx, W, rows){
+    const gap = W * GAP_RATE, t = (W - gap * (COLS - 1)) / COLS;
+    for (let r = 0; r < rows; r++){
+      const g = guesses[r];
+      for (let c = 0; c < COLS; c++){
+        const x = c * (t + gap), y = r * (t + gap);
+        if (!g){
+          const lw = Math.max(1, t * 0.04);
+          ctx.strokeStyle = C.line; ctx.lineWidth = lw;
+          ctx.strokeRect(x + lw / 2, y + lw / 2, t - lw, t - lw);
+          continue;
+        }
+        if (c === SEGS){
+          const lw = Math.max(1, t * 0.04);
+          ctx.strokeStyle = C.line; ctx.lineWidth = lw;
+          ctx.strokeRect(x + lw / 2, y + lw / 2, t - lw, t - lw);
+          drawOrder(ctx, x, y, t, g.path);
+          continue;
+        }
+        ctx.fillStyle = [C.gray, C.yellow, C.green][g.fb[c]];
+        ctx.fillRect(x, y, t, t);
+        drawSeg(ctx, x, y, t, g.path[c], g.path[c + 1]);
+      }
+    }
+  }
+
+  // 履歴は回答が増えるたびに縦に伸ばす（プレイ中は次に入る空の行を1行足す）
+  function drawHist(){
+    const rows = Math.max(VIEW_ROWS, guesses.length + (mode === 'playing' ? 1 : 0));
+    const H = histH(HW, rows);
+    fit(hist, hctx, HW, H, Math.min(window.devicePixelRatio || 1, 2));
+    hctx.clearRect(0, 0, HW, H);
+    drawHistory(hctx, HW, rows);
+  }
+
+  const dotPos = (i, s) => [((i % 3) * 2 + 1) * s / 6, (((i / 3) | 0) * 2 + 1) * s / 6];
+
+  // 演出の進み具合（0〜1）。期間を過ぎていれば 1
+  const progress = (start, now, dur) => Math.min(1, Math.max(0, (now - start) / dur));
+  const easeOut = t => 1 - (1 - t) ** 3;
+
+  function drawPad(now = performance.now()){
+    pctx.clearRect(0, 0, S, S);
+    pctx.lineCap = 'round'; pctx.lineJoin = 'round';
+    const on = mode === 'over' ? C.green : C.pad;
+    // 確定した線を緑で下に敷いておく
+    pctx.strokeStyle = C.green; pctx.lineWidth = S * 0.04;
+    for (const k of fixedSegs){
+      const [ax, ay] = dotPos(fixed[k], S), [bx, by] = dotPos(fixed[k + 1], S);
+      pctx.beginPath(); pctx.moveTo(ax, ay); pctx.lineTo(bx, by); pctx.stroke();
+    }
+    if (path.length){
+      pctx.strokeStyle = on; pctx.lineWidth = S * 0.018;
+      pctx.beginPath();
+      path.forEach((d, i) => { const [x, y] = dotPos(d, S); i ? pctx.lineTo(x, y) : pctx.moveTo(x, y); });
+      if (finger && path.length < 9) pctx.lineTo(finger.x, finger.y);   // 9点そろったら指への線は出さない
+      pctx.stroke();
+      // つながった直後の線は太く光らせ、時間とともに細く薄くして通常の線に溶け込ませる
+      for (let k = 0; k < path.length - 1; k++){
+        const t = progress(segAt[k], now, LINE_ANIM_MS);
+        if (t >= 1) continue;
+        const f = 1 - easeOut(t);
+        const [ax, ay] = dotPos(path[k], S), [bx, by] = dotPos(path[k + 1], S);
+        pctx.globalAlpha = f * 0.85;
+        pctx.lineWidth = S * (0.018 + LINE_GLOW * f);
+        pctx.beginPath(); pctx.moveTo(ax, ay); pctx.lineTo(bx, by); pctx.stroke();
+      }
+      pctx.globalAlpha = 1;
+      // 回答直後は黄・緑の線を手番順に色付けする。最初は太く光り、色付きの線に落ち着く
+      if (reveal){
+        for (let k = 0; k < path.length - 1; k++){
+          if (!reveal.fb[k]) continue;
+          const t = progress(reveal.at + k * REVEAL_STAGGER, now, REVEAL_MS);
+          if (t <= 0) continue;
+          const f = 1 - easeOut(t);
+          const [ax, ay] = dotPos(path[k], S), [bx, by] = dotPos(path[k + 1], S);
+          pctx.strokeStyle = reveal.fb[k] === 2 ? C.green : C.yellow;
+          pctx.lineWidth = S * (0.022 + LINE_GLOW * f);
+          pctx.beginPath(); pctx.moveTo(ax, ay); pctx.lineTo(bx, by); pctx.stroke();
+        }
+      }
+    }
+    for (let i = 0; i < 9; i++){
+      const [x, y] = dotPos(i, S);
+      pctx.fillStyle = used[i] ? on : C.dot;
+      if (!used[i]){ circle(pctx, x, y, S * 0.028); continue; }
+      // 触れた瞬間に膨らんで戻る。外側の輪は点から広がって出てくる
+      const t = progress(dotAt[i], now, DOT_ANIM_MS);
+      const pop = 1 + DOT_POP * Math.sin(Math.PI * t);
+      circle(pctx, x, y, S * 0.035 * pop);
+      pctx.strokeStyle = on; pctx.lineWidth = S * 0.008;
+      pctx.globalAlpha = 0.4 + 0.6 * easeOut(t);
+      pctx.beginPath(); pctx.arc(x, y, S * (0.035 + 0.04 * easeOut(t)), 0, Math.PI * 2); pctx.stroke();
+      pctx.globalAlpha = 1;
+    }
+    // 確定した点には何番目に通るかを表示する
+    pctx.font = `bold ${Math.round(S * 0.05)}px ${getComputedStyle(document.body).fontFamily}`;
+    pctx.textAlign = 'center'; pctx.textBaseline = 'middle';
+    fixed.forEach((d, k) => {
+      if (d < 0) return;
+      const [x, y] = dotPos(d, S);
+      pctx.fillStyle = C.green; circle(pctx, x, y, S * 0.045);
+      pctx.fillStyle = C.ink; pctx.fillText(String(k + 1), x, y + S * 0.003);
+    });
+  }
+
+  // 正解表示: 通る順番を番号で示す（線が重なっても順番が読めるように）
+  function drawAnswer(ctx, s, p){
+    ctx.clearRect(0, 0, s, s);
+    ctx.strokeStyle = C.pad; ctx.lineWidth = s * 0.025; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    p.forEach((d, i) => { const [x, y] = dotPos(d, s); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.stroke();
+    ctx.font = `bold ${Math.round(s * 0.09)}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    p.forEach((d, i) => {
+      const [x, y] = dotPos(d, s);
+      ctx.fillStyle = C.pad; circle(ctx, x, y, s * 0.075);
+      ctx.fillStyle = C.bg; ctx.fillText(String(i + 1), x, y + s * 0.005);
+    });
+  }
+
+  // ---------- リサイズ ----------
+  function fit(cv, ctx, w, h, dpr){
+    cv.style.width = w + 'px'; cv.style.height = h + 'px';
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const g = $('game'), cs = getComputedStyle(g);
+    const cw = g.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const ch = g.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    HW = Math.floor(Math.min(cw, ch * HIST_RATE / histH(1, VIEW_ROWS)));
+    const hw = $('histWrap');
+    hw.style.width = HW + 'px';
+    hw.style.height = Math.ceil(histH(HW, VIEW_ROWS)) + 'px';
+    const wrap = $('padWrap');
+    S = Math.max(100, Math.floor(Math.min(wrap.clientWidth, wrap.clientHeight)));
+    fit(pad, pctx, S, S, dpr);
+    drawHist(); drawPad();
+    if (mode === 'over') showAnswer();
+  }
+
+  // ---------- 演出ループ ----------
+  // 点や線の演出が動いている間だけ rAF で盤を描き直す（入力がなければ回さない）
+  let animId = 0;
+  function animActive(now){
+    return dotAt.some(t => now - t < DOT_ANIM_MS) || segAt.some(t => now - t < LINE_ANIM_MS)
+      || (reveal !== null && now - reveal.at < (SEGS - 1) * REVEAL_STAGGER + REVEAL_MS);
+  }
+  function tick(now){
+    drawPad(now);
+    animId = animActive(now) ? requestAnimationFrame(tick) : 0;
+  }
+  function startAnim(){
+    if (!animId) animId = requestAnimationFrame(tick);
+  }
+  // 点を通過した時刻を記録して演出を始める（点と、直前の点からの線の両方）
+  function markDot(d){
+    if (reduceMotion.matches) return;
+    const now = performance.now();
+    dotAt[d] = now;
+    if (path.length >= 2) segAt[path.length - 2] = now;
+    startAnim();
+  }
+  // 点をパターンに加える（通過済みにして演出も始める）
+  function pushDot(d){
+    used[d] = true; path.push(d);
+    markDot(d);
+  }
+
+  // ---------- 入力 ----------
+  function local(e){ const r = pad.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+
+  // 確定済みでまだ通っていない点（自動で入るので指では選べない）
+  const isReserved = d => !used[d] && fixed.includes(d);
+
+  // 次の手番が確定済みなら、その点を自動でつなぐ（連続していればまとめて）
+  function autoFill(){
+    while (path.length < 9 && fixed[path.length] >= 0){
+      pushDot(fixed[path.length]);
+    }
+  }
+
+  function addDot(b){
+    if (used[b] || isReserved(b)) return;   // 通過済みの点・確定済みの点の上はそのまま通り抜けられる
+    if (path.length){
+      // 未通過の点を飛び越えたら、実機と同じくその点も自動でつなぐ
+      const m = midOf(path[path.length - 1], b);
+      if (m >= 0 && !used[m]){
+        if (isReserved(m)) return;             // 確定済みの点を先取りすることになるのでつながない
+        pushDot(m);
+        if (fixed[path.length] >= 0){ autoFill(); return; }   // b の手番が確定済みなら b はつながない
+      }
+    }
+    pushDot(b);
+    autoFill();
+  }
+
+  function hit(x, y){
+    const r = HIT_R * S / 3;
+    for (let i = 0; i < 9; i++){
+      const [dx, dy] = dotPos(i, S);
+      if (Math.hypot(x - dx, y - dy) < r) addDot(i);
+    }
+  }
+
+  function clearInput(){ path = []; used.fill(false); dotAt.fill(-Infinity); segAt.fill(-Infinity); reveal = null; }
+
+  pad.addEventListener('pointerdown', e => {
+    if (mode !== 'playing' || activeId !== null) return;
+    e.preventDefault();
+    pad.setPointerCapture(e.pointerId);
+    activeId = e.pointerId;
+    clearInput(); setStatus();
+    autoFill();   // 1番目から確定していれば、そこまで自動でつないでおく
+    const p = local(e);
+    lastPt = finger = p;
+    hit(p.x, p.y);
+    drawPad();
+  });
+  pad.addEventListener('pointermove', e => {
+    if (e.pointerId !== activeId) return;
+    const p = local(e);
+    const dx = p.x - lastPt.x, dy = p.y - lastPt.y;
+    const n = Math.max(1, Math.ceil(Math.hypot(dx, dy) / SAMPLE_STEP));
+    for (let k = 1; k <= n; k++) hit(lastPt.x + dx * k / n, lastPt.y + dy * k / n);
+    lastPt = finger = p;
+    drawPad();
+  });
+  pad.addEventListener('pointerup', e => {
+    if (e.pointerId !== activeId) return;
+    activeId = null; finger = null;
+    submit();
+  });
+  pad.addEventListener('pointercancel', e => {
+    if (e.pointerId !== activeId) return;
+    activeId = null; finger = null;
+    clearInput(); drawPad();
+  });
+
+  function submit(){
+    if (!path.length){ drawPad(); return; }
+    if (path.length < 9){ setStatus('9個すべての点を通してください'); drawPad(); return; }
+    const fb = judge(path);
+    guesses.push({ path: path.slice(), fb });
+    // 緑の線は次の回答から自動で固定する
+    fb.forEach((v, k) => {
+      if (v !== 2) return;
+      fixedSegs.add(k); fixed[k] = secret[k]; fixed[k + 1] = secret[k + 1];
+    });
+    if (fb.every(v => v === 2)){ drawPad(); finish(); }
+    else {
+      // 黄か緑の線があれば、指を離した時点で盤の上に手番順に色付けして見せる
+      // （全部灰のときは何も出さない。動きを減らす設定では順番待ちなしで一度に色付けする）
+      if (fb.some(v => v)){ reveal = { fb, at: reduceMotion.matches ? -Infinity : performance.now() }; startAnim(); }
+      drawPad(); setStatus();
+    }
+    drawHist();
+    // 最新の回答が見えるように履歴欄を一番下までスクロールする
+    const hw = $('histWrap');
+    hw.scrollTop = hw.scrollHeight;
+  }
+
+  // ---------- 結果 ----------
+  const headline = () => `${TITLE} ${guesses.length}回で正解`;
+
+  function showAnswer(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const s = Math.round(Math.max(90, Math.min(150, S - 120)));
+    fit(ans, actx, s, s, dpr);
+    drawAnswer(actx, s, secret);
+  }
+
+  let unlockTimers = [];
+  function finish(){
+    mode = 'over';
+    setStatus('');
+    drawPad();   // 正解したパターンを緑で描き直す
+    $('resTitle').textContent = `${guesses.length}回で正解！`;
+    showAnswer();
+    const layer = $('unlock');
+    const showResult = () => {
+      $('padWrap').classList.add('unlocked');   // 結果の下に入力盤が透けないよう隠す
+      const over = $('over');
+      over.classList.remove('hidden');
+      void over.offsetWidth;   // 表示直後にクラスを足してもフェードが効くよう、いったんレイアウトを確定させる
+      over.classList.add('show');
+      $('again').focus({ preventScroll: true });
+    };
+    // 動きを減らす設定の端末では演出を省いてすぐ結果を出す
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches){ showResult(); return; }
+    unlockTimers = [
+      setTimeout(() => layer.classList.add('on'), UNLOCK_T[0]),
+      setTimeout(() => layer.classList.add('open'), UNLOCK_T[1]),
+      // 鍵が上へ抜けると同時に覆いを消し、下から結果を出す
+      setTimeout(() => { layer.classList.add('gone'); layer.classList.remove('on'); showResult(); }, UNLOCK_T[2]),
+    ];
+  }
+
+  function restart(){
+    secret = makeSecret();
+    guesses = [];
+    clearInput();
+    fixed.fill(-1); fixedSegs.clear();
+    mode = 'playing';
+    unlockTimers.forEach(clearTimeout); unlockTimers = [];
+    $('padWrap').classList.remove('unlocked');
+    $('unlock').classList.remove('on', 'open', 'gone');
+    $('over').classList.remove('show');
+    $('over').classList.add('hidden');
+    setStatus(); drawHist(); drawPad();
+    $('histWrap').scrollTop = 0;
+  }
+
+  // ---------- 共有 ----------
+  function shareText(){
+    const rows = guesses.map(g => g.fb.map(v => ['⬛', '🟨', '🟩'][v]).join('')).join('\n');
+    return `${headline()}\n${rows}\n${location.href.split(/[?#]/)[0]}\n#${TITLE}`;
+  }
+
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(){
+    const W = 720, M = 40, HEAD = 80, rows = guesses.length;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = Math.round(M + HEAD + histH(W - M * 2, rows) + M);
+    const x = c.getContext('2d');
+    x.fillStyle = C.bg; x.fillRect(0, 0, c.width, c.height);
+    x.fillStyle = C.fg; x.font = `bold 36px ${getComputedStyle(document.body).fontFamily}`;
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText(headline(), W / 2, M + HEAD / 2 - 10);
+    x.save(); x.translate(M, M + HEAD); drawHistory(x, W - M * 2, rows); x.restore();
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);   // toBlob の非同期コールバックは避ける
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    const file = resultImageFile();
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ text, files: [file] }).catch(() => {});
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    navigator.clipboard?.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+  $('again').addEventListener('click', restart);
+
+  // ---------- キーボード（PC用） ----------
+  // Esc: 描きかけを消す（結果画面では「もう一回」にフォーカスがあるので Enter / スペースで再開できる）
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && helpOpen()){ closeHelp(); return; }
+    if (e.key === 'Escape' && mode === 'playing' && activeId === null){
+      clearInput(); setStatus(); drawPad();
+    }
+  });
+
+  // ---------- iOS 対策 ----------
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  const isDraggable = t => t instanceof Element && !!t.closest('#pad');
+  document.addEventListener('touchstart', e => { if (isDraggable(e.target)) e.preventDefault(); }, { passive:false });
+  document.addEventListener('touchmove',  e => { if (activeId !== null) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => { if (isDraggable(e.target)) e.preventDefault(); });
+
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+
+  // ---------- 説明画面 ----------
+  // 初回に開いたときは自動で出す。以降は右上の「?」で開く
+  const helpOpen = () => !$('help').classList.contains('hidden');
+  function openHelp(first){
+    $('start').textContent = first ? 'スタート' : '閉じる';
+    $('help').classList.remove('hidden');
+    $('start').focus({ preventScroll: true });
+  }
+  function closeHelp(){
+    try { localStorage.setItem(HELP_KEY, '1'); } catch(e) {}
+    $('help').classList.add('hidden');
+  }
+  // 見たかどうかは localStorage に保存（使えない環境では開くたびに出る）
+  let helpShown = false;
+  try { helpShown = localStorage.getItem(HELP_KEY) === '1'; } catch(e) {}
+  if (!helpShown) openHelp(true);
+  $('start').addEventListener('click', closeHelp);
+  $('helpBtn').addEventListener('click', () => { if (activeId === null) openHelp(false); });   // 描いている最中は開かない
+
+  // ---------- 開始 ----------
+  addEventListener('resize', resize);
+  secret = makeSecret();
+  resize();
+  setStatus();
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

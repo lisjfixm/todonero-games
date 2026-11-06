@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/no-hole-in/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ホールインさせない</title>
+<meta name="description" content="カップになってゴルフボールをよける">
+<style>
+:root{
+  --bg:#1d2b1f; --fg:#eee; --sub:#bbb; --panel:rgba(0,0,0,.55); --card:rgba(22,34,24,.94); --line:rgba(255,255,255,.14);
+  --howto-bg:#1d2b1f; --howto-fg:#eee;
+  --green:#5fae4c; --green2:#4f9c3f; --fringe:#3f8a33; --rough:#2f6b27; --hole:#2a2a2a; --ball:#f4f4f4; --pin:#e0e0e0; --flag:#d32f2f; --gauge:#ffd54f; --btn:#ffffff; --btn-fg:#111;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+#game{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto}
+canvas{display:block;touch-action:none}
+/* スコア：画面上部の中央。芝の上でも読めるように薄い影を付ける */
+#hud{position:absolute;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top,0px) + 10px);display:flex;flex-direction:column;align-items:center;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+#hud .label{font-size:14px;font-weight:700;color:var(--fg);letter-spacing:.1em}
+#hud .num{font-size:44px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
+/* 結果：画面の中央に1枚のカードとしてまとめる */
+#over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--panel)}
+#over .card{width:min(300px,100%);padding:28px 24px 24px;border-radius:16px;background:var(--card);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;text-align:center}
+#over h2{margin:0;font-size:26px;font-weight:800}
+#over .score{margin:18px 0 22px;display:flex;align-items:baseline;justify-content:center;gap:4px}
+#over .score .num{font-size:64px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+#over .score .unit{font-size:17px;color:var(--sub)}
+#over .btns{width:100%;display:flex;flex-direction:column;gap:10px}
+.hidden{display:none !important}
+button{width:100%;min-height:52px;font-size:18px;font-weight:700;font-family:inherit;border-radius:12px;touch-action:manipulation;cursor:pointer}
+.howto-open{width:auto;min-height:44px}   /* 上の button の幅と高さを打ち消す */
+.primary{border:0;background:var(--btn);color:var(--btn-fg)}
+.secondary{border:2px solid var(--line);background:transparent;color:var(--fg)}
+button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hud" aria-live="polite"><span class="label">よけた</span><span class="num" id="score">0</span></div>
+  <div id="over" class="hidden">
+    <div class="card" role="dialog" aria-labelledby="overTitle">
+      <h2 id="overTitle">カップイン！</h2>
+      <div class="score"><span class="num" id="result">0</span><span class="unit">球よけた</span></div>
+      <div class="btns">
+        <button id="retry" class="primary">もう一回</button>
+        <button id="share" class="secondary">共有</button>
+      </div>
+    </div>
+  </div>
+  <section class="howto" data-pos="top-left" hidden>
+    <h2>遊び方</h2>
+    <p>ゴルフのカップになって、打ち込まれるボールをよけ続けるゲームです。打たれた球がカップに入らず止まると、よけた数が1増えます。1球でも入ると終わりで、そこまでの数が結果になります。</p>
+    <h2>操作</h2>
+    <p>画面をドラッグすると、指を動かした分だけカップが動きます。指でカップを隠さずに操作できますが、最高速度があるので少し遅れてついてきます。PC はマウスのドラッグか矢印キーです。</p>
+    <h2>コツ</h2>
+    <p>球はカップの少し先で止まる強さで打たれるので、打たれてから動きを変えると外れやすくなります。よけるほど先読みが強まり、打つ間隔も1.2秒から0.35秒まで縮みます。速い球は上を通っても落ちません。止まった球は残り、足元にゲージが出ると打ち直されます。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  const GREEN_W = 10;          // グリーンの横幅
+  const GREEN_L = 16;          // グリーンの奥行き
+  const STRIPES = 16;          // 芝刈りの縞の本数
+  const FRINGE_W = 0.6;        // グリーンのまわりの長い芝の幅
+  const HOLE_R = 0.46;          // カップの半径（実物と同じく、ボールの直径の約2.5倍）
+  const BALL_R = 0.18;         // ボールの半径
+  const PIN_H = 2.2;           // 旗竿の高さ
+  const PIN_R = 0.03;          // 旗竿の太さ（半径）
+  const FLAG_W = 0.8;          // 旗の横幅
+  const FLAG_H = 0.5;          // 旗の縦幅
+  const PIN_K = 90;            // 竿が真上に戻ろうとするばねの強さ
+  const PIN_C = 12;             // 竿の揺れの収まりやすさ
+  const PIN_MAX_TILT = 25 * Math.PI / 180; // 竿が傾ける最大の角度
+  const CLOTH_GRAVITY = 9.8;   // 布にかかる重力（単位/秒²）
+  const CLOTH_AIR_DRAG = 0.02; // 布の空気抵抗（1ステップで失う速さの割合）
+  const CLOTH_SHEAR = 0.05;   // 布のゆがみにくさ（0〜1。小さいほど重力で垂れ下がる）
+  const CLOTH_BEND = 0.1;      // 布の折れ曲がりにくさ（0〜1）
+  const CLOTH_ITER = 15;        // 布の拘束を解く回数（多いほど伸びにくい）
+  const GAUGE_IN = 0.3;        // 打ち直す球の足元ゲージの内径
+  const GAUGE_OUT = 0.42;      // 打ち直す球の足元ゲージの外径
+  const HOLE_MAX_SPEED = 7;    // カップが動ける最高速度（単位/秒）。指に遅れてついてくる
+  const HOLE_MARGIN = 0.46;    // カップの中心がグリーンの端に寄れる限界（カップの半径と同じ＝カップの縁がグリーンの端まで行ける）
+  const HOLE_START_Z = 3;      // カップの初期位置（手前寄り）
+  const KEY_SPEED = 7;         // 矢印キーで動かすときの速さ（単位/秒）
+  const FRICTION = 3;          // ボールの減速（単位/秒²）
+  const CAPTURE_SPEED = 3.2;   // この速さより遅い球がカップの上を通ると落ちる
+  const OVERSHOOT = 1.0;       // CPUはカップのこの距離先で止まる強さで打つ
+  const SPEED_ERR = 0.06;      // 打つ強さのぶれ（割合）
+  const ANGLE_ERR = 0.03;      // 打つ方向のぶれ（ラジアン）
+  const AIM_TIME = 0.6;        // 打つ球が決まってから打たれるまでの時間（秒）
+  const SPAWN_OUT = 0.3;       // 新しい球を出す位置の、グリーンの端から外側への距離（グリーンのまわりの長い芝の中）
+  const REHIT_RATE = 0.5;     // 止まっている球があるとき、新しい球ではなくそれを打ち直す確率
+  const EDGE_BOUNCE = 0.5;     // グリーンの端で跳ね返るときに残る速さの割合
+  const BALL_BOUNCE = 0.9;     // 球どうしがぶつかったときの跳ね返りの強さ（1で完全弾性）
+  const FIRST_DELAY = 1.0;     // 開始から最初の球が出るまでの時間（秒）
+  const INTERVAL_START = 1.2;  // 最初の打つ間隔（秒）
+  const INTERVAL_MIN = 0.35;   // 打つ間隔の下限（秒）
+  const INTERVAL_STEP = 0.05;  // 1球よけるごとに縮む間隔（秒）
+  const PREDICT_STEP = 0.05;   // 1球よけるごとに増えるCPUの先読みの割合（最大1）
+  const SINK_TIME = 0.6;       // カップに入ってから結果画面までの時間（ゲーム内の秒。スロー中なので実際はもっと長い）
+  const SLOW_SCALE = 0.25;     // カップインした瞬間からのスローモーションの速さ（1で通常）
+  const SINK_GRAVITY = 60;     // カップの中に落ちる球にかかる重力（単位/秒²）
+  const CUP_DEPTH = 0.8;       // カップの深さ
+  const CUP_BOUNCE = 0.3;      // カップの壁・底で跳ね返るときに残る速さの割合
+  const BALL_DIMPLES = 332;    // ボールのくぼみ（ディンプル）の数（本物は300〜400個ほど）
+  const DIMPLE_ANGLE = 0.098;  // くぼみ1個の大きさ（球の中心から見た半径の角度、ラジアン）。表面の約8割がくぼみになる
+  const DIMPLE_DEPTH = 0.015;  // くぼみの深さ（ボールの半径に対する割合）
+  const SHADOW_SCALE = 1.5;    // 球の影の大きさ（球の直径に対する倍率。少し大きめにしてやわらかく見せる）
+  const SHADOW_ALPHA = 0.4;    // 球の影の濃さ（0〜1）
+  const TRAIL_MIN_SPEED = 4;   // この速さ（単位/秒）を超えると球の後ろに軌跡が出始める
+  const TRAIL_FULL_SPEED = 8;  // この速さで軌跡がいちばん濃くなる
+  const TRAIL_ALPHA = 0.65;    // 軌跡のいちばん濃い所（球のすぐ後ろ）の不透明度
+  const TRAIL_SAMPLES = 24;    // 軌跡に残す位置の数（物理の1ステップごとに1つ。24で約0.2秒分）
+  const DT = 1 / 120;          // 物理の固定タイムステップ
+  // 球が転がれる範囲（グリーン＋まわりの長い芝）の半分の幅・奥行き（球の中心がここまで来られる）
+  const FIELD_HW = GREEN_W / 2 + FRINGE_W - BALL_R, FIELD_HL = GREEN_L / 2 + FRINGE_W - BALL_R;
+  // 旗竿はカップの底に立っていて、底を支点に傾く。傾きはカップの縁に当たるところまで
+  const PIN_LEN = PIN_H + CUP_DEPTH;
+  const PIN_TILT_LIMIT = Math.min(PIN_MAX_TILT, Math.atan((HOLE_R - PIN_R) / CUP_DEPTH));
+  const CAM_ELEV = 58 * Math.PI / 180; // カメラの見下ろし角
+
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // ---------- 3D ----------
+  const wrap = $('game');
+  // 共有画像に今の画面をそのまま使うため描画バッファを残す
+  const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const cv = renderer.domElement;
+  wrap.prepend(cv);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(css('--bg'));
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x334433, 0.8));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.6);
+  sun.position.set(3, 10, 5);
+  scene.add(sun);
+
+  // ---------- グリーン（芝刈りの縞模様＋細かい芝目を描いたテクスチャ） ----------
+  function greenTexture(){
+    const c = document.createElement('canvas');
+    const PX = 64;  // 1単位あたりのピクセル数
+    c.width = GREEN_W * PX; c.height = GREEN_L * PX;
+    const g = c.getContext('2d');
+    // 芝刈りの向きが交互になった縞
+    const bandH = c.height / STRIPES;
+    for (let i = 0; i < STRIPES; i++){
+      g.fillStyle = css(i % 2 ? '--green2' : '--green');
+      g.fillRect(0, i * bandH, c.width, bandH);
+    }
+    // 芝目のざらつき
+    for (let i = 0; i < 12000; i++){
+      g.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
+      g.fillRect(Math.random() * c.width, Math.random() * c.height, 2, 2);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return tex;
+  }
+  // 地面はカップの口の部分だけ描かない（ステンシルで穴を抜き、カップの中が見えるようにする）
+  const groundStencil = { stencilWrite:true, stencilRef:1, stencilFunc:THREE.NotEqualStencilFunc };
+  const green = new THREE.Mesh(
+    new THREE.PlaneGeometry(GREEN_W, GREEN_L),
+    new THREE.MeshLambertMaterial({ map: greenTexture(), ...groundStencil })
+  );
+  green.rotation.x = -Math.PI / 2;
+  scene.add(green);
+  // グリーンのまわりの少し長い芝（カラー）と、その外のラフ
+  const fringe = new THREE.Mesh(
+    new THREE.PlaneGeometry(GREEN_W + FRINGE_W * 2, GREEN_L + FRINGE_W * 2),
+    new THREE.MeshLambertMaterial({ color: css('--fringe'), ...groundStencil })
+  );
+  fringe.rotation.x = -Math.PI / 2;
+  fringe.position.y = -0.01;
+  scene.add(fringe);
+  const rough = new THREE.Mesh(
+    new THREE.PlaneGeometry(80, 80),
+    new THREE.MeshLambertMaterial({ color: css('--rough'), ...groundStencil })
+  );
+  rough.rotation.x = -Math.PI / 2;
+  rough.position.y = -0.02;
+  scene.add(rough);
+
+  // ---------- カップ（深さのある穴。球が落ちていくのが見える） ----------
+  const cup = new THREE.Group();
+  // 穴の形の印（色は描かず、地面より先に描いてステンシルに1を書く）
+  const cupMask = new THREE.Mesh(
+    new THREE.CircleGeometry(HOLE_R, 48),
+    new THREE.MeshBasicMaterial({
+      colorWrite:false, depthWrite:false,
+      stencilWrite:true, stencilRef:1, stencilFunc:THREE.AlwaysStencilFunc, stencilZPass:THREE.ReplaceStencilOp,
+    })
+  );
+  cupMask.rotation.x = -Math.PI / 2;
+  cupMask.position.y = 0.001;
+  cupMask.renderOrder = -1;
+  const cupMat = new THREE.MeshLambertMaterial({ color: css('--hole'), side: THREE.BackSide });
+  const cupWall = new THREE.Mesh(new THREE.CylinderGeometry(HOLE_R, HOLE_R, CUP_DEPTH, 48, 1, true), cupMat);
+  cupWall.position.y = -CUP_DEPTH / 2;
+  const cupBottom = new THREE.Mesh(
+    new THREE.CircleGeometry(HOLE_R, 48),
+    new THREE.MeshLambertMaterial({ color: css('--hole') })
+  );
+  cupBottom.rotation.x = -Math.PI / 2;
+  cupBottom.position.y = -CUP_DEPTH;
+  cup.add(cupMask, cupWall, cupBottom);
+  scene.add(cup);
+
+  // ---------- カップに立てる旗（見た目だけで、球とは当たらない） ----------
+  // 竿：根元はカップに固定。先端はばねで真上に戻ろうとし、カップを急に動かすと慣性で傾いて揺れる
+  // 布：質点を距離の拘束でつないだもの。重力と空気抵抗を受け、竿の動きに引きずられてなびく
+  const pinMesh = new THREE.Mesh(
+    // カップの底まで刺さっている分も含めた長さ
+    new THREE.CylinderGeometry(PIN_R, PIN_R, PIN_LEN, 12),
+    new THREE.MeshLambertMaterial({ color: css('--pin') })
+  );
+  scene.add(pinMesh);
+  const tip = { x:0, z:0, vx:0, vz:0 };   // 竿の先端の水平位置と速度
+  const pinBase = { x:0, z:0 };            // 前のステップの竿の根元（根元の速度を出すため）
+  const pinDir = new THREE.Vector3(0, 1, 0);
+
+  const NX = 9, NY = 6;                    // 布の質点の数（横・縦）
+  const cdx = FLAG_W / (NX - 1), cdy = FLAG_H / (NY - 1);
+  const cp = [];                           // 質点 { x,y,z, px,py,pz（1ステップ前の位置）, fixed }
+  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) cp.push({ i, j, fixed: i === 0, x:0, y:0, z:0, px:0, py:0, pz:0 });
+  const ci = (i, j) => j * NX + i;
+  // 拘束：となり同士（伸び縮みしない）、斜め（ゆがみにくさ）、1つ飛ばし（折れ曲がりにくさ）
+  const links = [];
+  function addLink(i1, j1, i2, j2, s){
+    if (i2 >= NX || j2 >= NY || i2 < 0) return;
+    links.push([ci(i1, j1), ci(i2, j2), Math.hypot((i2 - i1) * cdx, (j2 - j1) * cdy), s]);
+  }
+  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++){
+    addLink(i, j, i + 1, j, 1);
+    addLink(i, j, i, j + 1, 1);
+    addLink(i, j, i + 1, j + 1, CLOTH_SHEAR);
+    addLink(i, j, i - 1, j + 1, CLOTH_SHEAR);
+    addLink(i, j, i + 2, j, CLOTH_BEND);
+    addLink(i, j, i, j + 2, CLOTH_BEND);
+  }
+
+  // 竿の上で row 段目の質点を留める位置（上から順に）
+  function attach(p){
+    const h = PIN_LEN - p.j * cdy;   // カップの底（竿の根元）からの距離
+    p.x = p.px = pinBase.x + pinDir.x * h;
+    p.y = p.py = -CUP_DEPTH + pinDir.y * h;
+    p.z = p.pz = pinBase.z + pinDir.z * h;
+  }
+
+  function stepFlag(bx, bz){
+    // 竿の先端：真上へ戻るばね＋根元に対する速度のダンパー
+    const bvx = (bx - pinBase.x) / DT, bvz = (bz - pinBase.z) / DT;
+    pinBase.x = bx; pinBase.z = bz;
+    tip.vx += (PIN_K * (bx - tip.x) - PIN_C * (tip.vx - bvx)) * DT;
+    tip.vz += (PIN_K * (bz - tip.z) - PIN_C * (tip.vz - bvz)) * DT;
+    tip.x += tip.vx * DT;
+    tip.z += tip.vz * DT;
+    let ox = tip.x - bx, oz = tip.z - bz;
+    const o = Math.hypot(ox, oz), maxO = PIN_LEN * Math.sin(PIN_TILT_LIMIT);
+    if (o > maxO){ ox *= maxO / o; oz *= maxO / o; tip.x = bx + ox; tip.z = bz + oz; }
+    pinDir.set(ox, Math.sqrt(PIN_LEN * PIN_LEN - ox * ox - oz * oz), oz).divideScalar(PIN_LEN);
+
+    // 布：位置の差から速度を出して動かす（空気抵抗で少しずつ減速）
+    const keep = 1 - CLOTH_AIR_DRAG, g = CLOTH_GRAVITY * DT * DT;
+    for (const p of cp){
+      if (p.fixed){ attach(p); continue; }
+      const vx = (p.x - p.px) * keep, vy = (p.y - p.py) * keep, vz = (p.z - p.pz) * keep;
+      p.px = p.x; p.py = p.y; p.pz = p.z;
+      p.x += vx; p.y += vy - g; p.z += vz;
+    }
+    for (let k = 0; k < CLOTH_ITER; k++){
+      for (const [a, b, rest, s] of links){
+        const A = cp[a], B = cp[b];
+        const dx = B.x - A.x, dy = B.y - A.y, dz = B.z - A.z;
+        const len = Math.hypot(dx, dy, dz) || 1e-6;
+        const f = (len - rest) / len * s;
+        // 竿に留めた質点は動かさず、相手側だけを動かす
+        const wa = A.fixed ? 0 : B.fixed ? 1 : 0.5;
+        const wb = B.fixed ? 0 : A.fixed ? 1 : 0.5;
+        A.x += dx * f * wa; A.y += dy * f * wa; A.z += dz * f * wa;
+        B.x -= dx * f * wb; B.y -= dy * f * wb; B.z -= dz * f * wb;
+      }
+    }
+    for (const p of cp) if (p.y < 0.02) p.y = 0.02;
+  }
+
+  // 竿をまっすぐ立て、布を横に広げた状態から少し動かして落ち着かせる（開始時・リトライ時）
+  function resetFlag(bx, bz){
+    pinBase.x = tip.x = bx; pinBase.z = tip.z = bz;
+    tip.vx = tip.vz = 0;
+    pinDir.set(0, 1, 0);
+    for (const p of cp){
+      p.x = p.px = bx + p.i * cdx;
+      p.y = p.py = PIN_H - p.j * cdy;   // 竿がまっすぐなので、地面からの高さ = 底からの距離 - 深さ
+      p.z = p.pz = bz;
+    }
+    for (let k = 0; k < 240; k++) stepFlag(bx, bz);
+  }
+
+  const clothGeo = new THREE.BufferGeometry();
+  clothGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NX * NY * 3), 3));
+  const clothIdx = [];
+  for (let j = 0; j < NY - 1; j++) for (let i = 0; i < NX - 1; i++){
+    clothIdx.push(ci(i, j), ci(i, j + 1), ci(i + 1, j), ci(i + 1, j), ci(i, j + 1), ci(i + 1, j + 1));
+  }
+  clothGeo.setIndex(clothIdx);
+  const clothMesh = new THREE.Mesh(
+    clothGeo,
+    new THREE.MeshLambertMaterial({ color: css('--flag'), side: THREE.DoubleSide })
+  );
+  clothMesh.frustumCulled = false;
+  scene.add(clothMesh);
+
+  const UP = new THREE.Vector3(0, 1, 0);
+  function drawFlag(){
+    // 竿の中点（根元はカップの底の中心）
+    const mid = PIN_LEN / 2;
+    pinMesh.position.set(pinBase.x + pinDir.x * mid, -CUP_DEPTH + pinDir.y * mid, pinBase.z + pinDir.z * mid);
+    pinMesh.quaternion.setFromUnitVectors(UP, pinDir);
+    const pos = clothGeo.attributes.position;
+    cp.forEach((p, k) => pos.setXYZ(k, p.x, p.y, p.z));
+    pos.needsUpdate = true;
+    clothGeo.computeVertexNormals();
+  }
+
+  // ---------- ゴルフボール（表面全体に丸いくぼみ＝ディンプルを彫った形） ----------
+  // 球の頂点を、いちばん近いくぼみの中心からの角度に応じて内側へへこませる。
+  // 形そのものがへこんでいるので、光の当たり方でくぼみが見える
+  function dimpledBallGeometry(){
+    const geo = new THREE.SphereGeometry(BALL_R, 160, 108);
+    // くぼみの中心：球面にほぼ均等に並べる（黄金角でずらしながら上から下へ）
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    const cx = [], cy = [], cz = [];
+    for (let i = 0; i < BALL_DIMPLES; i++){
+      const y = 1 - (i + 0.5) / BALL_DIMPLES * 2, r = Math.sqrt(1 - y * y), t = i * golden;
+      cx.push(Math.cos(t) * r); cy.push(y); cz.push(Math.sin(t) * r);
+    }
+    const cosA = Math.cos(DIMPLE_ANGLE);
+    const pos = geo.attributes.position;
+    for (let k = 0; k < pos.count; k++){
+      const x = pos.getX(k) / BALL_R, y = pos.getY(k) / BALL_R, z = pos.getZ(k) / BALL_R;
+      let best = -1;
+      for (let i = 0; i < BALL_DIMPLES; i++){
+        const d = x * cx[i] + y * cy[i] + z * cz[i];
+        if (d > best) best = d;
+      }
+      if (best > cosA){
+        // 縁がなめらかにつながる浅いお椀形
+        const a = Math.acos(Math.min(1, best)) / DIMPLE_ANGLE;
+        const s = BALL_R * (1 - DIMPLE_DEPTH * 0.5 * (1 + Math.cos(Math.PI * a)));
+        pos.setXYZ(k, x * s, y * s, z * s);
+      }
+    }
+    geo.computeVertexNormals();
+    // 球の継ぎ目と極では同じ位置に頂点が重なっているので、法線を平均して継ぎ目の線が出ないようにする
+    const nor = geo.attributes.normal, groups = new Map();
+    for (let k = 0; k < pos.count; k++){
+      const key = pos.getX(k).toFixed(5) + ',' + pos.getY(k).toFixed(5) + ',' + pos.getZ(k).toFixed(5);
+      (groups.get(key) || groups.set(key, []).get(key)).push(k);
+    }
+    const n = new THREE.Vector3();
+    for (const ks of groups.values()){
+      if (ks.length < 2) continue;
+      n.set(0, 0, 0);
+      for (const k of ks) n.x += nor.getX(k), n.y += nor.getY(k), n.z += nor.getZ(k);
+      n.normalize();
+      for (const k of ks) nor.setXYZ(k, n.x, n.y, n.z);
+    }
+    return geo;
+  }
+  const ballGeo = dimpledBallGeometry();
+  const ballMat = new THREE.MeshPhongMaterial({ color: css('--ball'), specular: 0x222222, shininess: 30 });
+
+  // ---------- 球の影（地面に落ちる丸いぼかし。太陽の向きの反対側へ少しずらす） ----------
+  function shadowTexture(){
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(0,0,0,1)'); grad.addColorStop(0.5, 'rgba(0,0,0,0.6)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = grad; g.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  }
+  const shadowTex = shadowTexture();
+  const shadowGeo = new THREE.PlaneGeometry(BALL_R * 2 * SHADOW_SCALE, BALL_R * 2 * SHADOW_SCALE);
+  // 影のずれ：太陽の反対側へ、球の高さのぶんだけ
+  const SHADOW_DX = -sun.position.x / sun.position.y * BALL_R, SHADOW_DZ = -sun.position.z / sun.position.y * BALL_R;
+  function makeShadow(){
+    // 地面と同じステンシルにして、カップの口の上には描かない（球が落ちていく間に穴の中へ影が出ないように）
+    const m = new THREE.Mesh(shadowGeo, new THREE.MeshBasicMaterial({ map: shadowTex, transparent:true, opacity:SHADOW_ALPHA, depthWrite:false, ...groundStencil }));
+    m.rotation.x = -Math.PI / 2;
+    m.position.y = 0.005;
+    scene.add(m);
+    return m;
+  }
+
+  // ---------- 軌跡（速い球の後ろに引く球の色の帯。球のすぐ後ろは球の幅で、しっぽへ向けて細く薄くなる） ----------
+  function trailTexture(){   // 横向きに 透明（しっぽ）→ 不透明（頭）のグラデーション
+    const c = document.createElement('canvas'); c.width = 64; c.height = 1;
+    const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 0, 64, 0);
+    grad.addColorStop(0, 'rgba(255,255,255,0)'); grad.addColorStop(1, 'rgba(255,255,255,1)');
+    g.fillStyle = grad; g.fillRect(0, 0, 64, 1);
+    return new THREE.CanvasTexture(c);
+  }
+  const trailTex = trailTexture();
+  function makeTrail(x, z){
+    const N = TRAIL_SAMPLES;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 2 * 3), 3));
+    const uv = new Float32Array(N * 2 * 2);
+    for (let i = 0; i < N; i++){ const u = i / (N - 1); uv[i * 4] = u; uv[i * 4 + 1] = 0; uv[i * 4 + 2] = u; uv[i * 4 + 3] = 1; }
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    const idx = [];
+    for (let i = 0; i < N - 1; i++){ const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    geo.setIndex(idx);
+    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: css('--ball'), map: trailTex, transparent:true, opacity:0, depthWrite:false, side:THREE.DoubleSide }));
+    mesh.frustumCulled = false;   // 頂点を毎フレーム書き換えるので、画面外判定の範囲は計算しない
+    mesh.visible = false;
+    scene.add(mesh);
+    // 位置の履歴（x, z の順。先頭がいちばん古い）。最初は全部いまの位置にして、帯が出ないようにしておく
+    const pts = new Float32Array(N * 2);
+    for (let i = 0; i < N; i++){ pts[i * 2] = x; pts[i * 2 + 1] = z; }
+    return { mesh, pts };
+  }
+  // 物理の1ステップごとに、いまの位置を履歴の最後に足す
+  function pushTrail(tr, x, z){
+    tr.pts.copyWithin(0, 2);
+    tr.pts[tr.pts.length - 2] = x; tr.pts[tr.pts.length - 1] = z;
+  }
+  // 履歴から帯の頂点を作り直す（各点で進む向きの左右に、幅のぶんだけ広げる）
+  function updateTrail(tr){
+    const N = TRAIL_SAMPLES, p = tr.pts, pos = tr.mesh.geometry.attributes.position.array;
+    for (let i = 0; i < N; i++){
+      const i0 = Math.max(0, i - 1), i1 = Math.min(N - 1, i + 1);
+      let dx = p[i1 * 2] - p[i0 * 2], dz = p[i1 * 2 + 1] - p[i0 * 2 + 1];
+      const d = Math.hypot(dx, dz);
+      if (d > 0){ dx /= d; dz /= d; }
+      const hw = BALL_R * i / (N - 1), x = p[i * 2], z = p[i * 2 + 1];
+      // 球の中心の高さに水平に置く（球の手前半分に隠れて、後ろから出てくるように見える）
+      pos[i * 6] = x - dz * hw; pos[i * 6 + 1] = BALL_R; pos[i * 6 + 2] = z + dx * hw;
+      pos[i * 6 + 3] = x + dz * hw; pos[i * 6 + 4] = BALL_R; pos[i * 6 + 5] = z - dx * hw;
+    }
+    tr.mesh.geometry.attributes.position.needsUpdate = true;
+  }
+
+  // 転がった分だけ球を回す（進む向きに対して横の軸まわりに、距離 / 半径 だけ回転）
+  const rollAxis = new THREE.Vector3(), rollQ = new THREE.Quaternion();
+  function rollBall(b){
+    const sp = Math.hypot(b.vx, b.vz);
+    if (sp === 0) return;
+    rollAxis.set(b.vz / sp, 0, -b.vx / sp);
+    rollQ.setFromAxisAngle(rollAxis, sp * DT / BALL_R);
+    b.mesh.quaternion.premultiply(rollQ).normalize();
+  }
+
+  // ---------- カメラ（縦長画面にグリーンとまわりの長い芝（球が出てくる所）が収まる距離を探す） ----------
+  const CAM_TARGET = new THREE.Vector3(0, 0, 0.6);
+  const corners = [[-1,-1],[1,-1],[-1,1],[1,1]]
+    .map(([sx, sz]) => new THREE.Vector3(sx * (GREEN_W / 2 + FRINGE_W), 0, sz * (GREEN_L / 2 + FRINGE_W)));
+  function placeCam(d){
+    camera.position.set(CAM_TARGET.x, d * Math.sin(CAM_ELEV), CAM_TARGET.z + d * Math.cos(CAM_ELEV));
+    camera.lookAt(CAM_TARGET);
+    camera.updateMatrixWorld();
+  }
+  function fitCamera(){
+    let lo = 3, hi = 200;
+    for (let i = 0; i < 30; i++){
+      const d = (lo + hi) / 2;
+      placeCam(d);
+      // 上端はスコア表示の分だけ空ける
+      const ok = corners.every(c => {
+        const p = c.clone().project(camera);
+        return Math.abs(p.x) < 0.94 && p.y < 0.82 && p.y > -0.94;
+      });
+      if (ok) hi = d; else lo = d;
+    }
+    placeCam(hi);
+  }
+  function resize(){
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    fitCamera();
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  // ---------- 状態 ----------
+  let state = 'playing';        // playing / sinking / over
+  document.documentElement.setAttribute('data-howto-hidden', '');   // 開いた瞬間からプレイ中なので「遊び方」を隠す
+  let balls = [];
+  let avoided = 0;
+  let spawnTimer = FIRST_DELAY;
+  let sinkTimer = 0;
+  let timeScale = 1;            // ゲーム全体の時間の速さ（カップインの瞬間からスローになる）
+  const hole = { x:0, z:HOLE_START_Z };
+  const target = { x:0, z:HOLE_START_Z };
+  const holeVel = { x:0, z:0 }; // CPUの先読み用（なめらかにした速度）
+  resetFlag(hole.x, hole.z);
+
+  const minX = -GREEN_W / 2 + HOLE_MARGIN, maxX = GREEN_W / 2 - HOLE_MARGIN;
+  const minZ = -GREEN_L / 2 + HOLE_MARGIN, maxZ = GREEN_L / 2 - HOLE_MARGIN;
+  function clampTarget(){
+    target.x = clamp(target.x, minX, maxX);
+    target.z = clamp(target.z, minZ, maxZ);
+  }
+
+  function setScore(){ $('score').textContent = avoided; }
+
+  function reset(){
+    balls.forEach(b => {
+      scene.remove(b.mesh, b.gauge.g, b.shadow, b.trail.mesh);
+      b.gauge.fill.geometry.dispose();
+      b.shadow.material.dispose();
+      b.trail.mesh.geometry.dispose(); b.trail.mesh.material.dispose();
+    });
+    balls = [];
+    avoided = 0;
+    spawnTimer = FIRST_DELAY;
+    hole.x = target.x = 0;
+    hole.z = target.z = HOLE_START_Z;
+    holeVel.x = holeVel.z = 0;
+    resetFlag(hole.x, hole.z);
+    setScore();
+    $('over').classList.add('hidden');
+    $('hud').classList.remove('hidden');
+    document.documentElement.setAttribute('data-howto-hidden', '');
+    state = 'playing';
+    timeScale = 1;
+  }
+
+  // ---------- 入力（指の移動量だけカップの目標点を動かす。指でカップが隠れないように） ----------
+  const ray = new THREE.Raycaster();
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const ndc = new THREE.Vector2();
+  const hitP = new THREE.Vector3();
+  function groundAt(cx, cy){
+    const r = cv.getBoundingClientRect();
+    ndc.set((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    return ray.ray.intersectPlane(plane, hitP) ? { x:hitP.x, z:hitP.z } : null;
+  }
+  let dragId = null, dragPrev = null;
+  cv.addEventListener('pointerdown', e => {
+    if (state !== 'playing' || dragId !== null) return;
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    dragId = e.pointerId;
+    dragPrev = groundAt(e.clientX, e.clientY);
+  });
+  cv.addEventListener('pointermove', e => {
+    if (e.pointerId !== dragId) return;
+    const p = groundAt(e.clientX, e.clientY);
+    if (p && dragPrev && state === 'playing'){
+      target.x += p.x - dragPrev.x;
+      target.z += p.z - dragPrev.z;
+      clampTarget();
+    }
+    dragPrev = p;
+  });
+  const endDrag = e => { if (e.pointerId === dragId){ dragId = null; dragPrev = null; } };
+  cv.addEventListener('pointerup', endDrag);
+  cv.addEventListener('pointercancel', endDrag);
+
+  // PC用：矢印キーで移動、スペース/Enterでもう一回
+  const keys = new Set();
+  addEventListener('keydown', e => {
+    if (e.key.startsWith('Arrow')){ keys.add(e.key); e.preventDefault(); }
+    if ((e.key === ' ' || e.key === 'Enter') && state === 'over'){ e.preventDefault(); reset(); }
+  });
+  addEventListener('keyup', e => keys.delete(e.key));
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
+  document.addEventListener('touchmove', e => { if (dragId !== null) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+
+  // ---------- CPU（奥の端から新しい球を出すか、止まっている球を打ち直してカップを狙う） ----------
+  function nextShot(){
+    const resting = balls.filter(b => b.phase === 'rest');
+    if (resting.length && Math.random() < REHIT_RATE){
+      const b = resting[Math.floor(Math.random() * resting.length)];
+      b.phase = 'aim';
+      b.t = 0;
+      b.rehit = true;   // 打ち直す球には足元に円形のゲージを出す
+    } else {
+      spawnBall();
+    }
+  }
+  // 打ち直す球の足元に出す円形のゲージ（薄い円の上に、打たれるまでの残り時間ぶん弧が伸びる）
+  const gaugeTrackMat = new THREE.MeshBasicMaterial({ color: css('--gauge'), transparent:true, opacity:0.3 });
+  const gaugeFillMat = new THREE.MeshBasicMaterial({ color: css('--gauge') });
+  const gaugeTrackGeo = new THREE.RingGeometry(GAUGE_IN, GAUGE_OUT, 48);
+  function makeGauge(){
+    const g = new THREE.Group();
+    const track = new THREE.Mesh(gaugeTrackGeo, gaugeTrackMat);
+    track.rotation.x = -Math.PI / 2;
+    track.position.y = 0.01;
+    const fill = new THREE.Mesh(new THREE.RingGeometry(GAUGE_IN, GAUGE_OUT, 48, 1, 0, 0.001), gaugeFillMat);
+    fill.rotation.x = -Math.PI / 2;
+    fill.position.y = 0.015;
+    g.add(track, fill);
+    g.visible = false;
+    scene.add(g);
+    return { g, fill };
+  }
+  function spawnBall(){
+    const mesh = new THREE.Mesh(ballGeo, ballMat);
+    // くぼみの並びが球ごとに揃わないように、最初の向きをランダムにする
+    mesh.quaternion.setFromEuler(new THREE.Euler(rand(0, Math.PI * 2), rand(0, Math.PI * 2), rand(0, Math.PI * 2)));
+    // グリーンの外（まわりの長い芝）の4辺のどこかから出す（周囲の長さに対して均等に選ぶので、長い辺ほど出やすい）
+    const hw = GREEN_W / 2 + SPAWN_OUT, hl = GREEN_L / 2 + SPAWN_OUT;
+    let p = rand(0, (hw + hl) * 4), x, z;
+    if (p < hw * 2){ x = -hw + p; z = -hl; }                         // 奥の辺
+    else if ((p -= hw * 2) < hl * 2){ x = hw; z = -hl + p; }         // 右の辺
+    else if ((p -= hl * 2) < hw * 2){ x = hw - p; z = hl; }          // 手前の辺
+    else { p -= hw * 2; x = -hw; z = hl - p; }                        // 左の辺
+    const b = {
+      mesh, phase:'aim', t:0, rehit:false,
+      x, z,
+      vx:0, vz:0,
+      gauge: makeGauge(),
+      shadow: makeShadow(),
+      trail: makeTrail(x, z),
+    };
+    mesh.position.set(b.x, BALL_R, b.z);
+    scene.add(mesh);
+    balls.push(b);
+  }
+  function shoot(b){
+    // カップの少し先で止まる強さで打つ。慣れてきたらカップの動きを先読みする
+    const vh = Math.sqrt(2 * FRICTION * OVERSHOOT);
+    const pred = Math.min(1, avoided * PREDICT_STEP);
+    let ax = hole.x, az = hole.z;
+    for (let i = 0; i < 2; i++){
+      const d = Math.hypot(ax - b.x, az - b.z);
+      const t = (Math.sqrt(2 * FRICTION * (d + OVERSHOOT)) - vh) / FRICTION;
+      ax = clamp(hole.x + holeVel.x * t * pred, minX, maxX);
+      az = clamp(hole.z + holeVel.z * t * pred, minZ, maxZ);
+    }
+    const d = Math.hypot(ax - b.x, az - b.z);
+    const v0 = Math.sqrt(2 * FRICTION * (d + OVERSHOOT)) * (1 + rand(-SPEED_ERR, SPEED_ERR));
+    const ang = Math.atan2(az - b.z, ax - b.x) + rand(-ANGLE_ERR, ANGLE_ERR);
+    b.vx = Math.cos(ang) * v0;
+    b.vz = Math.sin(ang) * v0;
+    b.phase = 'roll';
+    b.shot = true;
+  }
+
+  // 止まった球はその場に残り、あとで打ち直される。
+  // よけた数は打たれた球が止まったときだけ数える（ぶつかって動いた球は数えない）
+  function avoid(b){
+    if (b.shot && state === 'playing'){
+      avoided++;
+      setScore();
+      b.shot = false;
+    }
+    b.phase = 'rest';
+    b.t = 0;
+  }
+
+  // カップに入った球。最初の1球でゲームが終わり、その瞬間からスローモーションになる
+  function sinkBall(b){
+    b.phase = 'sink';
+    b.y = BALL_R;
+    b.vy = 0;
+    if (state === 'playing'){
+      state = 'sinking';
+      sinkTimer = 0;
+      timeScale = SLOW_SCALE;
+      dragId = null; dragPrev = null;
+    }
+  }
+
+  // カップの中の球：重力で落ち、カップの壁・旗竿・底で跳ね返る
+  function stepSink(b){
+    b.vy -= SINK_GRAVITY * DT;
+    b.x += b.vx * DT;
+    b.y += b.vy * DT;
+    b.z += b.vz * DT;
+    // 縁より下に沈んだ分だけ、壁が内側に迫る（縁の上ではカップの口いっぱいまで動ける）
+    const below = clamp((BALL_R - b.y) / BALL_R, 0, 1);
+    const lim = HOLE_R - BALL_R * below;
+    let rx = b.x - hole.x, rz = b.z - hole.z, r = Math.hypot(rx, rz);
+    if (r > lim){
+      const ux = rx / r, uz = rz / r;
+      b.x = hole.x + ux * lim; b.z = hole.z + uz * lim;
+      const vn = b.vx * ux + b.vz * uz;
+      if (vn > 0){ b.vx -= (1 + CUP_BOUNCE) * vn * ux; b.vz -= (1 + CUP_BOUNCE) * vn * uz; }
+    }
+    // 旗竿（底の中心から傾いて立っているので、球の高さでの竿の位置と比べる）
+    const ph = (b.y + CUP_DEPTH) / pinDir.y;
+    rx = b.x - (hole.x + pinDir.x * ph); rz = b.z - (hole.z + pinDir.z * ph); r = Math.hypot(rx, rz);
+    const pr = PIN_R + BALL_R;
+    if (r < pr){
+      const ux = r > 0 ? rx / r : 1, uz = r > 0 ? rz / r : 0;
+      b.x = hole.x + pinDir.x * ph + ux * pr; b.z = hole.z + pinDir.z * ph + uz * pr;
+      const vn = b.vx * ux + b.vz * uz;
+      if (vn < 0){ b.vx -= (1 + CUP_BOUNCE) * vn * ux; b.vz -= (1 + CUP_BOUNCE) * vn * uz; }
+    }
+    // 底
+    const floor = -CUP_DEPTH + BALL_R;
+    if (b.y < floor){
+      b.y = floor;
+      if (b.vy < 0) b.vy = -b.vy * CUP_BOUNCE;
+      const sp = Math.hypot(b.vx, b.vz), ns = Math.max(0, sp - FRICTION * 2 * DT);
+      if (sp > 0){ b.vx *= ns / sp; b.vz *= ns / sp; }
+    }
+  }
+
+  // ---------- 更新 ----------
+  // 旗はゲームの状態に関係なく（結果画面でも）揺れが収まるまで動かす
+  function step(){
+    stepGame();
+    stepFlag(hole.x, hole.z);
+  }
+  // カップインの後も（スローのまま）ほかの球は転がり続ける。
+  // 結果画面になったら通常の速さに戻り、球は転がり終わるまで動く（新しい球は出ない）
+  function stepGame(){
+    if (state === 'sinking'){
+      sinkTimer += DT;
+      if (sinkTimer >= SINK_TIME){
+        document.documentElement.removeAttribute('data-howto-hidden');
+        state = 'over';
+        timeScale = 1;
+        $('result').textContent = avoided;
+        $('over').classList.remove('hidden');
+        $('hud').classList.add('hidden');   // 結果のカードにスコアが出るので、上のスコアは隠す
+      }
+    }
+    const playing = state === 'playing';
+    if (playing) stepPlayer();
+    stepBalls(playing);
+  }
+
+  function stepPlayer(){
+    // キー操作
+    let kx = 0, kz = 0;
+    if (keys.has('ArrowLeft')) kx--;
+    if (keys.has('ArrowRight')) kx++;
+    if (keys.has('ArrowUp')) kz--;
+    if (keys.has('ArrowDown')) kz++;
+    if (kx || kz){
+      target.x += kx * KEY_SPEED * DT;
+      target.z += kz * KEY_SPEED * DT;
+      clampTarget();
+    }
+
+    // カップは目標点へ最高速度つきで追従
+    const dx = target.x - hole.x, dz = target.z - hole.z;
+    const dist = Math.hypot(dx, dz);
+    const mv = Math.min(dist, HOLE_MAX_SPEED * DT);
+    const nx = dist > 0 ? hole.x + dx / dist * mv : hole.x;
+    const nz = dist > 0 ? hole.z + dz / dist * mv : hole.z;
+    holeVel.x += ((nx - hole.x) / DT - holeVel.x) * 0.05;
+    holeVel.z += ((nz - hole.z) / DT - holeVel.z) * 0.05;
+    hole.x = nx; hole.z = nz;
+
+    // 球を出す
+    spawnTimer -= DT;
+    if (spawnTimer <= 0){
+      nextShot();
+      spawnTimer = Math.max(INTERVAL_MIN, INTERVAL_START - avoided * INTERVAL_STEP);
+    }
+  }
+
+  function stepBalls(playing){
+    for (const b of balls){
+      if (b.phase === 'sink'){ stepSink(b); rollBall(b); continue; }
+      if (playing) b.t += DT;
+      const onHole = Math.hypot(b.x - hole.x, b.z - hole.z) < HOLE_R;
+      if (b.phase === 'aim' || b.phase === 'rest'){
+        // 止まっている球の上にカップを動かしても落ちる
+        if (onHole){ sinkBall(b); continue; }
+        if (playing && b.phase === 'aim' && b.t >= AIM_TIME) shoot(b);
+      } else if (b.phase === 'roll'){
+        const sp = Math.hypot(b.vx, b.vz);
+        const ns = Math.max(0, sp - FRICTION * DT);
+        if (sp > 0){ b.vx *= ns / sp; b.vz *= ns / sp; }
+        b.x += b.vx * DT;
+        b.z += b.vz * DT;
+        rollBall(b);
+        if (Math.hypot(b.x - hole.x, b.z - hole.z) < HOLE_R && ns < CAPTURE_SPEED){
+          sinkBall(b);
+          continue;
+        }
+        // まわりの長い芝の外側の端では跳ね返って、それより外には出ない
+        const ex = FIELD_HW, ez = FIELD_HL;
+        if (Math.abs(b.x) > ex){ b.x = Math.sign(b.x) * ex; b.vx *= -EDGE_BOUNCE; b.vz *= EDGE_BOUNCE; }
+        if (Math.abs(b.z) > ez){ b.z = Math.sign(b.z) * ez; b.vz *= -EDGE_BOUNCE; b.vx *= EDGE_BOUNCE; }
+        if (ns === 0) avoid(b);
+      }
+    }
+
+    // 球どうしの衝突（同じ重さの球として、中心を結ぶ向きの速さをやり取りする）
+    const ex = FIELD_HW, ez = FIELD_HL;
+    for (let i = 0; i < balls.length; i++){
+      const a = balls[i];
+      if (a.phase === 'sink') continue;   // カップの中の球はぶつからない
+      for (let j = i + 1; j < balls.length; j++){
+        const c = balls[j];
+        if (c.phase === 'sink') continue;
+        const nx = c.x - a.x, nz = c.z - a.z;
+        const d = Math.hypot(nx, nz);
+        if (d >= BALL_R * 2 || d === 0) continue;
+        const ux = nx / d, uz = nz / d;
+        // めり込みを半分ずつ押し戻す
+        const push = (BALL_R * 2 - d) / 2;
+        a.x -= ux * push; a.z -= uz * push;
+        c.x += ux * push; c.z += uz * push;
+        const vn = (a.vx - c.vx) * ux + (a.vz - c.vz) * uz;
+        if (vn > 0){
+          const imp = vn * (1 + BALL_BOUNCE) / 2;
+          a.vx -= ux * imp; a.vz -= uz * imp;
+          c.vx += ux * imp; c.vz += uz * imp;
+        }
+      }
+    }
+    for (const b of balls){
+      if (b.phase === 'sink') continue;
+      b.x = clamp(b.x, -ex, ex);
+      b.z = clamp(b.z, -ez, ez);
+      // 止まっていた球・構えていた球も、ぶつけられたら転がり出す
+      if (b.phase !== 'roll' && Math.hypot(b.vx, b.vz) > 0) b.phase = 'roll';
+      pushTrail(b.trail, b.x, b.z);
+    }
+  }
+
+  function draw(){
+    cup.position.set(hole.x, 0, hole.z);
+    drawFlag();
+    for (const b of balls){
+      const y = b.phase === 'sink' ? b.y : BALL_R;
+      b.mesh.position.set(b.x, y, b.z);
+      // 影：カップに落ちていく間は薄くなって消える
+      b.shadow.position.set(b.x + SHADOW_DX, 0.005, b.z + SHADOW_DZ);
+      b.shadow.material.opacity = SHADOW_ALPHA * clamp((y + BALL_R) / (BALL_R * 2), 0, 1);
+      b.shadow.visible = b.shadow.material.opacity > 0;
+      // 軌跡：転がっている球が速いときだけ。速いほど濃い
+      const sp = b.phase === 'roll' ? Math.hypot(b.vx, b.vz) : 0;
+      const ta = TRAIL_ALPHA * clamp((sp - TRAIL_MIN_SPEED) / (TRAIL_FULL_SPEED - TRAIL_MIN_SPEED), 0, 1);
+      b.trail.mesh.visible = ta > 0;
+      if (ta > 0){ b.trail.mesh.material.opacity = ta; updateTrail(b.trail); }
+      // ぶつけられて先に転がり出したらゲージは消す
+      const show = b.phase === 'aim' && b.rehit;
+      b.gauge.g.visible = show;
+      if (show){
+        b.gauge.g.position.set(b.x, 0, b.z);
+        const len = Math.max(0.001, Math.min(1, b.t / AIM_TIME) * Math.PI * 2);
+        b.gauge.fill.geometry.dispose();
+        // 奥側（12時の位置）から時計回りに伸ばす
+        b.gauge.fill.geometry = new THREE.RingGeometry(GAUGE_IN, GAUGE_OUT, 48, 1, Math.PI / 2 - len, len);
+      }
+    }
+    renderer.render(scene, camera);
+  }
+
+  let last = performance.now(), acc = 0;
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    acc += dt * timeScale;
+    while (acc >= DT){ step(); acc -= DT; }
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // ---------- 結果画面 ----------
+  $('retry').addEventListener('pointerdown', e => e.stopPropagation());
+  $('retry').addEventListener('click', reset);
+
+  function shareText(){
+    return avoided + '球よけた！\n' + location.href.split(/[?#]/)[0] + '\n#ホールインさせない';
+  }
+  // カップインした後の3D画面の上に、よけた数を書き込んだ画像を作る。
+  // 文字は画面上部の中央（プレイ中のスコアと同じ場所。カップやグリーンにかぶらない）に置く
+  function drawResultImage(){
+    const c = document.createElement('canvas');
+    c.width = cv.width; c.height = cv.height;
+    const g = c.getContext('2d');
+    g.drawImage(cv, 0, 0);   // 描画バッファを残しているので、今の3D画面がそのまま写る
+    const k = cv.width / cv.clientWidth;   // CSSピクセル → 画像のピクセル
+    const font = getComputedStyle(document.body).fontFamily;
+    const num = String(avoided), unit = '球よけた';
+    g.font = `800 ${56 * k}px ${font}`;
+    const wNum = g.measureText(num).width;
+    g.font = `700 ${20 * k}px ${font}`;
+    const wUnit = g.measureText(unit).width;
+    const gap = 6 * k, x0 = (c.width - (wNum + gap + wUnit)) / 2, y = 68 * k;
+    g.textBaseline = 'alphabetic';
+    g.fillStyle = css('--fg');
+    g.shadowColor = 'rgba(0,0,0,.5)';
+    g.shadowBlur = 6 * k;
+    g.shadowOffsetY = 2 * k;
+    g.font = `800 ${56 * k}px ${font}`;
+    g.fillText(num, x0, y);
+    g.font = `700 ${20 * k}px ${font}`;
+    g.fillText(unit, x0 + wNum + gap, y);
+    return c;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(){
+    const bin = atob(drawResultImage().toDataURL('image/png').split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type:'image/png' });
+  }
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    const file = resultImageFile();
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files:[file] })){
+      navigator.share({ text, files:[file] }).catch(() => {});
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share){
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    navigator.clipboard?.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

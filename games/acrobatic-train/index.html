@@ -1,0 +1,2692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/acrobatic-train/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>アクロバティックトレイン</title>
+<meta name="description" content="電車の前と後ろを別々に乗り換える">
+<style>
+  :root{
+    --bg:#dfe6ea;
+    --howto-bg:#dfe6ea; --howto-fg:#1d2329;
+    /* 下の2D表示の色 */
+    --ground:#aab39f; --ballast:#8a847b; --sleeper:#b3aea5; --rail:#5f6266;
+    --car:#cfd4d8; --roof:#9ea4aa; --ac:#b4b9bd; --dark:#2a2c2f; --head:#fff2cc; --tail:#ff2a1a;
+    --ramp:#e2b23a; --ramp-lip:#7a5a12;   /* ジャンプ台（3Dと2Dで共通） */
+    --pole:#d8262b; --pole-band:#ffffff;  /* 線路の間のポール（赤白のしま。斜めだとぶつかる） */
+    --gap:#4a3b2c;                        /* 線路の切れ目（レールが無いところ） */
+    --sign:#e0251b; --sign-bg:#ffffff;    /* 線路の切れ目の手前の看板（赤い×） */
+    --rock:#7b7168;                       /* 線路上の岩 */
+    --switch:#ffd400; --switch-mark:#1d2329;   /* 勝手に動く分岐器の標識（黄色地に黒い矢印） */
+    --item0:#ffd23f; --item1:#43d9ff; --item2:#ff5fd2;   /* ポイント（地上・空中1・空中2） */
+    --fg:#1d2329; --panel:rgba(255,255,255,.92); --accent:#2f9a57;
+    /* 3D表示は画面の縦横比に関わらず、この縦横比（幅:高さ = 2:3）で固定する */
+    --view-ratio:2 / 3;
+    /* 3D表示の幅：画面の幅いっぱい。ただし高さが画面の80%を超える場合は、80%に収まる幅にする
+       （アドレスバーで高さが変わるモバイルに合わせて dvh を使う。dvh が使えない古いブラウザは vh） */
+    --view-w:min(100vw, 80vh * 2 / 3);
+    --view-w:min(100vw, 80dvh * 2 / 3);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #wrap{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center}
+  #view3d{position:relative;flex:0 0 auto;width:var(--view-w);aspect-ratio:var(--view-ratio)}
+  #hud{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 0;pointer-events:none;
+    color:var(--fg);font-weight:700;font-size:28px;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+  #hud small{font-size:13px;margin-left:4px}
+  #best{display:block;margin-top:6px;font-size:13px}   /* 最高記録 */
+  /* 右上のメニュー（ハンバーガー）と、開いたときの項目 */
+  #menu-btn{position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 6px);width:44px;height:44px;padding:0;
+    border:0;border-radius:10px;background:var(--panel);color:var(--fg);font:inherit;font-size:22px;line-height:44px;cursor:pointer}
+  #menu{position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 56px);display:flex;flex-direction:column;gap:6px;
+    padding:8px;border-radius:12px;background:var(--panel);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+  #menu[hidden]{display:none}
+  #menu button{min-width:170px;height:44px;padding:0 12px;border:0;border-radius:8px;background:#e4e8eb;color:var(--fg);
+    font:inherit;font-size:15px;font-weight:700;text-align:left;cursor:pointer}
+  #menu button[aria-pressed="false"]{opacity:.6}
+  /* 右下の操作ボタン（上の段が前、下の段が後ろ。左右で隣の線路へ移る。右半分の幅いっぱい） */
+  #pad{position:absolute;left:50%;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);display:grid;grid-template-columns:1fr 1fr;gap:8px}   /* 右端から画面の真ん中まで */
+  #pad[hidden]{display:none}
+  #pad button{height:56px;padding:0;border:0;border-radius:12px;background:var(--panel);color:var(--fg);
+    font:inherit;font-size:16px;font-weight:700;touch-action:none;cursor:pointer}
+  #pad button:active{background:#c9d0d5}
+  #menu-btn:focus-visible,#menu button:focus-visible,#pad button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+  #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35)}
+  #over[hidden]{display:none}
+  #over .panel{background:var(--panel);color:var(--fg);border-radius:14px;padding:22px 22px 18px;width:min(84vw,320px);text-align:center}
+  #over h2{margin:0 0 6px;font-size:20px}
+  #final{font-size:44px;font-weight:800;margin:4px 0 4px}
+  #final-best{font-size:15px;font-weight:700;margin:0 0 16px}
+  #final small{font-size:16px;margin-left:4px}
+  /* チュートリアル：実際に操作してもらう。上に短い指示を出し、触る場所に丸を出す（開くたびに最初に出す） */
+  #tutorial{position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 64px);z-index:2;pointer-events:none;
+    background:var(--panel);color:var(--fg);border-radius:12px;padding:12px 14px;text-align:center;font-size:16px;font-weight:700;line-height:1.45;
+    box-shadow:0 2px 10px rgba(0,0,0,.18)}
+  #tutorial[hidden],.tut-mark[hidden]{display:none}
+  #tutorial em{font-style:normal;color:var(--accent)}
+  #tutorial button{pointer-events:auto;display:block;width:100%;min-height:48px;margin-top:10px;border:0;border-radius:10px;background:var(--accent);color:#fff;
+    font:inherit;font-size:17px;cursor:pointer}
+  #tutorial button[hidden]{display:none}
+  #tutorial button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+  .tut-mark{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;border:4px solid var(--accent);border-radius:50%;pointer-events:none;z-index:1;
+    background:rgba(255,255,255,.25)}
+  .tut-mark::before,.tut-mark::after{content:"";position:absolute;top:50%;width:0;height:0;margin-top:-9px;border:9px solid transparent}
+  .tut-mark::before{left:-26px;border-right-color:var(--accent)}
+  .tut-mark::after{right:-26px;border-left-color:var(--accent)}
+  #over button{display:block;width:100%;min-height:48px;margin-top:10px;border:0;border-radius:10px;font:inherit;font-size:17px;font-weight:700;cursor:pointer}
+  #retry{background:var(--accent);color:#fff}
+  #share{background:#e4e8eb;color:var(--fg)}
+  #over button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+  /* 2D表示をオフにしたとき：3D表示を画面全体に広げる（縦横比は固定しない） */
+  #wrap.no-map{touch-action:none}
+  #wrap.no-map #view3d{width:100%;height:100%;aspect-ratio:auto}
+  #wrap.no-map #map{display:none}
+  #map{flex:1 1 auto;min-height:0;width:var(--view-w);background:var(--ground);padding-bottom:env(safe-area-inset-bottom)}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="view3d"><div id="hud"><span id="score" aria-live="polite">0</span><small>ポイント</small><span id="best">最高 0</span></div>
+    <button id="menu-btn" type="button" aria-label="メニュー" aria-expanded="false" aria-controls="menu">☰</button>
+    <div id="menu" hidden>
+      <button id="sound" type="button" aria-pressed="true">効果音：ON</button>
+      <button id="pad-toggle" type="button" aria-pressed="false">操作ボタン：非表示</button>
+      <button id="howto-btn" type="button" data-howto-open>遊び方</button>
+    </div>
+    <div id="pad" role="group" aria-label="操作ボタン" hidden>
+      <button type="button" data-end="front" data-dir="-1" aria-label="前を左の線路へ">◀ 前</button>
+      <button type="button" data-end="front" data-dir="1" aria-label="前を右の線路へ">前 ▶</button>
+      <button type="button" data-end="rear" data-dir="-1" aria-label="後ろを左の線路へ">◀ 後</button>
+      <button type="button" data-end="rear" data-dir="1" aria-label="後ろを右の線路へ">後 ▶</button>
+    </div>
+  </div>
+  <div id="map"><canvas id="map-cv" aria-label="上から見た線路と電車"></canvas></div>
+  <div id="tutorial" role="status">
+    <div id="tutorial-text"></div>
+    <button id="tutorial-start" type="button" hidden>はじめる</button>
+  </div>
+  <div class="tut-mark" id="tut-mark" hidden></div>
+  <div id="over" hidden>
+    <div class="panel" role="dialog" aria-label="ゲームオーバー">
+      <h2>ゲームオーバー</h2>
+      <div id="final">0<small>ポイント</small></div>
+      <div id="final-best">最高 0</div>
+      <button id="retry" type="button">もう一回</button>
+      <button id="share" type="button">共有</button>
+    </div>
+  </div>
+</div>
+<section class="howto" hidden data-pos="none">
+  <h2>遊び方</h2>
+  <p>3本の線路を走る電車を操り、ポイントを集めて得点を伸ばすゲームです。前と後ろの台車は別々に線路を移れます。線路の切れ目に落ちたり、ポール、岩、対向列車にぶつかったりするとゲームオーバーです。速さは少しずつ上がり、最高点はこのブラウザに保存されます。</p>
+  <h2>操作</h2>
+  <p>画面に触れると前後の台車のうち近いほうが選ばれ、横にスワイプした量に応じて線路を移ります。右上のメニューで操作ボタンを表示すれば、ボタンでも隣の線路へ移せます。PC ではマウスのドラッグで同じように動かせます。</p>
+  <h2>コツ</h2>
+  <p>ジャンプ台で飛ぶと空中のリングが取れて、高さに応じて30点か50点が入ります。線路の間のポイントは車体を斜めにしないと取れませんが、斜めのままだとポールに当たるので注意してください。切れ目の手前では、ポイントの並ぶ線路が通れる道です。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  // 線路（直線とカーブを交互につないで、走るのに合わせて前へ伸ばし、後ろは消す）
+  const TRACK_BEHIND = 60;   // 電車より後ろに残す線路の長さ
+  const TRACK_AHEAD = 700;   // 電車より前に敷いておく線路の長さ
+  const TIE_BACK = 30;       // 枕木を並べる範囲（電車より後ろ）
+  const TIE_FRONT = 150;     // 枕木を並べる範囲（電車より前。これより先は細かすぎて見えないので省く）
+  const STRAIGHT_TIME = [4, 6.5];  // 直線を走り抜けるのにかかる時間（秒）。速くなるほど直線を長くする（長いほどカーブが少なくなる。仕掛けの多くはここに置く）
+  const CURVE_R_MIN = 45, CURVE_R_MAX = 110;     // カーブの半径（内側の線路でも電車が曲がれる大きさ）
+  const CURVE_DEG_MIN = 20, CURVE_DEG_MAX = 60;  // カーブで曲がる角度
+  const GAUGE = 1.0;         // 左右のレールの間隔
+  const TRACK_SPACING = 3.4; // 並んだ線路どうしの間隔（線路の中心から中心まで）
+  const TRACKS = [-TRACK_SPACING, 0, TRACK_SPACING];  // 3本の線路の横位置（電車は真ん中を走る）
+  const SLEEPER_STEP = 0.5;  // 枕木の間隔
+  const BALLAST_H = 0.18;    // 砂利（バラスト）の盛り土の高さ
+  const BALLAST_U = 1.5;     // 砂利の模様1枚ぶんの長さ
+  const RAIL_BASE = 0.23;    // レールの底の高さ（枕木の上面）
+  const RAIL_H = 0.14;       // レールの高さ
+  const RAIL_TOP = RAIL_BASE + RAIL_H;
+
+  // 走行
+  // 電車の速さ（1秒あたりに進む距離）。走るほど少しずつ速くなり、上限で止まる（難易度が上がる）
+  const SPEED_START = 28;    // 走り始めの速さ
+  const SPEED_MAX = 80;      // 速さの上限
+  const SPEED_ACCEL = 0.35;  // 1秒あたりに速くなる量（上限まで約2分30秒）
+  // 速く走ると枕木が1フレームで間隔の半分以上動き、逆向きに流れて見えてしまうので、
+  // 1フレームの間に動いた範囲に枕木を薄く重ねて描き、流れて見えるようにする（ぶれ）
+  const BLUR_N = 5;                                   // 重ねる枚数
+  const BLUR_A = 1 - Math.pow(0.05, 1 / BLUR_N);      // 1枚の濃さ（全部重なると95%の濃さ）
+
+  // 車両
+  // 車両の長さは「前後の台車を外側の線路2本に斜めに乗せたとき、ちょうど収まる」長さから決める
+  const DIAG_GAP = 3.4;      // 外側の線路2本に斜めに乗せたときの、前後の台車の進行方向の間隔
+  const OVERHANG = 0.9;      // 台車の中心から車両の端までの長さ
+  const BOGIE = Math.hypot(DIAG_GAP, TRACK_SPACING * 2) / 2;  // 車両中心から台車中心までの距離（車体に固定）
+  const CAR_LEN = (BOGIE + OVERHANG) * 2;                     // 車両の長さ
+  const CAR_W = 1.7;         // 車両の幅
+  const SIDE_H = 1.75;       // 車体側面の高さ（ここから上が屋根の丸み）
+  const AXLE = 0.5;          // 台車中心から車軸までの距離
+  const WHEEL_R = 0.3;       // 車輪の半径
+  const WC = RAIL_TOP + WHEEL_R;          // 車軸の高さ
+  const BODY_Y = WC + 0.39;               // 車体の床下の高さ
+  const W2 = CAR_W / 2;
+  const ROOF_Y = BODY_Y + SIDE_H + 0.34;  // 屋根上の機器を載せる高さ
+  const DOOR_PITCH = CAR_LEN / 4;         // 扉の間隔（片側4扉）
+  const DOORS = [-1.5, -0.5, 0.5, 1.5].map(k => k * DOOR_PITCH);  // 側面の扉の位置
+  const AC_X = [-BOGIE + 0.6, -0.3];      // 屋根上の冷房装置の位置
+  const PANTA_X = BOGIE - 0.8;            // パンタグラフの位置
+
+  // カメラ（電車の後ろ斜め上から、進む先の奥を見る）
+  const CAM_TARGET = [4, 0.8, 0];         // 見る点
+  const CAM_OFFSET = [-13, 4.2, 3.0];     // 見る点からカメラまでのずれ
+
+  // 下の2D表示
+  const SHOW_MAP = false;                 // 下の2D表示を出すか（false のときは画面をスワイプして操作する）
+  const MAP_LEN = 16;                     // 画面の縦幅に入れたい線路の長さ
+  const MAP_W = TRACK_SPACING * 2 + 4;    // 画面の横幅に入れたい幅（3本の線路）
+  const GRAB_PX = 22;                     // 電車を掴める範囲の、車体からはみ出してよい幅（ピクセル）
+
+  // スワイプ操作（触れた位置に近いほうの先端＝前か後ろを、横にスワイプして線路を移る）
+  const SWIPE_PX = 36;                    // 指をこれだけ横に動かすごとに、線路を1本移る（ピクセル）
+
+  const $ = id => document.getElementById(id);
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const UP = V(0, 1, 0);
+
+  // 電車の前後の台車の横位置（2D表示で指で動かす）。台車は必ずどれかの線路の上にあり、電車の位置と向きはこの2つから決まる
+  const CROSS_TIME = 0.28;                // 隣の線路へ移るのにかかる時間（秒）。短いほどキビキビ動く
+  let speed = SPEED_START;                // 今の速さ
+  const ends = { front:0, rear:0 };      // 今の横位置
+  const moves = {                        // 線路を移っている途中の動き（from から to へ、t が 0→1）
+    front:{ from:0, to:0, t:1, h0:0, airT:0 },
+    rear: { from:0, to:0, t:1, h0:0, airT:0 },
+  };
+  const AIR_MAX = 0.5;                    // 着地せずに線路を移り続けられる時間（秒）。過ぎると下りてくる
+  const AIR_FADE = 0.15;                  // 下りてくるのにかかる時間（秒）
+  const HOP = 0.9;                        // 線路を移るときに浮かせる高さ
+  const ease  = t => t * t * (3 - 2 * t);   // 始めと終わりがレールと平行になるS字
+  const easeD = t => 6 * t * (1 - t);       // その傾き
+  // 台車の進む向き（レールに対する横方向の傾き）
+  const slopeOf = end => { const m = moves[end]; return m.t >= 1 ? 0 : (m.to - m.from) * easeD(m.t) / (speed * CROSS_TIME); };
+  // 線路を移っている間の浮き上がり（移り始めと移り終わりで0、真ん中でいちばん高い）
+  // 途中で行き先を変えたときは、そのときの高さから続けて浮き直す
+  const liftOf = end => {
+    const m = moves[end];
+    // 足し合わせると、行き先を何度も変えたときに高さが積み上がるので、大きいほうを使う
+    if (m.t >= 1) return 0;
+    // 着地しないまま行き先を変え続けて AIR_MAX 秒を過ぎたら、だんだん下ろす（はじき続けて浮きっぱなしにならないように）
+    const fade = Math.max(0, Math.min(1, 1 - (m.airT - AIR_MAX) / AIR_FADE));
+    return Math.max(m.h0 * (1 - ease(m.t)), HOP * Math.sin(Math.PI * m.t)) * fade;
+  };
+  // 行き先の線路を変える（途中で変えたときは今の位置から向かい直す）
+  function setTarget(end, track){
+    const m = moves[end];
+    if (track === m.to) return;
+    m.h0 = Math.min(liftOf(end), HOP);
+    m.from = ends[end]; m.to = track; m.t = 0;
+    se.hop();
+  }
+  // 経過時間ぶん、S字に沿って横へ移す（速さが変わっても、移る時間は CROSS_TIME のまま）
+  function stepMoves(dt){
+    ['front', 'rear'].forEach(end => {
+      const m = moves[end];
+      if (m.t >= 1) return;
+      m.t = Math.min(1, m.t + dt / CROSS_TIME);
+      m.airT = m.t >= 1 ? 0 : m.airT + dt;   // 着地せずに移り続けている時間
+      ends[end] = m.from + (m.to - m.from) * ease(m.t);
+      // 移り終わり＝線路に着地した瞬間（ジャンプ中に移り終えたときは、まだ空中なので何もしない）
+      if (m.t >= 1 && !jump.on) onLand(end, Math.sign(m.to - m.from));
+    });
+  }
+
+  // いちばん近い線路の横位置
+  const nearestTrack = v => TRACKS.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a);
+
+  // ---------- 描画の準備 ----------
+  const wrap = $('view3d');
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setClearColor(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  wrap.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 3000);
+
+  // 金属やガラスの映り込み用に、上が明るく下が暗いグラデーションを環境マップにする
+  function makeEnv(){
+    const s = new THREE.Scene();
+    const geo = new THREE.SphereGeometry(10, 32, 16);
+    const pos = geo.attributes.position, col = [];
+    const top = new THREE.Color(0xeef3f7), mid = new THREE.Color(0xc4c9cc), bot = new THREE.Color(0x6a6f64), c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const t = pos.getY(i) / 10;
+      if (t > 0) c.copy(mid).lerp(top, t); else c.copy(mid).lerp(bot, -t);
+      col.push(c.r, c.g, c.b);
+    }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    s.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors:true, side:THREE.BackSide })));
+    const pm = new THREE.PMREMGenerator(renderer);
+    const tex = pm.fromScene(s, 0.02).texture;
+    pm.dispose();
+    return tex;
+  }
+  scene.environment = makeEnv();
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x777766, 0.25));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+  sun.position.set(8, 20, 10);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left:-10, right:10, top:10, bottom:-10, near:1, far:60 });
+  sun.shadow.camera.updateProjectionMatrix();
+  sun.shadow.bias = -0.0004;
+  sun.shadow.normalBias = 0.02;
+  const SUN_OFFSET = V(8, 20, 10);   // 電車から見た太陽の位置（影を落とす範囲を電車に付いて動かす）
+  scene.add(sun, sun.target);
+
+  // ---------- 部品づくりの道具 ----------
+  const std = (color, metalness, roughness, extra) =>
+    new THREE.MeshStandardMaterial(Object.assign({ color, metalness, roughness }, extra || {}));
+
+  // 同じ寸法の形は使い回す
+  const geoCache = new Map();
+  const cached = (key, make) => { if (!geoCache.has(key)) geoCache.set(key, make()); return geoCache.get(key); };
+  const box  = (w, h, d)        => cached(`b${w},${h},${d}`, () => new THREE.BoxGeometry(w, h, d));
+  const cyl  = (r, len, seg=12) => cached(`c${r},${len},${seg}`, () => new THREE.CylinderGeometry(r, r, len, seg));
+  const xCyl = (r, len, seg=12) => cached(`x${r},${len},${seg}`, () => new THREE.CylinderGeometry(r, r, len, seg).rotateZ(Math.PI / 2)); // 軸が前後向き
+  const zCyl = (r, len, seg=12) => cached(`z${r},${len},${seg}`, () => new THREE.CylinderGeometry(r, r, len, seg).rotateX(Math.PI / 2)); // 軸が左右向き
+
+  // 2点を結ぶ棒
+  function rod(parent, a, b, r, mat){
+    const d = new THREE.Vector3().subVectors(b, a);
+    const m = new THREE.Mesh(cyl(r, +d.length().toFixed(3), 8), mat);
+    m.position.addVectors(a, b).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(UP, d.normalize());
+    parent.add(m);
+    return m;
+  }
+
+  // ---------- 線路の道筋（直線とカーブをつないで、どこまでも伸ばす） ----------
+  // 道筋は真ん中の線路の中心線。距離 s の地点の位置 (x, z) と、進む向き h（進む方向は (cos h, sin h)）で表す
+  // 横の位置 l は、進む方向に対して右手側（2D表示の右、カメラのいる側）を正とする
+  const segs = [];   // 区間の並び { s0:始まりの距離, len:長さ, x0, z0, h0:始まりの位置と向き, k:曲がり具合（直線は0） }
+  function segAt(seg, u){
+    const h = seg.h0 + seg.k * u;
+    if (seg.k === 0) return { x:seg.x0 + Math.cos(h) * u, z:seg.z0 + Math.sin(h) * u, h };
+    return { x:seg.x0 + (Math.sin(h) - Math.sin(seg.h0)) / seg.k, z:seg.z0 - (Math.cos(h) - Math.cos(seg.h0)) / seg.k, h };
+  }
+  function pathAt(s){
+    let seg = segs[0];
+    for (let i = segs.length - 1; i >= 0; i--) if (segs[i].s0 <= s) { seg = segs[i]; break; }
+    return segAt(seg, s - seg.s0);
+  }
+  // 道筋から横に l ずらした点
+  const offsetPt = (p, l) => ({ x:p.x - Math.sin(p.h) * l, z:p.z + Math.cos(p.h) * l });
+
+  // 断面（道筋からの横ずれ, 高さ）を区間に沿って押し出した形
+  // ua〜ub を指定すると区間の一部だけを作る（線路の切れ目の前後でレールを分けるため）
+  function sweepSeg(seg, profile, closed, uLen, ua = 0, ub = seg.len){
+    const n = seg.k === 0 ? 1 : Math.max(2, Math.ceil((ub - ua) / 1.5));
+    const pos = [], uv = [], idx = [], m = profile.length;
+    for (let i = 0; i <= n; i++) {
+      const u = ua + (ub - ua) * i / n, p = segAt(seg, u);
+      profile.forEach(([l, y], j) => {
+        const q = offsetPt(p, l);
+        pos.push(q.x, y, q.z);
+        uv.push((seg.s0 + u) / uLen, j / (m - 1));
+      });
+    }
+    const sides = closed ? m : m - 1;
+    for (let i = 0; i < n; i++) for (let j = 0; j < sides; j++) {
+      const j2 = (j + 1) % m;
+      const a = i * m + j, b = i * m + j2, c = (i + 1) * m + j, d = (i + 1) * m + j2;
+      idx.push(a, c, b, b, c, d);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  // ---------- 背景（空と遠くの山。カメラに付いて動かすので、近づくことはなく、カーブでは向きに合わせて流れる） ----------
+  const SKY_TOP = 0x6fa8dc, SKY_HORIZON = 0xdce9f2;   // 空の色（真上・地平線）
+  const MOUNTAINS = [   // 遠くの山並み（遠いほど薄く空に近い色）
+    { r:2200, h:[90, 260], color:0xa7bccb, seed:1 },
+    { r:1500, h:[40, 150], color:0x7d9a88, seed:7 },
+  ];
+  const bg = new THREE.Group();
+  {
+    // 空：カメラを囲む大きな球を、上ほど濃い青のグラデーションにする（いちばん最初に描き、他のものはその上に描く）
+    const R = 2600, geo = new THREE.SphereGeometry(R, 32, 16);
+    const pos = geo.attributes.position, col = [], top = new THREE.Color(SKY_TOP), hor = new THREE.Color(SKY_HORIZON), c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      c.copy(hor).lerp(top, Math.pow(Math.max(0, pos.getY(i) / R), 0.6));
+      col.push(c.r, c.g, c.b);
+    }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    const sky = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors:true, side:THREE.BackSide, depthTest:false, depthWrite:false }));
+    sky.renderOrder = -1;
+    sky.frustumCulled = false;
+    bg.add(sky);
+    // 山：ぐるりと一周する帯の上の縁を、いくつかの波を重ねてでこぼこにする
+    MOUNTAINS.forEach(m => {
+      const N = 360, v = [], idx = [];
+      for (let i = 0; i <= N; i++) {
+        const a = i / N * Math.PI * 2;
+        const w = 0.5 + 0.5 * (0.5 * Math.sin(a * 3 + m.seed) + 0.3 * Math.sin(a * 7 + m.seed * 2.3) + 0.2 * Math.sin(a * 17 + m.seed * 4.1));
+        const h = m.h[0] + (m.h[1] - m.h[0]) * w;
+        v.push(Math.cos(a) * m.r, -20, Math.sin(a) * m.r, Math.cos(a) * m.r, h, Math.sin(a) * m.r);
+        if (i < N) idx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+      g.setIndex(idx);
+      const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color:m.color, side:THREE.DoubleSide }));
+      mesh.frustumCulled = false;
+      bg.add(mesh);
+    });
+  }
+  scene.add(bg);
+
+  // ---------- 地面と線路 ----------
+  // 地面・砂利・枕木は、空の映り込み（環境の明るさ）を弱くして白飛びしないようにする
+  const GROUND_ENV = 0.3;
+  // 草原の模様：濃い緑と明るい緑のまだらに、草の細かい筋を散らしたものを敷き詰める
+  const GRASS_TILE = 48;   // 模様1枚が覆う地面の大きさ（これを繰り返して敷く）
+  function grassTexture(){
+    const S = 512, cv = document.createElement('canvas');
+    cv.width = cv.height = S;
+    const g = cv.getContext('2d');
+    g.fillStyle = '#4f7d3a';
+    g.fillRect(0, 0, S, S);
+    // 継ぎ目が出ないよう、端からはみ出した分は反対側にも描く
+    const wrapDraw = (x, y, r, draw) => {
+      for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) {
+        if (x + ox + r < 0 || x + ox - r > S || y + oy + r < 0 || y + oy - r > S) continue;
+        draw(x + ox, y + oy);
+      }
+    };
+    // まだら（ぼかした丸を重ねる）
+    for (let i = 0; i < 70; i++) {
+      const x = Math.random() * S, y = Math.random() * S, r = 30 + Math.random() * 90;
+      const light = Math.random() < 0.5;
+      const col = light ? '118,165,74' : '44,82,34';
+      wrapDraw(x, y, r, (px, py) => {
+        const gr = g.createRadialGradient(px, py, 0, px, py, r);
+        gr.addColorStop(0, `rgba(${col},0.6)`);
+        gr.addColorStop(1, `rgba(${col},0)`);
+        g.fillStyle = gr;
+        g.fillRect(px - r, py - r, r * 2, r * 2);
+      });
+    }
+    // 草の細かい筋
+    for (let i = 0; i < 6000; i++) {
+      const x = Math.random() * S, y = Math.random() * S, len = 2 + Math.random() * 4;
+      const v = Math.random();
+      g.strokeStyle = v < 0.5 ? `rgba(40,70,30,${0.25 + v * 0.4})` : `rgba(130,170,90,${0.15 + (v - 0.5) * 0.4})`;
+      g.lineWidth = 1;
+      wrapDraw(x, y, len, (px, py) => {
+        g.beginPath();
+        g.moveTo(px, py);
+        g.lineTo(px + (Math.random() - 0.5) * 2, py - len);
+        g.stroke();
+      });
+    }
+    const t = new THREE.CanvasTexture(cv);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(6000 / GRASS_TILE, 6000 / GRASS_TILE);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  const grassTex = grassTexture();
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), std(0xffffff, 0, 1, { map:grassTex, envMapIntensity:GROUND_ENV }));
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -0.01;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // 砂利の粒々をキャンバスで描いた模様
+  function ballastTexture(){
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 128;
+    const g = cv.getContext('2d');
+    g.fillStyle = '#8a847b';
+    g.fillRect(0, 0, 128, 128);
+    for (let i = 0; i < 1400; i++) {
+      const v = (95 + Math.random() * 95) | 0;
+      const r = (v + Math.random() * 16 - 8) | 0;
+      g.fillStyle = `rgb(${r},${v - 4},${v - 10})`;
+      const s = 1 + Math.random() * 3;
+      g.fillRect(Math.random() * 128, Math.random() * 128, s, s);
+    }
+    const t = new THREE.CanvasTexture(cv);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(1, 5);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  const ballastMat = std(0xffffff, 0, 1, { map:ballastTexture(), side:THREE.DoubleSide, envMapIntensity:GROUND_ENV });
+  const BW = TRACK_SPACING;
+  const BALLAST_PROFILE = [[-BW - 1.6, 0], [-BW - 1.15, BALLAST_H], [BW + 1.15, BALLAST_H], [BW + 1.6, 0]];
+
+  // レール（底・首・頭のある断面）と、車輪が当たって光っている上面
+  const RAIL_PROFILE = [
+    [-0.07, 0], [0.07, 0], [0.07, 0.02], [0.016, 0.035], [0.016, 0.095], [0.036, 0.102],
+    [0.036, 0.14], [-0.036, 0.14], [-0.036, 0.102], [-0.016, 0.095], [-0.016, 0.035], [-0.07, 0.02]
+  ];
+  const railMat = std(0x7a7c7f, 0.8, 0.45, { flatShading:true, side:THREE.DoubleSide });
+  const railTopMat = std(0xd8dce0, 0.95, 0.18, { side:THREE.DoubleSide });
+
+  // 線路の切れ目のところは、レールの代わりに土がむき出しになった帯を敷く
+  // 砂利のすぐ上に重ねるので、遠くでちらつかないよう手前に描かれるようにずらす
+  const gapMat = std(0xffffff, 0, 1, { color:getComputedStyle(document.documentElement).getPropertyValue('--gap').trim(), envMapIntensity:GROUND_ENV,
+    polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2 });
+  // 区間の中で、その線路にレールがある範囲（切れ目を除いた範囲）
+  function railRanges(seg, tz){
+    let ranges = [[0, seg.len]];
+    seg.gaps.filter(g => g.tz === tz).forEach(g => {
+      const a = g.a - seg.s0, b = g.b - seg.s0;
+      ranges = ranges.flatMap(([x, y]) => (b <= x || a >= y) ? [[x, y]] :
+        [[x, Math.max(x, a)], [Math.min(y, b), y]].filter(([p, q]) => q - p > 0.01));
+    });
+    return ranges;
+  }
+  // 区間ひとつぶんの砂利とレールを作る
+  function buildSeg(seg){
+    seg.meshes = [];
+    const ballast = new THREE.Mesh(sweepSeg(seg, BALLAST_PROFILE, false, BALLAST_U), ballastMat);
+    ballast.receiveShadow = true;
+    seg.meshes.push(ballast);
+    TRACKS.forEach(tz => {
+      const ranges = railRanges(seg, tz);
+      [-GAUGE / 2, GAUGE / 2].forEach(off => {
+        const c = tz + off;
+        ranges.forEach(([ua, ub]) => {
+          const rail = new THREE.Mesh(sweepSeg(seg, RAIL_PROFILE.map(([l, y]) => [c + l, RAIL_BASE + y]), true, 1, ua, ub), railMat);
+          const top = new THREE.Mesh(sweepSeg(seg, [[c - 0.03, RAIL_TOP + 0.002], [c + 0.03, RAIL_TOP + 0.002]], false, 1, ua, ub), railTopMat);
+          rail.castShadow = rail.receiveShadow = top.receiveShadow = true;
+          seg.meshes.push(rail, top);
+        });
+      });
+    });
+    seg.gaps.forEach(g => {
+      const m = new THREE.Mesh(sweepSeg(seg, [[g.tz - 0.95, BALLAST_H + 0.01], [g.tz + 0.95, BALLAST_H + 0.01]], false, 1, g.a - seg.s0, g.b - seg.s0), gapMat);
+      m.receiveShadow = true;
+      seg.meshes.push(m);
+    });
+    seg.meshes.forEach(m => scene.add(m));
+  }
+  function disposeSeg(seg){
+    seg.meshes.forEach(m => { scene.remove(m); m.geometry.dispose(); });
+    const drop = (list, arr) => list.forEach(o => { if (o.mesh) scene.remove(o.mesh); const i = arr.indexOf(o); if (i >= 0) arr.splice(i, 1); });
+    drop(seg.ramps, ramps);
+    drop(seg.poles, poles);
+    drop(seg.items, items);
+    drop(seg.gaps, gaps);
+    seg.decor.forEach(m => { scene.remove(m); if (m.dispose) m.dispose(); });
+    seg.props.forEach(m => scene.remove(m));   // 分岐器の看板（形と材質は使い回しなので捨てない）
+    seg.geoMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); });   // 分岐器のレール（区間ごとに作る形なので捨てる）
+    drop(seg.switches, switches);
+  }
+  const newSeg = (s0, len, x0, z0, h0, k) => ({ s0, len, x0, z0, h0, k, ramps:[], poles:[], items:[], gaps:[], decor:[],
+    props:[], geoMeshes:[], switches:[] });
+
+  // ---------- 沿線の木（線路の両側に散らばる。ローポリの、とがった木） ----------
+  const DECOR_PER_100 = 6.5;              // 線路100あたりに置く数（両側の合計）
+  const DECOR_NEAR = 9.5, DECOR_FAR = 70;  // 線路の中心からの距離の範囲
+  const DECOR_CLEAR = 9;                   // どの線路からもこれ以上離す（カーブの内側などで線路に重ならないように）
+  const flat = (color, extra) => std(color, 0, 0.9, Object.assign({ flatShading:true, envMapIntensity:GROUND_ENV }, extra || {}));
+  const trunkMat = flat(0x6b4a2f);
+  const DECOR_KINDS = [
+    // 針葉樹（とがった木）
+    { rate:1, parts:[
+      [new THREE.CylinderGeometry(0.22, 0.3, 1.4, 6).translate(0, 0.7, 0), trunkMat],
+      [new THREE.ConeGeometry(1.7, 3.2, 7).translate(0, 2.6, 0), flat(0x2f5d34)],
+      [new THREE.ConeGeometry(1.2, 2.6, 7).translate(0, 4.3, 0), flat(0x2f5d34)],
+    ] },
+  ];
+  // 線路のどこからも十分離れているか（作り終わっている区間だけで調べる）
+  function clearOfTrack(x, z, s0, s1){
+    const a = Math.max(s0, segs[0].s0), b = Math.min(s1, segs[segs.length - 1].s0 + segs[segs.length - 1].len);
+    for (let t = a; t <= b; t += 3) {
+      const p = pathAt(t);
+      if ((p.x - x) ** 2 + (p.z - z) ** 2 < (TRACK_SPACING + DECOR_CLEAR) ** 2) return false;
+    }
+    return true;
+  }
+  const decorDummy = new THREE.Object3D();
+  function decorateSeg(seg){
+    const list = DECOR_KINDS.map(() => []);
+    const n = Math.round(seg.len / 100 * DECOR_PER_100);
+    for (let i = 0; i < n; i++) {
+      const s = seg.s0 + Math.random() * seg.len;
+      // 線路に近いほど多く（遠くはまばらに）
+      const l = (Math.random() < 0.5 ? -1 : 1) * (DECOR_NEAR + (DECOR_FAR - DECOR_NEAR) * Math.random() ** 1.6);
+      const q = offsetPt(segAt(seg, s - seg.s0), l);
+      if (!clearOfTrack(q.x, q.z, s - Math.abs(l) - 30, s + Math.abs(l) + 30)) continue;
+      let r = Math.random(), kind = 0;
+      while (kind < DECOR_KINDS.length - 1 && (r -= DECOR_KINDS[kind].rate) > 0) kind++;
+      list[kind].push({ x:q.x, z:q.z, rot:Math.random() * Math.PI * 2, sc:rnd(0.75, 1.35) });
+    }
+    list.forEach((arr, kind) => {
+      if (!arr.length) return;
+      DECOR_KINDS[kind].parts.forEach(([geo, mat]) => {
+        const m = new THREE.InstancedMesh(geo, mat, arr.length);
+        arr.forEach((o, i) => {
+          decorDummy.position.set(o.x, 0, o.z);
+          decorDummy.rotation.set(0, o.rot, 0);
+          decorDummy.scale.setScalar(o.sc);
+          decorDummy.updateMatrix();
+          m.setMatrixAt(i, decorDummy.matrix);
+        });
+        m.instanceMatrix.needsUpdate = true;
+        m.receiveShadow = true;
+        m.frustumCulled = false;   // 木は区間じゅうに散らばるので、見えない判定で消されないようにする
+        scene.add(m);
+        seg.decor.push(m);
+      });
+    });
+  }
+
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  // 直線の次はカーブ（左右はランダム）、カーブの次は直線をつなぐ
+  function addSeg(){
+    const last = segs[segs.length - 1];
+    const e = segAt(last, last.len);
+    let len, k = 0;
+    if (last.k === 0) {
+      const r = rnd(CURVE_R_MIN, CURVE_R_MAX), ang = THREE.MathUtils.degToRad(rnd(CURVE_DEG_MIN, CURVE_DEG_MAX));
+      k = (Math.random() < 0.5 ? -1 : 1) / r;
+      len = ang * r;
+    } else {
+      len = rnd(STRAIGHT_TIME[0], STRAIGHT_TIME[1]) * speedAt(last.s0 + last.len);
+    }
+    const seg = newSeg(last.s0 + last.len, len, e.x, e.z, e.h, k);
+    placeHazards(seg, seg.s0 + rnd(10, 25));   // 仕掛け（線路の切れ目はレールの作り方に関わるので先に決める）
+    buildSeg(seg);
+    segs.push(seg);
+    decorateSeg(segs[segs.length - 2]);   // 木は、前後の区間ができてから置く（次のカーブに重ならないように）
+  }
+  // 走った距離に合わせて、前に線路を足し、後ろの線路を消す
+  function maintainTrack(){
+    let last = segs[segs.length - 1];
+    while (last.s0 + last.len < dist + TRACK_AHEAD) { addSeg(); last = segs[segs.length - 1]; }
+    while (segs.length > 1 && segs[0].s0 + segs[0].len < dist - TRACK_BEHIND) disposeSeg(segs.shift());
+  }
+
+  // 枕木（コンクリート）とレールを留める金具。電車の前後の決まった範囲だけ、毎回道筋に沿って並べ直す
+  const tmp = new THREE.Object3D();
+  const tiesPerTrack = Math.floor((TIE_BACK + TIE_FRONT) / SLEEPER_STEP);
+  const sleeperCount = tiesPerTrack * TRACKS.length;
+  const sleepers = new THREE.InstancedMesh(box(0.24, 0.1, GAUGE + 0.8), std(0xb3aea5, 0, 0.9), sleeperCount);
+  const clips = new THREE.InstancedMesh(box(0.1, 0.05, 0.05), std(0x3a3c3f, 0.4, 0.6), sleeperCount * 4);
+  sleepers.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  clips.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  const clipOffsets = [-GAUGE / 2 - 0.08, -GAUGE / 2 + 0.08, GAUGE / 2 - 0.08, GAUGE / 2 + 0.08];
+  function placeTies(){
+    const k0 = Math.ceil((dist - TIE_BACK) / SLEEPER_STEP);
+    let n = 0;
+    for (let i = 0; i < tiesPerTrack; i++) {
+      const p = pathAt((k0 + i) * SLEEPER_STEP);
+      tmp.rotation.set(0, -p.h, 0);
+      const sk = (k0 + i) * SLEEPER_STEP;
+      TRACKS.forEach(tz => {
+        const q = offsetPt(p, tz);
+        tmp.position.set(q.x, BALLAST_H, q.z);
+        tmp.scale.setScalar(gapAt(tz, sk) ? 0 : 1);   // 線路の切れ目には枕木も無い
+        tmp.updateMatrix();
+        sleepers.setMatrixAt(n, tmp.matrix);
+        clipOffsets.forEach((l, j) => {
+          const c = offsetPt(p, tz + l);
+          tmp.position.set(c.x, RAIL_BASE + 0.02, c.z);
+          tmp.updateMatrix();
+          clips.setMatrixAt(n * 4 + j, tmp.matrix);
+        });
+        n++;
+      });
+    }
+    tmp.scale.setScalar(1);
+    sleepers.instanceMatrix.needsUpdate = true;
+    clips.instanceMatrix.needsUpdate = true;
+  }
+  // ぶれ用に、同じ並びの枕木を薄くして何枚か重ねる（並びの元データは共有する）
+  const ties = new THREE.Group();
+  const tieLayers = [];
+  // スマホで重くならないよう、重ねるのは枕木だけ（小さい留め具は1枚目だけ）にし、影も受けない
+  const BLUR_MIN = SLEEPER_STEP * 0.4;   // 1フレームで動く距離がこれより短いときは、ぶれは要らないので1枚だけ描く
+  const sleeperLayerMat = [];
+  for (let i = 0; i < BLUR_N; i++) {
+    const layer = new THREE.Group();
+    [[sleepers, 0xb3aea5, 0, 0.9], [clips, 0x3a3c3f, 0.4, 0.6]].forEach(([src, color, metal, rough], j) => {
+      if (j === 1 && i > 0) return;
+      const mat = std(color, metal, rough, { transparent:true, opacity:j === 0 ? BLUR_A : 0.95, depthWrite:false, envMapIntensity:GROUND_ENV });
+      const m = new THREE.InstancedMesh(src.geometry, mat, src.count);
+      m.instanceMatrix = src.instanceMatrix;
+      m.frustumCulled = false;   // 並びは毎回変わるので、見えない判定で消されないようにする
+      layer.add(m);
+      if (j === 0) sleeperLayerMat.push(mat);
+    });
+    ties.add(layer);
+    tieLayers.push(layer);
+  }
+  const blurOn = () => mode === 'playing' && blurSpan > BLUR_MIN;
+  scene.add(ties);
+
+  // ---------- ジャンプ台 ----------
+  // 線路の上に置かれた坂。台車が乗ると坂に沿って持ち上がり、踏み切りを越えると電車ごと飛ぶ
+  // ・反対側の台車も同じ線路にいる（まっすぐ）→ そのまま飛ぶ
+  // ・反対側の台車が別の線路にいる（斜め）→ 斜めの角度を保ったまま、車体の前後方向の軸でぐるっと1回転して飛ぶ
+  const RAMP_LEN = 7;          // ジャンプ台の長さ
+  const RAMP_H = 1.0;          // ジャンプ台の高さ（踏み切りの高さ）
+  const RAMP_W = GAUGE + 0.7;  // ジャンプ台の幅
+  const RAMP_HIT = 0.7;        // 台車がジャンプ台に乗ったとみなす、線路の中心からの横のずれ
+  const RAMP_END_MARGIN = 15;  // 直線区間の終わり（カーブの手前）には仕掛けを置かない長さ
+  // 高さのライン：地上（レールの上）・空中1・空中2。ジャンプの最高点はどちらかのラインにぴったり届く
+  // ・斜めに乗って回転して飛ぶ → 空中1
+  // ・まっすぐ乗って飛ぶ → 空中2
+  const LINE_AIR1 = 4;               // 空中1の高さ（レールの上から）
+  const LINE_AIR2 = LINE_AIR1 * 2;   // 空中2の高さ（空中1の2倍）
+  const JUMP_G = 56;                 // 飛んでいるときの重力（強いほど素早く上がって落ちる。空中1は滞空約0.7秒、空中2は約1.05秒）
+  const CAM_JUMP_FOLLOW = 0.75;      // 飛んだ高さのどれだけをカメラが追って上がるか（高く飛んでも画面から出ないように）
+  const JUMP_PITCH = 0.25;     // まっすぐ飛ぶときの機首の上げ下げの強さ
+  const SPIN_PIVOT_Y = 1.6;    // 回転の中心の高さ（車体の真ん中あたり）
+  const JUMP_LAND = 1.5;       // 飛んだあとの着地の沈み込みを、線路を移るときの何倍にするか
+
+  const rampMat = std(0xffffff, 0.3, 0.5, { color:getComputedStyle(document.documentElement).getPropertyValue('--ramp').trim() });
+  // 横から見た台形（入口はレールの高さ、踏み切りで RAMP_H 高い）を幅の分だけ押し出す
+  const rampGeo = (() => {
+    const sh = new THREE.Shape();
+    sh.moveTo(0, BALLAST_H);
+    sh.lineTo(0, RAIL_TOP);
+    sh.lineTo(RAMP_LEN, RAIL_TOP + RAMP_H);
+    sh.lineTo(RAMP_LEN, BALLAST_H);
+    sh.closePath();
+    const g = new THREE.ExtrudeGeometry(sh, { depth:RAMP_W, bevelEnabled:false });
+    g.translate(0, 0, -RAMP_W / 2);
+    return g;
+  })();
+  const ramps = [];   // { s:入口の距離, tz:線路の横位置, mesh }
+  function addRamp(seg, s, tz){
+    const p = segAt(seg, s - seg.s0), q = offsetPt(p, tz);
+    const mesh = new THREE.Mesh(rampGeo, rampMat);
+    mesh.position.set(q.x, 0, q.z);
+    mesh.rotation.y = -p.h;
+    mesh.castShadow = mesh.receiveShadow = true;
+    scene.add(mesh);
+    const r = { s, tz, mesh };
+    ramps.push(r);
+    seg.ramps.push(r);
+  }
+  // 距離 s・横位置 lat の台車が乗っているジャンプ台
+  function rampAt(s, lat){
+    for (const r of ramps) {
+      const u = s - r.s;
+      if (u >= 0 && u <= RAMP_LEN && Math.abs(lat - r.tz) < RAMP_HIT) return r;
+    }
+    return null;
+  }
+
+  const riding = { front:null, rear:null };   // それぞれの台車が今乗っているジャンプ台
+  const jump = { on:false, t:0, T:1, y0:0, vy:0, spin:false, dir:1 };
+  const SPIN_AXIS = V(1, 0, 0);   // 斜めに飛ぶときの回転軸：車体の前後方向（斜めの向きはそのまま、横にくるっと回る）
+  const FLIP_AXIS = V(0, 0, 1);   // まっすぐ飛ぶときの回転軸：車体の左右方向（縦にぐるっと宙返りする）
+  const FLIP_TURNS = 1;           // まっすぐ飛ぶときの宙返りの回数
+  const FLIP_DIR = 1;             // 宙返りの向き（1：機首を上げて後ろへ回る、-1：機首から前へ回る）
+  function launch(end, r, y0, p0 = 0){
+    const other = end === 'front' ? 'rear' : 'front';
+    const spin = Math.abs(ends[other] - r.tz) >= RAMP_HIT;
+    // 最高点が、回転なら空中1、まっすぐなら空中2のラインにぴったり届く速さで踏み切る
+    const peak = spin ? LINE_AIR1 : LINE_AIR2;
+    const vy = Math.sqrt(2 * JUMP_G * Math.max(0, peak - y0));
+    Object.assign(jump, { on:true, t:0, y0, vy, spin, p0 });
+    se.launch(spin);
+    jump.T = (vy + Math.sqrt(vy * vy + 2 * JUMP_G * y0)) / JUMP_G;   // 線路の高さに戻るまでの時間
+    if (spin) {
+      // もう一方の台車がいる側へ倒れ込むように回る
+      jump.dir = Math.sign(ends[other] - r.tz) || 1;
+    }
+  }
+  function landJump(){
+    riding.front = riding.rear = null;
+    ['front', 'rear'].forEach(e => { sag[e].v -= SAG_HIT * JUMP_LAND; lands.push(e); });
+    shake = SHAKE_HIT * 1.8;
+    if (mode === 'playing') se.bigLand();
+  }
+
+  // ---------- 仕掛け（線路の切れ目・ポール・ポイント） ----------
+  // ・線路の切れ目：台車が浮かずに通ると脱線（ゲームオーバー）。別の線路へ移るか、ジャンプで飛び越える
+  // ・ポール：線路と線路の間に立っている。車体が斜め（または線路を移っている途中）でその場所を通るとぶつかる
+  // ・ポイント：線路の上（地上）と、空中1・空中2の高さに浮いている。車体が通ると取れる
+  const GAP_MIN = 10, GAP_MAX = 20;            // 線路の切れ目の長さ
+  const AIR_ITEM_DT = 0.1;                     // 空中のポイントの並びの間隔（飛んでいる時間で。最高点の前後に5個）
+  const GAP_KINDS = ['gap', 'chicane', 'ramp', 'rocks', 'switch', 'oncoming'];   // 線路を移ることを求める仕掛け
+  const GAP_REACT = 0.45;                      // 切れ目を抜けてから次の切れ目までに、最低限見込む反応の時間（秒）
+  const CHICANE_TIME = [0.7, 1.0];             // 切り返しの、1つ目と2つ目の切れ目の間（秒。この間に線路を移る）
+  const GAP_TWO_RATE = [0.45, 0.8];            // 切れ目が2本の線路に同時にある割合（易しいとき・難しいとき。3本同時にはしない）
+  const RAMP_GAP_RATE = 0.6;                   // ジャンプ台の先に切れ目を置く割合
+  const RAMP_GAP_MIN = 6, RAMP_GAP_MAX = 11;   // ジャンプ台の先の切れ目の長さ（どちらのジャンプでも飛び越えられる長さ）
+  const SAFE_LIFT = 0.15;                      // 台車がこれより高く浮いていれば、切れ目の上を通っても落ちない
+  const SIGN_W = 1.7, SIGN_H = 0.85;           // 線路の切れ目の手前の看板の幅・高さ（ジャンプで飛び越えるときに当たらない低さ）
+  const SIGN_UP = 0.15;                        // 看板の下の脚の長さ
+  const POLE_H = 3.2;                          // ポールの高さ（空中1・空中2の高さで飛べば越えられる）
+  const POLE_R = 0.16;                         // ポールの太さ（半径）
+  const POLE_STEP = 3.5;                       // ポールを並べる間隔
+  const POLE_MIN_N = 3, POLE_MAX_N = [5, 9];   // 1か所に並べるポールの本数（最大は易しいとき・難しいとき）
+  // 対向列車：同じ線路を向こうから走ってくる（近づくと動き出す）
+  const ONC_SPEED = 14;                        // 対向列車の速さ
+  const ONC_WARN = 2.0;                        // 動き出してから、すれ違うまでの時間（秒）。この間に線路を移る
+  const ONC_H = 3.6;                           // 対向列車の高さ（これより高く飛んでいれば、上を越えられる）
+  // 線路上の岩：ジャンプか線路を移って避ける
+  const ROCK_R = 0.75, ROCK_H = 1.3;           // 岩の大きさ（当たり判定の半径と高さ）
+  const ROCK_RAMP_T = 0.345;                   // ジャンプ台の端から岩までの距離（そこを通るときの速さ×この秒数）
+  const ROCK_RAMP_RATE = 0.4;                  // ジャンプ台の先の3本すべてに岩を置く（飛ばないと通れない）割合
+  // 勝手に動く分岐器：踏むと、隣の線路へ強制的に移される（隣の線路へ渡るレールと、手前の標識で分かるようにする）
+  const SWITCH_SIGN_AHEAD = 5;                 // 標識を立てる位置（分岐器の手前）
+  const POLE_BOTH_RATE = [0.35, 0.7];          // 左右両方の線路の間にポールを並べる割合（易しいとき・難しいとき）
+  const ITEM_POINTS = [10, 30, 50];            // ポイントの点数（地上・空中1・空中2）
+  const ITEM_Y = 1.6;                          // ポイントの、各ラインの高さからの浮き具合（車体の真ん中あたり）
+  const ITEM_R = 0.45;                         // ポイントの大きさ
+  const ITEM_ROW = 5, ITEM_STEP = 3;           // 地上のポイントを並べる数と間隔
+  const DIAG_MIN = TRACK_SPACING * 0.5;        // 線路の間のポイントは、前後の台車がこれ以上横にずれている（斜め）ときだけ取れる
+  const BETWEEN_ITEMS_RATE = 0.6;              // 仕掛けと仕掛けの間にポイントの列を置く割合
+  const DIAG_POINTS = 20;                      // 線路の間のポイントの点数（斜めにする危険があるぶん、地上より高い）
+  // 難しさ：走った距離に合わせて 0（易しい）→ 1（難しい）へ上げる。速さが上限になる頃に 1 になる
+  const DIFF_LEN = 800;                        // 仕掛けが出始めてから、いちばん難しくなるまでの距離
+  // 仕掛けどうしの間隔は、そこを通るときの速さで割った「時間」で決める（速くなっても考える時間が減りすぎないように）
+  const PATTERN_TIME_EASY = [1.1, 1.8];        // 易しいときの間隔（秒、最短〜最長）
+  const PATTERN_TIME_HARD = [0.5, 0.9];        // 難しいときの間隔（秒）
+  // 仕掛けの出やすさ（直線区間とカーブ区間。ジャンプ台と線路の切れ目は直線だけ）。易しいとき→難しいときで変える
+  const WEIGHTS_STRAIGHT = [
+    { ramp:0.16, gap:0.18, poles:0.12, items:0.1, diag:0.08, chicane:0.04, oncoming:0.06, rocks:0.09, switch:0.04 },
+    { ramp:0.12, gap:0.16, poles:0.1, items:0.05, diag:0.05, chicane:0.12, oncoming:0.12, rocks:0.1, switch:0.08 }];
+  const WEIGHTS_CURVE = [{ poles:0.3, items:0.25, diag:0.15, rocks:0.1 }, { poles:0.35, items:0.1, diag:0.15, rocks:0.15, switch:0.05 }];
+  const SAFE_START = 80;                       // 走り始めてしばらく（約3秒）は仕掛けを置かない
+  const CAR_H = 3.2;                           // 当たり判定に使う車体の高さ（床下からパンタグラフの手前まで）
+
+  const cssColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const poleGeo = new THREE.CylinderGeometry(POLE_R, POLE_R, POLE_H, 12);
+  poleGeo.translate(0, POLE_H / 2, 0);
+  // ポールは赤白のしまにして、ぶつかる物だと一目で分かるようにする
+  const poleMat = (() => {
+    const cv = document.createElement('canvas');
+    cv.width = 8; cv.height = 64;
+    const g = cv.getContext('2d');
+    for (let i = 0; i < 4; i++) {
+      g.fillStyle = i % 2 ? cssColor('--pole-band') : cssColor('--pole');
+      g.fillRect(0, i * 16, 8, 16);
+    }
+    const t = new THREE.CanvasTexture(cv);
+    t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(1, 2);
+    return std(0xffffff, 0.1, 0.5, { map:t, emissive:0xffffff, emissiveMap:t, emissiveIntensity:0.3, envMapIntensity:GROUND_ENV });
+  })();
+  const itemGeo = new THREE.OctahedronGeometry(ITEM_R);
+  const itemMats = [0, 1, 2].map(i => {
+    const c = cssColor('--item' + i);
+    return std(0xffffff, 0.2, 0.3, { color:c, emissive:c, emissiveIntensity:0.6 });
+  });
+  const LINE_Y = () => [0, LINE_AIR1, LINE_AIR2];
+  // 空中のポイントはリング（くぐると取れる）。進む向きに輪が向くように立てる
+  const RING_R = 2.0;                          // リングの半径（車体がくぐれる大きさ）
+  const ringGeo = new THREE.TorusGeometry(RING_R, 0.16, 8, 32);
+  // 線路の切れ目の手前の看板（白地に赤い縁と×。表も裏も同じ絵）
+  function signTexture(){
+    const W = 256, H = 128, cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const g = cv.getContext('2d');
+    g.fillStyle = cssColor('--sign-bg');
+    g.fillRect(0, 0, W, H);
+    g.strokeStyle = cssColor('--sign');
+    g.lineWidth = 16;
+    g.strokeRect(8, 8, W - 16, H - 16);
+    g.lineWidth = 18;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(W / 2 - 34, 30); g.lineTo(W / 2 + 34, H - 30);
+    g.moveTo(W / 2 + 34, 30); g.lineTo(W / 2 - 34, H - 30);
+    g.stroke();
+    const t = new THREE.CanvasTexture(cv);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  // 太陽を背にして影になっても見えるよう、絵そのものを少し光らせる
+  const signTex = signTexture();
+  const signFaceMat = std(0xffffff, 0, 0.6, { map:signTex, emissive:0xffffff, emissiveMap:signTex, emissiveIntensity:0.55, envMapIntensity:GROUND_ENV });
+  const signEdgeMat = std(0xffffff, 0, 0.6, { color:cssColor('--sign'), emissive:cssColor('--sign'), emissiveIntensity:0.3, envMapIntensity:GROUND_ENV });
+  // 箱の面の順番は +x, -x, +y, -y, +z, -z。進む向きを x にするので、前後（±x）の面に絵を貼る
+  const signBoardGeo = new THREE.BoxGeometry(0.06, SIGN_H, SIGN_W);
+  signBoardGeo.translate(0, SIGN_UP + SIGN_H / 2, 0);
+  const signLegGeo = new THREE.BoxGeometry(0.06, SIGN_UP + 0.05, 0.08);
+  signLegGeo.translate(0, (SIGN_UP + 0.05) / 2, 0);
+  const signLegMat = std(0x8a8f96, 0.6, 0.5);
+  function makeSign(){
+    const grp = new THREE.Group();
+    const board = new THREE.Mesh(signBoardGeo, [signFaceMat, signFaceMat, signEdgeMat, signEdgeMat, signEdgeMat, signEdgeMat]);
+    board.castShadow = true;
+    grp.add(board);
+    [-1, 1].forEach(side => {
+      const leg = new THREE.Mesh(signLegGeo, signLegMat);
+      leg.position.z = side * SIGN_W * 0.35;
+      grp.add(leg);
+    });
+    return grp;
+  }
+  const gaps = [], poles = [], items = [];   // 走っている範囲の仕掛け（当たり判定と2D表示で使う）
+
+  function addGap(seg, tz, a, b, sign = true){
+    // 切れ目の手前（レールが途切れるところ）に、その線路をふさぐ向きで看板を立てる（トンネルの横などでは立てない）
+    let mesh = null;
+    if (sign) {
+      const p = segAt(seg, a - seg.s0), q = offsetPt(p, tz);
+      mesh = makeSign();
+      mesh.position.set(q.x, BALLAST_H, q.z);
+      mesh.rotation.y = -p.h;
+      scene.add(mesh);
+    }
+    const g = { tz, a, b, mesh };
+    seg.gaps.push(g);
+    gaps.push(g);
+  }
+  function addPole(seg, s, lat){
+    const p = segAt(seg, s - seg.s0), q = offsetPt(p, lat);
+    const mesh = new THREE.Mesh(poleGeo, poleMat);
+    mesh.position.set(q.x, BALLAST_H, q.z);
+    mesh.castShadow = mesh.receiveShadow = true;
+    scene.add(mesh);
+    const o = { s, lat, mesh };
+    seg.poles.push(o);
+    poles.push(o);
+  }
+  function addItem(seg, s, lat, level, diag = false, pts = ITEM_POINTS[level]){
+    const p = segAt(seg, s - seg.s0), q = offsetPt(p, lat);
+    const y = LINE_Y()[level] + ITEM_Y;
+    const ring = level > 0;
+    const mesh = new THREE.Mesh(ring ? ringGeo : itemGeo, itemMats[level]);
+    mesh.position.set(q.x, y, q.z);
+    mesh.rotation.y = ring ? Math.PI / 2 - p.h : -p.h + Math.PI / 4;
+    mesh.castShadow = true;
+    scene.add(mesh);
+    const o = { s, lat, y, level, mesh, taken:false, diag, pts, ring };
+    seg.items.push(o);
+    items.push(o);
+  }
+  // ぶつかる物（ポールと同じ扱い。r：太さ、h：高さ）。見た目は別に作るときは mesh なし
+  function addObstacle(seg, s, lat, r, h, mesh = null){
+    const o = { s, lat, r, h, mesh };
+    seg.poles.push(o);
+    poles.push(o);
+    return o;
+  }
+  // 線路上の岩
+  const rockGeo = new THREE.DodecahedronGeometry(0.85, 0).scale(1, 0.8, 1);
+  const rockMat = std(0xffffff, 0, 0.95, { color:cssColor('--rock'), flatShading:true, envMapIntensity:GROUND_ENV });
+  function addRock(seg, s, tz){
+    const p = segAt(seg, s - seg.s0), q = offsetPt(p, tz);
+    const mesh = new THREE.Mesh(rockGeo, rockMat);
+    mesh.position.set(q.x, BALLAST_H + 0.45, q.z);
+    mesh.rotation.set(rnd(0, 1), rnd(0, 6.3), rnd(0, 1));
+    mesh.castShadow = mesh.receiveShadow = true;
+    scene.add(mesh);
+    addObstacle(seg, s, tz, ROCK_R, ROCK_H, mesh);
+  }
+  // 勝手に動く分岐器（線路 tz の s を踏むと、to の線路へ移される）
+  // 見た目：s から隣の線路へS字に渡るレールを敷き、手前の脇に黄色い矢印の標識を立てる
+  function railStripGeo(pts, off){
+    // 道筋 pts（{x, z}）から横に off ずらした線に沿った、細長いレールの形（上面と両側面）
+    const pos = [], idx = [], w = 0.035, y0 = RAIL_BASE, y1 = RAIL_TOP;
+    pts.forEach((p, i) => {
+      const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+      let tx = b.x - a.x, tz = b.z - a.z; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l;
+      const nx = -tz, nz = tx, cx = p.x + nx * off, cz = p.z + nz * off;
+      pos.push(cx - nx * w, y0, cz - nz * w, cx - nx * w, y1, cz - nz * w, cx + nx * w, y1, cz + nz * w, cx + nx * w, y0, cz + nz * w);
+      if (i > 0) {
+        const o = (i - 1) * 4, n = i * 4;
+        for (let k = 0; k < 3; k++) idx.push(o + k, n + k, o + k + 1, o + k + 1, n + k, n + k + 1);
+      }
+    });
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }
+  function switchSignTexture(dir){
+    const S = 128, cv = document.createElement('canvas');
+    cv.width = cv.height = S;
+    const g = cv.getContext('2d');
+    g.fillStyle = cssColor('--switch');
+    g.fillRect(0, 0, S, S);
+    g.strokeStyle = cssColor('--switch-mark');
+    g.lineWidth = 8;
+    g.strokeRect(4, 4, S - 8, S - 8);
+    // 移る側を指す太い矢印
+    g.fillStyle = cssColor('--switch-mark');
+    g.beginPath();
+    const c = S / 2;
+    g.moveTo(c + dir * 44, c);
+    g.lineTo(c + dir * 4, c - 36);
+    g.lineTo(c + dir * 4, c - 14);
+    g.lineTo(c - dir * 40, c - 14);
+    g.lineTo(c - dir * 40, c + 14);
+    g.lineTo(c + dir * 4, c + 14);
+    g.lineTo(c + dir * 4, c + 36);
+    g.closePath();
+    g.fill();
+    const t = new THREE.CanvasTexture(cv);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  const switchSignMats = {};
+  [-1, 1].forEach(d => {
+    const tex = switchSignTexture(d);
+    switchSignMats[d] = std(0xffffff, 0, 0.6, { map:tex, emissive:0xffffff, emissiveMap:tex, emissiveIntensity:0.45, envMapIntensity:GROUND_ENV });
+  });
+  const switchBoardGeo = new THREE.BoxGeometry(0.06, 1.2, 1.2).translate(0, 1.9, 0);
+  const switchPostGeo = new THREE.CylinderGeometry(0.06, 0.06, 1.4, 8).translate(0, 0.7, 0);
+  const switchPostMat = std(0x8a8f96, 0.6, 0.5);
+  const switches = [];  // { s, tz, to, done:{ front, rear } }
+  function addSwitch(seg, s, tz, to){
+    const dir = Math.sign(to - tz), L = speedAt(s) * CROSS_TIME;
+    // 隣の線路へS字に渡るレール（電車が移される道筋と同じ形）
+    const pts = [];
+    for (let u = 0; u <= L + 0.01; u += 0.5) {
+      const k = Math.min(1, u / L), e = k * k * (3 - 2 * k);
+      pts.push(offsetPt(segAt(seg, s + u - seg.s0), tz + (to - tz) * e));
+    }
+    [-GAUGE / 2, GAUGE / 2].forEach(off => {
+      const m = new THREE.Mesh(railStripGeo(pts, off), railMat);
+      m.castShadow = m.receiveShadow = true;
+      scene.add(m);
+      seg.geoMeshes.push(m);
+    });
+    // 手前の脇（移る側と反対の外側）に立つ標識。手前を向けて、矢印で移る向きを示す
+    const p = segAt(seg, s - SWITCH_SIGN_AHEAD - seg.s0), q = offsetPt(p, tz - dir * 1.3);
+    const grp = new THREE.Group();
+    grp.position.set(q.x, BALLAST_H, q.z);
+    grp.rotation.y = -p.h;
+    grp.add(new THREE.Mesh(switchPostGeo, switchPostMat));
+    grp.add(new THREE.Mesh(switchBoardGeo, [switchSignMats[dir], switchSignMats[dir], switchPostMat, switchPostMat, switchPostMat, switchPostMat]));
+    scene.add(grp);
+    seg.props.push(grp);
+    const w = { s, tz, to, done:{ front:false, rear:false } };
+    seg.switches.push(w);
+    switches.push(w);
+  }
+  // 対向列車（走っている範囲の外で管理する。近づくと動き出す）
+  const oncomings = [];  // { s, tz, moving, mesh }
+
+  // 線路 tz の距離 s が切れ目かどうか
+  const gapAt = (tz, s) => gaps.some(g => g.tz === tz && s >= g.a && s <= g.b);
+  // 台車の位置（横位置 lat）がどれかの線路の切れ目の上かどうか
+  const gapUnder = (lat, s) => gaps.some(g => Math.abs(lat - g.tz) < RAMP_HIT && s >= g.a && s <= g.b);
+
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  // 仕掛けのひとまとまり。置けたら使った長さ、置けなければ 0 を返す
+  const PATTERNS = {
+    // ジャンプ台（その先に切れ目や、空中のポイントを置く）
+    ramp(seg, s, end){
+      const lip = s + RAMP_LEN, v = speedAt(lip);
+      const level = Math.random() < 0.5 ? 2 : 1;   // 2：まっすぐ飛ぶと届く空中2、1：回転して飛ぶと届く空中1
+      // 空中のポイントは、そこを通るときの速さで飛んだときの最高点の前後に並べる（速くなると遠くに並ぶ）
+      const tp = Math.sqrt(2 * (LINE_Y()[level] - RAMP_H) / JUMP_G);   // 踏み切りから最高点までの時間
+      const at = i => lip - BOGIE + v * (tp + (i - 2) * AIR_ITEM_DT);  // 車体の真ん中が i 個目に来る位置
+      const len = Math.max(RAMP_LEN + 28, at(4) + 4 - s);
+      if (s + len > end) return 0;
+      const tz = pick(TRACKS);
+      addRamp(seg, s, tz);
+      if (Math.random() < RAMP_GAP_RATE) addGap(seg, tz, lip + 1, lip + 1 + rnd(RAMP_GAP_MIN, RAMP_GAP_MAX));
+      for (let i = 0; i < 5; i++) addItem(seg, at(i), tz, level);
+      return len;
+    },
+    // 線路の切れ目（1本か2本。通れる線路の上にはポイントを並べて、抜け道を示す）
+    gap(seg, s, end){
+      const len = rnd(GAP_MIN, GAP_MAX);
+      if (s + len > end) return 0;
+      const order = TRACKS.slice().sort(() => Math.random() - 0.5);
+      const n = Math.random() < lerpD(GAP_TWO_RATE) ? 2 : 1;
+      order.slice(0, n).forEach(tz => addGap(seg, tz, s, s + len));
+      for (let x = s + 1; x < s + len; x += ITEM_STEP) addItem(seg, x, order[n], 0);
+      return len;
+    },
+    // 切り返し：2本が切れた区間のすぐ先に、別の1本だけが残る切れ目が続く（素早く線路を移らないと抜けられない）
+    chicane(seg, s, end){
+      const L1 = rnd(GAP_MIN, GAP_MAX), L2 = rnd(GAP_MIN, GAP_MAX);
+      const sep = speedAt(s) * rnd(CHICANE_TIME[0], CHICANE_TIME[1]);
+      const len = L1 + sep + L2;
+      if (s + len > end) return 0;
+      const f1 = pick(TRACKS), f2 = pick(TRACKS.filter(t => t !== f1));   // 1つ目・2つ目で通れる線路
+      TRACKS.filter(t => t !== f1).forEach(tz => addGap(seg, tz, s, s + L1));
+      TRACKS.filter(t => t !== f2).forEach(tz => addGap(seg, tz, s + L1 + sep, s + len));
+      // 通れる線路の上と、1つ目から2つ目へ移る道筋にポイントを並べる（たどれば全部取れる）
+      for (let x = s + 1; x < s + L1; x += ITEM_STEP) addItem(seg, x, f1, 0);
+      for (let x = s + L1 + 2; x < s + L1 + sep - 2; x += ITEM_STEP) {
+        const k = (x - s - L1) / sep, e = k * k * (3 - 2 * k);
+        addItem(seg, x, f1 + (f2 - f1) * e, 0);
+      }
+      for (let x = s + L1 + sep + 1; x < s + len; x += ITEM_STEP) addItem(seg, x, f2, 0);
+      return len;
+    },
+    // 対向列車：1本の線路を向こうから走ってくる（直線だけ）。ほかの線路にはポイントを並べる
+    oncoming(seg, s, end){
+      if (seg.k !== 0) return 0;
+      const len = ONC_SPEED * (ONC_WARN + 0.6) + CAR_LEN;
+      if (s + len > end) return 0;
+      const tz = pick(TRACKS);
+      oncomings.push({ s:s + len, tz, moving:false, mesh:null });
+      const other = pick(TRACKS.filter(t => t !== tz));
+      for (let x = s + 2; x < s + len - CAR_LEN; x += ITEM_STEP * 1.5) addItem(seg, x, other, 0);
+      return len;
+    },
+    // 線路上の岩：1〜2本の線路に置く。ジャンプ台の先の3本すべてに置いて、飛ばないと通れなくすることもある
+    rocks(seg, s, end){
+      if (seg.k === 0 && Math.random() < ROCK_RAMP_RATE) {
+        const lip = s + RAMP_LEN, v = speedAt(lip);
+        const at = lip + v * ROCK_RAMP_T;   // 前の台車で飛んでも、後ろの台車で飛んでも、飛んでいる間に越えられる位置
+        const len = at - s + 4;
+        if (s + len > end) return 0;
+        const tz = pick(TRACKS);
+        addRamp(seg, s, tz);
+        TRACKS.forEach(t => addRock(seg, at, t));
+        return len;
+      }
+      const n = Math.random() < 0.5 ? 1 : 2, cnt = 1 + Math.floor(Math.random() * 3);
+      const len = (cnt - 1) * 4 + 2;
+      if (s + len > end) return 0;
+      const order = TRACKS.slice().sort(() => Math.random() - 0.5);
+      order.slice(0, n).forEach(tz => { for (let i = 0; i < cnt; i++) addRock(seg, s + i * 4, tz); });
+      for (let x = s - 3; x < s + len + 3; x += ITEM_STEP) addItem(seg, x, order[n], 0);
+      return len;
+    },
+    // 勝手に動く分岐器：1本の線路にあり、踏むと隣の線路へ移される
+    switch(seg, s, end){
+      const len = SWITCH_SIGN_AHEAD + speedAt(s) * CROSS_TIME + 2;
+      if (s + len > end) return 0;
+      const i = Math.floor(Math.random() * TRACKS.length);
+      const j = i === 0 ? 1 : i === TRACKS.length - 1 ? i - 1 : i + pick([-1, 1]);
+      addSwitch(seg, s + SWITCH_SIGN_AHEAD, TRACKS[i], TRACKS[j]);
+      return len;
+    },
+    // 線路の間のポール
+    poles(seg, s, end){
+      const n = Math.floor(rnd(POLE_MIN_N, Math.round(lerpD(POLE_MAX_N)) + 1)), len = (n - 1) * POLE_STEP;
+      if (s + len > end) return 0;
+      const half = TRACK_SPACING / 2;
+      const lats = Math.random() < lerpD(POLE_BOTH_RATE) ? [-half, half] : [pick([-half, half])];
+      lats.forEach(lat => { for (let i = 0; i < n; i++) addPole(seg, s + i * POLE_STEP, lat); });
+      // ポールの横を走る線路にポイントを並べる。片側だけのときは、反対側の線路の間（斜めで取れる）に置くこともある
+      if (lats.length === 1 && Math.random() < 0.5) {
+        for (let x = s; x <= s + len; x += ITEM_STEP) addItem(seg, x, -lats[0], 0, true, DIAG_POINTS);
+      } else {
+        const tz = pick(TRACKS);
+        for (let x = s; x <= s + len; x += ITEM_STEP) addItem(seg, x, tz, 0);
+      }
+      return len;
+    },
+    // 線路の間（線路の上ではないところ）のポイントの列。電車が斜めになっていないと取れない
+    diag(seg, s, end){
+      const len = (ITEM_ROW - 1) * ITEM_STEP;
+      if (s + len > end) return 0;
+      const lat = pick([-1, 1]) * TRACK_SPACING / 2;
+      for (let i = 0; i < ITEM_ROW; i++) addItem(seg, s + i * ITEM_STEP, lat, 0, true, DIAG_POINTS);
+      return len;
+    },
+    // 地上のポイントの列
+    items(seg, s, end){
+      const len = (ITEM_ROW - 1) * ITEM_STEP;
+      if (s + len > end) return 0;
+      const tz = pick(TRACKS);
+      for (let i = 0; i < ITEM_ROW; i++) addItem(seg, s + i * ITEM_STEP, tz, 0);
+      return len;
+    },
+  };
+  // カーブの先は画面に映らないので、仕掛けは「届く少し前から見えている」ところにだけ置く
+  const WARN_TIME = 1.6;                                // 仕掛けが見えてから届くまでに欲しい時間（いちばん速いとき）
+  const WARN_TURN = THREE.MathUtils.degToRad(12);       // その間に線路の向きがこれ以上変わると、仕掛けは画面の外になる
+  // 距離 s での線路の向き（作っている途中の区間 seg と、すでにある区間から求める）
+  function headAt(seg, s){
+    if (s >= seg.s0) return seg.h0 + seg.k * (s - seg.s0);
+    for (let i = segs.length - 1; i >= 0; i--) if (segs[i].s0 <= s) return segs[i].h0 + segs[i].k * (s - segs[i].s0);
+    return seg.h0;
+  }
+  // 電車が s の WARN_TIME 秒手前（そこを通るときの速さで）にいるときに、s が画面に映っているか（その間の線路の向きの変わり具合で見る）
+  const seenEarly = (seg, s) => Math.abs(headAt(seg, s) - headAt(seg, s - speedAt(s) * WARN_TIME)) < WARN_TURN;
+
+  // 距離 s を通るときの速さ（走り始めから一定の割合で速くなるので、距離から決まる）
+  function speedAt(s){
+    if (s <= 0) return SPEED_START;
+    const t = (-SPEED_START + Math.sqrt(SPEED_START ** 2 + 2 * SPEED_ACCEL * s)) / SPEED_ACCEL;
+    return Math.min(SPEED_MAX, SPEED_START + SPEED_ACCEL * t);
+  }
+  // 距離 s での難しさ（0〜1）。仕掛けを置いている最中の値を diff に入れておき、各仕掛けが参照する
+  const diffAt = s => Math.max(0, Math.min(1, (s - SAFE_START) / DIFF_LEN));
+  let diff = 0;
+  const lerpD = ([a, b]) => a + (b - a) * diff;
+
+  // 区間に仕掛けを並べる。ジャンプ台と線路の切れ目は直線区間だけ
+  function placeHazards(seg, from){
+    const end = seg.s0 + seg.len - RAMP_END_MARGIN;
+    for (let s = Math.max(from, SAFE_START); s < end; ) {
+      // 見えないところは飛ばす（カーブの直後の直線は、見えるところまで進める。カーブの奥は見えないので打ち切る）
+      if (!seenEarly(seg, s)) {
+        if (seg.k !== 0) break;
+        s += 2;
+        continue;
+      }
+      // 仕掛けのひとまとまりが見えるところに収まるようにする（カーブは奥へ行くほど見えなくなる）
+      let lim = end;
+      if (seg.k !== 0) while (lim > s && !seenEarly(seg, lim)) lim -= 1;
+      diff = diffAt(s);
+      const ws = seg.k === 0 ? WEIGHTS_STRAIGHT : WEIGHTS_CURVE, w = {};
+      for (const k in ws[1]) w[k] = (ws[0][k] || 0) + ((ws[1][k] || 0) - (ws[0][k] || 0)) * diff;
+      let r = Math.random() * Object.values(w).reduce((a, b) => a + b, 0), name;
+      for (name in w) { r -= w[name]; if (r <= 0) break; }
+      const used = PATTERNS[name](seg, s, lim);
+      const tm = [0, 1].map(i => PATTERN_TIME_EASY[i] + (PATTERN_TIME_HARD[i] - PATTERN_TIME_EASY[i]) * diff);
+      let next = rnd(tm[0], tm[1]) * speedAt(s + used);
+      // 線路の切れ目のあとは、後ろの台車が抜けてから線路を移れるだけの間を必ず空ける（どうやっても抜けられない並びを作らない）
+      if (used && GAP_KINDS.includes(name)) next = Math.max(next, BOGIE * 2 + speedAt(s + used) * (CROSS_TIME + GAP_REACT));
+      // 仕掛けと仕掛けの間にも、ポイントの列を置く（間が狭いときは置かない）
+      const row = (ITEM_ROW - 1) * ITEM_STEP;
+      if (used && next > row + 8 && s + used + 4 + row < lim && Math.random() < BETWEEN_ITEMS_RATE) {
+        const tz = pick(TRACKS);
+        for (let i = 0; i < ITEM_ROW; i++) addItem(seg, s + used + 4 + i * ITEM_STEP, tz, 0);
+      }
+      s += used + next;
+    }
+  }
+
+  let dist = 0;  // 走った距離
+  // 最初は電車の前後をまっすぐな区間にしておく
+  function initTrack(){
+    const seg = newSeg(-TRACK_BEHIND - 10, TRACK_BEHIND + 10 + 140, -TRACK_BEHIND - 10, 0, 0, 0);
+    placeHazards(seg, SAFE_START);
+    buildSeg(seg);
+    segs.push(seg);
+    maintainTrack();
+  }
+  initTrack();
+
+  // ---------- 電車の材質 ----------
+  const M = {
+    body:    std(0xcfd4d8, 0.6, 0.3),            // ステンレスの車体
+    door:    std(0xbcc2c7, 0.6, 0.36),
+    band:    std(0x2f9a57, 0.1, 0.45),           // 帯の色
+    roof:    std(0x9ea4aa, 0.3, 0.6),
+    ac:      std(0xb4b9bd, 0.4, 0.5),            // 屋根上の冷房装置
+    frame:   std(0x4a4f55, 0.3, 0.5),            // 窓枠
+    glass:   std(0x17212b, 0.3, 0.08),
+    black:   std(0x1c1c1e, 0.1, 0.85),           // ゴム・ライトの枠
+    under:   std(0x2e3033, 0.2, 0.7),            // 床下機器
+    bogie:   std(0x2a2c2f, 0.3, 0.6),
+    wheel:   std(0x62656a, 0.75, 0.35),
+    mark:    std(0xd8d8d8, 0.2, 0.5),
+    spring:  std(0x44484c, 0.4, 0.5),
+    skirt:   std(0x3a3d40, 0.3, 0.6),
+    insul:   std(0xe6e2d6, 0.0, 0.3),            // がいし
+    panta:   std(0x9aa0a6, 0.6, 0.4),
+    shoe:    std(0x3b3d40, 0.5, 0.5),
+    dest:    std(0x111111, 0, 0.5, { emissive:0xffa040, emissiveIntensity:0.9 }),  // 行先表示
+    headOn:  std(0xffffff, 0, 0.2, { emissive:0xfff2cc, emissiveIntensity:1.2 }),
+    headOff: std(0xcfcfcf, 0.3, 0.2),
+    tailOn:  std(0xff2a1a, 0, 0.3, { emissive:0xff1a0a, emissiveIntensity:1.0 }),
+    tailOff: std(0x5a1a14, 0.2, 0.3),
+  };
+
+  // 車体：角を丸めた箱に、丸い屋根の断面を前後に押し出す
+  function makeBodyGeo(){
+    const s = new THREE.Shape(), r = 0.3;
+    s.moveTo(-W2, 0);
+    s.lineTo(W2, 0);
+    s.lineTo(W2, SIDE_H);
+    s.quadraticCurveTo(W2, SIDE_H + r, W2 - r, SIDE_H + r + 0.02);
+    s.quadraticCurveTo(0, SIDE_H + r + 0.12, -(W2 - r), SIDE_H + r + 0.02);
+    s.quadraticCurveTo(-W2, SIDE_H + r, -W2, SIDE_H);
+    const bt = 0.05;
+    const geo = new THREE.ExtrudeGeometry(s, {
+      depth:CAR_LEN - bt * 2, curveSegments:10,
+      bevelEnabled:true, bevelThickness:bt, bevelSize:0.03, bevelOffset:-0.03, bevelSegments:3
+    });
+    geo.translate(0, 0, -(CAR_LEN - bt * 2) / 2);
+    geo.rotateY(Math.PI / 2);   // 押し出し方向を車両の前後（x）にする
+    return geo;
+  }
+
+  // ---------- 台車 ----------
+  function makeBogie(){
+    const b = new THREE.Group();
+    const add = (geo, mat, x, y, z, parent = b) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+    const wheelsets = [];
+    const SZ = GAUGE / 2 + 0.12;   // 軸箱と側梁の横位置
+
+    [-AXLE, AXLE].forEach(ax => {
+      // 輪軸（車軸＋左右の車輪）：これをまとめて回す
+      const ws = new THREE.Group();
+      ws.position.set(ax, WC, 0);
+      add(zCyl(0.05, GAUGE + 0.26, 10), M.wheel, 0, 0, 0, ws);
+      [-1, 1].forEach(sd => {
+        const z = sd * GAUGE / 2;
+        add(zCyl(WHEEL_R, 0.1, 28), M.wheel, 0, 0, z, ws);                     // 踏面
+        add(zCyl(WHEEL_R + 0.03, 0.022, 28), M.wheel, 0, 0, z - sd * 0.055, ws); // フランジ（内側のつば）
+        add(zCyl(0.12, 0.012, 16), M.bogie, 0, 0, z + sd * 0.055, ws);         // 車輪の中心部
+        add(box(0.05, 0.1, 0.012), M.mark, 0, 0.19, z + sd * 0.056, ws);       // 回転が分かる目印
+      });
+      b.add(ws);
+      wheelsets.push(ws);
+
+      [-1, 1].forEach(sd => {
+        add(box(0.16, 0.12, 0.1), M.bogie, ax, WC, sd * SZ);               // 軸箱
+        add(cyl(0.045, 0.09, 10), M.spring, ax, WC + 0.1, sd * SZ);        // 軸ばね
+      });
+      add(box(0.22, 0.2, 0.14), M.bogie, ax - Math.sign(ax) * 0.12, WC, -0.22);  // 歯車箱
+    });
+
+    [-1, 1].forEach(sd => {
+      add(box(1.45, 0.1, 0.07), M.bogie, 0, WC + 0.19, sd * SZ);           // 側梁
+      add(cyl(0.11, 0.15, 18), M.black, 0, BODY_Y - 0.075, sd * SZ);       // 空気ばね
+    });
+    add(box(0.3, 0.12, GAUGE + 0.36), M.bogie, 0, WC + 0.19, 0);           // 横はり
+    b.userData.wheelsets = wheelsets;
+    return b;
+  }
+
+  // ---------- 車両（1両。前後とも運転台付きで、前は前照灯・後ろは尾灯を点ける） ----------
+  function makeCar(){
+    const car = new THREE.Group();        // 台車を含む電車全体
+    // 車体（空気ばねの上に載る部分）。床の高さを支点にして、台車の上で沈んだり揺れたりできるようにする
+    const bodyPivot = new THREE.Group();
+    bodyPivot.position.y = BODY_Y;
+    const g = new THREE.Group();
+    g.position.y = -BODY_Y;
+    bodyPivot.add(g);
+    car.add(bodyPivot);
+    const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
+    // 車体の両側面に同じ部品を貼る（d は側面から外への厚み）
+    const onSides = (w, h, d, mat, x, y) => [-1, 1].forEach(sd => add(box(w, h, d), mat, x, y, sd * (W2 + d / 2)));
+
+    add(makeBodyGeo(), M.body, 0, BODY_Y, 0);
+
+    // 扉（両開き、縁取り・合わせ目・窓つき）
+    DOORS.forEach(x => {
+      onSides(0.62, 1.56, 0.01, M.frame, x, BODY_Y + 0.88);
+      onSides(0.56, 1.5, 0.02, M.door, x, BODY_Y + 0.87);
+      onSides(0.012, 1.5, 0.028, M.frame, x, BODY_Y + 0.87);
+      [-0.13, 0.13].forEach(dx => onSides(0.17, 0.5, 0.03, M.glass, x + dx, BODY_Y + 1.22));
+    });
+
+    // 窓（扉の間は仕切り付きの大きな窓、両端は乗務員室の窓）
+    const wins = [[-DOOR_PITCH, 1.25], [0, 1.25], [DOOR_PITCH, 1.25], [CAR_LEN / 2 - 0.32, 0.3], [-(CAR_LEN / 2 - 0.32), 0.3]];
+    wins.forEach(([x, w]) => {
+      onSides(w + 0.07, 0.67, 0.012, M.frame, x, BODY_Y + 1.2);
+      onSides(w, 0.6, 0.02, M.glass, x, BODY_Y + 1.2);
+      if (w > 0.6) onSides(0.035, 0.6, 0.026, M.frame, x, BODY_Y + 1.2);
+    });
+
+    // 帯と側面の行先表示
+    onSides(CAR_LEN - 0.04, 0.12, 0.036, M.band, 0, BODY_Y + 0.78);
+    onSides(0.36, 0.1, 0.02, M.dest, -DOOR_PITCH, BODY_Y + 1.6);
+
+    // 雨どい
+    [-1, 1].forEach(sd => rod(g, V(-CAR_LEN / 2 + 0.08, BODY_Y + SIDE_H + 0.2, sd * (W2 - 0.04)),
+                                 V( CAR_LEN / 2 - 0.08, BODY_Y + SIDE_H + 0.2, sd * (W2 - 0.04)), 0.018, M.roof));
+
+    // 屋根上の冷房装置（送風口と側面のスリット）とパンタグラフ
+    AC_X.forEach(x => {
+      add(box(1.0, 0.2, 0.95), M.ac, x, ROOF_Y + 0.08, 0);
+      [-0.25, 0.25].forEach(dx => add(cyl(0.17, 0.02, 24), M.bogie, x + dx, ROOF_Y + 0.185, 0));
+      [0.02, 0.07, 0.12].forEach(dy => [-1, 1].forEach(sd => add(box(0.88, 0.014, 0.01), M.bogie, x, ROOF_Y + dy, sd * 0.48)));
+    });
+    addPanta(g, PANTA_X);
+    [-1, 1].forEach(s => add(box(0.25, 0.03, 0.08), M.bogie, s * (CAR_LEN / 2 - 0.5), ROOF_Y + 0.02, 0.3));  // 無線アンテナ
+
+    // 床下機器
+    [[-1.6, 1.0, 0.36, 1.0, 0.05], [-0.2, 0.7, 0.28, 0.8, -0.2], [0.8, 0.6, 0.3, 0.9, 0.1], [1.9, 1.1, 0.42, 1.1, 0]].forEach(([x, w, h, d, z]) => {
+      add(box(w, h, d), M.under, x, BODY_Y - h / 2, z);
+    });
+
+    // 前後の運転台
+    addCabFront(g, 1, 'head');
+    addCabFront(g, -1, 'tail');
+
+    // 台車
+    const bogies = [makeBogie(), makeBogie()];
+    bogies[0].position.x = BOGIE;    // 台車は車体に対して固定（向きだけ線路に合わせて振る）
+    bogies[1].position.x = -BOGIE;
+    bogies.forEach(b => car.add(b));
+    car.userData.body = bodyPivot;
+    car.userData.bogies = bogies;
+    car.userData.wheelsets = bogies.flatMap(b => b.userData.wheelsets);
+
+    car.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    scene.add(car);
+    return car;
+  }
+
+  // 運転台の前面（s: 1=前, -1=後ろ）
+  function addCabFront(g, s, lit){
+    const e = s * CAR_LEN / 2;
+    // 前面に貼る部品（w は横幅、d は前面から外への厚み）
+    const F = (w, h, d, mat, y, z) => { const m = new THREE.Mesh(box(d, h, w), mat); m.position.set(e + s * d / 2, y, z); g.add(m); return m; };
+
+    F(CAR_W - 0.16, 0.78, 0.03, M.glass, BODY_Y + 1.27, 0);  // 前面の大きな窓
+    F(0.46, 1.55, 0.045, M.body, BODY_Y + 0.9, 0);           // 貫通扉
+    F(0.3, 0.46, 0.055, M.glass, BODY_Y + 1.3, 0);           // 貫通扉の窓
+    F(0.42, 0.13, 0.04, M.dest, BODY_Y + 1.53, -0.52 * s);   // 行先表示
+    F(0.24, 0.1, 0.04, M.dest, BODY_Y + 1.53, 0.55 * s);     // 運行番号表示
+    F(CAR_W - 0.04, 0.12, 0.036, M.band, BODY_Y + 0.78, 0);  // 前面の帯
+
+    // ライト（白い前照灯と赤い尾灯）
+    const lampX = e + s * 0.042;
+    [-1, 1].forEach(sz => {
+      F(0.42, 0.17, 0.03, M.black, BODY_Y + 0.6, sz * 0.56);
+      const h = new THREE.Mesh(xCyl(0.065, 0.024, 20), lit === 'head' ? M.headOn : M.headOff);
+      h.position.set(lampX, BODY_Y + 0.6, sz * 0.45);
+      const t = new THREE.Mesh(xCyl(0.045, 0.024, 16), lit === 'tail' ? M.tailOn : M.tailOff);
+      t.position.set(lampX, BODY_Y + 0.6, sz * 0.69);
+      g.add(h, t);
+    });
+
+    // ワイパー
+    [-0.5, 0.42].forEach(z0 => rod(g, V(e + s * 0.04, BODY_Y + 0.93, z0 * s), V(e + s * 0.04, BODY_Y + 1.3, (z0 + 0.14) * s), 0.012, M.black));
+
+    // スカート（線路上の障害物をはねのける板。下が外に出るように傾ける）
+    const sk = new THREE.Mesh(box(0.04, 0.5, CAR_W - 0.3), M.skirt);
+    sk.position.set(e + s * 0.08, BODY_Y - 0.3, 0);
+    sk.rotation.z = s * 0.3;
+    g.add(sk);
+  }
+
+  // シングルアーム式パンタグラフ
+  function addPanta(g, px){
+    const Y = ROOF_Y;
+    const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
+    [-1, 1].forEach(sx => [-1, 1].forEach(sz => add(cyl(0.035, 0.1, 10), M.insul, px + sx * 0.3, Y + 0.03, sz * 0.25)));  // がいし
+    add(box(0.72, 0.04, 0.6), M.bogie, px, Y + 0.1, 0);   // 台枠
+    const knee = V(px - 0.32, Y + 0.5, 0), top = V(px + 0.12, Y + 0.86, 0);
+    [-0.1, 0.1].forEach(z => rod(g, V(px + 0.28, Y + 0.14, z), knee, 0.022, M.panta));  // 下わく
+    rod(g, V(px + 0.2, Y + 0.14, 0), V(px - 0.12, Y + 0.42, 0), 0.012, M.panta);        // 釣り合い棒
+    rod(g, knee, top, 0.018, M.panta);                                                   // 上わく
+    add(box(0.14, 0.04, 0.1), M.panta, top.x, top.y, 0);
+    // 架線に触れる舟（2本）と、端の曲がった角
+    [-0.05, 0.05].forEach(dx => {
+      rod(g, V(top.x + dx, top.y + 0.03, -0.42), V(top.x + dx, top.y + 0.03, 0.42), 0.018, M.shoe);
+      [-1, 1].forEach(sz => rod(g, V(top.x + dx, top.y + 0.03, sz * 0.42), V(top.x + dx, top.y - 0.05, sz * 0.56), 0.014, M.shoe));
+    });
+  }
+
+  const car = makeCar();
+  let blurSpan = 0;  // この1フレームで進んだ距離（ぶれの幅）
+  // 今の電車の置かれ方。m で始まるものは2D表示用（真ん中の線路の、電車の位置を原点にした、線路に沿った向きの座標）
+  const pose = { x:0, z:0, h:0, yaw:0, mx:0, mz:0, ma:0, air:0 };
+  const Z_AXIS = V(0, 0, 1);
+  const qYaw = new THREE.Quaternion(), qPitch = new THREE.Quaternion(), qSpin = new THREE.Quaternion();
+  const pivA = V(0, 0, 0), pivB = V(0, 0, 0);
+  let camLift = 0;   // 飛んでいる高さに合わせてカメラを持ち上げる量
+
+  // ---------- ゲームの状態 ----------
+  // playing：走っている / crash：脱線・衝突して止まっていくところ / over：結果を表示中
+  let mode = 'playing', crashT = 0, score = 0;
+  const updateHud = () => { $('score').textContent = score; };
+  // 最高記録（ブラウザに保存。保存できない環境ではその回だけ覚えておく）
+  const BEST_KEY = 'acrobatic-train.best';
+  let best = 0;
+  try { best = Math.max(0, parseInt(localStorage.getItem(BEST_KEY), 10) || 0); } catch (e) {}
+  const showBest = () => { $('best').textContent = $('final-best').textContent = '最高 ' + best; };
+  showBest();
+
+  // ---------- 脱線・衝突（線路から外れた電車を、ひとかたまりの箱として転がす） ----------
+  // 電車は線路から離れ、勢いのまま地面に落ちて、角が地面にぶつかるたびに跳ねたり回ったりしながら止まる
+  const CRASH_MIN_TIME = 1.2;  // 結果を出すまでの最短の時間（秒）
+  const CRASH_MAX_TIME = 3.0;  // 止まりきらなくても結果を出す時間（秒）
+  const CRASH_G = 22;          // 転がっているときの重力
+  const CRASH_FLOOR = BALLAST_H;   // 地面の高さ
+  const CRASH_BOUNCE = 0.15;   // 地面にぶつかったときの跳ね返り
+  const CRASH_FRICTION = 0.55; // 地面とのすべりにくさ
+  const COM_Y = 1.6;           // 重心の高さ（車体の真ん中あたり）
+  // 箱の大きさ（車輪の下から屋根まで）と、回りにくさ（慣性）
+  const BOX = { x:CAR_LEN, y:3.3, z:CAR_W };
+  const BOX_BOTTOM = RAIL_TOP - COM_Y, BOX_TOP = BOX_BOTTOM + BOX.y;
+  const INV_I = V(12 / (BOX.y * BOX.y + BOX.z * BOX.z), 12 / (BOX.x * BOX.x + BOX.z * BOX.z), 12 / (BOX.x * BOX.x + BOX.y * BOX.y));
+  const CORNERS = [];
+  [-1, 1].forEach(sx => [BOX_BOTTOM, BOX_TOP].forEach(y => [-1, 1].forEach(sz => CORNERS.push(V(sx * BOX.x / 2, y, sz * BOX.z / 2)))));
+  const rb = { p:V(0, 0, 0), v:V(0, 0, 0), q:new THREE.Quaternion(), w:V(0, 0, 0) };
+  let impactCool = 0;          // 地面にぶつかった音や火花を出しすぎないための待ち時間
+
+  // cause：'gap'（線路の切れ目に落ちた）か 'pole'（ポールにぶつかった）。info：どの台車か、ポールが車体のどこに当たったか
+  function crash(cause, info){
+    if (mode !== 'playing') return;
+    se.crash();
+    mode = 'crash';
+    crashT = 0;
+    holds.clear();
+    shake = SHAKE_HIT * 3;
+    lands.push('front', 'rear');
+
+    // 今の電車の位置・向き・速さから転がり始める
+    car.updateMatrixWorld(true);
+    car.localToWorld(rb.p.set(0, COM_Y, 0));
+    rb.q.copy(car.quaternion);
+    const fx = Math.cos(pose.yaw), fz = Math.sin(pose.yaw);
+    rb.v.set(fx * speed, jump.on ? jump.vy - JUMP_G * jump.t : 0, fz * speed);
+    jump.on = false;   // 以降は転がる箱として動く（光の軌跡なども止める）
+    const local = V(0, 0, 0);
+    if (cause === 'gap') {
+      // 落ちた側の端が切れ目に引っかかって跳ね上がり、横へ振られて足をすくわれるように転がる
+      const drop = info === 'front' ? -1 : 1;   // 前が落ちたら機首が下がる向きに回る
+      const side = Math.random() < 0.5 ? -1 : 1;   // 振られる向き（その向きへ倒れる）
+      local.set(side * rnd(2.5, 3.5), side * rnd(0.3, 0.9), drop * rnd(1.5, 2.5));
+      rb.v.x += -fz * side * rnd(5, 8);
+      rb.v.z +=  fx * side * rnd(5, 8);
+      rb.v.y += 1.5;
+    } else {
+      // ポールに当たった側が止められて、ポールを中心にぐるっと振り回される
+      const { lx, lz } = info;
+      const yawDir = Math.sign(lz || 1) * Math.sign(lx || 1);
+      local.set(-Math.sign(lz || 1) * rnd(2, 3.5), yawDir * speed / (CAR_LEN / 2) * 0.7, rnd(-0.6, 0.6));
+      rb.v.multiplyScalar(0.55);
+      // ポールから離れる向き（ポールと反対側の横）に弾かれる
+      rb.v.x +=  fz * Math.sign(lz || 1) * 4;
+      rb.v.z += -fx * Math.sign(lz || 1) * 4;
+      rb.v.y += 3;
+    }
+    rb.w.copy(local).applyQuaternion(rb.q);
+  }
+
+  // 箱の回りにくさを、今の向きに合わせて世界の向きで使う（I⁻¹ をかける）
+  const tmpQ = new THREE.Quaternion(), tA = V(0, 0, 0), tB = V(0, 0, 0), tR = V(0, 0, 0), tN = V(0, 1, 0), tT = V(0, 0, 0), tVp = V(0, 0, 0);
+  function applyInvI(vec, out){
+    tmpQ.copy(rb.q).invert();
+    out.copy(vec).applyQuaternion(tmpQ).multiply(INV_I).applyQuaternion(rb.q);
+    return out;
+  }
+  // 点 r（重心から見た位置）に力積 j をかける
+  function applyImpulse(r, j){
+    rb.v.add(j);
+    applyInvI(tA.crossVectors(r, j), tB);
+    rb.w.add(tB);
+  }
+  // 点 r に向き d の力積を1だけかけたときの、その点の速さの変わり方
+  function effMass(r, d){
+    applyInvI(tA.crossVectors(r, d), tB);
+    return 1 + d.dot(tA.crossVectors(tB, r));
+  }
+  function stepCrash(dt){
+    const n = Math.max(1, Math.ceil(dt * 240)), h = dt / n;
+    for (let k = 0; k < n; k++) {
+      rb.v.y -= CRASH_G * h;
+      // 地面にめり込んだ角ごとに、跳ね返りと摩擦の力積をかける
+      let deepest = 0;
+      CORNERS.forEach(c => {
+        tR.copy(c).applyQuaternion(rb.q);
+        const y = rb.p.y + tR.y;
+        if (y >= CRASH_FLOOR) return;
+        deepest = Math.max(deepest, CRASH_FLOOR - y);
+        tVp.crossVectors(rb.w, tR).add(rb.v);          // 角の速さ
+        if (tVp.y >= 0) return;
+        const jn = -(1 + CRASH_BOUNCE) * tVp.y / effMass(tR, tN);
+        applyImpulse(tR, tT.copy(tN).multiplyScalar(jn));
+        // 摩擦：地面に沿った向きのすべりを止める（押し付けの強さまで）
+        tVp.crossVectors(rb.w, tR).add(rb.v);
+        tVp.y = 0;
+        const sl = tVp.length();
+        if (sl > 1e-4) {
+          tVp.multiplyScalar(-1 / sl);
+          const jt = Math.min(sl / effMass(tR, tVp), CRASH_FRICTION * jn);
+          applyImpulse(tR, tT.copy(tVp).multiplyScalar(jt));
+        }
+        // 強くぶつかったところから火花と砂ぼこり、音
+        if (jn > 1.2 && impactCool <= 0) {
+          impactCool = 0.09;
+          tT.copy(tR).add(rb.p);
+          sparkAt(tT, rb.v.x, rb.v.z, 10);
+          dustAt(tT, rb.v.x * 0.4, rb.v.z * 0.4);
+          if (jn > 3) { se.land(); shake = Math.max(shake, SHAKE_HIT * 1.2); }
+        }
+      });
+      if (deepest > 0) rb.p.y += deepest * 0.8;   // めり込みを戻す
+      rb.p.addScaledVector(rb.v, h);
+      // 回転を進める
+      tmpQ.set(rb.w.x * h / 2, rb.w.y * h / 2, rb.w.z * h / 2, 0).multiply(rb.q);
+      rb.q.set(rb.q.x + tmpQ.x, rb.q.y + tmpQ.y, rb.q.z + tmpQ.z, rb.q.w + tmpQ.w).normalize();
+      rb.w.multiplyScalar(Math.exp(-0.4 * h));
+    }
+    impactCool -= dt;
+  }
+  const settled = () => rb.v.length() < 1.2 && rb.w.length() < 1.2;
+  // 当たり判定。車体は、線路に沿った座標（距離・横位置）の上の斜めの長方形として見る
+  function checkHits(half, slant, lf, lr, jy){
+    // 線路の切れ目：浮いていない台車が切れ目の上にあれば脱線
+    const sOf = { front:dist + half, rear:dist - half }, lift = { front:lf, rear:lr };
+    for (const end of ['front', 'rear']) {
+      if (lift[end] + jy < SAFE_LIFT && gapUnder(ends[end], sOf[end])) { crash('gap', end); return; }
+    }
+    const latC = (ends.front + ends.rear) / 2, ca = Math.cos(slant), sa = Math.sin(slant);
+    const near = o => Math.abs(o.s - dist) < CAR_LEN;
+    const inCar = (o, r) => {
+      const ds = o.s - dist, dl = o.lat - latC;
+      return Math.abs(ds * ca + dl * sa) < CAR_LEN / 2 + r && Math.abs(-ds * sa + dl * ca) < CAR_W / 2 + r;
+    };
+    // ポール：いちばん低い台車がポールの高さより下なら、ぶつかる
+    const bottom = jy + Math.min(lf, lr);
+    let hit = poles.find(o => near(o) && bottom < (o.h ?? POLE_H) && inCar(o, o.r ?? POLE_R));
+    // 対向列車：車体の長さぶん、同じ線路を占めている
+    if (!hit && bottom < ONC_H) {
+      for (const o of oncomings) {
+        if (Math.abs(o.s - dist) > CAR_LEN * 1.5) continue;
+        for (let k = -CAR_LEN / 2; k <= CAR_LEN / 2 && !hit; k += 1.5) {
+          if (inCar({ s:o.s + k, lat:o.tz }, CAR_W / 2)) hit = { s:o.s + k, lat:o.tz };
+        }
+        if (hit) break;
+      }
+    }
+    if (hit) {
+      const ds = hit.s - dist, dl = hit.lat - latC;
+      crash('pole', { lx:ds * ca + dl * sa, lz:-ds * sa + dl * ca });
+      return;
+    }
+    // ポイント：車体の高さの範囲に入っていれば取れる
+    const base = RAIL_TOP + jy + (lf + lr) / 2;
+    items.forEach(o => {
+      if (o.taken || !near(o) || !inCar(o, ITEM_R)) return;
+      if (o.diag && Math.abs(ends.front - ends.rear) < DIAG_MIN) return;   // 線路の間のものは、斜めのときだけ
+      if (o.ring) {
+        if (Math.abs(base + CAR_H / 2 - o.y) > RING_R * 0.8) return;   // リングは、車体の真ん中がくぐったときだけ
+      } else if (o.y < base - ITEM_R || o.y > base + CAR_H + ITEM_R) return;
+      o.taken = true;
+      o.mesh.visible = false;
+      score += o.pts;
+      se.point(o.level);
+      updateHud();
+    });
+    // 勝手に動く分岐器：線路に乗っている台車が踏むと、隣の線路へ移される
+    switches.forEach(w => {
+      ['front', 'rear'].forEach(end => {
+        if (w.done[end] || sOf[end] < w.s) return;
+        w.done[end] = true;
+        if (Math.abs(ends[end] - w.tz) < 0.3 && moves[end].t >= 1 && lift[end] + jy < SAFE_LIFT) setTarget(end, w.to);
+      });
+    });
+  }
+  let camH = 0;      // カメラの向き（線路の向きに少し遅れて付いていく）
+
+  // 対向列車：近づいたら警笛を鳴らして走り出し、すれ違ったあと後ろへ消える
+  const oncPool = [];
+  function oncMesh(){
+    let m = oncPool.find(x => !x.visible);
+    if (!m) { m = makeCar(); oncPool.push(m); }
+    m.visible = true;
+    return m;
+  }
+  function updateOncoming(dt){
+    for (let i = oncomings.length - 1; i >= 0; i--) {
+      const o = oncomings[i];
+      if (!o.mesh && o.s - dist < TRACK_AHEAD * 0.7) o.mesh = oncMesh();
+      if (!o.moving && o.s - dist < (speed + ONC_SPEED) * ONC_WARN) { o.moving = true; se.horn(); }
+      if (o.moving) o.s -= ONC_SPEED * dt;
+      if (o.s < dist - 80) {
+        if (o.mesh) o.mesh.visible = false;
+        oncomings.splice(i, 1);
+        continue;
+      }
+      if (o.mesh) {
+        const p = pathAt(o.s), q = offsetPt(p, o.tz);
+        o.mesh.position.set(q.x, 0, q.z);
+        o.mesh.rotation.set(0, -(p.h + Math.PI), 0);
+      }
+    }
+  }
+
+  // 電車を道筋に沿って置き、車輪を回し、枕木を並べ直す
+  function update(dt){
+    const turn = -(dist / WHEEL_R) % (Math.PI * 2);
+    car.userData.wheelsets.forEach(w => { w.rotation.z = turn; });
+    if (mode !== 'playing') { updateCrashed(dt); return; }
+
+    // 前後の台車を、それぞれの線路（移る途中はS字の道筋）の上に置き、その2点から車体の位置と向きを決める
+    const pc = pathAt(dist);
+    const slant = Math.asin(Math.max(-1, Math.min(1, (ends.front - ends.rear) / (BOGIE * 2))));
+    const half = BOGIE * Math.cos(slant);   // 斜めになったぶん、前後の台車の線路方向の間隔が詰まる
+    const pf = pathAt(dist + half), pr = pathAt(dist - half);
+    const wf = offsetPt(pf, ends.front), wr = offsetPt(pr, ends.rear);
+    const cx = (wf.x + wr.x) / 2, cz = (wf.z + wr.z) / 2;
+    const yaw = Math.atan2(wf.z - wr.z, wf.x - wr.x);
+    // ジャンプ台：乗っている台車は坂に沿って持ち上がり、踏み切りを越えたら飛ぶ
+    const rh = { front:0, rear:0 };
+    if (!jump.on) {
+      const sOf = { front:dist + half, rear:dist - half };
+      ['front', 'rear'].forEach(end => {
+        const r = rampAt(sOf[end], ends[end]);
+        // 線路を移りながら乗り降りしたときに高さが急に変わらないよう、線路の中心から離れるほど低くする
+        if (r) rh[end] = RAMP_H * (sOf[end] - r.s) / RAMP_LEN * Math.min(1, 2 * (1 - Math.abs(ends[end] - r.tz) / RAMP_HIT));
+      });
+      ['front', 'rear'].forEach(end => {
+        const prev = riding[end], r = rampAt(sOf[end], ends[end]);
+        // さっきまで乗っていたジャンプ台を、同じ線路のまま越えた＝踏み切った
+        if (!jump.on && prev && !r && sOf[end] - prev.s > RAMP_LEN && Math.abs(ends[end] - prev.tz) < RAMP_HIT) {
+          const other = end === 'front' ? 'rear' : 'front';
+          // 踏み切った瞬間の車体の傾き（坂に乗っていた側が上がっている）
+          const p0 = Math.atan2(end === 'front' ? RAMP_H - rh.rear : rh.front - RAMP_H, BOGIE * 2);
+          launch(end, prev, (RAMP_H + rh[other]) / 2, p0);
+        }
+        riding[end] = r;
+      });
+    }
+    let jy = 0, jPitch = 0;
+    if (jump.on) {
+      jump.t += dt;
+      if (jump.t >= jump.T) { jump.on = false; landJump(); }
+      else {
+        jy = jump.y0 + jump.vy * jump.t - JUMP_G * jump.t * jump.t / 2;
+        // 踏み切った瞬間の傾きから滑らかに戻し、まっすぐ飛ぶときは上がるときは機首上げ・落ちるときは機首下げ
+        // （踏み切りと着地の瞬間に傾きが飛ばないよう、どちらも両端で0になるようにする）
+        const k = jump.t / jump.T;
+        jPitch = jump.p0 * (1 - k) * (1 - k);
+        if (!jump.spin) jPitch += Math.atan2(jump.vy - JUMP_G * jump.t, speed) * JUMP_PITCH * Math.sin(Math.PI * k);
+      }
+    }
+    camLift = jy * CAM_JUMP_FOLLOW;
+    pose.air = jy;
+
+    // 線路を移っている側・ジャンプ台に乗っている側を浮かせる。前だけ・後ろだけのときは、その側が持ち上がって車体が傾く
+    const lf = Math.max(liftOf('front'), rh.front), lr = Math.max(liftOf('rear'), rh.rear);
+    qYaw.setFromAxisAngle(UP, -yaw);
+    qPitch.setFromAxisAngle(Z_AXIS, Math.atan2(lf - lr, BOGIE * 2) + jPitch);
+    car.quaternion.copy(qYaw).multiply(qPitch);
+    car.position.set(cx, (lf + lr) / 2 + jy, cz);
+    if (jump.on) {
+      // 斜め：斜めの角度を保ったまま、車体の前後方向の軸で1回転
+      // まっすぐ：車体の左右方向の軸で縦に宙返り
+      // どちらも回り始めと回り終わりはゆっくりで、着地のときには元の向きに戻る
+      const k = jump.t / jump.T, e = k * k * (3 - 2 * k);
+      if (jump.spin) qSpin.setFromAxisAngle(SPIN_AXIS, jump.dir * Math.PI * 2 * e);
+      else qSpin.setFromAxisAngle(FLIP_AXIS, FLIP_DIR * Math.PI * 2 * FLIP_TURNS * e);
+      // 車体の真ん中を中心に回すため、回したぶんの位置のずれを戻す
+      pivA.set(0, SPIN_PIVOT_Y, 0).applyQuaternion(car.quaternion);
+      car.quaternion.multiply(qSpin);
+      pivB.set(0, SPIN_PIVOT_Y, 0).applyQuaternion(car.quaternion);
+      car.position.add(pivA).sub(pivB);
+    }
+    // 着地の反動：車体だけが台車の上で沈んで弾み、横へ移った勢いで傾いて揺り戻す
+    const body = car.userData.body, sf = sag.front.x, sr = sag.rear.x;
+    body.position.y = BODY_Y + (sf + sr) / 2;
+    body.rotation.z = Math.atan2(sf - sr, BOGIE * 2);
+    // ぶつかったあとは車体が横へ倒れていく
+    body.rotation.x = roll.x;
+    checkHits(half, slant, lf, lr, jy);
+    // カーブでは、線路に乗っている台車の外側の車輪から火花を出す（出すのは電車を置き直したあと）
+    curveSide.front = !jump.on && lf + jy < 0.05 ? -Math.sign(curveAt(dist + half)) : 0;
+    curveSide.rear  = !jump.on && lr + jy < 0.05 ? -Math.sign(curveAt(dist - half)) : 0;
+    // 台車は車体に固定したまま、それぞれの線路の向き（移る途中はS字の進む向き）に首を振る
+    const [bf, br] = car.userData.bogies;
+    bf.rotation.y = yaw - pf.h - Math.atan(slopeOf('front'));
+    br.rotation.y = yaw - pr.h - Math.atan(slopeOf('rear'));
+
+    // 2D表示用に、真ん中の線路に沿った座標に直す
+    const c = Math.cos(pc.h), s = Math.sin(pc.h), dx = cx - pc.x, dz = cz - pc.z;
+    Object.assign(pose, { x:cx, z:cz, h:pc.h, yaw, mx:dx * c + dz * s, mz:-dx * s + dz * c, ma:yaw - pc.h });
+
+    finishFrame(pc, cx, cz);
+    // カメラは線路の向きに少し遅れて回り込む
+    camH += Math.atan2(Math.sin(pc.h - camH), Math.cos(pc.h - camH)) * Math.min(1, dt * 5);
+    placeCamera();
+  }
+  // 枕木・地面・影の範囲を電車の位置に合わせる
+  function finishFrame(pc, cx, cz){
+    // 枕木を並べ直し、ぶれの分だけ進む向きにずらして重ねる
+    placeTies();
+    const blur = blurOn();
+    tieLayers.forEach((l, i) => {
+      const o = blurSpan * i / (BLUR_N - 1);
+      l.position.set(Math.cos(pc.h) * o, 0, Math.sin(pc.h) * o);
+      l.visible = blur || i === 0;
+      sleeperLayerMat[i].opacity = blur ? BLUR_A : 0.95;
+    });
+    // 地面と影を落とす範囲は電車に付いて動かす
+    ground.position.set(cx, -0.01, cz);
+    // 地面は電車に付いて動くので、模様は逆にずらして、地面に描かれたまま止まって見えるようにする
+    grassTex.offset.set((cx / GRASS_TILE) % 1, (-cz / GRASS_TILE) % 1);
+    sun.target.position.set(cx, 0, cz);
+    sun.position.set(cx, 0, cz).add(SUN_OFFSET);
+  }
+  // 脱線・衝突したあと：転がる箱の位置と向きを電車に写す（カメラの向きはそのまま、位置だけ追う）
+  function updateCrashed(dt){
+    if (mode === 'crash') stepCrash(dt);
+    car.quaternion.copy(rb.q);
+    car.position.copy(rb.p).sub(tA.set(0, COM_Y, 0).applyQuaternion(rb.q));
+    const body = car.userData.body;
+    body.position.y = BODY_Y;
+    body.rotation.set(0, 0, 0);
+    // 世界の進み具合（枕木を並べる範囲など）は、電車が進んだぶんだけ進める
+    const pc0 = pathAt(dist);
+    if (mode === 'crash') dist += Math.max(0, rb.v.x * Math.cos(pc0.h) + rb.v.z * Math.sin(pc0.h)) * dt;
+    const pc = pathAt(dist);
+    const fwd = tA.set(1, 0, 0).applyQuaternion(rb.q), yaw = Math.atan2(fwd.z, fwd.x);
+    const c = Math.cos(pc.h), s = Math.sin(pc.h), dx = rb.p.x - pc.x, dz = rb.p.z - pc.z;
+    Object.assign(pose, { x:rb.p.x, z:rb.p.z, h:pc.h, yaw, mx:dx * c + dz * s, mz:-dx * s + dz * c, ma:yaw - pc.h, air:0 });
+    camLift = Math.max(0, rb.p.y - COM_Y) * 0.5;
+    finishFrame(pc, rb.p.x, rb.p.z);
+    placeCamera();
+  }
+
+  // ---------- 線路を移るときの光の軌跡 ----------
+  // 線路を移っている間だけ、台車の左右の車輪から光の帯を出す。帯は地面に残り、少しずつ消えていく
+  const TRAIL_LIFE = 0.45;                    // 光の帯が消えるまでの時間（秒）
+  const TRAIL_MAX = 90;                       // 1本の帯に残す点の数
+  const TRAIL_COLOR = new THREE.Color(0x5fe3ff);
+  // 帯は2枚重ね：芯の細く明るい光と、まわりのぼんやりした光（half:半分の太さ, gain:明るさ, edge:縁の明るさの割合）
+  const TRAIL_LAYERS = [{ half:0.06, gain:1.6, edge:0.6 }, { half:0.42, gain:0.5, edge:0 }];
+  const trailMat = new THREE.MeshBasicMaterial({
+    vertexColors:true, transparent:true, blending:THREE.AdditiveBlending,
+    depthWrite:false, side:THREE.DoubleSide, toneMapped:false
+  });
+  function makeTrail(end, bogie, side){
+    const layers = TRAIL_LAYERS.map(L => {
+      const g = new THREE.BufferGeometry();
+      // 1つの点につき、縁・芯・縁の3つの頂点を並べる
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TRAIL_MAX * 9), 3).setUsage(THREE.DynamicDrawUsage));
+      g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(TRAIL_MAX * 9), 3).setUsage(THREE.DynamicDrawUsage));
+      g.setIndex(new THREE.BufferAttribute(new Uint16Array((TRAIL_MAX - 1) * 12), 1).setUsage(THREE.DynamicDrawUsage));
+      g.setDrawRange(0, 0);
+      const m = new THREE.Mesh(g, trailMat);
+      m.frustumCulled = false;
+      m.renderOrder = 2;
+      scene.add(m);
+      return { L, g };
+    });
+    return { end, bogie, side, layers, pts:[], emitting:false };
+  }
+  // ---------- 風の筋（スピード感）：電車の周りを白い筋が後ろへ流れる。速いほど多く、長く、濃くなる ----------
+  const WIND_N = 90;                   // 筋の数
+  const WIND_REL = 1.5;                // 電車から見て筋が流れる速さ（電車の速さに対する倍率。大きいほど速く見える）
+  const WIND_LEN = 0.18;               // 筋の長さ（速さ1あたり）
+  const WIND_FRONT = 80, WIND_BACK = 15;    // 筋を出す範囲（電車より前・後ろ）
+  const WIND_A_MIN = 0.08, WIND_A_MAX = 0.3;   // 走り始め・最高速のときの濃さ
+  const windGeo = new THREE.BoxGeometry(1, 0.07, 0.07);
+  const windMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0, depthWrite:false, fog:false });
+  const winds = new THREE.InstancedMesh(windGeo, windMat, WIND_N);
+  winds.frustumCulled = false;
+  winds.renderOrder = 2;
+  scene.add(winds);
+  // 筋は線路に沿った場所に置き、その場所の線路の向きのまま、まっすぐ後ろへ流す（カメラや電車には付いて来ない）
+  // s：線路上の距離、l：線路の中心からの横の位置、y：高さ。線路と電車の上は避けて、左右と上空に出す
+  const windOf = [];
+  function spawnWind(w, s){
+    let l, y;
+    if (Math.random() < 0.75) { l = (Math.random() < 0.5 ? -1 : 1) * rnd(5, 16); y = rnd(0.5, 7); }
+    else { l = rnd(-6, 6); y = rnd(6.5, 10); }
+    const p = pathAt(s), q = offsetPt(p, l);
+    Object.assign(w, { s, x:q.x, z:q.z, y, h:p.h, k:rnd(0.6, 1.4) });   // k：長さのばらつき
+  }
+  for (let i = 0; i < WIND_N; i++) windOf.push({ s:-1e9 });
+  const windM = new THREE.Matrix4(), windQ = new THREE.Quaternion(), windP = new THREE.Vector3(), windS = new THREE.Vector3();
+  function updateWinds(dt){
+    winds.visible = mode === 'playing';
+    if (!winds.visible) return;
+    const t = (speed - SPEED_START) / (SPEED_MAX - SPEED_START);
+    windMat.opacity = WIND_A_MIN + (WIND_A_MAX - WIND_A_MIN) * Math.max(0, t);
+    const v = speed * (WIND_REL - 1);   // 地面に対して後ろへ流れる速さ（電車の速さとの差で、電車からはもっと速く見える）
+    windOf.forEach((w, i) => {
+      if (w.s < dist - WIND_BACK || w.s > dist + WIND_FRONT + 40) {
+        // 範囲の外に出たら前に出し直す（最初とやり直したときは範囲全体にばらまく）
+        spawnWind(w, w.s < -1e8 || w.s > dist + WIND_FRONT + 40 ? dist + rnd(-WIND_BACK, WIND_FRONT) : dist + WIND_FRONT + rnd(0, 20));
+      }
+      w.s -= v * dt;
+      w.x -= Math.cos(w.h) * v * dt;
+      w.z -= Math.sin(w.h) * v * dt;
+      windQ.setFromAxisAngle(UP, -w.h);
+      windP.set(w.x, w.y, w.z);
+      windS.set(speed * WIND_LEN * w.k, 1, 1);
+      winds.setMatrixAt(i, windM.compose(windP, windQ, windS));
+    });
+    winds.instanceMatrix.needsUpdate = true;
+  }
+
+  const [bogieF, bogieR] = car.userData.bogies;
+  const trails = [
+    makeTrail('front', bogieF, -1), makeTrail('front', bogieF, 1),
+    makeTrail('rear',  bogieR, -1), makeTrail('rear',  bogieR, 1),
+  ];
+  const tv = new THREE.Vector3(), tDir = new THREE.Vector3(), tView = new THREE.Vector3(), tW = new THREE.Vector3();
+  function updateTrails(now){
+    car.updateMatrixWorld(true);
+    trails.forEach(tr => {
+      // 線路を移っている間と飛んでいる間だけ点を足す（出し始めは前の帯とつながない）
+      const on = mode === 'playing' && (moves[tr.end].t < 1 || jump.on);   // 飛んでいる間も出す（回転すると螺旋を描く）
+      if (on) {
+        tr.bogie.localToWorld(tv.set(0, WC, tr.side * (GAUGE / 2 + 0.12)));
+        tr.pts.push({ x:tv.x, y:tv.y, z:tv.z, t:now, brk:!tr.emitting });
+        if (tr.pts.length > TRAIL_MAX) tr.pts.shift();
+      }
+      tr.emitting = on;
+      while (tr.pts.length && now - tr.pts[0].t > TRAIL_LIFE) tr.pts.shift();
+
+      const pts = tr.pts, n = pts.length;
+      tr.layers.forEach(({ L, g }) => {
+        const pos = g.attributes.position.array, col = g.attributes.color.array, idx = g.index.array;
+        let ni = 0;
+        for (let i = 0; i < n; i++) {
+          const p = pts[i], a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)];
+          // 帯の幅の向き：進む向きと、カメラへの向きの両方に直角（どこから見ても帯の面が見える）
+          tDir.set(b.x - a.x, b.y - a.y, b.z - a.z);
+          tView.set(camera.position.x - p.x, camera.position.y - p.y, camera.position.z - p.z);
+          tW.crossVectors(tDir, tView);
+          if (tW.lengthSq() < 1e-8) tW.set(0, 1, 0);
+          tW.normalize().multiplyScalar(L.half);
+          pos.set([p.x - tW.x, p.y - tW.y, p.z - tW.z, p.x, p.y, p.z, p.x + tW.x, p.y + tW.y, p.z + tW.z], i * 9);
+          // 古い点ほど暗く（消えていく）
+          const f = Math.pow(1 - (now - p.t) / TRAIL_LIFE, 1.5) * L.gain, e = f * L.edge;
+          const c = TRAIL_COLOR;
+          col.set([c.r * e, c.g * e, c.b * e, c.r * f, c.g * f, c.b * f, c.r * e, c.g * e, c.b * e], i * 9);
+          if (i > 0 && !p.brk) {
+            const v = (i - 1) * 3;
+            idx.set([v, v + 3, v + 1, v + 1, v + 3, v + 4, v + 1, v + 4, v + 2, v + 2, v + 4, v + 5], ni);
+            ni += 12;
+          }
+        }
+        g.setDrawRange(0, ni);
+        g.attributes.position.needsUpdate = true;
+        g.attributes.color.needsUpdate = true;
+        g.index.needsUpdate = true;
+      });
+    });
+  }
+
+  // ---------- 着地の重さ ----------
+  // 着地した側の空気ばねが沈んで弾み、車体は横へ移った勢いで傾いて揺り戻す。あわせて火花・砂ぼこり・カメラの揺れを出す
+  const SAG_K = 170;           // 車体の上下のばねの強さ
+  const SAG_C = 11;            // 上下の揺れの収まりやすさ（大きいほど早く収まる）
+  const SAG_HIT = 2.4;         // 着地で車体が沈み込む勢い
+  const ROLL_K = 120;          // 車体の横揺れのばねの強さ
+  const ROLL_C = 7;            // 横揺れの収まりやすさ
+  const ROLL_HIT = 0.9;        // 着地で車体が横へ傾く勢い（横へ移った向きに傾く）
+  const SHAKE_HIT = 0.35;      // 着地したときのカメラの揺れの大きさ
+  const SHAKE_DECAY = 9;       // カメラの揺れが収まる速さ
+  const sag = { front:{ x:0, v:0 }, rear:{ x:0, v:0 } };
+  const roll = { x:0, v:0 };
+  let shake = 0;
+  // 距離 s の線路の曲がり具合（直線は 0。左右で符号が変わる）
+  function curveAt(s){
+    for (let i = segs.length - 1; i >= 0; i--) if (segs[i].s0 <= s) return segs[i].k;
+    return 0;
+  }
+  const curveSide = { front:0, rear:0 };   // カーブで火花を出す側（0 は出さない。±1 は車輪の左右）
+  const lands = [];            // 火花・砂ぼこりを出す着地（電車を置き直してから出すために一旦ためる）
+  function onLand(end, dir){
+    sag[end].v -= SAG_HIT;
+    roll.v += dir * ROLL_HIT;
+    shake = Math.min(shake + SHAKE_HIT, SHAKE_HIT * 1.6);
+    lands.push(end);
+    if (mode === 'playing') se.land();
+  }
+  function stepSprings(dt){
+    // ばねが強いので、細かく分けて計算する（まとめて進めると揺れが暴れる）
+    const n = Math.max(1, Math.ceil(dt * 240)), h = dt / n;
+    for (let i = 0; i < n; i++) {
+      [sag.front, sag.rear].forEach(sp => { sp.v += (-SAG_K * sp.x - SAG_C * sp.v) * h; sp.x += sp.v * h; });
+      roll.v += (-ROLL_K * roll.x - ROLL_C * roll.v) * h;
+      roll.x += roll.v * h;
+    }
+    shake *= Math.exp(-SHAKE_DECAY * dt);
+  }
+
+  // 火花：車輪とレールが当たったところから飛び散り、電車より遅いので後ろへ流れていく
+  const SPARK_MAX = 300;
+  const SPARK_PER_WHEEL = 9;   // 車輪1つから出る火花の数
+  const SPARK_GRAVITY = 18;
+  const sparkPos = new Float32Array(SPARK_MAX * 3), sparkCol = new Float32Array(SPARK_MAX * 3);
+  const sparks = [];
+  const sparkGeo = new THREE.BufferGeometry();
+  sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3).setUsage(THREE.DynamicDrawUsage));
+  sparkGeo.setAttribute('color', new THREE.BufferAttribute(sparkCol, 3).setUsage(THREE.DynamicDrawUsage));
+  const sparkPts = new THREE.Points(sparkGeo, new THREE.PointsMaterial({
+    size:0.14, vertexColors:true, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false
+  }));
+  sparkPts.frustumCulled = false;
+  scene.add(sparkPts);
+
+  // 砂ぼこり：ふわっと広がりながら薄くなる
+  const DUST_MAX = 24;
+  const dustTex = (() => {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 64;
+    const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)');
+    gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(cv);
+  })();
+  const dusts = [];
+  for (let i = 0; i < DUST_MAX; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:dustTex, color:0xb9ae9b, transparent:true, opacity:0, depthWrite:false }));
+    sp.visible = false;
+    scene.add(sp);
+    dusts.push({ sp, vel:new THREE.Vector3(), age:1, life:1 });
+  }
+
+  const fxV = new THREE.Vector3();
+  function burst(end){
+    const bogie = end === 'front' ? bogieF : bogieR;
+    const fx = Math.cos(pose.yaw), fz = Math.sin(pose.yaw);       // 電車の進む向き
+    [-1, 1].forEach(side => {
+      const nx = -fz * side, nz = fx * side;                       // 外側の向き
+      [-AXLE, AXLE].forEach(ax => {
+        bogie.localToWorld(fxV.set(ax, RAIL_TOP + 0.02, side * GAUGE / 2));
+        for (let i = 0; i < SPARK_PER_WHEEL; i++) {
+          if (sparks.length >= SPARK_MAX) sparks.shift();
+          const fwd = speed * rnd(0.3, 0.8), out = rnd(0.5, 4), up = rnd(1.5, 6);
+          sparks.push({
+            x:fxV.x, y:fxV.y, z:fxV.z,
+            vx:fx * fwd + nx * out + rnd(-1, 1), vy:up, vz:fz * fwd + nz * out + rnd(-1, 1),
+            age:0, life:rnd(0.25, 0.6)
+          });
+        }
+      });
+      // 砂ぼこりは台車の左右に1つずつ
+      const d = dusts.reduce((a, b) => (b.age / b.life > a.age / a.life ? b : a));   // いちばん古いものを使い回す
+      bogie.localToWorld(fxV.set(0, 0.3, side * (GAUGE / 2 + 0.3)));
+      d.sp.position.copy(fxV);
+      d.vel.set(fx * speed * 0.55 + nx * 1.5, 0.6, fz * speed * 0.55 + nz * 1.5);
+      d.age = 0;
+      d.life = 0.7;
+      d.sp.visible = true;
+    });
+  }
+
+  // カーブの火花：外側のレールに車輪が押し付けられてこすれ、細かい火花が後ろへ流れる
+  const CURVE_SPARK_RATE = 110;   // 台車1つから1秒あたりに出る火花の数（いちばん速いとき。遅いと減る）
+  const curveAcc = { front:0, rear:0 };
+  function curveSparks(dt){
+    ['front', 'rear'].forEach(end => {
+      const side = curveSide[end];
+      if (!side || mode !== 'playing') { curveAcc[end] = 0; return; }
+      curveAcc[end] += CURVE_SPARK_RATE * (speed / SPEED_MAX) * dt;
+      const bogie = end === 'front' ? bogieF : bogieR;
+      const fx = Math.cos(pose.yaw), fz = Math.sin(pose.yaw);
+      const nx = -fz * side, nz = fx * side;
+      for (; curveAcc[end] >= 1; curveAcc[end]--) {
+        if (sparks.length >= SPARK_MAX) sparks.shift();
+        bogie.localToWorld(fxV.set(pick([-AXLE, AXLE]), RAIL_TOP + 0.02, side * GAUGE / 2));
+        const fwd = speed * rnd(0.45, 0.85), out = rnd(0.3, 2), up = rnd(0.5, 3);
+        sparks.push({
+          x:fxV.x, y:fxV.y, z:fxV.z,
+          vx:fx * fwd + nx * out + rnd(-0.5, 0.5), vy:up, vz:fz * fwd + nz * out + rnd(-0.5, 0.5),
+          age:0, life:rnd(0.15, 0.4)
+        });
+      }
+    });
+  }
+
+  // 地面にぶつかった点から火花と砂ぼこりを出す（脱線して転がるとき用）
+  function sparkAt(pt, vx, vz, n){
+    for (let i = 0; i < n; i++) {
+      if (sparks.length >= SPARK_MAX) sparks.shift();
+      sparks.push({ x:pt.x, y:Math.max(pt.y, BALLAST_H + 0.05), z:pt.z,
+        vx:vx * rnd(0.3, 0.9) + rnd(-3, 3), vy:rnd(1.5, 6), vz:vz * rnd(0.3, 0.9) + rnd(-3, 3), age:0, life:rnd(0.25, 0.6) });
+    }
+  }
+  function dustAt(pt, vx, vz){
+    const d = dusts.reduce((a, b) => (b.age / b.life > a.age / a.life ? b : a));
+    d.sp.position.set(pt.x, Math.max(pt.y, 0.3), pt.z);
+    d.vel.set(vx + rnd(-1, 1), 0.8, vz + rnd(-1, 1));
+    d.age = 0;
+    d.life = 0.9;
+    d.sp.visible = true;
+  }
+
+  function updateEffects(dt){
+    stepSprings(dt);
+    while (lands.length) burst(lands.shift());
+    curveSparks(dt);
+
+    // 火花：重力で落ちて地面で弾み、白→黄→橙と冷めながら消える
+    let n = 0;
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const p = sparks[i];
+      p.age += dt;
+      if (p.age >= p.life) { sparks.splice(i, 1); continue; }
+      p.vy -= SPARK_GRAVITY * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+      if (p.y < BALLAST_H) { p.y = BALLAST_H; p.vy *= -0.35; p.vx *= 0.7; p.vz *= 0.7; }
+    }
+    sparks.forEach(p => {
+      const k = 1 - p.age / p.life;
+      sparkPos.set([p.x, p.y, p.z], n * 3);
+      sparkCol.set([1.6 * k, (0.6 + 0.9 * k) * k, 0.25 * k * k], n * 3);
+      n++;
+    });
+    sparkGeo.setDrawRange(0, n);
+    sparkGeo.attributes.position.needsUpdate = true;
+    sparkGeo.attributes.color.needsUpdate = true;
+
+    // 砂ぼこり：広がりながら、ゆっくり薄くなる
+    dusts.forEach(d => {
+      if (!d.sp.visible) return;
+      d.age += dt;
+      const k = d.age / d.life;
+      if (k >= 1) { d.sp.visible = false; return; }
+      d.sp.position.addScaledVector(d.vel, dt);
+      d.vel.multiplyScalar(Math.exp(-3 * dt));
+      const sc = 0.6 + 2.4 * Math.sqrt(k);
+      d.sp.scale.set(sc, sc * 0.7, 1);
+      d.sp.material.opacity = 0.55 * (1 - k) * (1 - k);
+    });
+  }
+
+  // ---------- 下の2D表示（上から見た線路と電車。上が進む向き、右がカメラのいる側） ----------
+  const mapCv = $('map-cv');
+  const mctx = mapCv.getContext('2d');
+  const C = {};
+  ['ground', 'ballast', 'sleeper', 'rail', 'car', 'ac', 'dark', 'head', 'tail', 'ramp', 'ramp-lip', 'pole', 'gap', 'item0', 'item1', 'item2'].forEach(k => {
+    C[k] = getComputedStyle(document.documentElement).getPropertyValue('--' + k).trim();
+  });
+  let MW = 0, MH = 0, MS = 1;   // 2D表示の幅・高さ（CSSピクセル）と、線路の長さ1あたりのピクセル数
+
+  function resizeMap(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    MW = mapCv.clientWidth; MH = mapCv.clientHeight;
+    mapCv.width = Math.round(MW * dpr);
+    mapCv.height = Math.round(MH * dpr);
+    mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    MS = Math.min(MW / MAP_W, MH / MAP_LEN);
+  }
+
+  // 角の丸い四角（x, z は中心）
+  function rrect(x, z, w, h, r, color){
+    const x0 = x - w / 2, z0 = z - h / 2, g = mctx;
+    g.beginPath();
+    g.moveTo(x0 + r, z0);
+    g.arcTo(x0 + w, z0, x0 + w, z0 + h, r);
+    g.arcTo(x0 + w, z0 + h, x0, z0 + h, r);
+    g.arcTo(x0, z0 + h, x0, z0, r);
+    g.arcTo(x0, z0, x0 + w, z0, r);
+    g.closePath();
+    g.fillStyle = color;
+    g.fill();
+  }
+  function dot(x, z, r, color){
+    mctx.beginPath();
+    mctx.arc(x, z, r, 0, Math.PI * 2);
+    mctx.fillStyle = color;
+    mctx.fill();
+  }
+
+  function drawMap(){
+    const g = mctx;
+    g.save();
+    g.fillStyle = C.ground;
+    g.fillRect(0, 0, MW, MH);
+    g.translate(MW / 2, MH / 2);   // 電車の中心を表示の中央に置き、以降は線路の単位で描く
+    g.scale(MS, MS);
+    g.rotate(-Math.PI / 2);        // 線路の前方向を画面の上、横方向を画面の右にする
+    const half = MH / 2 / MS + 1;
+
+    // 真ん中の線路の、電車の位置を原点にして、線路の向きを上にした座標に直す
+    const pc = pathAt(dist), c = Math.cos(pc.h), sn = Math.sin(pc.h);
+    const local = q => { const dx = q.x - pc.x, dz = q.z - pc.z; return [dx * c + dz * sn, -dx * sn + dz * c]; };
+    const s0 = dist - half * 1.3, s1 = dist + half * 1.3;
+    const pts = [], sv = [];
+    for (let s = s0; s <= s1; s += 0.5) { pts.push(pathAt(s)); sv.push(s); }
+    const line = l => pts.map(p => local(offsetPt(p, l)));
+    // 距離 a〜b の範囲で、横位置 l1〜l2 の帯を塗る
+    const band = (a, b, l1, l2, color) => {
+      const A = Math.max(a, s0), B = Math.min(b, s1);
+      if (A >= B) return;
+      const ps = [];
+      for (let x = A; x < B; x += 0.5) ps.push(pathAt(x));
+      ps.push(pathAt(B));
+      const poly = ps.map(p => local(offsetPt(p, l1))).concat(ps.reverse().map(p => local(offsetPt(p, l2))));
+      g.beginPath();
+      poly.forEach(([x, z], i) => i ? g.lineTo(x, z) : g.moveTo(x, z));
+      g.closePath();
+      g.fillStyle = color;
+      g.fill();
+    };
+
+    // 砂利
+    const L = TRACK_SPACING + 1.4;
+    const outer = line(-L).concat(line(L).reverse());
+    g.beginPath();
+    outer.forEach(([x, z], i) => i ? g.lineTo(x, z) : g.moveTo(x, z));
+    g.closePath();
+    g.fillStyle = C.ballast;
+    g.fill();
+    // 線路の切れ目（土がむき出しになっているところ）
+    gaps.forEach(gp => band(gp.a, gp.b, gp.tz - 0.95, gp.tz + 0.95, C.gap));
+    // 枕木（3Dと同じく、1フレームで動いた範囲に薄く重ねる。切れ目には無い）
+    g.fillStyle = C.sleeper;
+    const blur = blurOn(), layers = blur ? BLUR_N : 1;
+    g.globalAlpha = blur ? BLUR_A : 1;
+    const sw = GAUGE + 0.8;
+    for (let k = Math.ceil(s0 / SLEEPER_STEP); k * SLEEPER_STEP < s1; k++) {
+      for (let i = 0; i < layers; i++) {
+        const p = pathAt(k * SLEEPER_STEP + (blur ? blurSpan * i / (BLUR_N - 1) : 0));
+        const [x, z] = local(p);
+        g.save();
+        g.translate(x, z);
+        g.rotate(p.h - pc.h);
+        TRACKS.forEach(tz => { if (!gapAt(tz, k * SLEEPER_STEP)) g.fillRect(-0.12, tz - sw / 2, 0.24, sw); });
+        g.restore();
+      }
+    }
+    g.globalAlpha = 1;
+    // レール
+    g.strokeStyle = C.rail;
+    g.lineWidth = 0.1;
+    TRACKS.forEach(tz => [-GAUGE / 2, GAUGE / 2].forEach(o => {
+      g.beginPath();
+      let pen = false;   // 切れ目のところは線を途切れさせる
+      line(tz + o).forEach(([x, z], i) => {
+        if (gapAt(tz, sv[i])) { pen = false; return; }
+        pen ? g.lineTo(x, z) : g.moveTo(x, z);
+        pen = true;
+      });
+      g.stroke();
+    }));
+
+    // ジャンプ台（踏み切り側の端を濃い色の線で示す）
+    ramps.forEach(r => {
+      if (r.s + RAMP_LEN < s0 || r.s > s1) return;
+      const a = pathAt(r.s), b = pathAt(r.s + RAMP_LEN);
+      const pa = local(offsetPt(a, r.tz - RAMP_W / 2)), pb = local(offsetPt(a, r.tz + RAMP_W / 2));
+      const pc2 = local(offsetPt(b, r.tz + RAMP_W / 2)), pd = local(offsetPt(b, r.tz - RAMP_W / 2));
+      g.beginPath();
+      [pa, pb, pc2, pd].forEach(([x, z], i) => i ? g.lineTo(x, z) : g.moveTo(x, z));
+      g.closePath();
+      g.fillStyle = C.ramp;
+      g.fill();
+      g.beginPath();
+      g.moveTo(pc2[0], pc2[1]);
+      g.lineTo(pd[0], pd[1]);
+      g.strokeStyle = C['ramp-lip'];
+      g.lineWidth = 0.25;
+      g.stroke();
+    });
+
+    // ポール
+    poles.forEach(o => {
+      if (o.s < s0 || o.s > s1) return;
+      const [x, z] = local(offsetPt(pathAt(o.s), o.lat));
+      dot(x, z, 0.3, C.pole);
+    });
+    // ポイント（空中のものは白い縁取りの数で高さを表す：空中1は1重、空中2は2重）
+    items.forEach(o => {
+      if (o.taken || o.s < s0 || o.s > s1) return;
+      const [x, z] = local(offsetPt(pathAt(o.s), o.lat));
+      for (let i = o.level; i > 0; i--) dot(x, z, 0.38 + i * 0.14, i % 2 ? '#fff' : C['item' + o.level]);
+      dot(x, z, 0.38, C['item' + o.level]);
+    });
+
+    // 電車（屋根の上から見た形）。前後の位置から決まる位置と向きで描く。飛んでいる間は高さのぶん大きく見せる
+    g.translate(pose.mx, pose.mz);
+    g.rotate(pose.ma);
+    const airScale = 1 + pose.air * 0.07;
+    g.scale(airScale, airScale);
+    rrect(0, 0, CAR_LEN, CAR_W, 0.25, C.car);
+    AC_X.forEach(x => {                    // 冷房装置と送風口
+      rrect(x, 0, 1.0, 0.95, 0.06, C.ac);
+      [-0.25, 0.25].forEach(dx => dot(x + dx, 0, 0.17, C.dark));
+    });
+    rrect(PANTA_X, 0, 0.72, 0.6, 0.04, C.dark); // パンタグラフの台枠と舟
+    g.fillStyle = C.dark;
+    [0.07, 0.17].forEach(dx => g.fillRect(PANTA_X + dx - 0.02, -0.56, 0.04, 1.12));
+    [-1, 1].forEach(sz => {                 // 前照灯と尾灯
+      dot(CAR_LEN / 2 + 0.02, sz * 0.45, 0.07, C.head);
+      dot(-CAR_LEN / 2 - 0.02, sz * 0.69, 0.06, C.tail);
+    });
+    g.restore();
+  }
+
+  // ---------- 2D表示での操作（前と後ろを別々の指で掴み、横へ動かす） ----------
+  const holds = new Map();   // pointerId → { end:'front'|'rear', off:掴んだ点と台車の横位置の差 }
+  const toMap = e => {
+    const r = mapCv.getBoundingClientRect();
+    return { x:-(e.clientY - r.top - MH / 2) / MS, z:(e.clientX - r.left - MW / 2) / MS };
+  };
+  mapCv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (mode !== 'playing') return;
+    const p = toMap(e), a = pose.ma;
+    // 電車から見た位置に直して、車体（指で掴みやすいよう少し広め）に触れたかを見る
+    const dx = p.x - pose.mx, dz = p.z - pose.mz;
+    const lx =  dx * Math.cos(a) + dz * Math.sin(a);
+    const lz = -dx * Math.sin(a) + dz * Math.cos(a);
+    const m = GRAB_PX / MS;
+    if (Math.abs(lx) > CAR_LEN / 2 + m || Math.abs(lz) > CAR_W / 2 + m) return;
+    const end = lx >= 0 ? 'front' : 'rear';          // 前半分なら前、後ろ半分なら後ろ
+    for (const h of holds.values()) if (h.end === end) return;  // すでに別の指が掴んでいる
+    mapCv.setPointerCapture(e.pointerId);
+    holds.set(e.pointerId, { end, off:moves[end].to - p.z });
+  });
+  mapCv.addEventListener('pointermove', e => {
+    const h = holds.get(e.pointerId);
+    if (!h || mode !== 'playing') return;
+    setTarget(h.end, nearestTrack(toMap(e).z + h.off));  // 指にいちばん近い線路へ、S字を描いて移る
+  });
+  const release = e => holds.delete(e.pointerId);
+  mapCv.addEventListener('pointerup', release);
+  mapCv.addEventListener('pointercancel', release);
+
+  // ---------- スワイプ操作（2D表示をオフにしたとき。触れた位置に近いほうの先端＝前か後ろを動かす） ----------
+  const swipes = new Map();  // pointerId → { end:'front'|'rear', x0:触れた横位置, i0:触れたときの行き先の線路の番号 }
+  const root = $('wrap');
+  // 前と後ろの台車を画面上の位置に直し、触れた点に近いほうを選ぶ
+  const scrPt = V(0, 0, 0);
+  function toScreen(obj){
+    const r = renderer.domElement.getBoundingClientRect();
+    obj.getWorldPosition(scrPt).project(camera);
+    return { x:r.left + (scrPt.x + 1) / 2 * r.width, y:r.top + (1 - scrPt.y) / 2 * r.height };
+  }
+  function nearerEnd(x, y){
+    const f = toScreen(bogieF), b = toScreen(bogieR);
+    return Math.hypot(f.x - x, f.y - y) <= Math.hypot(b.x - x, b.y - y) ? 'front' : 'rear';
+  }
+  if (!SHOW_MAP) {
+    root.classList.add('no-map');
+    root.addEventListener('pointerdown', e => {
+      if (mode !== 'playing' || e.target.closest('button, #menu, #pad')) return;
+      e.preventDefault();
+      const end = nearerEnd(e.clientX, e.clientY);
+      for (const [id, s] of swipes) if (s.end === end) swipes.delete(id);   // 同じ側は新しい指を優先
+      root.setPointerCapture(e.pointerId);
+      swipes.set(e.pointerId, { end, x0:e.clientX, i0:TRACKS.indexOf(moves[end].to) });
+    });
+    root.addEventListener('pointermove', e => {
+      const s = swipes.get(e.pointerId);
+      if (!s || mode !== 'playing') return;
+      // 横に動かした量に応じて線路を移る（戻せば戻る）。右へスワイプで右の線路へ
+      const i = Math.max(0, Math.min(TRACKS.length - 1, s.i0 + Math.trunc((e.clientX - s.x0) / SWIPE_PX)));
+      setTarget(s.end, TRACKS[i]);
+    });
+    const endSwipe = e => swipes.delete(e.pointerId);
+    root.addEventListener('pointerup', endSwipe);
+    root.addEventListener('pointercancel', endSwipe);
+  }
+
+  // ---------- 画面サイズ ----------
+  // 3D表示の縦横比はCSSで固定しているので、どの画面でも同じ映り方になる（大きさだけが変わる）
+  const camTarget = V(...CAM_TARGET), camOffset = V(...CAM_OFFSET);
+  const VIEW_RATIO = 2 / 3;   // これより横長の画面では、縦に映る範囲をこの縦横比のときと同じにする
+  const H_FOV = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(55 / 2)) * 5 / 6);  // 横の画角（これまでの映り方に合わせた値）
+  // 電車の位置から、カメラの向き camH を基準にした前後・左右のずれで置く
+  const camAt = (o, out) => out.set(
+    pose.x + Math.cos(camH) * o.x - Math.sin(camH) * o.z,
+    o.y,
+    pose.z + Math.sin(camH) * o.x + Math.cos(camH) * o.z);
+  const camLook = V(0, 0, 0), camOff = V(0, 0, 0);
+  function placeCamera(){
+    camAt(camTarget, camLook);
+    camAt(camOff.copy(camTarget).add(camOffset), camera.position);
+    camLook.y += camLift;
+    camera.position.y += camLift;
+    // 着地の衝撃でカメラを揺らす
+    if (shake > 0.001) {
+      camera.position.x += (Math.random() * 2 - 1) * shake * 0.4;
+      camera.position.y += (Math.random() * 2 - 1) * shake * 0.6;
+      camera.position.z += (Math.random() * 2 - 1) * shake * 0.4;
+    }
+    camera.lookAt(camLook);
+  }
+  function resize(){
+    const W = wrap.clientWidth, H = wrap.clientHeight;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(W, H, false);
+    camera.aspect = W / H;
+    // 縦長の画面では横に映る範囲をそろえて、縦に広く映す。横長の画面では縦横比2:3のときの縦の範囲をそろえて、横に広く映す
+    camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(H_FOV / 2) / Math.min(camera.aspect, VIEW_RATIO)));
+    camera.updateProjectionMatrix();
+    placeCamera();
+    if (SHOW_MAP) resizeMap();
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  // ---------- 効果音（Web Audio で合成） ----------
+  // 音声ファイルは使わず、発振器とノイズを組み合わせて作る。ブラウザの自動再生制限があるので、最初の操作で鳴らせるようにする
+  const SE_VOLUME = 0.5;       // 全体の音量
+  const RAIL_JOINT = 25;       // レールの継ぎ目の間隔（車輪が通るたびに「タタン」と鳴る）
+  let actx = null, master = null, noiseBuf = null, soundOn = true;
+  function audioCtx(){
+    if (actx) return actx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    actx = new AC();
+    master = actx.createGain();
+    master.gain.value = SE_VOLUME;
+    master.connect(actx.destination);
+    // 1秒ぶんのホワイトノイズ（風切り音・衝撃音の元）
+    noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return actx;
+  }
+  const unlock = () => { const a = audioCtx(); if (a && a.state !== 'running') a.resume(); };
+  ['pointerdown', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, unlock, true));
+  const ready = () => soundOn && actx && actx.state === 'running';
+
+  // 音の高さが f0 から f1 へ変わる短い音
+  function tone(type, f0, f1, dur, vol, delay = 0){
+    if (!ready()) return;
+    const t = actx.currentTime + delay, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(master);
+    o.start(t);
+    o.stop(t + dur + 0.02);
+  }
+  // フィルターを通したノイズ（filter の通す高さが f0 から f1 へ変わる）
+  function noise(filter, f0, f1, dur, vol, delay = 0, q = 1){
+    if (!ready()) return;
+    const t = actx.currentTime + delay, src = actx.createBufferSource(), bq = actx.createBiquadFilter(), g = actx.createGain();
+    src.buffer = noiseBuf;
+    bq.type = filter;
+    bq.Q.value = q;
+    bq.frequency.setValueAtTime(f0, t);
+    bq.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(bq).connect(g).connect(master);
+    src.start(t, Math.random() * 0.5);
+    src.stop(t + dur + 0.02);
+  }
+  const se = {
+    // 線路を移り始める：ヒュッという風切り音
+    hop(){ noise('bandpass', 700, 2600, 0.18, 0.28, 0, 1.5); },
+    // 線路に着地：ドンという低い音と、車輪とレールのガチャッという金属音
+    land(){
+      tone('sine', 150, 55, 0.14, 0.55);
+      noise('highpass', 3500, 2500, 0.06, 0.18);
+      tone('square', 950, 720, 0.06, 0.05, 0.01);
+    },
+    // ジャンプ台で踏み切る：上がっていく風切り音（回転するときは長め）
+    launch(spin){
+      noise('bandpass', 400, 3200, spin ? 0.45 : 0.35, 0.38, 0, 1.2);
+      tone('sawtooth', 180, 620, 0.25, 0.07);
+    },
+    // ジャンプから着地：重いドスンという音と、長めの金属音
+    bigLand(){
+      tone('sine', 115, 38, 0.3, 0.85);
+      noise('lowpass', 1400, 300, 0.28, 0.45);
+      tone('square', 520, 470, 0.16, 0.06, 0.01);
+      tone('square', 780, 700, 0.14, 0.05, 0.02);
+    },
+    // ポイントを取る：キラッという2音（空中のものほど高い音）
+    point(level){
+      const base = [880, 1047, 1319][level];
+      tone('triangle', base, base, 0.08, 0.22);
+      tone('triangle', base * 1.5, base * 1.5, 0.14, 0.2, 0.06);
+    },
+    // 対向列車の警笛：プァーンという2つの音の和音
+    horn(){
+      tone('sawtooth', 330, 322, 0.7, 0.09);
+      tone('sawtooth', 415, 405, 0.7, 0.08);
+    },
+    // 脱線・衝突：ガシャーンという崩れる音
+    crash(){
+      noise('lowpass', 3000, 250, 0.9, 0.75);
+      tone('sawtooth', 320, 40, 0.6, 0.22);
+      [0, 0.09, 0.2, 0.33].forEach((d, i) => tone('square', 600 + i * 170, 420, 0.12, 0.06, d));
+    },
+    // レールの継ぎ目を車輪が通る音
+    clack(){
+      noise('bandpass', 1600, 1200, 0.035, 0.12, 0, 2);
+      tone('sine', 190, 120, 0.05, 0.14);
+    },
+  };
+  // 4つの車軸がそれぞれ継ぎ目を通るたびに鳴らす（「タタン…タタン」）。浮いている車軸は鳴らさない
+  const AXLE_OFFSETS = [BOGIE + AXLE, BOGIE - AXLE, -BOGIE + AXLE, -BOGIE - AXLE];
+  const lastJoint = AXLE_OFFSETS.map(() => null);
+  function railClacks(){
+    if (jump.on) { lastJoint.fill(null); return; }
+    AXLE_OFFSETS.forEach((o, i) => {
+      const j = Math.floor((dist + o) / RAIL_JOINT);
+      const end = o > 0 ? 'front' : 'rear';
+      if (lastJoint[i] !== null && j > lastJoint[i] && liftOf(end) < SAFE_LIFT) se.clack();
+      lastJoint[i] = j;
+    });
+  }
+  // ---------- メニュー（右上）：効果音のON/OFFと、操作ボタンの表示/非表示 ----------
+  const menuBtn = $('menu-btn'), menu = $('menu');
+  const setMenu = open => { menu.hidden = !open; menuBtn.setAttribute('aria-expanded', String(open)); };
+  ['menu-btn', 'menu'].forEach(id => $(id).addEventListener('pointerdown', e => e.stopPropagation()));
+  menuBtn.addEventListener('click', () => setMenu(menu.hidden));
+  // メニューの外を触ったら閉じる
+  document.addEventListener('pointerdown', e => { if (!menu.hidden && !e.target.closest('#menu, #menu-btn')) setMenu(false); }, true);
+  $('sound').addEventListener('click', () => {
+    soundOn = !soundOn;
+    $('sound').setAttribute('aria-pressed', String(soundOn));
+    $('sound').textContent = soundOn ? '効果音：ON' : '効果音：OFF';
+  });
+  $('pad-toggle').addEventListener('click', () => {
+    const show = $('pad').hidden;
+    $('pad').hidden = !show;
+    $('pad-toggle').setAttribute('aria-pressed', String(show));
+    $('pad-toggle').textContent = show ? '操作ボタン：表示' : '操作ボタン：非表示';
+  });
+
+  // ---------- 操作ボタン（右下）：押すたびに、前か後ろを左右の隣の線路へ移す ----------
+  $('pad').querySelectorAll('button').forEach(b => {
+    b.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (mode !== 'playing') return;
+      const end = b.dataset.end, dir = Number(b.dataset.dir);
+      const i = Math.max(0, Math.min(TRACKS.length - 1, TRACKS.indexOf(moves[end].to) + dir));
+      setTarget(end, TRACKS[i]);
+    });
+    b.addEventListener('contextmenu', e => e.preventDefault());
+  });
+
+  // ---------- 結果画面 ----------
+  function showOver(){
+    mode = 'over';
+    rb.v.set(0, 0, 0);   // 結果を出したところで電車を止める
+    rb.w.set(0, 0, 0);
+    $('final').firstChild.textContent = score;
+    if (score > best){
+      best = score;
+      try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
+    }
+    showBest();
+    $('over').hidden = false;
+    $('retry').focus();
+  }
+  // 最初からやり直す（線路・仕掛け・電車・演出をすべて初めの状態に戻す）
+  function resetGame(){
+    segs.forEach(disposeSeg);
+    segs.length = 0;
+    oncomings.forEach(o => { if (o.mesh) o.mesh.visible = false; });
+    oncomings.length = 0;
+    dist = 0;
+    speed = SPEED_START;
+    score = 0;
+    updateHud();
+    ['front', 'rear'].forEach(e => {
+      ends[e] = 0;
+      Object.assign(moves[e], { from:0, to:0, t:1, h0:0, airT:0 });
+      sag[e].x = sag[e].v = 0;
+      riding[e] = null;
+    });
+    roll.x = roll.v = 0;
+    shake = 0;
+    jump.on = false;
+    camH = 0;
+    lands.length = 0;
+    sparks.length = 0;
+    dusts.forEach(d => { d.sp.visible = false; });
+    trails.forEach(tr => { tr.pts.length = 0; tr.emitting = false; });
+    holds.clear();
+    lastJoint.fill(null);
+    initTrack();
+    mode = 'playing';
+    crashT = 0;
+    $('over').hidden = true;
+    update(0);
+  }
+  // チュートリアル：開くたび（リロードのたび）に最初に出す。ブラウザには何も保存しない
+  // 1. 前をスワイプ → 2. 後ろをスワイプ → 3. 説明を読んで「はじめる」
+  const TUT_TEXT = [
+    '<em>前</em>をスワイプ',
+    '<em>後ろ</em>をスワイプ',
+    'ポイントを集めよう！',
+  ];
+  let tutStep = 0, tutFrom = null;
+  function setTutStep(n){
+    tutStep = n;
+    $('tutorial-text').innerHTML = TUT_TEXT[n];
+    $('tutorial-start').hidden = n < 2;
+    tutFrom = { front:moves.front.to, rear:moves.rear.to };
+  }
+  function updateTutorial(){
+    // 操作できたら次へ進む
+    if (tutStep === 0 && moves.front.to !== tutFrom.front) setTutStep(1);
+    else if (tutStep === 1 && moves.rear.to !== tutFrom.rear) setTutStep(2);
+    // 触る場所（前か後ろの台車）に丸を出す
+    const mark = $('tut-mark');
+    mark.hidden = tutStep > 1;
+    if (!mark.hidden) {
+      const p = toScreen(tutStep === 0 ? bogieF : bogieR), r = root.getBoundingClientRect();
+      // 画面の端からはみ出さないようにする（はみ出した側でも、近いほうの台車が選ばれる）
+      mark.style.left = Math.max(56, Math.min(r.width - 56, p.x - r.left)) + 'px';
+      mark.style.top = Math.max(150, Math.min(r.height - 56, p.y - r.top)) + 'px';
+    }
+  }
+  setTutStep(0);
+  $('tutorial-start').addEventListener('pointerdown', e => e.stopPropagation());
+  $('tutorial-start').addEventListener('click', () => {
+    tutStep = -1;
+    $('tutorial').hidden = true;
+    $('tut-mark').hidden = true;
+  });
+  $('retry').addEventListener('pointerdown', e => e.stopPropagation());
+  $('retry').addEventListener('click', resetGame);
+
+  // 共有：文面を共有シートへ。使えない環境では文面をコピーする
+  const shareText = () => `${score}ポイント獲得！\n${location.href.split(/[?#]/)[0]}\n#アクロバティックトレイン`;
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    // 1) 共有シート（スマホなど）
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 2) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+
+  // ---------- ゲームループ ----------
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.max(0, Math.min((now - last) / 1000, 1 / 30));  // タブ復帰時の大ジャンプ防止（最初のフレームで負にならないように）
+    last = now;
+    // チュートリアルの間は、電車は進まずに止まったまま。線路を移る操作だけ試せる
+    if (tutStep >= 0) {
+      stepMoves(dt);
+      update(dt);
+      updateTrails(now / 1000);
+      updateEffects(dt);   // 着地の揺れ（カメラの揺れ・車体の沈み）も、ここで収める
+      updateTutorial();
+      renderer.render(scene, camera);
+      requestAnimationFrame(loop);
+      return;
+    }
+    if (mode === 'playing') {
+      speed = Math.min(SPEED_MAX, speed + SPEED_ACCEL * dt);   // 少しずつ速くなる
+      dist += speed * dt;
+      blurSpan = speed * dt;
+    } else {
+      // ぶつかったあとは電車だけが転がる（世界の進み具合は updateCrashed で電車に合わせる）
+      blurSpan = 0;
+      crashT += dt;
+      if (mode === 'crash' && crashT >= CRASH_MIN_TIME && (settled() || crashT >= CRASH_MAX_TIME)) showOver();
+    }
+    if (mode === 'playing') {
+      stepMoves(dt);
+      updateOncoming(dt);
+      railClacks();
+    }
+    maintainTrack();
+    update(dt);
+    updateTrails(now / 1000);
+    updateWinds(dt);
+    updateEffects(dt);
+    bg.position.set(camera.position.x, 0, camera.position.z);   // 背景はカメラに付いて動かす
+    renderer.render(scene, camera);
+    if (SHOW_MAP) drawMap();
+    requestAnimationFrame(loop);
+  }
+  update(0);
+  requestAnimationFrame(loop);
+
+  // ---------- iOS 対策 ----------
+  // iPhone(Safari)で長押しにより文字選択・拡大鏡・長押しメニューが出るのを防ぐ
+  [renderer.domElement, mapCv].forEach(cv => {
+    cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
+    cv.addEventListener('contextmenu', e => e.preventDefault());
+  });
+  document.addEventListener('touchmove', e => { if (holds.size || swipes.size) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => e.preventDefault());
+
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350 && !(e.target.closest && e.target.closest('button'))) e.preventDefault();   // ボタンの連打は通す
+    lastTouchEnd = now;
+  }, { passive:false });
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

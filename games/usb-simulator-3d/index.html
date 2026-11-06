@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/usb-simulator-3d/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>USBシミュレーター3D</title>
+<meta name="description" content="USBを刺されないように粘る">
+<style>
+  :root{
+    --bg:#cfc7bb; --fg:#222; --sub:#777; --line:#999; --panel:#fff;
+    --howto-bg:#fff; --howto-fg:#222;
+    --alu:#c9ccd1;        /* ノートPCのアルミ */
+    --alu-dark:#9da1a8;   /* タッチパッド */
+    --keycap:#1e1f22;     /* キー */
+    --kbwell:#2c2d31;     /* キーボードの周り */
+    --bezel:#0e0f11;      /* 画面のふち */
+    --hinge:#3a3b3f;      /* ヒンジ */
+    --port:#26272a;       /* 差し込み口まわりの樹脂 */
+    --metal:#d6d9de;      /* USBの金属 */
+    --hole:#0c0c0d;       /* 穴の奥 */
+    --tongue:#1f5fd1;     /* USB 3.0 の青い樹脂 */
+    --pin:#d9b24a;        /* 端子 */
+    --plug:#2b2c2f;       /* プラグ本体 */
+    --icon:#e9e9e9;       /* 差し込み口横の向きの印（USBを連想させる記号） */
+    --icon-plug:#8d9096;  /* プラグの向きの印（USBを連想させる記号の刻印） */
+    --cable:#222326;      /* ケーブル */
+    --skin:#d19470;       /* 肌 */
+    --sleeve:#41608f;     /* 袖 */
+    --wood1:#6b5745;      /* 机の木目（明）。白っぽくせず、銀色のPCが浮いて見える落ち着いた中間色 */
+    --wood2:#4f4034;      /* 机の木目（暗） */
+    --wall1:#3b6fd6;      /* 壁紙の色1 */
+    --wall2:#8a5bd8;      /* 壁紙の色2 */
+    --wall3:#f2a65e;      /* 壁紙の色3 */
+    --shade:rgba(0,0,0,.45);
+    --accent:#2b6be0;
+    --gold:#ffc83d;       /* 自己ベスト更新 */
+    --gold-fg:#5a3a00;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #game{position:fixed;inset:0}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #score{position:absolute;left:0;right:0;top:0;padding-top:calc(env(safe-area-inset-top,0px) + 16px);text-align:center;font-size:48px;font-weight:800;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5);pointer-events:none}
+  .hidden{display:none !important}
+  #score.stuck{color:#ff6b57}
+  #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+  #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--shade);touch-action:none;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+  #card{width:min(100%,320px);background:var(--panel);border-radius:22px;padding:28px 20px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 14px 44px rgba(0,0,0,.35);animation:card-in .38s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes card-in{from{transform:translateY(24px) scale(.8);opacity:0}to{transform:none;opacity:1}}
+  #newbest{background:var(--gold);color:var(--gold-fg);font-weight:800;font-size:15px;padding:6px 16px;border-radius:999px;animation:badge-in .5s .15s cubic-bezier(.2,1.8,.4,1) both}
+  @keyframes badge-in{from{transform:scale(0) rotate(-12deg)}to{transform:none}}
+  #res{font-size:68px;font-weight:800;line-height:1.05;color:var(--fg);font-variant-numeric:tabular-nums;letter-spacing:-1px}
+  #best{font-size:16px;font-weight:700;color:var(--sub);margin-bottom:8px}
+  #over button,#share-close{width:100%;min-height:56px;font-size:20px;font-weight:700;border:0;border-radius:14px;background:#eceef1;color:var(--fg);font-family:inherit;touch-action:manipulation;cursor:pointer}
+  #over #retry{background:var(--accent);color:#fff}
+  button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+  #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--shade)}
+  #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;background:var(--panel);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+  #share-img{display:block;width:100%;height:auto}
+  #share-text{margin:0;white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="score" role="timer">0.0秒</div>
+  <div id="flash" aria-hidden="true"></div>
+  <div id="over" class="hidden">
+    <div id="card">
+      <div id="newbest" class="hidden">ベスト更新</div>
+      <div id="res" aria-live="polite"></div>
+      <div id="best"></div>
+      <button id="retry" type="button">もう一回</button>
+      <button id="share" type="button">共有</button>
+    </div>
+  </div>
+  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+    <div class="panel">
+      <img id="share-img" alt="共有される結果画像">
+      <p id="share-text"></p>
+      <button id="share-close" type="button">閉じる</button>
+    </div>
+  </div>
+  <section class="howto" data-pos="top-left" hidden>
+    <h2>遊び方</h2>
+    <p>ノートPCの差し込み口を上下にひっくり返して、USBプラグを刺されないように粘るゲームです。ページを開くとすぐに、手がプラグを持って近づいてきます。向きが合った状態で押し込まれると刺さって終わりで、刺されずにいた秒数がスコアです。自己ベストはこのブラウザに保存されます。</p>
+    <h2>操作</h2>
+    <p>画面をタップするたびに差し込み口がひっくり返ります。PC ではクリックのほか、スペースキーや矢印キーでも回せます。</p>
+    <h2>コツ</h2>
+    <p>手は差し込み口の向きを少し遅れて読み取り、プラグをひねって合わせてきます。読み取りとひねりは60秒かけて速くなります。ひねっている途中のプラグは刺さりません。押し込まれる直前に回してかわすと演出が入り、一瞬だけ時間がゆっくりになります。途中で戻すフェイントや、一度離してから刺しに来る動きにも注意してください。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+
+  // ---------- 定数 ----------
+  // 遊び
+  const FIRST_DELAY = 0;       // 開始から手が出てくるまで（秒）。始まった瞬間から画面に手がいる
+  const APPROACH_TIME = 1.6;   // 手が差し込み口まで近づく時間（秒）。着いたらあとは引っ込まずに刺そうとし続ける
+  const INSERT_TIME = 1.3;     // 刺さってから結果が出るまで（秒）
+  const BUMP_TIME = 0.14;      // 押し込もうとして弾かれる動きの時間（秒）
+  const BUMP_DIST = 0.3;       // 弾かれて手前に戻る距離
+  const REACT_JITTER = 0.25;   // 手が気づくまでの時間のばらつき（±割合。ひねるたびに選び直す）
+  const RAMP = 60;             // この秒数たつと最高難度
+  // 難易度：開始時と RAMP 秒以降の値。その間はなめらかにつなぐ
+  // feint〜pause：手が向きを合わせるときや、手が空いたときに、その動きを選ぶ確率。guess は1秒あたりの確率
+  const DIFF = {
+    //      気づくまで(秒) ひねる時間(秒) フェイント  素早く  読み(/秒) 一旦離す  グイグイ  間を置く
+    easy: { react: 0.55, turn: 0.36,   feint: 0.08, quick: 0.00, guess: 0.03, pull: 0.10, jab: 0.12, pause: 0.12 },
+    hard: { react: 0.22, turn: 0.17,   feint: 0.30, quick: 0.25, guess: 0.35, pull: 0.18, jab: 0.18, pause: 0.20 },
+  };
+  // 演出
+  const PORT_SPRING = 1600, PORT_DAMP = 55;   // 差し込み口の回転のばね（固さ・減衰）。少し行き過ぎてから止まる
+  const SHAKE_DECAY = 10;        // 画面の揺れが収まる速さ（大きいほど早く収まる）
+  const SHAKE_BUMP = 0.05, SHAKE_NEAR = 0.12, SHAKE_INSERT = 0.32;   // 画面の揺れの大きさ（弾かれた・ギリギリ・刺さった）
+  const SPARKS_BUMP = 10, SPARKS_NEAR = 26, SPARKS_INSERT = 70;       // 飛ぶ火花の数
+  const SPARK_SPEED = 6;         // 火花の速さ
+  const SPARK_GRAVITY = 14, SPARK_DRAG = 3;   // 火花にかかる重力と空気抵抗
+  const NEAR_WINDOW = 0.2;       // 手が刺しに来る直前のこの秒数以内にかわすと「ギリギリ」の演出
+  const HITSTOP_TIME = 0.16;     // ギリギリのとき時間がゆっくりになる長さ（実時間・秒）
+  const HITSTOP_SCALE = 0.12;    // そのときの時間の進み方（1 = ふつう）
+  const INSERT_SLIDE = 0.1;      // 刺さるときプラグが奥まで入る時間（秒）
+  const INSERT_DOLLY = 0.7;      // 刺さったあとカメラが寄る時間（秒）
+  const DOLLY_AMOUNT = 0.45;     // そのときカメラが差し込み口に近づく割合
+  const FLASH_NEAR = 0.18, FLASH_INSERT = 0.75;   // 画面が白く光る強さ（0〜1）
+  const FLASH_DECAY = 6;         // 画面の白さが消える速さ
+  const MILESTONE = 10;          // この秒数ごとに時間の表示を弾ませる
+  // 手の動きのバリエーション
+  const QUICK_RATE = 0.6;      // 素早いひねり：いつものひねる時間に掛ける割合
+  const TRACK_FROM = 0.6;      // 近づく途中、ここまで来てから（割合）向きを合わせに来る
+  const FEINT_MIN = 0.35, FEINT_MAX = 0.6;    // フェイント：ひねりのどこまで進んでから戻すか（割合）
+  const PULL_OUT = 0.22, PULL_IN = 0.16;      // 一旦離す：手を引く時間・戻って刺しに来る時間（秒）
+  const PULL_MIN = 1.2, PULL_MAX = 2.6;       // 一旦離す：手を引く距離
+  const PULL_HOLD_MIN = 0.25, PULL_HOLD_MAX = 0.8;   // 一旦離す：離れたまま様子を見る時間（秒）。この間も向きを変えることがある
+  const JAB_MIN = 2, JAB_MAX = 3;             // グイグイ：押し付ける回数
+  const JAB_GAP = 0.1;         // グイグイ：押し込んでから次に引くまでの間（秒）
+  const THRUST_BACK = 0.13;    // 押し込む前に、手を引く時間（秒）
+  const THRUST_IN = 0.07;      // 引いたところから一気に押し込む時間（秒）
+  const THRUST_DIST = 0.75;    // 押し込む前に手を引く距離
+  const JAB_DIST = 0.45;       // グイグイのときに手を引く距離
+  const PAUSE_MIN = 0.35, PAUSE_MAX = 1.0;    // 間を置く：何もしない時間（秒）
+  // 手の出てき方（差し込み口の正面＝右側から来る）
+  const START_Z = 3.4;         // 出てくる位置の差し込み口からの距離（最初から画面に映る近さ）。差し込み口の正面からまっすぐ近づく
+  const DIR_MIN = 100, DIR_MAX = 185;   // 出てくる方向（度。0 = 手前、90 = 上、180 = 奥）。カメラ側からは来ない
+  const CONTACT_Z = 0.03;      // 差し込み口に当たっているときのプラグ先端の位置
+  const INSERT_Z = -0.55;      // 刺さりきったときのプラグ先端の位置
+  // USB（単位：穴の幅 1.4 ≒ 実物の12mm）
+  const HOLE_W = 1.4, HOLE_H = 0.52;     // 差し込み口の穴
+  const MOD_W = 2.45, MOD_H = 0.9;      // 差し込み口まわりの樹脂の板の幅と高さ（向きの印もここ）
+  const RECEPT_W = 1.52, RECEPT_H = 0.62, RECEPT_D = 0.72;   // 差し込み口の金属部分の外形と奥行き
+  const RECESS_W = 2.62, RECESS_H = 1.06; // 本体側面の、差し込み口がはまっている穴
+  const SHELL_W = 1.34, SHELL_H = 0.46, SHELL_LEN = 0.6;     // プラグの金属部分
+  const BODY_W = 1.62, BODY_H = 0.74, BODY_LEN = 1.25;       // プラグ本体
+  // ノートPC（差し込み口は右側面。x が手前、y が上、z が右）
+  const PC_FRONT = 2.2;        // 差し込み口から手前の縁まで
+  const PC_BACK = 5.2;         // 差し込み口から奥の縁（ヒンジ）まで
+  const PC_THICK = 1.15;       // 本体の厚み
+  const PC_WIDTH = 10.5;       // 本体の左右の幅
+  const PC_ROUND = 0.4;        // 本体の角の丸み
+  const LID_H = 6.6;           // 画面の高さ
+  const LID_T = 0.2;           // 画面の厚み
+  const LID_TILT = 16;         // 画面の後ろへの傾き（度）
+  const SMOOTH_ANGLE = 50;     // この角度（度）より緩く曲がる面どうしは、なめらかにつなげて見せる
+  const FEET = 0.06;           // 机から本体の底までのすき間（ゴム足）
+  // カメラ
+  const CAM_FOV = 32;          // 縦の画角（度）
+  const CAM_DIR = [0.75, 0.8, 1.05];        // 見ている向き（見る点から見たカメラの方向）。手前右上から見る
+  const CAM_TARGET = [-0.4, 0.5, -0.9];  // カメラが見る点（差し込み口の近く）
+  const CAM_MIN_DIST = 11;     // カメラの最小距離
+  const VIEW_HALF = 3.0;       // 横幅にこれだけは必ず収める（縦長の画面でカメラを引く量）
+  const BEST_KEY = 'usbSimulator3d.best';   // 自己ベストの保存先（localStorage）
+  const SHARE_INSTANT = 0.5;   // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+
+  const mod = (a, n) => ((a % n) + n) % n;
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const rad = d => d * Math.PI / 180;
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+
+  // ---------- 色（CSS変数から読む） ----------
+  const css = getComputedStyle(document.documentElement);
+  const colStr = k => css.getPropertyValue('--' + k).trim();
+  const col = k => new THREE.Color(colStr(k)).convertSRGBToLinear();   // 描画は線形の色で計算する
+  const rgb = k => { const c = new THREE.Color(colStr(k)); return [c.r * 255, c.g * 255, c.b * 255]; };
+
+  // ---------- three.js ----------
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  $('game').prepend(renderer.domElement);
+  const cv = renderer.domElement;
+
+  const scene = new THREE.Scene();
+  scene.background = col('bg');
+  scene.fog = new THREE.Fog(scene.background, 40, 90);
+  const camera = new THREE.PerspectiveCamera(CAM_FOV, 1, 0.5, 200);
+
+  // 映り込み用の部屋（明るい窓と照明のある箱）を一度だけ描いて環境マップにする
+  {
+    const env = new THREE.Scene();
+    const room = new THREE.Mesh(new THREE.BoxGeometry(40, 20, 40), new THREE.MeshBasicMaterial({ color: 0x8a8278, side: THREE.BackSide }));
+    room.position.y = 6;
+    env.add(room);
+    const panel = (w, h, c, x, y, z, ry, rx) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide }));
+      m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, 0);
+      env.add(m);
+    };
+    panel(16, 8, 0xffffff, 0, 15.9, 0, 0, Math.PI / 2);   // 天井の照明
+    panel(14, 9, 0xe8f0ff, 19.9, 7, 4, -Math.PI / 2);     // 窓
+    panel(10, 5, 0xfff1dc, -6, 6, 19.9, Math.PI);         // 奥の明かり
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshBasicMaterial({ color: 0x5e4630 }));
+    floor.rotation.x = -Math.PI / 2; floor.position.y = -3.9;
+    env.add(floor);
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(env, 0.04).texture;
+    pmrem.dispose();
+  }
+
+  // 照明：上からの主光（影を落とす）＋空と床の照り返し＋左からの弱い光
+  scene.add(new THREE.HemisphereLight(0xfff6ea, 0x6b4a2e, 0.45));
+  const sun = new THREE.DirectionalLight(0xfff3e2, 1.6);
+  sun.position.set(7, 15, 9);
+  sun.target.position.set(-1.5, 0, -3);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 50 });
+  sun.shadow.bias = -0.0004;
+  sun.shadow.normalBias = 0.02;
+  scene.add(sun, sun.target);
+  const fill = new THREE.DirectionalLight(0xdfe8ff, 0.35);
+  fill.position.set(-8, 5, 6);
+  scene.add(fill);
+
+  // ---------- テクスチャ（1画素ずつ計算して作る） ----------
+  // なめらかなノイズ（格子点の乱数を補間）
+  const hash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+  // px, py ごとに繰り返す（机のテクスチャを並べたときに継ぎ目が出ないように）
+  function noise(x, y, px = 1e9, py = 1e9){
+    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+    const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+    const hx = i => mod(i, px), hy = i => mod(i, py);
+    return lerp(lerp(hash(hx(ix), hy(iy)), hash(hx(ix + 1), hy(iy)), ux),
+                lerp(hash(hx(ix), hy(iy + 1)), hash(hx(ix + 1), hy(iy + 1)), ux), uy);
+  }
+  function canvasTex(S, T, fn){
+    const c = document.createElement('canvas'); c.width = S; c.height = T;
+    const g = c.getContext('2d'), img = g.createImageData(S, T), d = img.data;
+    for (let y = 0; y < T; y++) for (let x = 0; x < S; x++){
+      const k = (y * S + x) * 4, p = fn(x / S, y / T);
+      d[k] = p[0]; d[k + 1] = p[1]; d[k + 2] = p[2]; d[k + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c);
+    t.encoding = THREE.sRGBEncoding;
+    t.anisotropy = 4;
+    return t;
+  }
+  // 机の木目：板を4枚並べ、板ごとに木目をずらす。細い筋と板の継ぎ目を入れる（どれも薄めにして控えめに）
+  const W1 = rgb('wood1'), W2 = rgb('wood2');
+  const PLANKS = 4;
+  const woodTex = canvasTex(1024, 1024, (u, v) => {
+    const pv = v * PLANKS, plank = Math.floor(pv), fv = pv - plank;
+    const uo = u + hash(plank, 7);   // 板ごとの木目のずれ
+    // 板目：ゆるく曲がった年輪（太さが不ぞろい）
+    const warp = noise(uo * 2, plank * 3.1, 2, 1e9) * 1.4 + noise(uo * 5, fv * 2 + plank, 5, 1e9) * 0.5;
+    const ring = Math.sin((fv * 3.2 + warp) * Math.PI * 2) * 0.5 + 0.5;
+    const rings = Math.pow(ring, 3) * (0.6 + noise(uo * 8, fv * 4 + plank * 9, 8, 1e9) * 0.6);
+    // 繊維：板の向きに長く伸びた細い筋
+    const fiber = noise(uo * 6, fv * 260 + plank * 37, 6, 1e9);
+    let t = 0.35 + rings * 0.18 + (fiber - 0.5) * 0.14 + (hash(plank, 3) - 0.5) * 0.08;
+    if (fv < 0.003 || fv > 0.997) t = 0.85;   // 板の継ぎ目
+    return [0, 1, 2].map(i => Math.max(0, Math.min(255, lerp(W1[i], W2[i], t))));
+  });
+  woodTex.wrapS = woodTex.wrapT = THREE.RepeatWrapping;
+  woodTex.repeat.set(4, 4);
+  // 画面の壁紙：3色がゆるやかに混ざる
+  const P1 = rgb('wall1'), P2 = rgb('wall2'), P3 = rgb('wall3');
+  const wallTex = canvasTex(320, 200, (u, v) => {
+    const a = 0.5 + 0.5 * Math.sin(u * 3.2 + v * 2.1 + Math.sin(v * 4.0) * 0.8);
+    const b = Math.max(0, Math.sin(u * 2.2 - v * 3.4 + 1.6)) ** 2;
+    return [0, 1, 2].map(i => lerp(lerp(P1[i], P2[i], a), P3[i], b * 0.8));
+  });
+  // 向きの印：USBを連想させるオリジナルの記号（矢印の付いた軸から、先に丸の付いた枝が左に1本だけ出る。下端も丸）。
+  // 本物のUSBマーク（三つ叉）の写しにならないよう、枝は1本だけにしてある
+  function usbLikeTex(color){
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S;
+    const g = c.getContext('2d');
+    g.strokeStyle = g.fillStyle = color;
+    g.lineWidth = 16; g.lineCap = 'round'; g.lineJoin = 'round';
+    const cx = 140;
+    g.beginPath(); g.moveTo(cx, 204); g.lineTo(cx, 76); g.stroke();                    // 軸
+    g.beginPath(); g.moveTo(cx, 28); g.lineTo(cx - 34, 88); g.lineTo(cx + 34, 88); g.closePath(); g.fill();   // 矢印
+    g.beginPath(); g.moveTo(cx, 170); g.lineTo(cx - 62, 118); g.lineTo(cx - 62, 98); g.stroke();   // 左の枝
+    g.beginPath(); g.arc(cx - 62, 88, 19, 0, Math.PI * 2); g.fill();                 // 枝の先の丸
+    g.beginPath(); g.arc(cx, 212, 22, 0, Math.PI * 2); g.fill();                     // 下端の丸
+    const t = new THREE.CanvasTexture(c);
+    t.encoding = THREE.sRGBEncoding;
+    t.anisotropy = 4;
+    return t;
+  }
+
+  // 光の粒・輪のテクスチャ（濃さを1画素ずつ計算する。グラデーションは拡大するとノイズが出る）
+  function alphaTex(S, fn){
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++){
+      const dx = (x + 0.5) / S * 2 - 1, dy = (y + 0.5) / S * 2 - 1, k = (y * S + x) * 4;
+      d[k] = d[k + 1] = d[k + 2] = 255;
+      d[k + 3] = Math.round(255 * Math.max(0, Math.min(1, fn(Math.sqrt(dx * dx + dy * dy)))));
+    }
+    g.putImageData(img, 0, 0);
+    return new THREE.CanvasTexture(c);
+  }
+  const dotTex = alphaTex(128, r => Math.pow(Math.max(0, 1 - r * r), 3));
+  const ringTex = alphaTex(256, r => r >= 1 ? 0 : Math.exp(-Math.pow((r - 0.8) / 0.06, 2)) + 0.3 * Math.exp(-Math.pow((r - 0.65) / 0.12, 2)));
+
+  // ---------- 材質 ----------
+  const std = (k, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: col(k), roughness: 0.5, metalness: 0 }, o));
+  const M = {
+    alu: std('alu', { roughness: 0.32, metalness: 0.75 }),
+    pad: std('alu-dark', { roughness: 0.22, metalness: 0.6 }),
+    keycap: std('keycap', { roughness: 0.62 }),
+    kbwell: std('kbwell', { roughness: 0.7 }),
+    bezel: std('bezel', { roughness: 0.08 }),
+    screen: new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: wallTex, emissiveIntensity: 0.85, roughness: 0.06 }),
+    hinge: std('hinge', { roughness: 0.4, metalness: 0.5 }),
+    port: std('port', { roughness: 0.55 }),
+    metal: std('metal', { roughness: 0.2, metalness: 1 }),
+    hole: std('hole', { roughness: 0.9, side: THREE.DoubleSide }),
+    tongue: std('tongue', { roughness: 0.4 }),
+    pin: std('pin', { roughness: 0.25, metalness: 1 }),
+    plug: std('plug', { roughness: 0.42 }),
+    cable: std('cable', { roughness: 0.5 }),
+    skin: std('skin', { roughness: 0.55 }),
+    sleeve: std('sleeve', { roughness: 0.85 }),
+    desk: new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.75, metalness: 0 }),   // つやを抑えて照り返しを目立たせない
+    icon: new THREE.MeshStandardMaterial({ color: col('icon'), map: usbLikeTex('#ffffff'), transparent: true, roughness: 0.6, depthWrite: false }),
+    iconPlug: new THREE.MeshStandardMaterial({ color: col('icon-plug'), map: usbLikeTex('#ffffff'), transparent: true, roughness: 0.5, depthWrite: false }),
+  };
+
+  // ---------- 形を作る道具 ----------
+  // 角の丸い長方形（中心 cx, cy）
+  function rrect(w, h, r, cls = THREE.Shape, cx = 0, cy = 0){
+    const p = new cls(), x = cx - w / 2, y = cy - h / 2;
+    p.moveTo(x + r, y); p.lineTo(x + w - r, y); p.quadraticCurveTo(x + w, y, x + w, y + r);
+    p.lineTo(x + w, y + h - r); p.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    p.lineTo(x + r, y + h); p.quadraticCurveTo(x, y + h, x, y + h - r);
+    p.lineTo(x, y + r); p.quadraticCurveTo(x, y, x + r, y);
+    return p;
+  }
+  // 形 shape を z = z0 から奥行き depth で押し出す（bevel = 縁の丸め）
+  function extrude(shape, depth, z0, bevel = 0){
+    const g = new THREE.ExtrudeGeometry(shape, {
+      depth: Math.max(0.001, depth - bevel * 2), bevelEnabled: bevel > 0,
+      bevelThickness: bevel, bevelSize: bevel, bevelSegments: 4, curveSegments: 16,
+    });
+    g.translate(0, 0, z0 + bevel);
+    return smoothNormals(g, SMOOTH_ANGLE);
+  }
+  // 押し出した形は面ごとの法線になっていて角の丸みがカクカクに見えるので、
+  // 同じ位置にある頂点の法線を、向きの近いもの（crease 度以内）どうしで平均してなめらかにする
+  function smoothNormals(g, crease){
+    const pos = g.attributes.position, n = pos.count, nor = g.attributes.normal;
+    const cos = Math.cos(rad(crease)), faceN = new Float32Array(n * 3);
+    const a = V(0, 0, 0), b = V(0, 0, 0), c = V(0, 0, 0);
+    for (let i = 0; i < n; i += 3){
+      a.fromBufferAttribute(pos, i); b.fromBufferAttribute(pos, i + 1); c.fromBufferAttribute(pos, i + 2);
+      const f = c.sub(b).cross(a.sub(b)).normalize();
+      for (let k = 0; k < 3; k++) faceN.set([f.x, f.y, f.z], (i + k) * 3);
+    }
+    const key = i => `${Math.round(pos.getX(i) * 1e4)},${Math.round(pos.getY(i) * 1e4)},${Math.round(pos.getZ(i) * 1e4)}`;
+    const groups = new Map();
+    for (let i = 0; i < n; i++){ const k = key(i); (groups.get(k) || groups.set(k, []).get(k)).push(i); }
+    for (const list of groups.values()){
+      for (const i of list){
+        let x = 0, y = 0, z = 0;
+        for (const j of list){
+          const d = faceN[i * 3] * faceN[j * 3] + faceN[i * 3 + 1] * faceN[j * 3 + 1] + faceN[i * 3 + 2] * faceN[j * 3 + 2];
+          if (d >= cos){ x += faceN[j * 3]; y += faceN[j * 3 + 1]; z += faceN[j * 3 + 2]; }
+        }
+        const l = Math.hypot(x, y, z) || 1;
+        nor.setXYZ(i, x / l, y / l, z / l);
+      }
+    }
+    nor.needsUpdate = true;
+    return g;
+  }
+  function withHole(shape, hole){ shape.holes.push(hole); return shape; }
+  const mesh = (g, m, shadow = true) => {
+    const o = new THREE.Mesh(g, m);
+    o.castShadow = o.receiveShadow = shadow;
+    return o;
+  };
+  const at = (o, x, y, z) => { o.position.set(x, y, z); return o; };
+  function blob(rx, ry, rz, m, x, y, z){
+    const o = mesh(new THREE.SphereGeometry(1, 64, 40), m);
+    o.scale.set(rx, ry, rz);
+    return at(o, x, y, z);
+  }
+  // 面に貼る絵（+z 向きの板）
+  function decal(w, h, m, x, y, z){
+    const o = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m);
+    return at(o, x, y, z);
+  }
+
+  // ---------- 机 ----------
+  const DESK_Y = -PC_THICK / 2 - FEET;
+  const desk = mesh(new THREE.PlaneGeometry(120, 120), M.desk);
+  desk.rotation.x = -Math.PI / 2;
+  desk.position.y = DESK_Y;
+  desk.castShadow = false;
+  scene.add(desk);
+
+  // ---------- ノートPC ----------
+  const pc = new THREE.Group();
+  {
+    // 本体：右側面の形（角を丸め、差し込み口の穴をあけたもの）を左へ押し出す
+    const B = 0.05;
+    const side = withHole(
+      rrect(PC_FRONT + PC_BACK, PC_THICK, PC_ROUND, THREE.Shape, (PC_FRONT - PC_BACK) / 2, 0),
+      rrect(RECESS_W, RECESS_H, 0.14, THREE.Path));
+    pc.add(mesh(extrude(side, PC_WIDTH, -PC_WIDTH, B), M.alu));
+    const top = PC_THICK / 2 + B;
+    // 側面の通気口
+    for (let i = 0; i < 7; i++){
+      pc.add(decal(0.09, 0.42, M.hole, -3.9 + i * 0.22, 0, 0.004));
+    }
+    // キーボード：周りの黒い面と、キーを1つずつ
+    const kbBack = -PC_BACK + 0.75, kbFront = -0.9;
+    const well = new THREE.Mesh(new THREE.ShapeGeometry(rrect(kbFront - kbBack, PC_WIDTH - 1.0, 0.12)), M.kbwell);
+    well.rotation.x = -Math.PI / 2;
+    well.position.set((kbBack + kbFront) / 2, top + 0.003, -PC_WIDTH / 2);
+    well.receiveShadow = true;
+    pc.add(well);
+    const keyG = extrude(rrect(1, 1, 0.14), 0.07, 0, 0.02);
+    keyG.rotateX(-Math.PI / 2);
+    const keys = [];
+    const COLS = 15, pitchZ = (PC_WIDTH - 1.3) / COLS;
+    const rows = [0.26, 0.46, 0.46, 0.46, 0.46, 0.46];   // 奥からの各列の奥行き（いちばん奥はファンクションキーで細い）
+    let rx = kbBack + 0.12;
+    rows.forEach((depth, r) => {
+      const xc = rx + depth / 2;
+      rx += depth + 0.08;
+      if (r === rows.length - 1){
+        // いちばん手前：左右に小さいキー、真ん中にスペースキー
+        for (let c = 0; c < COLS; c++){
+          if (c >= 4 && c <= 10){ if (c === 7) keys.push([xc, (c - 7) * pitchZ, depth, pitchZ * 7 - 0.1]); continue; }
+          keys.push([xc, (c - (COLS - 1) / 2) * pitchZ, depth, pitchZ - 0.1]);
+        }
+      } else {
+        for (let c = 0; c < COLS; c++) keys.push([xc, (c - (COLS - 1) / 2) * pitchZ, depth, pitchZ - 0.1]);
+      }
+    });
+    const kb = new THREE.InstancedMesh(keyG, M.keycap, keys.length);
+    const mx = new THREE.Matrix4(), q = new THREE.Quaternion();
+    keys.forEach((k, i) => {
+      mx.compose(V(k[0], top, k[1] - PC_WIDTH / 2), q, V(k[2], 1, k[3]));
+      kb.setMatrixAt(i, mx);
+    });
+    kb.castShadow = kb.receiveShadow = true;
+    pc.add(kb);
+    // タッチパッド
+    const pad = new THREE.Mesh(new THREE.ShapeGeometry(rrect(2.0, 4.0, 0.2)), M.pad);
+    pad.rotation.x = -Math.PI / 2;
+    pad.position.set(0.55, top + 0.004, -PC_WIDTH / 2);
+    pad.receiveShadow = true;
+    pc.add(pad);
+    // ヒンジ
+    const hinge = mesh(new THREE.CylinderGeometry(0.24, 0.24, PC_WIDTH * 0.78, 48), M.hinge);
+    hinge.rotation.x = Math.PI / 2;
+    pc.add(at(hinge, -PC_BACK + 0.15, top + 0.02, -PC_WIDTH / 2));
+    // 画面（奥の縁から立ち上がり、少し後ろへ傾く）
+    const lid = new THREE.Group();
+    lid.position.set(-PC_BACK + 0.15, top + 0.05, -PC_WIDTH / 2);
+    lid.rotation.z = rad(LID_TILT);
+    const lidG = extrude(rrect(PC_WIDTH, LID_H, 0.35, THREE.Shape, 0, LID_H / 2), LID_T, -LID_T, 0.04);
+    lidG.rotateY(Math.PI / 2);   // 押し出しの向きを手前（+x）に、幅の向きを左右（z）にする
+    lid.add(mesh(lidG, M.alu));
+    const face = (shape, m, x) => {
+      const o = new THREE.Mesh(new THREE.ShapeGeometry(shape), m);
+      o.rotation.y = Math.PI / 2;
+      o.position.x = x;
+      o.receiveShadow = true;
+      return o;
+    };
+    lid.add(face(rrect(PC_WIDTH - 0.2, LID_H - 0.2, 0.3, THREE.Shape, 0, LID_H / 2), M.bezel, 0.004));
+    const disp = new THREE.Mesh(new THREE.PlaneGeometry(PC_WIDTH - 0.75, LID_H - 1.0), M.screen);   // 壁紙を画面いっぱいに貼る
+    disp.rotation.y = Math.PI / 2;
+    lid.add(at(disp, 0.008, LID_H / 2 - 0.18, 0));
+    const cam = new THREE.Mesh(new THREE.CircleGeometry(0.06, 16), M.hinge);
+    cam.rotation.y = Math.PI / 2;
+    lid.add(at(cam, 0.008, LID_H - 0.32, 0));
+    pc.add(lid);
+  }
+  scene.add(pc);
+
+  // ---------- 差し込み口（タップで差し込む方向の軸のまわりに半回転） ----------
+  // USB Type-A：穴の上側に青い樹脂の舌があり、その下面に端子が並ぶ。右横に向きの印（USBを連想させる記号）
+  const port = new THREE.Group();
+  {
+    port.add(mesh(extrude(withHole(rrect(MOD_W, MOD_H, 0.12), rrect(RECEPT_W, RECEPT_H, 0.02, THREE.Path)), 0.1, -0.1), M.port));
+    port.add(mesh(extrude(withHole(rrect(RECEPT_W, RECEPT_H, 0.03), rrect(HOLE_W, HOLE_H, 0.01, THREE.Path)), RECEPT_D, -RECEPT_D + 0.012), M.metal));
+    port.add(at(new THREE.Mesh(new THREE.PlaneGeometry(HOLE_W, HOLE_H), M.hole), 0, 0, -RECEPT_D + 0.03));
+    const TW = 1.1, TH = 0.15, TD = RECEPT_D - 0.08, TY = 0.095, tz = -RECEPT_D + 0.03 + TD / 2;
+    port.add(at(mesh(new THREE.BoxGeometry(TW, TH, TD), M.tongue), 0, TY, tz));
+    for (const px of [-0.42, -0.14, 0.14, 0.42]){
+      port.add(at(mesh(new THREE.BoxGeometry(0.13, 0.02, TD * 0.75), M.pin), px, TY - TH / 2 - 0.008, tz + TD * 0.1));
+    }
+    port.add(decal(0.32, 0.32, M.icon, (RECEPT_W + MOD_W) / 4, 0, 0.004));
+  }
+  scene.add(port);
+  // 本体の穴の内側を暗くする（回転中に穴の奥が見えるため）
+  // 穴の内壁：本体の穴と同じ角の丸い形の筒にする（四角い箱だと角が穴からはみ出して見える）。
+  // 本体の縁の丸め（0.05）で穴が狭くなる分だけ小さくし、手前の端は本体の中に隠す
+  {
+    // 本体の穴の壁とぴったり重なるとちらつくので、ひと回り（片側0.01）小さくする
+    const iw = RECESS_W - 0.12, ih = RECESS_H - 0.12, ir = 0.08, depth = 3;
+    const wall = new THREE.Mesh(
+      extrude(withHole(rrect(iw + 0.06, ih + 0.06, ir + 0.03), rrect(iw, ih, ir, THREE.Path)), depth, -depth - 0.02),   // 外側は本体の中に収まる薄さ
+      std('hole', { roughness: 0.9, side: THREE.DoubleSide }));
+    scene.add(wall);
+    scene.add(at(new THREE.Mesh(new THREE.PlaneGeometry(iw, ih), std('hole', { roughness: 0.9 })), 0, 0, -depth - 0.01));
+  }
+
+  // ---------- 手とプラグ ----------
+  // hand の原点 = プラグの先端。プラグは +z 側へ伸びる。twist は手首のひねり（プラグと手が一緒に回る）
+  const hand = new THREE.Group();
+  const twist = new THREE.Group();
+  hand.add(twist);
+  {
+    // 金属部分と、中の青い樹脂（差し込み口の舌と反対の下側）
+    twist.add(mesh(extrude(withHole(rrect(SHELL_W, SHELL_H, 0.03), rrect(SHELL_W - 0.07, SHELL_H - 0.07, 0.02, THREE.Path)), SHELL_LEN, 0), M.metal));
+    twist.add(at(new THREE.Mesh(new THREE.PlaneGeometry(SHELL_W - 0.07, SHELL_H - 0.07), M.hole), 0, 0, SHELL_LEN - 0.02));
+    twist.add(at(mesh(new THREE.BoxGeometry(1.16, 0.15, SHELL_LEN - 0.06), M.tongue), 0, -0.095, SHELL_LEN / 2 + 0.03));
+    // 金属部分の上下にある四角い穴
+    for (const sy of [1, -1]) for (const sx of [-0.36, 0.36]){
+      const d = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.14), M.hole);
+      d.rotation.x = -sy * Math.PI / 2;
+      d.position.set(sx, sy * (SHELL_H / 2 + 0.003), 0.24);
+      twist.add(d);
+    }
+    // 本体（角の丸い樹脂）と上面の向きの印（USBを連想させる記号）
+    twist.add(mesh(extrude(rrect(BODY_W - 0.1, BODY_H - 0.1, 0.18), BODY_LEN, SHELL_LEN, 0.05), M.plug));
+    const logo = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8), M.iconPlug);
+    logo.rotation.x = -Math.PI / 2;   // 上面に貼る（記号の矢印がプラグの先を向く）
+    twist.add(at(logo, 0, BODY_H / 2 + 0.004, SHELL_LEN + BODY_LEN / 2));   // 上面の真ん中
+    // 根元のブッシュ
+    const boot = mesh(new THREE.CylinderGeometry(0.17, 0.26, 0.55, 48), M.plug);
+    boot.rotation.x = Math.PI / 2;
+    twist.add(at(boot, 0, 0, SHELL_LEN + BODY_LEN + 0.25));
+  }
+  // 手（球）・前腕・袖・ケーブル（ひねりと関係なく、手が来た方向へ伸びる）
+  const HAND_R = 1.0;          // 手の球の半径
+  hand.add(blob(HAND_R, HAND_R, HAND_R, M.skin, 0, 0, SHELL_LEN + BODY_LEN + HAND_R * 0.95));   // プラグの後ろ半分を包む
+  const WRIST = V(0, 0, SHELL_LEN + BODY_LEN + HAND_R * 1.5);
+  const armG = new THREE.CylinderGeometry(0.44, 0.5, 4, 48);
+  armG.translate(0, 2, 0);
+  const arm = mesh(armG, M.skin);
+  arm.position.copy(WRIST);
+  hand.add(arm);
+  const sleeveG = new THREE.CylinderGeometry(0.66, 0.72, 16, 48);
+  sleeveG.translate(0, 3.4 + 8, 0);
+  const sleeve = mesh(sleeveG, M.sleeve);
+  sleeve.position.copy(WRIST);
+  hand.add(sleeve);
+  let cable = null;
+  hand.visible = false;
+  scene.add(hand);
+
+  const camDir = V(...CAM_DIR).normalize();
+  const camTarget = V(...CAM_TARGET);
+  const camBase = V(0, 0, 0);   // 揺れや寄りを加える前のカメラの位置
+  let W = 0, H = 0;
+  function resize(){
+    W = $('game').clientWidth; H = $('game').clientHeight;
+    renderer.setSize(W, H);
+    camera.aspect = W / H;
+    // 縦長の画面でも横に VIEW_HALF だけ収まるように距離を決める
+    const dist = Math.max(CAM_MIN_DIST, VIEW_HALF / (Math.tan(rad(CAM_FOV / 2)) * camera.aspect));
+    camBase.copy(camTarget).addScaledVector(camDir, dist);
+    camera.position.copy(camBase);
+    camera.lookAt(camTarget);
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  // ---------- 演出 ----------
+  const PORT_PT = V(0, 0, 0);          // 差し込み口の中心
+  const CONTACT_PT = V(0, 0, 0.08);    // プラグが当たる点
+  const addMat = o => Object.assign({ blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false }, o);
+  // 火花：進む向きに引き伸ばした光の粒
+  const sparks = [];
+  for (let i = 0; i < 90; i++){
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial(addMat({ map: dotTex, blending: THREE.NormalBlending })));   // 明るい背景でも見えるよう普通に重ねる
+    sp.visible = false;
+    scene.add(sp);
+    sparks.push({ sp, p: V(0, 0, 0), v: V(0, 0, 0), life: 0, max: 1 });
+  }
+  let sparkIdx = 0;
+  const SPARK_HOT = new THREE.Color(1, 0.97, 0.8), SPARK_COOL = new THREE.Color(1, 0.38, 0.05);
+  function burst(n, power){
+    for (let i = 0; i < n; i++){
+      const k = sparks[sparkIdx = (sparkIdx + 1) % sparks.length];
+      // プラグの金属部分のふちのどこかから、外向きに飛び出す（プラグの陰に隠れないように）
+      const side = Math.random() < SHELL_W / (SHELL_W + SHELL_H) ? 0 : 1, sg = Math.random() < 0.5 ? -1 : 1;
+      const u = Math.random() * 2 - 1;
+      const ex = side === 0 ? u * SHELL_W / 2 : sg * SHELL_W / 2, ey = side === 0 ? sg * SHELL_H / 2 : u * SHELL_H / 2;
+      k.p.set(ex, ey, CONTACT_PT.z);
+      const nx = side === 0 ? (Math.random() - 0.5) * 0.8 : sg, ny = side === 0 ? sg : (Math.random() - 0.5) * 0.8;
+      const sp = power * lerp(0.5, 1.2, Math.random());
+      k.v.set(nx, ny + 0.25, lerp(0.3, 1.0, Math.random())).normalize().multiplyScalar(sp);
+      k.life = k.max = lerp(0.2, 0.5, Math.random());
+      k.sp.visible = true;
+    }
+  }
+  // 当たった瞬間の光
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial(addMat({ map: dotTex })));
+  glow.visible = false;
+  scene.add(glow);
+  let glowT = 0, glowMax = 1, glowSize = 1;
+  function flashGlow(size, color, dur){
+    glow.material.color.set(color);
+    glowSize = size; glowT = glowMax = dur;
+    glow.position.copy(CONTACT_PT);
+    glow.visible = true;
+  }
+  // 差し込み口から広がる輪（差し込み口と同じ面に置く）
+  const rings = [];
+  for (let i = 0; i < 4; i++){
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial(addMat({ map: ringTex })));
+    m.position.set(0, 0, 0.03);
+    m.visible = false;
+    scene.add(m);
+    rings.push({ m, t: 0, max: 1, from: 1, to: 2, op: 1 });
+  }
+  let ringIdx = 0;
+  function ring(color, from, to, dur, op){
+    const r = rings[ringIdx = (ringIdx + 1) % rings.length];
+    r.m.material.color.set(color);
+    Object.assign(r, { t: dur, max: dur, from, to, op });
+    r.m.visible = true;
+  }
+  let shake = 0, flashA = 0, screenPulse = 0, portKick = 0, hitStop = 0, fxTime = 0;
+  const popScore = k => $('score').animate([{ transform: `scale(${k})` }, { transform: 'scale(1)' }], { duration: 280, easing: 'ease-out' });
+
+  // 弾かれた：小さな火花と揺れ
+  function fxBump(){
+    burst(SPARKS_BUMP, SPARK_SPEED * 0.7);
+    flashGlow(0.9, 0xffd9a0, 0.12);
+    shake = Math.max(shake, SHAKE_BUMP);
+    portKick = 1;
+  }
+  // ギリギリでかわした：一瞬時間がゆっくりになり、青い輪と多めの火花
+  function fxNear(){
+    burst(SPARKS_NEAR, SPARK_SPEED);
+    flashGlow(1.6, 0xdff4ff, 0.18);
+    ring(0x8fd3ff, 1.2, 3.6, 0.35, 0.9);
+    shake = Math.max(shake, SHAKE_NEAR);
+    flashA = Math.max(flashA, FLASH_NEAR);
+    hitStop = HITSTOP_TIME;
+    portKick = 1;
+    popScore(1.25);
+  }
+  // 差し込み口を回した：薄い輪が広がる
+  function fxFlip(){
+    ring(0xcfe6ff, 1.4, 2.6, 0.22, 0.45);
+  }
+  // 刺さった：大きな火花と光、画面が白く光り、PCの画面も光る
+  function fxInsert(){
+    burst(SPARKS_INSERT, SPARK_SPEED * 1.4);
+    flashGlow(3.2, 0xfff0c8, 0.4);
+    ring(0xffc27a, 1.0, 5.0, 0.5, 1);
+    shake = SHAKE_INSERT;
+    flashA = FLASH_INSERT;
+    screenPulse = 1;
+    $('score').classList.add('stuck');
+    popScore(1.4);
+  }
+
+  const tmpA = V(0, 0, 0), tmpB = V(0, 0, 0);
+  function updateFx(rdt){
+    fxTime += rdt;
+    for (const k of sparks){
+      if (k.life <= 0) continue;
+      k.life -= rdt;
+      if (k.life <= 0){ k.sp.visible = false; continue; }
+      k.v.y -= SPARK_GRAVITY * rdt;
+      k.v.multiplyScalar(Math.exp(-SPARK_DRAG * rdt));
+      k.p.addScaledVector(k.v, rdt);
+      const f = k.life / k.max;
+      k.sp.position.copy(k.p);
+      // 画面の上で進む向きを求めて、その向きに引き伸ばす
+      tmpA.copy(k.p).project(camera);
+      tmpB.copy(k.p).addScaledVector(k.v, 0.02).project(camera);
+      k.sp.material.rotation = Math.atan2((tmpB.y - tmpA.y) * H, (tmpB.x - tmpA.x) * W);
+      k.sp.scale.set(0.16 + k.v.length() * 0.06, 0.13, 1);
+      k.sp.material.color.copy(SPARK_HOT).lerp(SPARK_COOL, 1 - f);
+      k.sp.material.opacity = Math.min(1, f * 1.5);
+    }
+    if (glowT > 0){
+      glowT -= rdt;
+      const f = Math.max(0, glowT / glowMax);
+      glow.scale.setScalar(glowSize * (1.2 - 0.6 * f));
+      glow.material.opacity = f;
+      if (glowT <= 0) glow.visible = false;
+    }
+    for (const r of rings){
+      if (r.t <= 0) continue;
+      r.t -= rdt;
+      const f = Math.max(0, r.t / r.max), e = 1 - f * f;
+      r.m.scale.setScalar(lerp(r.from, r.to, e));
+      r.m.material.opacity = r.op * f;
+      if (r.t <= 0) r.m.visible = false;
+    }
+    shake *= Math.exp(-SHAKE_DECAY * rdt);
+    flashA *= Math.exp(-FLASH_DECAY * rdt);
+    screenPulse *= Math.exp(-2.5 * rdt);
+    portKick *= Math.exp(-14 * rdt);
+    $('flash').style.opacity = flashA < 0.005 ? '0' : flashA.toFixed(3);
+    M.screen.emissiveIntensity = 0.85 + screenPulse * 2.5;
+  }
+
+  // ---------- ゲーム状態 ----------
+  let state = 'playing';   // playing / inserting / over
+  let time = 0;            // ゲーム内の時計（秒）
+  let portTurns = 0;       // 差し込み口をひっくり返した回数（向き = portTurns % 2）
+  let portAngle = 0;       // 見た目の回転角（度）
+  let portVel = 0;         // 見た目の回転の速さ（度/秒）
+  let portLog = [];        // いつどの向きにしたか（手は少し遅れてこれを見る）
+  let h = null;            // いま来ている手
+  let spawnTimer = 0;
+  let insT = 0;
+
+  const portDir = () => mod(portTurns, 2);
+
+  function params(){
+    const t = Math.min(time / RAMP, 1), o = {};
+    for (const k in DIFF.easy) o[k] = lerp(DIFF.easy[k], DIFF.hard[k], t);
+    return o;
+  }
+
+  // 手が見ている差し込み口の向き（react 秒前の向き）
+  function seenTurns(react){
+    const t = time - react;
+    let v = portLog[0].turns;
+    for (const e of portLog){ if (e.t <= t) v = e.turns; else break; }
+    return v;
+  }
+
+  // 手が気づくまでの時間（いまの難易度にばらつきを加える）
+  const nextReact = () => params().react * (1 + (Math.random() * 2 - 1) * REACT_JITTER);
+
+  function spawn(){
+    const dir = rad(lerp(DIR_MIN, DIR_MAX, Math.random()));
+    h = {
+      phase: 'approach', u: 0, dir,
+      qTurns: portTurns + 1,   // プラグの向き（偶数 = 印が上）。最初は差し込み口と逆向きで来る
+      turn: null,      // ひねっている途中：{ from, to（向き。半回転を1とする）, t, dur, feintAt（フェイントで戻し始める割合） }
+      react: nextReact(),
+      wait: 0,         // 間を置いている残り時間（秒）
+      pull: null,      // 一旦離している途中：{ stage: 'out' | 'hold' | 'in', t, dist, hold }
+      pullZ: 0,        // 一旦離して手前に引いている距離
+      jab: 0, jabT: 0, // グイグイ押し付ける残り回数と、次まで（秒）
+      bump: 0,
+      thrust: null,    // 押し込んでいる途中：{ stage: 'back' | 'in', t, dist }
+      thrustFor: null, // 最後に押し込んだとき見ていた差し込み口の向き
+    };
+    // 腕と袖は来た方向（少し上から）へ伸ばす
+    const a = V(Math.cos(dir), Math.max(Math.sin(dir), 0) * 0.7 + 0.35, 1.25).normalize();
+    const qa = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), a);
+    arm.quaternion.copy(qa);
+    sleeve.quaternion.copy(qa);
+    // ケーブル：プラグの根元から手の下を通って、腕の下側へ垂れていく
+    if (cable){ hand.remove(cable); cable.geometry.dispose(); }
+    const curve = new THREE.CatmullRomCurve3([
+      V(0, 0, SHELL_LEN + BODY_LEN + 0.45), V(0, -0.15, 3.0), V(0, -0.7, 4.0),
+      WRIST.clone().addScaledVector(a, 2.5).add(V(0, -1.5, 0)),
+      WRIST.clone().addScaledVector(a, 6).add(V(0, -3.5, 0)),
+    ]);
+    cable = mesh(new THREE.TubeGeometry(curve, 48, 0.13, 12, false), M.cable);
+    hand.add(cable);
+    hand.visible = true;
+  }
+
+  // 共有画像用：刺さる直前（プラグが差し込み口の少し手前にある瞬間）を撮っておく
+  const SNAP_GAP = 0.45;        // 撮るときのプラグと差し込み口の間（この分だけ手前に戻して撮る）
+  const SNAP_SPAN = 6;          // 撮る範囲の横幅（差し込み口のまわりこの長さ分）
+  const SNAP_W = 600, SNAP_H = 370;
+  const snap = document.createElement('canvas');
+  snap.width = SNAP_W; snap.height = SNAP_H;
+  let snapGap = 0;
+  const SNAP_CENTER = V(0, 0, 0.9), camRight = V(0, 0, 0);
+  function takeSnap(){
+    snapGap = SNAP_GAP;
+    render();   // 描いた直後に読む（描画バッファが消える前）
+    snapGap = 0;
+    const src = renderer.domElement, sw = src.width, sh = src.height;
+    // 差し込み口のまわり SNAP_SPAN 分が横幅に収まるように切り抜く
+    const a = SNAP_CENTER.clone().project(camera);
+    camRight.setFromMatrixColumn(camera.matrixWorld, 0);
+    const b = SNAP_CENTER.clone().addScaledVector(camRight, SNAP_SPAN).project(camera);
+    let cw = Math.abs(b.x - a.x) * 0.5 * sw, ch = cw * SNAP_H / SNAP_W;
+    if (cw > sw){ cw = sw; ch = cw * SNAP_H / SNAP_W; }
+    if (ch > sh){ ch = sh; cw = ch * SNAP_W / SNAP_H; }
+    const px = (a.x * 0.5 + 0.5) * sw, py = (1 - (a.y * 0.5 + 0.5)) * sh;
+    const sx = Math.max(0, Math.min(sw - cw, px - cw / 2)), sy = Math.max(0, Math.min(sh - ch, py - ch / 2));
+    const g = snap.getContext('2d');
+    g.clearRect(0, 0, SNAP_W, SNAP_H);
+    g.drawImage(src, sx, sy, cw, ch, 0, 0, SNAP_W, SNAP_H);
+  }
+
+  function insert(){
+    takeSnap();
+    state = 'inserting';
+    insT = 0;
+    h.bump = 0;
+    fxInsert();
+  }
+
+  const rnd = (a, b) => lerp(a, b, Math.random());
+  // プラグが差し込み口に当たっているか（近づいている途中・一旦離している途中は当たっていない）
+  const touching = () => h.phase === 'push' && !h.pull;
+
+  // 差し込み口に当たっているとき、向きが合っていれば刺さる。合っていなければ弾かれる
+  // 刺しに行く：いったん手を引いてから、一気に押し込む。当たった瞬間に向きが合っていれば刺さる
+  function startThrust(dist){
+    h.thrustFor = seenTurns(h.react);   // この向きを見て押し込んだ（同じ向きのまま何度も押し込まない）
+    h.thrust = { stage: 'back', t: 0, dist };
+  }
+
+  // プラグが差し込み口に当たった瞬間の判定。刺さるのはこの瞬間だけ
+  function attempt(){
+    h.thrustFor = seenTurns(h.react);
+    if (!h.turn && mod(h.qTurns, 2) === portDir()){ insert(); return; }
+    h.bump = BUMP_TIME;
+    // 直前に回したおかげでかわせた（回す前の向きならプラグが刺さっていた）ならギリギリの演出
+    const last = portLog[portLog.length - 1];
+    const near = !h.turn && time - last.t < NEAR_WINDOW && mod(h.qTurns, 2) === mod(last.turns - 1, 2);
+    if (near) fxNear(); else fxBump();
+  }
+
+  function tap(){
+    if (state !== 'playing') return;
+    portTurns++;
+    portLog.push({ t: time, turns: portTurns });
+    while (portLog.length > 2 && portLog[1].t < time - 2) portLog.shift();
+    fxFlip();
+  }
+
+  // プラグを上下ひっくり返し始める。ときどき素早く、ときどき途中で戻す（フェイント）
+  function startFlip(P){
+    const dir = Math.random() < 0.5 ? 1 : -1;   // どちら回りでひねるかは毎回ばらばら
+    const quick = Math.random() < P.quick;
+    h.turn = {
+      from: h.qTurns, to: h.qTurns + dir, t: 0,
+      dur: P.turn * (quick ? QUICK_RATE : 1),
+      feintAt: Math.random() < P.feint ? rnd(FEINT_MIN, FEINT_MAX) : null,
+    };
+  }
+
+  // 手が空いたとき：一旦離す・グイグイ押し付ける・間を置く のどれかをすることがある
+  function idleAction(P){
+    if (!touching() || h.thrust) return;
+    const r = Math.random();
+    if (r < P.pull){
+      h.pull = { stage: 'out', t: 0, dist: rnd(PULL_MIN, PULL_MAX), hold: rnd(PULL_HOLD_MIN, PULL_HOLD_MAX) };
+    } else if (r < P.pull + P.jab){
+      h.jab = JAB_MIN + Math.floor(Math.random() * (JAB_MAX - JAB_MIN + 1));
+      h.jabT = 0.05;
+    } else if (r < P.pull + P.jab + P.pause){
+      h.wait = rnd(PAUSE_MIN, PAUSE_MAX);
+    }
+  }
+
+  function updateHand(dt){
+    const P = params();
+    h.bump = Math.max(0, h.bump - dt);
+    // 押し込んでいる途中（引く→押し込む）。押し込みきった瞬間に判定する
+    if (h.thrust){
+      const T = h.thrust;
+      T.t += dt;
+      if (T.stage === 'back' && T.t >= THRUST_BACK){ T.stage = 'in'; T.t = 0; }
+      else if (T.stage === 'in' && T.t >= THRUST_IN){
+        h.thrust = null;
+        attempt();
+        if (state !== 'playing') return;
+        if (!h.jab) idleAction(P);
+      }
+    }
+    // ひねっている途中
+    if (h.turn){
+      const T = h.turn;
+      T.t += dt;
+      if (T.feintAt !== null && T.t >= T.dur * T.feintAt){
+        // フェイント：途中まで回したところから、元の向きへ戻す
+        h.turn = { from: lerp(T.from, T.to, T.feintAt), to: T.from, t: 0, dur: T.dur * T.feintAt, feintAt: null };
+      } else if (T.t >= T.dur){
+        h.qTurns = T.to;
+        h.turn = null;
+        h.react = nextReact();   // 次に気づくまでの時間は毎回少し変わる
+        if (touching()) startThrust(THRUST_DIST);   // ひねり終えたら、引いてから押し込む
+      }
+    } else if (h.wait > 0){
+      h.wait -= dt;   // 間を置いている
+    } else if (!h.thrust && (!h.pull || h.pull.stage === 'hold') && h.u >= TRACK_FROM){
+      if (mod(seenTurns(h.react) - h.qTurns, 2)) startFlip(P);   // 向きが違うのに気づいたら合わせにいく
+      else if (touching() && !h.jab && Math.random() < P.guess * dt) startFlip(P);   // 読み：タップされたと見込んで先にひねる
+      // 向きが合っているのに気づいたら押し込む（回した瞬間ではなく、手が気づいてから刺しに来る）
+      if (!h.turn && touching() && h.thrustFor !== seenTurns(h.react)) startThrust(THRUST_DIST);
+    }
+    // グイグイ押し付ける
+    if (h.jab > 0 && touching() && !h.turn && !h.thrust){
+      h.jabT -= dt;
+      if (h.jabT <= 0){
+        h.jab--; h.jabT = JAB_GAP;
+        startThrust(JAB_DIST);   // グイグイも毎回引いてから本当に押し込むので、向きが合っていれば刺さる
+      }
+    }
+    // 一旦離して、また刺しに来る
+    if (h.pull){
+      const L = h.pull;
+      L.t += dt;
+      if (L.stage === 'out'){
+        h.pullZ = L.dist * Math.sin(Math.min(L.t / PULL_OUT, 1) * Math.PI / 2);
+        if (L.t >= PULL_OUT){ L.stage = 'hold'; L.t = 0; }
+      } else if (L.stage === 'hold'){
+        if (L.t >= L.hold){ L.stage = 'in'; L.t = 0; }
+      } else {
+        h.pullZ = L.dist * (1 - Math.min(L.t / PULL_IN, 1));
+        if (L.t >= PULL_IN){
+          h.pull = null; h.pullZ = 0;
+          attempt();
+          if (state !== 'playing') return;
+          if (!h.turn) idleAction(P);
+        }
+      }
+    }
+    if (h.phase === 'approach'){
+      h.u += dt / APPROACH_TIME;
+      if (h.u >= 1){ h.u = 1; h.phase = 'push'; attempt(); if (state === 'playing' && !h.turn) idleAction(P); }
+    }
+  }
+
+  const fmt = t => `${t.toFixed(1)}秒`;   // 刺されずにいた時間の表示
+  let shownTime = '';
+
+  // dt = ゲームの時間（ギリギリのときはゆっくり）、rdt = 実際の時間
+  function update(dt, rdt){
+    // 時計は遊んでいる間だけ進む（刺さった瞬間の時間が記録になる）
+    if (state === 'playing'){
+      const before = Math.floor(time / MILESTONE);
+      time += dt;
+      const s = fmt(time);
+      if (s !== shownTime){ shownTime = s; $('score').textContent = s; }
+      if (Math.floor(time / MILESTONE) > before) popScore(1.3);
+    }
+    // 差し込み口の見た目の回転：ばねで追いかけ、少し行き過ぎて止まる（連打で遅れすぎないよう半回転以上は離さない）
+    const target = portTurns * 180;
+    if (portAngle < target - 180) portAngle = target - 180;
+    const n = Math.ceil(dt / (1 / 240));
+    for (let i = 0; i < n; i++){
+      const sdt = dt / n;
+      portVel += (PORT_SPRING * (target - portAngle) - PORT_DAMP * portVel) * sdt;
+      portAngle += portVel * sdt;
+    }
+    if (state === 'playing'){
+      if (!h){ spawnTimer -= dt; if (spawnTimer <= 0) spawn(); }
+      else updateHand(dt);
+    } else if (state === 'inserting'){
+      insT += rdt;
+      if (insT >= INSERT_TIME) showOver();
+    }
+  }
+
+  function place(){
+    // 差し込み口：差し込む方向の軸のまわりに、正面から見て反時計回りに回る。
+    // 回転の途中は、角が本体の穴から飛び出さない大きさまで縮める
+    const th = rad(portAngle);
+    port.rotation.z = th;
+    const c = Math.abs(Math.cos(th)), sn = Math.abs(Math.sin(th));
+    const reachX = MOD_W / 2 * c + MOD_H / 2 * sn, reachY = MOD_H / 2 * c + MOD_W / 2 * sn;
+    port.scale.setScalar(Math.min(1, (MOD_W / 2) / reachX, (MOD_H / 2) / reachY));
+    port.position.z = -0.06 * portKick;   // 弾かれたとき少し押し込まれる
+    if (!h) return;
+    const u = h.u;
+    let thrustZ = 0;
+    if (h.thrust){
+      const T = h.thrust;
+      thrustZ = T.stage === 'back'
+        ? T.dist * Math.sin(Math.min(T.t / THRUST_BACK, 1) * Math.PI / 2)     // ためながら引く
+        : T.dist * (1 - Math.pow(Math.min(T.t / THRUST_IN, 1), 2));          // 一気に押し込む
+    }
+    let z = lerp(START_Z, CONTACT_Z, u) + h.pullZ + thrustZ + snapGap;
+    if (h.bump > 0) z += BUMP_DIST * Math.sin(Math.PI * (1 - h.bump / BUMP_TIME));
+    if (state !== 'playing') z = lerp(CONTACT_Z, INSERT_Z, 1 - Math.pow(1 - Math.min(insT / INSERT_SLIDE, 1), 3));   // 一気に奥まで入る
+    hand.position.set(0, 0, z);   // 差し込み口に対して垂直に、まっすぐ出し入れする
+    const turnPos = h.turn ? lerp(h.turn.from, h.turn.to, Math.min(h.turn.t / h.turn.dur, 1)) : h.qTurns;
+    twist.rotation.z = -rad(turnPos * 180);
+  }
+
+  const lookPt = V(0, 0, 0);
+  function render(){
+    place();
+    // 刺さったあとは差し込み口に寄る。揺れはその上に足す
+    const d0 = state === 'playing' ? 0 : Math.min(insT / INSERT_DOLLY, 1);
+    const d = d0 * d0 * (3 - 2 * d0);
+    camera.position.copy(camBase).lerp(PORT_PT, d * DOLLY_AMOUNT);
+    camera.position.x += Math.sin(fxTime * 53) * shake;
+    camera.position.y += Math.sin(fxTime * 61 + 1) * shake;
+    camera.position.z += Math.sin(fxTime * 47 + 2) * shake;
+    lookPt.copy(camTarget).lerp(PORT_PT, d * 0.6);
+    camera.lookAt(lookPt);
+    renderer.render(scene, camera);
+  }
+
+  // ---------- 開始・結果 ----------
+  function reset(){
+    state = 'playing';
+    document.documentElement.setAttribute('data-howto-hidden', '');
+    time = 0; shownTime = '';
+    portTurns = 0; portAngle = 0; portVel = 0; insT = 0;
+    shake = 0; flashA = 0; screenPulse = 0; portKick = 0; hitStop = 0;
+    $('score').classList.remove('stuck', 'hidden');
+    portLog = [{ t: -1e9, turns: 0 }];
+    h = null; hand.visible = false;
+    spawnTimer = FIRST_DELAY;
+    $('score').textContent = fmt(0);
+    $('over').classList.add('hidden');
+  }
+
+  // 自己ベスト（保存できない環境でも遊べるよう、読み書きの失敗は無視する）
+  function loadBest(){ try { return parseFloat(localStorage.getItem(BEST_KEY)) || 0; } catch (e){ return 0; } }
+  function saveBest(v){ try { localStorage.setItem(BEST_KEY, String(v)); } catch (e){} }
+  let result = { time: 0, best: 0, isNew: false };
+
+  function showOver(){
+    state = 'over';
+    document.documentElement.removeAttribute('data-howto-hidden');
+    const prev = loadBest();
+    // 初めて遊んだときは比べる記録がないので「更新」とは出さない
+    result = { time, best: Math.max(prev, time), isNew: prev > 0 && time > prev };
+    if (time > prev) saveBest(time);
+    $('res').textContent = fmt(time);
+    $('newbest').classList.toggle('hidden', !result.isNew);
+    $('score').classList.add('hidden');   // 結果のカードと同じ数字が上に重ならないように
+    $('best').textContent = `ベスト ${fmt(result.best)}`;
+    $('over').classList.remove('hidden');
+    $('retry').focus({ preventScroll: true });
+  }
+
+  $('retry').addEventListener('pointerdown', e => e.stopPropagation());
+  $('retry').addEventListener('click', reset);
+
+  // ---------- 入力 ----------
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); tap(); });
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('selectstart', e => {
+    if (!(e.target instanceof Element && e.target.closest('#share-text'))) e.preventDefault();
+  });
+  // スマホでのダブルタップ拡大を防ぐ（連打するゲームなので拡大されると戻せなくなる）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  document.addEventListener('keydown', e => {
+    if (!$('share-view').classList.contains('hidden')) return;
+    if (state === 'playing'){
+      if (e.code === 'Space' || e.key.startsWith('Arrow')){
+        e.preventDefault();
+        if (!e.repeat) tap();
+      }
+    } else if (state === 'over'){
+      if (e.target instanceof HTMLButtonElement) return;   // ボタンにフォーカスがあるときはボタンに任せる
+      if (e.code === 'Space' || e.key === 'Enter'){ e.preventDefault(); reset(); }
+    }
+  });
+
+  // ---------- 共有 ----------
+  function shareText(){
+    return `${fmt(result.time)}まもった！\n${location.href.split(/[?#]/)[0]}\n#USBシミュレーター3D`;
+  }
+  // 結果画像：上に結果（時間・ベスト）、下に刺さる直前の差し込み口まわり
+  function resultCanvas(){
+    const S = 600, TOP = S - SNAP_H, c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d');
+    const FONT = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif';
+    g.drawImage(snap, 0, TOP);
+    // 上：結果の帯
+    g.fillStyle = colStr('panel');
+    g.fillRect(0, 0, S, TOP);
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    if (result.isNew){
+      g.font = `800 22px ${FONT}`;
+      const bw = g.measureText('ベスト更新').width + 36;
+      g.fillStyle = colStr('gold');
+      g.beginPath(); g.roundRect ? g.roundRect(S / 2 - bw / 2, 22, bw, 36, 18) : g.rect(S / 2 - bw / 2, 22, bw, 36); g.fill();
+      g.fillStyle = colStr('gold-fg');
+      g.fillText('ベスト更新', S / 2, 41);
+    }
+    g.fillStyle = colStr('fg');
+    g.font = `800 96px ${FONT}`;
+    g.fillText(fmt(result.time), S / 2, result.isNew ? 118 : 100);
+    g.fillStyle = colStr('sub');
+    g.font = `700 24px ${FONT}`;
+    g.fillText($('best').textContent, S / 2, result.isNew ? 192 : 176);
+    return c;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(c){
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const text = shareText();
+    const c = resultCanvas();
+    const file = resultImageFile(c);
+    // 3) 共有シートが無い・使えない環境：文面をコピーし、共有される内容を画面に出す
+    const fallback = () => {
+      navigator.clipboard?.writeText(text).catch(() => {});
+      $('share-img').src = c.toDataURL('image/png');
+      $('share-text').textContent = text;
+      $('share-view').classList.remove('hidden');
+      $('share-close').focus({ preventScroll: true });
+    };
+    // 失敗、または押してすぐのキャンセル扱いは共有シートが出なかったとみなして 3) へ
+    const shareStart = performance.now();
+    const failed = err => {
+      const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
+      if (!err || err.name !== 'AbortError' || instant) fallback();
+    };
+    // 1) 画像を渡せる共有シート：文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      navigator.share({ text, files: [file] }).catch(failed);
+      return;
+    }
+    // 2) 画像を渡せない共有シート：文面のみ
+    if (navigator.share){
+      navigator.share({ text }).catch(failed);
+      return;
+    }
+    fallback();
+  });
+  const closeShareView = () => {
+    $('share-view').classList.add('hidden');
+    $('share').focus({ preventScroll: true });
+  };
+  $('share-close').addEventListener('click', closeShareView);
+  $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('share-view').classList.contains('hidden')) closeShareView();
+  });
+
+  // ---------- ループ ----------
+  reset();
+  let last = performance.now();
+  function loop(now){
+    const rdt = Math.max(0, Math.min((now - last) / 1000, 1 / 30));   // 最初のフレームは読み込み前の時刻が来て負になることがある
+    last = now;
+    const scale = hitStop > 0 ? HITSTOP_SCALE : 1;   // ギリギリのときは時間をゆっくりにする
+    hitStop -= rdt;
+    update(rdt * scale, rdt);
+    updateFx(rdt);
+    render();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

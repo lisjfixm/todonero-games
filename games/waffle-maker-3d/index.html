@@ -1,0 +1,2379 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/waffle-maker-3d/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ワッフルメーカー3D</title>
+<meta name="description" content="金型を描いて好きな形のワッフルを焼く">
+<style>
+  :root{--bg:#f0f0f0;--fg:#eee;--sub:#aaa;--panel:#2c2c2c;--btn:#3a3a3a;--line:#555;--accent:#d99a3d;--howto-bg:#2c2c2c;--howto-fg:#eee}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg);color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #game{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;display:flex;flex-direction:column}
+  /* 3D画面は全面に広げ、ボタンはその上に重ねる */
+  #stage{position:absolute;inset:0}
+  #cv{display:block;width:100%;height:100%;touch-action:none}
+  /* ボタンは文字の大きさに合わせ、間のすき間は3D画面を触れるように指を通す */
+  #bottom{position:absolute;left:0;right:0;bottom:0;padding:0 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
+  #bottom, #bottom *{pointer-events:none}
+  #bottom button{pointer-events:auto}
+  /* 1行を左・中央・右の3列に分け、次へ進むボタン（.go）は中央、道具（.tool）は右端に置く */
+  .row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end}
+  .row > .go{grid-column:2}
+  .row > .tool{grid-column:3;justify-self:end}
+  /* 幅の狭い画面では「生地を入れる」と描く／消しゴムが重なるので、描く／消しゴムを1段上へ */
+  @media (max-width:359px){ #moldRow > .tool{grid-row:1} #moldRow > .go{grid-row:2} }
+  button{font:inherit;font-size:16px;color:#fff;background:#0008;border:none;border-radius:22px;min-height:44px;padding:0 16px;touch-action:manipulation}
+  button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  #bake{touch-action:none}
+  #bake.active,#toppingRow button[aria-pressed="true"]{background:#fffd;color:#000}
+  .hidden{display:none !important}
+  /* 描く／消しゴムの切り替え（右下）：2つのボタンをくっつけて1つの形にし、選んでいる方を白黒反転 */
+  #toolSeg{display:flex}
+  #toolSeg button{flex:0 0 44px;width:44px;padding:0;display:flex;align-items:center;justify-content:center;color:#fff}
+  #toolSeg button:first-child{border-radius:22px 0 0 22px}
+  #toolSeg button:last-child{border-radius:0 22px 22px 0}
+  #toolSeg button[aria-pressed="true"]{background:#fffd;color:#000}
+  /* 線の太さのスライダー（描く／消しゴムの上）：細い点と太い点の間を指で左右に動かす */
+  #brushBox{display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-radius:22px;background:#0008;color:#fff}
+  #brushBox svg{flex:none}
+  #brushSize{pointer-events:auto;touch-action:none;-webkit-appearance:none;appearance:none;width:120px;height:44px;margin:0;background:transparent}
+  #brushSize::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:#fff8}
+  #brushSize::-moz-range-track{height:4px;border-radius:2px;background:#fff8}
+  #brushSize::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-10px;border-radius:50%;background:#fff;border:none}
+  #brushSize::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:none}
+  #brushSize:focus-visible{outline:2px solid #fff;outline-offset:2px;border-radius:22px}
+  /* ボタンの置き場所：次へ進むボタンは下の中央、道具（描く／消しゴム・共有）は右下、トッピングはその上に2段 */
+  #toppingBox{display:flex;flex-direction:column;gap:8px}
+  /* トッピングは4つと3つの2段に分け、それぞれ中央にそろえる。全部が画面に収まるよう、文字は画面の幅に合わせて小さくする */
+  #toppingRow{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .topLine{display:flex;gap:6px}
+  #toppingRow button{white-space:nowrap;font-size:min(13px, 3.3vw);padding:0 8px}
+  #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
+  #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;background:var(--panel);border-radius:12px;padding:14px}
+  #share-img{display:block;width:100%;height:auto}
+  #share-text{white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text;font-size:14px}
+  #share-close{width:100%}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="stage"><canvas id="cv"></canvas></div>
+  <div id="bottom">
+    <div class="row" id="brushRow">
+      <div id="brushBox" class="tool">
+        <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="2" fill="currentColor"/></svg>
+        <input id="brushSize" type="range" min="2" max="20" step="0.5" value="6" aria-label="線の太さ">
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="currentColor"/></svg>
+      </div>
+    </div>
+    <div class="row" id="moldRow">
+      <button id="toPour" class="go" type="button">生地を入れる</button>
+      <div id="toolSeg" class="tool" role="group" aria-label="描く・消す">
+        <button id="pen" type="button" aria-label="描く" aria-pressed="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.17 6.81a2.83 2.83 0 0 0-4-4L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/></svg>
+        </button>
+        <button id="eraser" type="button" aria-label="消しゴム" aria-pressed="false">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4.3-4.3a1 1 0 0 1 0-1.4l9.6-9.6a1 1 0 0 1 1.4 0l5.6 5.6a1 1 0 0 1 0 1.4L11 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="row hidden" id="startRow">
+      <button id="startBake" class="go" type="button">焼く</button>
+    </div>
+    <div class="row hidden" id="pourRow">
+      <button id="bake" class="go" type="button">取り出す</button>
+    </div>
+    <div id="toppingBox" class="hidden">
+      <div id="toppingRow">
+        <div class="topLine">
+          <button type="button" data-top="whip" aria-pressed="false">ホイップ</button>
+          <button type="button" data-top="choco" aria-pressed="false">チョコソース</button>
+          <button type="button" data-top="berry" aria-pressed="false">いちご</button>
+          <button type="button" data-top="blue" aria-pressed="false">ブルーベリー</button>
+        </div>
+        <div class="topLine">
+          <button type="button" data-top="ice" aria-pressed="false">バニラアイス</button>
+          <button type="button" data-top="sprinkle" aria-pressed="false">カラースプレー</button>
+          <button type="button" data-top="sugar" aria-pressed="false">粉砂糖</button>
+        </div>
+      </div>
+      <div class="row"><button id="done" class="go" type="button">完成</button></div>
+    </div>
+    <div id="result" class="row hidden">
+      <button id="again" class="go" type="button">もう一回</button>
+      <button id="share" class="tool" type="button">共有</button>
+    </div>
+  </div>
+  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+    <div class="panel">
+      <img id="share-img" alt="共有される結果画像">
+      <p id="share-text"></p>
+      <button id="share-close" type="button">閉じる</button>
+    </div>
+  </div>
+  <section class="howto" data-pos="top-left" hidden>
+    <h2>遊び方</h2>
+    <p>鉄板に金型を描き、生地を注いで焼き、トッピングで仕上げるワッフル作りのおもちゃです。点数や時間切れはありません。描いた線は金型の出っ張りになり、ワッフルにはその形の窪みが付きます。「もう一回」を押しても金型は残るので、描き足して焼き直せます。</p>
+    <h2>操作</h2>
+    <p>鉄板をなぞると線が描けます。太さはスライダーで変えられ、消しゴムもあります。「生地を入れる」の後は鉄板をなぞって生地を注ぎ、ふたを手で閉じるか「焼く」を押すと焼き始め、「取り出す」で焼き上がります。トッピングはボタンで選んで載せ、「完成」の後はドラッグで回して眺められます。PC ではマウスで同じように操作します。</p>
+    <h2>楽しみ方</h2>
+    <p>焼き色は焼いた時間で決まります。10秒で薄い煙が出始め、15秒を超えると黒い煙とともに一気に焦げます。金型に押された所は濃く焼けるので、模様がくっきり出ます。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+
+  // ---------- 定数 ----------
+  // 金型
+  const N = 200;              // 生地の流れを計算するマス目の解像度（鉄板の直径をこのマス数で扱う）
+  const F = 3;                // 金型とワッフルの形は、生地のマス目をさらにこの数で細かく割った細かいマス目で作る
+  const BRUSH = 6;            // 金型を描く筆の半径のはじめの値（生地のマス目で数えたマス）。スライダーで BRUSH_MIN〜BRUSH_MAX に変えられる
+  const BRUSH_MIN = 2, BRUSH_MAX = 20; // 筆の半径の範囲（スライダーの min / max と合わせる）
+  const BRUSH_PREVIEW_HOLD = 0.6;      // スライダーから指を離してから、太さの見本が消え始めるまで（秒）
+  const BLUR = 1;             // 出っ張りのふちを丸める量（生地のマス目で数えたマス）
+  const EDGE_LO = 0.2, EDGE_HI = 0.8; // 出っ張りの壁の急さ（ぼかした値のこの範囲で立ち上がる。狭いほど壁が切り立つ）
+  const PLATE_R = 0.5;        // 鉄板の半径
+  const MOLD_H = 0.05;        // 金型の出っ張りの高さ（上下の鉄板それぞれ）
+  // 生地
+  const POUR_RATE = 1.25;      // 生地を注ぐ速さ（注ぎ口の真下で1秒に増える厚み）
+  const POUR_R = 5;           // 生地の注ぎ口の広がり（マス）
+  const POUR_MAX = 0.08;      // おたまの真下でも生地はこの厚みまでしか盛り上がらない
+  const SPILL_BINS = 96;      // こぼれた生地を周方向に分ける数
+  const SPILL_T = 0.012;      // 本体の側面を伝う生地の厚み
+  const PUDDLE_T = 0.01;      // 台の上に広がる生地の厚み
+  const PUDDLE_GROW = 0.1;    // 台の上の生地の広がりやすさ
+  const PUDDLE_MAX = 0.4;     // 台の上に広がる長さの上限
+  const SPILL_FPS = 20;       // こぼれた生地の形を作り直す回数（1秒あたり）
+  const SPILL_SPEED = 0.3;    // こぼれた生地が垂れていく速さ（/秒）
+  const FILM = 0.04;          // 生地がこれより薄いと流れない（粘り気）。この厚みのぽってりした水たまりで止まる
+  const FLOW = 0.22;          // 生地の流れやすさ
+  const FLOW_STEPS = 24;      // 1フレームに生地の流れを計算する回数（多いほど速く広がる）
+  // おたま
+  const LADLE_R = 0.16;       // おたまの丸い部分の半径
+  const LADLE_Y = 0.42;       // おたまを構える高さ（鉄板から）
+  const LADLE_TILT = 1.1;     // 注ぐときにおたまを傾ける角度（rad）
+  const LADLE_TILT_SPEED = 8; // おたまを傾ける速さ
+  const LADLE_FOLLOW = 14;    // おたまが指を追いかける速さ
+  const STREAM_R = 0.016;     // おたまから落ちる生地の太さ
+  // 本体
+  const BASE_H = 0.16;        // 下側の本体の高さ
+  const LID_H = 0.09;         // ふたの本体の高さ
+  const BODY_R = 0.63;        // 本体の半径
+  const FOOT_H = 0.025;       // 脚の高さ
+  const HINGE_Z = -0.67;      // ちょうつがいの位置（奥）
+  const LID_OPEN = -1.85;     // ふたを開けたときの角度（rad）
+  const MAKER_SLIDE = 5;       // 皿へ移すときにワッフルメーカーを左へ滑らせる距離
+  const MAKER_SLIDE_TIME = 0.9; // その時間（秒）
+  const LID_CLOSE_AT = -0.35; // ふたを手で下ろしてこの角度（rad）より閉じた所で離すと、閉まって焼き始める
+  const LID_SPEED = 10;       // ふたが開け閉めされる速さ
+  const COLOR_BODY = 0xc8141c;  // 本体の色（赤）
+  const COLOR_PLATE = 0x0d0d0e; // 鉄板のまわりの色（黒いフッ素加工）
+  const COLOR_IRON = 0x5e6166;  // 金型の鉄の色
+  const IRON_ROUGH = 0.42;      // 金型の鉄のざらつき（大きいほどつや消し）
+  const IRON_LOW = 0.55;        // 金型の根元（低い所）の明るさの倍率
+  const IRON_TOP = 1.7;         // 金型の出っ張りの天面の明るさの倍率
+  const IRON_TOP_ROUGH = 0.7;   // 出っ張りの天面のざらつきの倍率（使い込んでつるっとしている）
+  const GINGHAM_COLOR = [52, 96, 178];   // 床に敷いた布のギンガムチェックの色（白との組み合わせ）
+  const GINGHAM_CHECKS = 8;              // 模様1枚に並ぶチェックの数
+  const GINGHAM_REPEAT = 18;             // 床に模様を繰り返す回数（多いほどチェックが細かい）
+  const COLOR_BATTER = 0xf3dfa8;// 焼く前の生地の色
+  // ワッフル
+  const THICK = 0.17;         // 上下の鉄板のすき間（ふたを閉じたときのワッフルの厚み）
+  const THIN_FILL = 0.35;     // 焼くとき、すき間に対してこれより薄い生地は周りへ寄せ集める（ペラペラのふちを作らない）
+  const GAP_FILL = 16;        // 焼くとき、生地どうしの間のこれ（マス）以下のすき間は埋める（金型の出っ張りで分かれた生地をつなぐ）
+  const ISLAND_MIN = 800;     // 焼くとき、これより小さい（マス数）離れ小島の生地は取り除く（小さな粒がとがった山になるため）
+  const WAF_MIN = 0.05;       // 金型で押した所に残す最低の厚み（生地が薄いときは押す深さを浅くして、薄い膜にしない）
+  const RISE = 1.8;           // 焼くと生地がふくらむ倍率（ふくらんで上の鉄板まで届き、厚みが出る）
+  // 皿
+  const DISH_R = 0.62;        // 皿の半径
+  const DISH_X = BODY_R + 0.12 + DISH_R; // 皿の位置（本体の右隣）
+  const DISH_Z = 0.15;
+  const COLOR_DISH = 0xc4c2be;  // 皿の色（照明が強いので、白く見えつつ白飛びしない明るさにする）
+  const TRANSFER_TIME = 1.2;  // 焼き上がったワッフルを皿へ移す時間（秒）
+  const TRANSFER_LIFT = 0.3;  // 皿へ移すときに持ち上げる高さ
+  // カメラ
+  const FOV = 42;             // 縦の視野角（度）
+  const CAM_PITCH = 34;       // 見下ろす角度（度）
+  const CAM_YAW = 18;         // 右から見る角度（度）
+  const CAM_DIST = 2.6;       // カメラの距離（横幅が足りない画面では離す）
+  const CAM_TARGET = new THREE.Vector3(0, 0.22, -0.22); // 注視点
+  const MOLD_CAM_PITCH = 60;  // 金型を作る画面で鉄板を見下ろす角度（度）。真上だと出っ張りの高さが見えないので斜めから
+  const MOLD_CAM_DIST = 1.6;  // 金型を作る画面のカメラの距離
+  const DISH_CAM_PITCH = 75;  // 皿を見るときの見下ろす角度（度）。トッピングしやすいよう上から見る
+  const DISH_CAM_DIST = 2.2;  // 皿を見るときのカメラの距離
+  const ORBIT_SPEED = 0.4;    // 完成品を見るとき、ドラッグ1pxで回る角度（度）
+  const ORBIT_PITCH_MIN = 8, ORBIT_PITCH_MAX = 88;   // 見下ろす角度の範囲（度）
+  const ZOOM_MIN = 0.3, ZOOM_MAX = 2.0;              // 近づける・離れる倍率の範囲
+  // 完成の演出
+  const FINALE_ZOOM = 0.48;      // 完成したときに寄る倍率（ワッフルが画面いっぱいに近くなる）
+  const FINALE_PITCH = 28;       // 完成したときに見下ろす角度（度）
+  const FINALE_TIME = 1.2;       // 寄っていく時間（秒）
+  const AUTO_ROTATE = 30;        // 完成品を自動で回す速さ（度/秒）。指で触っている間は止まる
+  const SPARK_COUNT = 160;       // 完成したときに飛び散るきらきらの数（2回に分けてはじける）
+  const SPARK_WAVE_GAP = 0.35;   // 1回目と2回目のはじけの間（秒）
+  const SPARK_LIFE = 2.6;        // きらきらが消えるまでの時間（秒）
+  const SPARK_SPEED = 1.1;       // きらきらが飛び出す速さ
+  const SPARK_GRAVITY = 1.0;     // きらきらが落ちる速さ（重力）
+  const SPARK_SIZE = 0.11;       // きらきらの大きさ
+  const SPARK_COLORS = [0xffc21a, 0xff4f8b, 0x3fb6ff, 0x6fd64a, 0xffffff];   // きらきらの色（白い皿の上でも見える濃い色）
+  const CAM_MOVE = 3;         // カメラが皿へ向かう速さ
+  // 焼き
+  const COLOR_RAMP = [        // 焼き時間（秒）→ 生地の色。15秒を超えると一気に黒くなる
+    [0,  [244, 226, 176]],
+    [4,  [240, 208, 140]],
+    [7,  [226, 168,  82]],
+    [10, [192, 120,  52]],
+    [13, [142,  82,  38]],
+    [15, [ 98,  52,  24]],
+    [17, [ 24,  16,  12]]
+  ];
+  // 焼きむら：金型の出っ張りに押された所（ワッフルの窪み）は鉄板に強く当たって濃く焼け、
+  // 出っ張っていない所（ワッフルの盛り上がった所）は焼けにくく、まだらになりやすい
+  const BAKE_FLAT = 0.62;     // 出っ張っていない所の焼ける速さ（焼き時間に掛ける倍率）
+  const BAKE_PRESSED = 1.28;  // 出っ張りに押された所の焼ける速さ
+  const BAKE_UNEVEN = 0.32;   // 出っ張っていない所のむらの強さ（倍率の上下幅）
+  const BAKE_BLOTCH = 8;      // むらの斑点の大きさ（鉄板の直径あたりの数。小さいほど大きな斑点）
+  // 演出
+  const PUFF_COUNT = 16;      // ふたを開けたときに立ちのぼる湯気（焦げたときは黒い煙）の数
+  const TILT_MAX = 0.35;      // 皿へ運ぶ途中にワッフルを傾ける角度（ラジアン）
+  const LAND_TIME = 0.35;     // 皿に置いたときに少しつぶれて戻る時間（秒）
+  const LAND_SQUASH = 0.12;   // そのときにつぶれる割合
+  const PREVIEW_OPACITY = 0.45; // トッピングを押している間に出す見本の濃さ
+  const POP_TIME = 0.3;       // バニラアイスがぽんと乗る時間（秒）
+  const DROP_TIME = 0.45;     // いちご・ブルーベリーが落ちてきて弾む時間（秒）
+  const WHIP_TIME = 0.4;      // ホイップを下から絞り出して盛り上がる時間（秒）
+  const DROP_H = 0.18;        // それらを落とす高さ
+  const SPRINKLE_FALL = 0.25; // カラースプレーが落ちる時間（秒）
+  const SPRINKLE_FALL_H = 0.08; // カラースプレーを振る高さ
+  const LAMP_ON = 0xff8a2a;   // 焼いている間に点くランプの色
+  const SMOKE_START = 10;     // この秒数から薄い煙が出る
+  const SMOKE_BLACK = 15;     // この秒数を超えると黒い煙になる
+  const SMOKE_RATE = [4, 18]; // 煙の出る量（1秒あたりの数）[薄い煙, 黒い煙]
+  const SMOKE_MAX = 90;       // 同時に出せる煙の数
+  const SMOKE_LIFE = 2.6;     // 煙が消えるまでの時間（秒）
+  const SHARE_INSTANT = 0.5;  // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  // トッピング
+  const ICE_R = 0.07;                    // バニラアイスのひとすくいの半径
+  const BLUE_R = 0.016;                  // ブルーベリーの半径
+  const WHIP_R = 0.045, WHIP_H = 0.065;  // ホイップのひと絞りの半径・高さ
+  const WHIP_RIDGES = 8;                 // 星形の口金の筋の数
+  const WHIP_TURNS = 2.5;                // 絞りながら巻く回数
+  const BERRY_R = 0.028, BERRY_H = 0.05; // いちごの半径・高さ
+  const CHOCO_R = 0.007;                 // チョコソースの太さ（半径）
+  const CHOCO_STEP = 0.008;              // チョコソースの線を伸ばす間隔
+  const SPRINKLE_MAX = 4000;              // カラースプレーの粒の最大数
+  const SPRINKLE_PER_MOVE = 6;           // なぞるたびに振る粒の数
+  const SPRINKLE_SPREAD = 0.05;          // カラースプレーが散らばる半径
+  const SPRINKLE_LEN = 0.013, SPRINKLE_R = 0.0024;   // カラースプレーの粒の長さ・太さ
+  const SPRINKLE_COLORS = [0xff4f8b, 0xffc21a, 0x3fb6ff, 0x6fd64a, 0xff7a2a, 0xffffff, 0xb07cff];   // カラースプレーの色
+  const SUGAR_MAX = 30000;               // 粉砂糖の粒の最大数
+  const SUGAR_PER_MOVE = 50;             // なぞるたびに振る粉砂糖の粒の数
+  const SUGAR_SPREAD = 0.045;            // 粉砂糖が散らばる半径
+  const SUGAR_SIZE = 0.005;              // 粉砂糖の粒の大きさ
+  const COLOR_SUGAR = 0xf6f4f0;          // 粉砂糖の色
+  const GHOST_GUARD = 400;    // 結果を出してからこの時間（ミリ秒）は共有ボタンを受け付けない（焼くボタンを離した指が押してしまうのを防ぐ）
+
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+
+  // ---------- 状態 ----------
+  let state = 'mold';   // 'mold'（金型を作る画面） / 'pour'（生地を入れる画面） / 'bake'（焼いている） / 'result'（焼き上がり）
+  let bakeSec = 0, bakeStart = 0;
+  let resultShownAt = 0;
+  let lidAngle = LID_OPEN, lidTarget = LID_OPEN;
+  let transfer = -1;      // 皿へ移している経過時間（-1＝まだ移し始めていない）
+  let resultReady = false;
+  let toppingMode = false; // 皿に移してトッピングしている間
+  const ladleTarget = new THREE.Vector3(0.18, 0, 0.12);   // おたまの注ぎ口を持っていく場所（鉄板の上の位置）
+  let view = 'mold';      // カメラが向かう先（'mold'＝鉄板を真上から、'maker'＝ワッフルメーカー全体、'dish'＝皿）
+
+  // ---------- マス目のデータ ----------
+  // 鉄板を覆う正方形のマス目。マス i = 行 × N + 列、行0が奥、列0が左
+  const B = new Float32Array(N * N);      // 出っ張りの形 0〜1（細かいマス目の BF を生地のマス目で拾ったもの）
+  const Bb = new Float32Array(N * N);     // 生地の見た目用：まわり（細かいマス ±F）でいちばん高い出っ張り。生地の面が金型に埋まらないように
+  const Bs = new Float32Array(N * N);     // 生地の見た目用：まわりでいちばん低い出っ張り。生地の無い所はここより下へ沈めて、金型の上に見えないように
+  const dough = new Float32Array(N * N);  // 生地の厚み
+  const inside = new Uint8Array(N * N);   // 鉄板の上のマス
+  const cellX = i => (i % N) / (N - 1) - 0.5, cellZ = i => Math.floor(i / N) / (N - 1) - 0.5;
+  for (let i = 0; i < N * N; i++) inside[i] = Math.hypot(cellX(i), cellZ(i)) < PLATE_R * 0.99 ? 1 : 0;
+  const ground = i => MOLD_H * B[i];                  // 下の鉄板の高さ
+  const capacity = i => THICK - 2 * MOLD_H * B[i];    // ふたを閉じたときの上下の鉄板のすき間
+
+  // 細かいマス目（金型・ワッフルの形用）。M = (N-1)×F+1 なので、細かいマス (y×F, x×F) が生地のマス (y, x) と同じ場所
+  const M = (N - 1) * F + 1;
+  const maskF = new Float32Array(M * M);  // 金型を描いた所 0〜1（上下の鉄板の出っ張り＝ワッフルの窪み）
+  const BF = new Float32Array(M * M);     // 出っ張りの形 0〜1（描いた所のふちを丸め、壁を切り立たせたもの）
+  const insideF = new Uint8Array(M * M);  // 鉄板の上の細かいマス
+  for (let i = 0; i < M * M; i++)
+    insideF[i] = Math.hypot((i % M) / (M - 1) - 0.5, Math.floor(i / M) / (M - 1) - 0.5) < PLATE_R * 0.99 ? 1 : 0;
+  const groundF = i => MOLD_H * BF[i];
+  const capacityF = i => THICK - 2 * MOLD_H * BF[i];
+  // 生地のマス目の値を細かいマス目へ（間はなめらかにつなぐ）
+  function upsample(src){
+    const out = new Float32Array(M * M);
+    for (let fy = 0; fy < M; fy++){
+      const y = fy / F, y0 = Math.min(Math.floor(y), N - 2), ty = y - y0;
+      for (let fx = 0; fx < M; fx++){
+        const x = fx / F, x0 = Math.min(Math.floor(x), N - 2), tx = x - x0;
+        const a = y0 * N + x0;
+        out[fy * M + fx] = (src[a] * (1 - tx) + src[a + 1] * tx) * (1 - ty) + (src[a + N] * (1 - tx) + src[a + N + 1] * tx) * ty;
+      }
+    }
+    return out;
+  }
+
+  // 描き変えた範囲（細かいマス目）。金型の面はこの範囲だけ作り直す
+  const dirty = { x0:0, x1:M - 1, y0:0, y1:M - 1, any:true };
+  function moldDirty(x0, x1, y0, y1){
+    if (!dirty.any){ Object.assign(dirty, { x0, x1, y0, y1, any:true }); return; }
+    dirty.x0 = Math.min(dirty.x0, x0); dirty.x1 = Math.max(dirty.x1, x1);
+    dirty.y0 = Math.min(dirty.y0, y0); dirty.y1 = Math.max(dirty.y1, y1);
+  }
+  // 筆で金型を描く（座標は生地のマス目、描くのは細かいマス目）。消しゴムのときは同じ筆の形で消す
+  let erasing = false;
+  let brushR = BRUSH;   // いまの筆の半径（スライダーで変わる）
+  function stampCircle(gx, gy){
+    const cx = gx * F, cy = gy * F, R = brushR * F;
+    const x0 = Math.max(0, Math.floor(cx - R - 1)), x1 = Math.min(M - 1, Math.ceil(cx + R + 1));
+    const y0 = Math.max(0, Math.floor(cy - R - 1)), y1 = Math.min(M - 1, Math.ceil(cy + R + 1));
+    if (x0 > x1 || y0 > y1) return;   // 筆がマス目の外にあるときは何もしない
+    moldDirty(x0, x1, y0, y1);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){
+      const a = 1 - smooth(R - 1.5, R, Math.hypot(x - cx, y - cy));
+      const i = y * M + x;
+      if (erasing){ if (1 - a < maskF[i]) maskF[i] = 1 - a; }
+      else if (a > maskF[i]) maskF[i] = a;
+    }
+  }
+  function stampLine(a, b){
+    const steps = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) * F / 1.5) + 1;
+    for (let s = 1; s <= steps; s++){
+      const t = s / steps;
+      stampCircle(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+    }
+  }
+  // n×n のマス目を半径 r でぼかす
+  function boxBlur(src, n = N, r = BLUR){
+    const tmp = new Float32Array(n * n), out = new Float32Array(n * n), w = 2 * r + 1;
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++){
+      let s = 0;
+      for (let k = -r; k <= r; k++) s += src[y * n + clamp(x + k, 0, n - 1)];
+      tmp[y * n + x] = s / w;
+    }
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++){
+      let s = 0;
+      for (let k = -r; k <= r; k++) s += tmp[clamp(y + k, 0, n - 1) * n + x];
+      out[y * n + x] = s / w;
+    }
+    return out;
+  }
+  // ワールド座標 (x, z) → マス目の座標
+  const toGrid = (x, z) => ({ x:(x / (PLATE_R * 2) + 0.5) * (N - 1), y:(z / (PLATE_R * 2) + 0.5) * (N - 1) });
+
+  // ---------- 生地 ----------
+  // 注ぎ口のまわりに生地を足す
+  function pour(cx, cy, dt){
+    const R = Math.ceil(POUR_R * 3);
+    for (let y = Math.max(0, Math.floor(cy) - R); y <= Math.min(N - 1, Math.ceil(cy) + R); y++)
+      for (let x = Math.max(0, Math.floor(cx) - R); x <= Math.min(N - 1, Math.ceil(cx) + R); x++){
+        const i = y * N + x;
+        if (!inside[i]) continue;
+        const d2 = (x - cx) ** 2 + (y - cy) ** 2;
+        // 液体なので高く積み上がらない（POUR_MAX の厚みを超える分は周りへ流れ出たものとして足さない）
+        dough[i] = Math.min(Math.max(dough[i], POUR_MAX), dough[i] + POUR_RATE * dt * Math.exp(-d2 / (2 * POUR_R * POUR_R)));
+      }
+  }
+  // 生地が高い所から低い所へ流れる（FILM より薄い分は粘り気で留まる）。鉄板のふちからはあふれる。動いた量を返す
+  const flowDelta = new Float32Array(N * N);
+  const NB = [-1, 1, -N, N];
+  // 鉄板のふちからこぼれた生地の量（周方向の区分ごと）
+  const CELL_AREA = 1 / ((N - 1) * (N - 1));
+  const spillV = new Float32Array(SPILL_BINS);
+  const spillBin = new Int16Array(N * N);
+  for (let i = 0; i < N * N; i++){
+    const a = Math.atan2(cellZ(i), cellX(i));
+    spillBin[i] = ((Math.floor((a / (Math.PI * 2) + 1) * SPILL_BINS) % SPILL_BINS) + SPILL_BINS) % SPILL_BINS;
+  }
+  function flowStep(){
+    flowDelta.fill(0);
+    let moved = 0;
+    const f = [0, 0, 0, 0];
+    for (let i = 0; i < N * N; i++){
+      const d = dough[i];
+      if (!inside[i] || d <= FILM) continue;
+      const h = ground(i) + d;
+      let sum = 0;
+      for (let k = 0; k < 4; k++){
+        const j = i + NB[k];
+        // 鉄板の外へは高さ0として流れ出る（流れ出た分はこぼれて無くなる）
+        const out = !(j >= 0 && j < N * N && inside[j]);
+        f[k] = out ? h * FLOW : Math.max(0, h - ground(j) - dough[j]) * FLOW;
+        sum += f[k];
+      }
+      if (sum <= 0) continue;
+      const s = Math.min(1, (d - FILM) / sum);
+      for (let k = 0; k < 4; k++){
+        const j = i + NB[k];
+        if (f[k] <= 0) continue;
+        if (j >= 0 && j < N * N && inside[j]) flowDelta[j] += f[k] * s;
+        else spillV[spillBin[i]] += f[k] * s * CELL_AREA;
+      }
+      flowDelta[i] -= sum * s;
+      moved += sum * s;
+    }
+    for (let i = 0; i < N * N; i++) dough[i] += flowDelta[i];
+    return moved;
+  }
+  // ふたを閉じたとき、すき間からはみ出る生地を押し広げる。
+  // はみ出た分を、すき間いっぱいの所から近い順に足りない所へ詰めていく（鉄板からあふれた分は捨てる）
+  // 本体から離れた小さな生地のかたまりを取り除く。
+  // すき間いっぱいまで詰めると、数マスだけの粒は周りが空なのでとがった円すいの形になってしまう
+  function removeIslands(){
+    const label = new Int32Array(N * N).fill(-1), sizes = [], stack = [];
+    for (let i = 0; i < N * N; i++){
+      if (label[i] >= 0 || !inside[i] || dough[i] <= 1e-4) continue;
+      const id = sizes.length;
+      let n = 0;
+      label[i] = id; stack.push(i);
+      while (stack.length){
+        const j = stack.pop(); n++;
+        const x = j % N;
+        for (const k of [x > 0 ? j - 1 : -1, x < N - 1 ? j + 1 : -1, j - N, j + N]){
+          if (k < 0 || k >= N * N || label[k] >= 0 || !inside[k] || dough[k] <= 1e-4) continue;
+          label[k] = id; stack.push(k);
+        }
+      }
+      sizes.push(n);
+    }
+    const biggest = sizes.indexOf(Math.max(...sizes, 0));
+    for (let i = 0; i < N * N; i++){
+      const id = label[i];
+      if (id >= 0 && id !== biggest && sizes[id] < ISLAND_MIN) dough[i] = 0;
+    }
+  }
+  // 生地のかたまりごとに表面を平らにする（量はそのまま、生地の無い所へは広がらない）。
+  // 詰めた直後は金型の窪みのまわりだけ高く盛られた段差が残るので、焼く形を作る前に平らにする
+  // 金型の出っ張りが土手になって生地が渡れなかった細いすき間を埋める（焼くとふくらんでつながるため）。
+  // 生地のある所を GAP_FILL マスだけ太らせてから同じだけ細らせると、細いすき間だけが埋まり外側の輪郭はほぼ変わらない
+  function fillGaps(){
+    const m = new Float32Array(N * N);
+    let sum = 0, cnt = 0;
+    for (let i = 0; i < N * N; i++) if (inside[i] && dough[i] > 1e-4){ m[i] = 1; sum += ground(i) + dough[i]; cnt++; }
+    if (!cnt) return;
+    const level = sum / cnt;
+    const filt = (src, useMax) => {   // 正方形の範囲で最大（太らせる）・最小（細らせる）を取る。縦横に分けて計算する
+      const tmp = new Float32Array(N * N), out = new Float32Array(N * N), r = GAP_FILL;
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++){
+        let v = useMax ? 0 : 1;
+        for (let k = Math.max(0, x - r); k <= Math.min(N - 1, x + r); k++) v = useMax ? Math.max(v, src[y * N + k]) : Math.min(v, src[y * N + k]);
+        tmp[y * N + x] = v;
+      }
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++){
+        let v = useMax ? 0 : 1;
+        for (let k = Math.max(0, y - r); k <= Math.min(N - 1, y + r); k++) v = useMax ? Math.max(v, tmp[k * N + x]) : Math.min(v, tmp[k * N + x]);
+        out[y * N + x] = v;
+      }
+      return out;
+    };
+    const closed = filt(filt(m, true), false);
+    for (let i = 0; i < N * N; i++)
+      if (inside[i] && closed[i] > 0.5 && !m[i]) dough[i] = Math.max(1e-3, level - ground(i));
+  }
+  const levelMap = new Float32Array(N * N);   // ならしたあとの、かたまりごとの表面の高さ（生地の無い所は0）
+  function levelDough(){
+    const label = new Int32Array(N * N).fill(-1), stack = [], groups = [];
+    for (let i = 0; i < N * N; i++){
+      if (label[i] >= 0 || !inside[i] || dough[i] <= 0) continue;
+      const id = groups.length, cells = [];
+      let sum = 0;
+      label[i] = id; stack.push(i);
+      while (stack.length){
+        const j = stack.pop();
+        cells.push(j); sum += ground(j) + dough[j];
+        const x = j % N;
+        for (const k of [x > 0 ? j - 1 : -1, x < N - 1 ? j + 1 : -1, j - N, j + N]){
+          if (k < 0 || k >= N * N || label[k] >= 0 || !inside[k] || dough[k] <= 0) continue;
+          label[k] = id; stack.push(k);
+        }
+      }
+      groups.push([cells, Math.min(THICK, sum / cells.length)]);
+    }
+    levelMap.fill(0);
+    for (const [cells, level] of groups) for (const j of cells){ dough[j] = Math.max(1e-4, level - ground(j)); levelMap[j] = level; }
+  }
+  function squeeze(){
+    let pool = 0, best = -1;
+    const dist = new Float32Array(N * N).fill(Infinity);
+    for (let i = 0; i < N * N; i++){
+      if (!inside[i]) continue;
+      const c = capacity(i);
+      if (dough[i] >= c){ pool += dough[i] - c; dough[i] = c; dist[i] = 0; }
+      // 薄く広がっただけの生地は、ペラペラの膜にならないよう一度集めてから詰め直す
+      // 生地の表面が低い所（薄く広がっただけの所）。金型の出っ張りの上は生地が薄くても表面は周りと同じ高さなので、
+      // 厚みではなく表面の高さで見る（厚みで見ると出っ張りの上だけ生地が消え、そこで穴が開く）
+      else if (ground(i) + dough[i] < THIN_FILL * THICK){ pool += dough[i]; dough[i] = 0; }
+      if (best < 0 || dough[i] > dough[best]) best = i;
+    }
+    if (pool <= 0) return;
+    // すき間いっぱいの所が無いときは、いちばん厚い所から詰めていく
+    if (dist[best] !== 0) dist[best] = 0;
+    // すき間いっぱいの所からの距離（2パスの近似距離）
+    const S2 = Math.SQRT2;
+    const relax = (i, j, w) => { if (inside[j] && dist[j] + w < dist[i]) dist[i] = dist[j] + w; };
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++){
+      const i = y * N + x;
+      if (!inside[i]) continue;
+      if (x > 0) relax(i, i - 1, 1);
+      if (y > 0){ relax(i, i - N, 1); if (x > 0) relax(i, i - N - 1, S2); if (x < N - 1) relax(i, i - N + 1, S2); }
+    }
+    for (let y = N - 1; y >= 0; y--) for (let x = N - 1; x >= 0; x--){
+      const i = y * N + x;
+      if (!inside[i]) continue;
+      if (x < N - 1) relax(i, i + 1, 1);
+      if (y < N - 1){ relax(i, i + N, 1); if (x < N - 1) relax(i, i + N + 1, S2); if (x > 0) relax(i, i + N - 1, S2); }
+    }
+    const order = [];
+    for (let i = 0; i < N * N; i++) if (inside[i] && dist[i] > 0 && dist[i] < Infinity) order.push(i);
+    order.sort((a, b) => dist[a] - dist[b]);
+    for (const i of order){
+      const need = capacity(i) - dough[i];
+      if (need <= 0) continue;
+      const add = Math.min(need, pool);
+      dough[i] += add;
+      pool -= add;
+      if (pool <= 0) break;
+    }
+  }
+  // 見た目用に、生地の厚みをなめらかにしたもの（3回ぼかす）
+  // 鉄板のふちの近くでは厚みを円に沿ってなめらかに0へ落とす。
+  // （マス目のふちは階段状なので、生地がふちまで届くとその階段がギザギザのトゲに見える）
+  const rimFade = new Float32Array(N * N);
+  for (let i = 0; i < N * N; i++) rimFade[i] = 1 - smooth(PLATE_R * 0.93, PLATE_R * 0.98, Math.hypot(cellX(i), cellZ(i)));
+  const softDough = () => {
+    const d = boxBlur(boxBlur(boxBlur(dough)));
+    for (let i = 0; i < N * N; i++) d[i] *= rimFade[i];
+    return d;
+  };
+  const totalDough = () => { let s = 0; for (let i = 0; i < N * N; i++) s += dough[i]; return s; };
+
+  const LIN = Float32Array.from({ length:256 }, (_, v) => Math.pow(v / 255, 2.2));   // 0〜255 → linear の表
+  const _col = [0, 0, 0];
+  function ramp(c){
+    let k = 1;
+    while (k < COLOR_RAMP.length - 1 && c > COLOR_RAMP[k][0]) k++;
+    const [a, ca] = COLOR_RAMP[k - 1], [b, cb] = COLOR_RAMP[k];
+    const t = clamp((c - a) / (b - a), 0, 1);
+    for (let j = 0; j < 3; j++) _col[j] = ca[j] + (cb[j] - ca[j]) * t;
+    return _col;
+  }
+
+  // ---------- three.js ----------
+  const cv = $('cv');
+  const renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.NoToneMapping;   // ACES だと赤が橙に寄って白っぽくなるので使わない
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(css('--bg'));
+  const camera = new THREE.PerspectiveCamera(FOV, 1, 0.05, 30);
+
+  // 映り込み用の環境。照明の板を並べた部屋を作り、反射に使える形に変換して全体の映り込みにする
+  // （映り込みが無いと、つやのある材質がのっぺりしたプラスチックに見える）
+  {
+    const envScene = new THREE.Scene();
+    envScene.add(new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10),
+      new THREE.MeshBasicMaterial({ color:0x121110, side:THREE.BackSide })));
+    const panel = (w, h, x, y, z, rx, ry, power) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
+        new THREE.MeshBasicMaterial({ color:new THREE.Color(power, power, power), side:THREE.DoubleSide }));
+      m.position.set(x, y, z);
+      m.rotation.set(rx, ry, 0);
+      envScene.add(m);
+    };
+    panel(4, 3, -0.5, 4.9, 0.5, Math.PI / 2, 0, 1.4);    // 天井の大きな照明
+    panel(2.5, 1.6, -4.9, 1.6, 1.2, 0, Math.PI / 2, 0.9); // 左の窓
+    panel(1.6, 2.4, 4.9, 1.2, -1.5, 0, -Math.PI / 2, 0.45);// 右の照明
+    panel(4, 1, 0, 1.2, 4.9, 0, Math.PI, 0.6);           // 手前の細長い照明
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+    pmrem.dispose();
+  }
+
+  scene.add(new THREE.HemisphereLight(0xfff6e8, 0x2a2622, 0.25));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.3);
+  sun.position.set(-1.2, 2.6, 1.8);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left:-2.4, right:2.4, top:2.4, bottom:-2.4, near:0.5, far:7 });
+  sun.shadow.bias = -0.0006;
+  sun.shadow.normalBias = 0.012;   // 急な斜面（生地のふちなど）に影のギザギザ（影の縞）が出ないよう、影を面の向きに少しずらす
+  scene.add(sun);
+  // 奥から当てる弱い光。ふちに明るい線が出て、形の輪郭が見やすくなる
+  const rim = new THREE.DirectionalLight(0xffe9cc, 0.35);
+  rim.position.set(1.6, 1.4, -2.2);
+  scene.add(rim);
+
+  // 色の指定は見た目どおりの色（sRGB）で書き、three.js の計算用（linear）に直して渡す。
+  // 直さずに渡すと、出力時に明るく変換されて白っぽく（黒は灰色、赤はピンクに）なる
+  const srgb = hex => new THREE.Color(hex).convertSRGBToLinear();
+  // フッ素加工の表面の細かいざらつき（ノイズ画像を凹凸として使う）
+  const coatTex = (() => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 256;
+    const g = c.getContext('2d'), img = g.createImageData(256, 256);
+    for (let i = 0; i < 256 * 256; i++){ const v = 110 + Math.random() * 40; img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v; img.data[i * 4 + 3] = 255; }
+    g.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(6, 6);
+    return t;
+  })();
+  // 鋳物の鉄の表面：細かい砂目のざらつき（ノイズ画像を凹凸として使う）
+  const castTex = (() => {
+    const S = 256, c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d'), img = g.createImageData(S, S);
+    for (let i = 0; i < S * S; i++){
+      const v = 128 + (Math.random() - 0.5) * 70 + (Math.random() < 0.04 ? -50 : 0);   // ところどころ小さなくぼみ
+      img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v; img.data[i * 4 + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(10, 10);
+    return t;
+  })();
+  // ---------- 材質の細かい模様（画像を使わず、ここで描いて作る） ----------
+  // 繰り返して並べても継ぎ目が出ないノイズ（格子の値を周期 P で折り返す）
+  function makeNoise(P, seed){
+    let a = seed * 9301 + 49297;
+    const rnd = () => { a = (a * 9301 + 49297) % 233280; return a / 233280; };
+    const g = Float32Array.from({ length:P * P }, rnd);
+    return (x, y) => {
+      const xi = Math.floor(x), yi = Math.floor(y), tx = x - xi, ty = y - yi;
+      const sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
+      const at = (i, j) => g[(((j % P) + P) % P) * P + (((i % P) + P) % P)];
+      const a0 = at(xi, yi) + (at(xi + 1, yi) - at(xi, yi)) * sx;
+      const a1 = at(xi, yi + 1) + (at(xi + 1, yi + 1) - at(xi, yi + 1)) * sx;
+      return a0 + (a1 - a0) * sy;
+    };
+  }
+  // 何段か重ねたノイズ（0〜1）。size の画像の中で base 周期から細かくしていく
+  function fbm(size, base, octaves, seed){
+    const ns = [];
+    for (let o = 0; o < octaves; o++) ns.push(makeNoise(base << o, seed + o * 17));
+    return (x, y) => {
+      let v = 0, amp = 0.5, tot = 0;
+      for (let o = 0; o < octaves; o++){
+        const f = (base << o) / size;
+        v += ns[o](x * f, y * f) * amp; tot += amp; amp *= 0.5;
+      }
+      return v / tot;
+    };
+  }
+  // 1画素ずつ色を決めて、繰り返し貼れるテクスチャにする
+  function paintTex(size, fn, repeat = 1, srgbColor = false){
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const g = c.getContext('2d'), img = g.createImageData(size, size), d = img.data;
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++){
+      const [r, gg, b] = fn(x, y), o = (y * size + x) * 4;
+      d[o] = r; d[o + 1] = gg; d[o + 2] = b; d[o + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(repeat, repeat);
+    t.anisotropy = 4;
+    if (srgbColor) t.encoding = THREE.sRGBEncoding;
+    return t;
+  }
+  // 周期的に並べた小さな丸（気泡・毛穴・種など）。丸の中心からの距離で値を返す
+  function dots(size, count, rMin, rMax, seed){
+    let a = seed * 7919 + 1;
+    const rnd = () => { a = (a * 16807) % 2147483647; return a / 2147483647; };
+    const list = [];
+    for (let k = 0; k < count; k++) list.push([rnd() * size, rnd() * size, rMin + rnd() * (rMax - rMin)]);
+    const grid = new Float32Array(size * size);
+    for (const [cx, cy, r] of list){
+      for (let y = Math.floor(cy - r - 1); y <= cy + r + 1; y++) for (let x = Math.floor(cx - r - 1); x <= cx + r + 1; x++){
+        const dd = Math.hypot(x - cx, y - cy) / r;
+        if (dd >= 1) continue;
+        const i = (((y % size) + size) % size) * size + (((x % size) + size) % size);
+        grid[i] = Math.max(grid[i], Math.sqrt(1 - dd * dd));
+      }
+    }
+    return (x, y) => grid[y * size + x];
+  }
+  const TEX = 512;
+  // ワッフルの焼きむらの斑点（細かいマス目の位置で引く）
+  const blotchN = fbm(M, BAKE_BLOTCH, 3, 41);
+  // ワッフルの焼き面：細かな気泡の穴とざらつき（凹凸）、焼きむら（色の明暗。色そのものは焼き時間で決まる）
+  const crustN = fbm(TEX, 8, 5, 3), crustPores = dots(TEX, 900, 1.5, 4.5, 5);
+  const crustBump = paintTex(TEX, (x, y) => { const v = 150 + 70 * (crustN(x, y) - 0.5) - 90 * crustPores(x, y); return [v, v, v]; }, 3);
+  const crustMap = paintTex(TEX, (x, y) => { const v = 255 * (0.82 + 0.18 * crustN(x, y)) - 16 * crustPores(x, y); return [v, v * 0.97, v * 0.93]; }, 3, true);
+  // 生地：表面の小さな気泡
+  const bubbles = dots(TEX, 260, 1.5, 4, 11), batterN = fbm(TEX, 4, 3, 13);
+  const batterBump = paintTex(TEX, (x, y) => { const v = 128 + 30 * (batterN(x, y) - 0.5) + 70 * bubbles(x, y); return [v, v, v]; }, 3);
+  // 床：ギンガムチェックの布。縦糸と横糸に色の帯があり、重なった所が濃くなる。細かい織り目と布のむらも付ける
+  const clothN = fbm(TEX, 4, 3, 21);
+  const gingham = (x, y) => {
+    const cell = TEX / GINGHAM_CHECKS;
+    const bx = (x % cell) < cell / 2 ? 1 : 0, by = (y % cell) < cell / 2 ? 1 : 0;   // 色の帯に入っているか
+    return (bx + by) / 2;                                                             // 0：白, 0.5：帯, 1：重なり
+  };
+  const weave = (x, y) => ((x >> 1) + (y >> 1)) % 2;   // 糸が上下に交互に出る細かな織り目
+  const tableTex = paintTex(TEX, (x, y) => {
+    const g = gingham(x, y), w = weave(x, y), n = 0.94 + 0.08 * clothN(x, y) + 0.03 * w;
+    const c = GINGHAM_COLOR, wt = [246, 242, 236];
+    return [0, 1, 2].map(j => (wt[j] + (c[j] - wt[j]) * g) * n);
+  }, GINGHAM_REPEAT, true);
+  const tableRough = paintTex(TEX, (x, y) => { const v = 225 + 25 * weave(x, y); return [v, v, v]; }, GINGHAM_REPEAT);
+  const tableBump = paintTex(TEX, (x, y) => { const v = 110 + 90 * weave(x, y) + 30 * (clothN(x, y) - 0.5); return [v, v, v]; }, GINGHAM_REPEAT);
+  // いちご：表面の種のくぼみ（種は少しずつずらして並べる）
+  const berryTex = (() => {
+    const S = 256, c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d');
+    g.fillStyle = '#c8142a'; g.fillRect(0, 0, S, S);
+    for (let row = 0; row < 10; row++) for (let col = 0; col < 14; col++){
+      const x = (col + (row % 2) * 0.5) / 14 * S, y = (row + 0.6) / 10 * S * 0.92;
+      g.fillStyle = '#8e0a1a'; g.beginPath(); g.ellipse(x, y, 5, 6, 0, 0, Math.PI * 2); g.fill();   // くぼみ
+      g.fillStyle = '#e8c44a'; g.beginPath(); g.ellipse(x, y, 2, 3, 0, 0, Math.PI * 2); g.fill();   // 種
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = THREE.RepeatWrapping;
+    t.encoding = THREE.sRGBEncoding;
+    return t;
+  })();
+  // バニラアイス：細かなざらつきと、バニラビーンズの小さな黒い粒
+  const iceN = fbm(256, 16, 3, 31), beans = dots(256, 70, 0.6, 1.3, 33);
+  const iceBump = paintTex(256, (x, y) => { const v = 128 + 120 * (iceN(x, y) - 0.5); return [v, v, v]; }, 2);
+  const iceMap = paintTex(256, (x, y) => { const k = 1 - 0.75 * beans(x, y); return [250 * k, 234 * k, 192 * k]; }, 2, true);
+
+  // 本体：つやを抑えた塗装の家電の外装
+  const bodyMat = new THREE.MeshPhysicalMaterial({ color:srgb(COLOR_BODY), roughness:0.42, metalness:0, clearcoat:0.5, clearcoatRoughness:0.2 });
+  // 鉄板：黒いフッ素加工（つや消しで、映り込みは弱い）
+  const wellMat = new THREE.MeshStandardMaterial({ color:srgb(COLOR_PLATE), roughness:0.62, metalness:0.25, envMapIntensity:0.6, bumpMap:coatTex, bumpScale:0.0015 });
+  // 金型：鋳物の鉄。黒いフッ素加工より明るい鉄色で、周りの映り込みがはっきり出るので出っ張りの形が見やすい。
+  // 出っ張りの天面は使い込んで少し明るく、つるっとしている。根元の低い所はやや暗い（形の高低が色でも分かる）
+  const moldMat = new THREE.MeshStandardMaterial({ color:srgb(COLOR_IRON), roughness:IRON_ROUGH, metalness:0.85, envMapIntensity:1.1,
+    bumpMap:castTex, bumpScale:0.0012 });
+  moldMat.onBeforeCompile = sh => {
+    sh.uniforms.uMoldH = { value:MOLD_H };
+    sh.vertexShader = 'uniform float uMoldH;\nvarying float vMoldK;\n' + sh.vertexShader
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\n  vMoldK = clamp(position.y / uMoldH, 0.0, 1.0);');
+    sh.fragmentShader = 'varying float vMoldK;\n' + sh.fragmentShader
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        diffuseColor.rgb *= mix(${IRON_LOW.toFixed(2)}, ${IRON_TOP.toFixed(2)}, vMoldK);`)
+      .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+        roughnessFactor *= mix(1.0, ${IRON_TOP_ROUGH.toFixed(2)}, vMoldK);`);
+  };
+  const pinMat = new THREE.MeshStandardMaterial({ color:srgb(0x9a9a9a), roughness:0.28, metalness:1 });  // ちょうつがいの軸（金属）
+  const footMat = new THREE.MeshStandardMaterial({ color:srgb(0x151515), roughness:0.9 });               // 脚（ゴム）
+  const shadowy = m => { m.castShadow = true; m.receiveShadow = true; return m; };
+
+  // 台
+  const table = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.MeshStandardMaterial({ map:tableTex, roughnessMap:tableRough, roughness:1,
+    bumpMap:tableBump, bumpScale:0.0008, envMapIntensity:0.35 }));
+  table.rotation.x = -Math.PI / 2;
+  table.position.y = -BASE_H - FOOT_H;
+  table.receiveShadow = true;
+  scene.add(table);
+
+  // 金型の面：細かいマス目と同じ並びの頂点（頂点 i = 細かいマス i）を高さ方向に動かして出っ張りを作る。
+  // 鉄板の円の外の頂点は円周に寄せて、ふちを丸くする（寄せた所の三角形はつぶれて見えなくなる）
+  const moldGeo = new THREE.PlaneGeometry(PLATE_R * 2, PLATE_R * 2, M - 1, M - 1);
+  moldGeo.rotateX(-Math.PI / 2);
+  {
+    const p = moldGeo.attributes.position.array, R = PLATE_R - 0.002;
+    for (let i = 0; i < M * M; i++){
+      const r = Math.hypot(p[i * 3], p[i * 3 + 2]);
+      if (r > R){ p[i * 3] *= R / r; p[i * 3 + 2] *= R / r; }
+    }
+  }
+
+  // 本体の半分（下側の本体、またはふた）。外側のクリーム色の殻・黒いふち・金型の面
+  function makeShell(h){
+    const g = new THREE.Group();
+    const outer = [
+      [0, -h], [BODY_R - 0.08, -h], [BODY_R - 0.03, -h + 0.012], [BODY_R - 0.005, -h + 0.045],
+      [BODY_R, -h + 0.08], [BODY_R, -0.012], [BODY_R - 0.008, 0.014], [BODY_R - 0.03, 0.025], [0.568, 0.025]
+    ].map(([r, y]) => new THREE.Vector2(r, y));
+    g.add(shadowy(new THREE.Mesh(new THREE.LatheGeometry(outer, 96), bodyMat)));
+    const well = [[0.568, 0.025], [0.55, 0.023], [0.515, 0.006], [PLATE_R - 0.002, 0]]
+      .map(([r, y]) => new THREE.Vector2(r, y));
+    g.add(shadowy(new THREE.Mesh(new THREE.LatheGeometry(well, 96), wellMat)));
+    g.add(shadowy(new THREE.Mesh(moldGeo, moldMat)));
+    return g;
+  }
+
+  // ワッフルメーカー一式をまとめる（皿へ移すときに丸ごと画面の外へ滑らせるため）
+  const maker = new THREE.Group();
+  scene.add(maker);
+  // 下側の本体
+  maker.add(makeShell(BASE_H));
+  for (let k = 0; k < 3; k++){
+    const a = Math.PI / 2 + k * Math.PI * 2 / 3;
+    const foot = shadowy(new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, FOOT_H, 24), footMat));
+    foot.position.set(Math.cos(a) * 0.42, -BASE_H - FOOT_H / 2, Math.sin(a) * 0.42);
+    maker.add(foot);
+  }
+  const PIVOT_Y = THICK / 2;
+  const baseHinge = shadowy(new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.08, 0.12), bodyMat));
+  baseHinge.position.set(0, -0.025, HINGE_Z + 0.04);
+  maker.add(baseHinge);
+  const pin = shadowy(new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.3, 20), pinMat));
+  pin.rotation.z = Math.PI / 2;
+  pin.position.set(0, PIVOT_Y, HINGE_Z);
+  maker.add(pin);
+
+  // ふた（ちょうつがいを軸に開け閉めする）。下側の本体を上下反転した形
+  const lid = new THREE.Group();
+  lid.position.set(0, PIVOT_Y, HINGE_Z);
+  maker.add(lid);
+  const lidBody = makeShell(LID_H);
+  lidBody.scale.y = -1;
+  lidBody.position.set(0, THICK - PIVOT_Y, -HINGE_Z);
+  lid.add(lidBody);
+  const lidHinge = shadowy(new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.07, 0.12), bodyMat));
+  lidHinge.position.set(0, -0.02, HINGE_Z + 0.04);   // ふたの中の座標（上下反転済み）
+  lidBody.add(lidHinge);
+  const tab = shadowy(new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.022, 0.08), bodyMat));
+  tab.position.set(0, -0.01, BODY_R + 0.03);         // 手前の取っ手
+  // 手前の側面の小さなランプ（焼いている間だけ点く）
+  const lampMat = new THREE.MeshStandardMaterial({ color:srgb(0x3a1a0c), emissive:srgb(LAMP_ON), emissiveIntensity:0, roughness:0.2 });
+  const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.014, 20, 12), lampMat);
+  lamp.scale.set(1, 1, 0.55);
+  lamp.position.set(Math.sin(0.45) * BODY_R, -0.06, Math.cos(0.45) * BODY_R);
+  lamp.rotation.y = 0.45;
+  maker.add(lamp);
+  lidBody.add(tab);
+  // ふたをつかむための見えない当たり（ふた全体を覆う円柱）。表示はしないが指の当たり判定には使う
+  const lidPick = new THREE.Mesh(new THREE.CylinderGeometry(BODY_R + 0.04, BODY_R + 0.04, LID_H + 0.03, 32),
+    new THREE.MeshBasicMaterial({ side:THREE.DoubleSide }));
+  lidPick.visible = false;
+  lidPick.position.y = -LID_H / 2;   // ふたの中の座標（上下反転済み）
+  lidBody.add(lidPick);
+
+  // 皿（本体の右隣の台の上）
+  const TABLE_Y = -BASE_H - FOOT_H;
+  const DISH_TOP = TABLE_Y + 0.014;   // 皿の平らな所の高さ
+  const DISH_SURF = [[0, 0.014], [0.48, 0.014], [0.55, 0.026], [0.6, 0.045], [DISH_R + 0.005, 0.05]];   // 皿の上面の断面（中心からの距離, 台からの高さ）。トッピングを皿に置くときにも使う
+  {
+    const under = [[DISH_R, 0.042], [0.56, 0.018], [0.4, 0.004], [0.36, 0], [0.3, 0], [0.28, 0.004], [0, 0.004]];   // 皿の裏側の断面
+    const lathe = pts => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), 96);
+    // 見える皿は影を受けるだけにする（皿が自分の上面に影を落とすと、全体が灰色にくすみ、ふちに縞が出るため）
+    const dish = new THREE.Mesh(lathe([...DISH_SURF, ...under]),
+      new THREE.MeshPhysicalMaterial({ color:srgb(COLOR_DISH), roughness:0.3, clearcoat:1, clearcoatRoughness:0.05, side:THREE.DoubleSide }));  // 釉薬のかかった陶器
+    dish.receiveShadow = true;
+    dish.position.set(DISH_X, TABLE_Y, DISH_Z);
+    scene.add(dish);
+    // 皿の影は、皿より一回り低い見えない形で台に落とす。
+    // 皿の上面との間を2cmほど空ける（近いと、皿のふちの斜面に縞模様の影が出るため）
+    const dishShadow = new THREE.Mesh(lathe([[DISH_R, 0.03], [DISH_R * 0.9, 0], [0, 0]]),
+      new THREE.MeshBasicMaterial({ colorWrite:false, depthWrite:false, side:THREE.DoubleSide }));
+    dishShadow.castShadow = true;
+    dishShadow.position.copy(dish.position);
+    scene.add(dishShadow);
+  }
+
+  // マス目と同じ並びの面（頂点 i = マス i、鉄板の上の三角形だけ）。生地（生地のマス目）とワッフル（細かいマス目）に使う。
+  // 生地の無い所は少しだけ沈めて隠すので、ふちは鉄板（皿）との交わりで滑らかになる
+  function gridGeometry(n, ins){
+    const g = new THREE.PlaneGeometry(PLATE_R * 2, PLATE_R * 2, n - 1, n - 1);
+    g.rotateX(-Math.PI / 2);
+    g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * n * 3), 3));
+    const idx = [];
+    for (let r = 0; r < n - 1; r++) for (let c = 0; c < n - 1; c++){
+      const a = r * n + c, b = a + n, d = a + 1, e = a + n + 1;
+      if (ins[a] && ins[b] && ins[d] && ins[e]) idx.push(a, b, d, b, e, d);
+    }
+    g.setIndex(idx);
+    return g;
+  }
+  const BATTER_HIDE = 0.012;   // 注いでいる生地の無い所を金型の下へ沈める深さ（浅いと金型の壁に生地の色が点々と透ける）
+  // 注いでいる生地：金型と同じ細かいマス目の面を使い、高さは描くときに計算する（毎フレーム頂点を作り直すと重いため）。
+  // 生地の表面の高さと厚み（生地のマス目）を画像にして渡し、金型の形（細かいマス目）と合わせて形を決める。
+  // 表面は液体なので平ら。金型の出っ張りが表面より高い所だけ、生地が無くて金型が見える
+  const LEVEL_MAX = 0.25;   // 生地の表面の高さ・厚みを画像に入れるときの上限
+  const batterGeo = gridGeometry(M, insideF);
+  const levelData = new Uint8Array(N * N * 4), moldData = new Uint8Array(M * M * 4);
+  const levelTex = new THREE.DataTexture(levelData, N, N, THREE.RGBAFormat);
+  const moldTex = new THREE.DataTexture(moldData, M, M, THREE.RGBAFormat);
+  for (const t of [levelTex, moldTex]){ t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; }
+  // 生地：とろりとしたつや（表面に薄い膜のような映り込み）と小さな気泡
+  const batterMat = new THREE.MeshPhysicalMaterial({ color:srgb(COLOR_BATTER), roughness:0.45, clearcoat:0.8, clearcoatRoughness:0.12,
+    bumpMap:batterBump, bumpScale:0.0012 });
+  const batterSurfMat = batterMat.clone();
+  batterSurfMat.flatShading = true;
+  batterSurfMat.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, {
+      levelTex:{ value:levelTex }, moldTex:{ value:moldTex },
+      uN:{ value:N }, uM:{ value:M }, uMoldH:{ value:MOLD_H }, uLMax:{ value:LEVEL_MAX }, uHide:{ value:BATTER_HIDE }
+    });
+    sh.vertexShader = `uniform sampler2D levelTex, moldTex;
+      uniform float uN, uM, uMoldH, uLMax, uHide;
+      varying float vKeep;
+      // 2つの8ビットに分けて入れた値を戻す
+      vec2 dec(vec4 t){ return vec2((t.r * 255.0 * 256.0 + t.g * 255.0) / 65535.0, (t.b * 255.0 * 256.0 + t.a * 255.0) / 65535.0) * uLMax; }
+      // 生地のマス目の値を、間をなめらかにつないで読む（x:表面の高さ, y:厚み）
+      vec2 lvAt(vec2 tc){
+        vec2 q = tc * (uN - 1.0), i0 = floor(q), f = q - i0;
+        vec2 a = dec(texture2D(levelTex, (i0 + vec2(0.5, 0.5)) / uN)), b = dec(texture2D(levelTex, (i0 + vec2(1.5, 0.5)) / uN));
+        vec2 c = dec(texture2D(levelTex, (i0 + vec2(0.5, 1.5)) / uN)), d = dec(texture2D(levelTex, (i0 + vec2(1.5, 1.5)) / uN));
+        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+      }
+      float moldAt(vec2 tc){ return texture2D(moldTex, (tc * (uM - 1.0) + 0.5) / uM).r; }
+      // 生地の上面の高さ。液体なので、金型の出っ張りの上も周りと同じ平らな表面でおおう（液がたまる）。
+      // 無い所（ふち、出っ張りが生地の表面より高く顔を出した所）は金型の下へ沈め、keep を 0 にする
+      float heightAt(vec2 tc, out float keep){
+        float b = moldAt(tc), g = uMoldH * b;
+        vec2 L = lvAt(tc);
+        float top = L.x;
+        keep = smoothstep(0.0005, 0.004, L.y) * step(g + 0.002, top);
+        return keep > 0.0 ? top : g - uHide;
+      }
+      ` + sh.vertexShader
+      // 面の向きは描くときに画面上の傾きから求める（頂点ごとに周りの高さを読み直すと重いため）
+      .replace('#include <beginnormal_vertex>', `
+        float hC = heightAt(vec2(uv.x, 1.0 - uv.y), vKeep);
+        vec3 objectNormal = vec3(0.0, 1.0, 0.0);`)
+      .replace('#include <begin_vertex>', 'vec3 transformed = vec3(position.x, hC, position.z);');
+    sh.fragmentShader = 'varying float vKeep;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n  if (vKeep < 0.5) discard;');
+  };
+  // 金型の形を生地の計算用の画像に写す（生地を入れる画面に移るときに1回）
+  function updateMoldTex(){
+    for (let i = 0; i < M * M; i++) moldData[i * 4] = Math.round(BF[i] * 255);
+    moldTex.needsUpdate = true;
+  }
+  const batter = new THREE.Mesh(batterGeo, batterSurfMat);
+  batter.frustumCulled = false;
+  batter.receiveShadow = true;   // 生地は自分自身に影を落とさない（ふちの斜面にギザギザの影が出るため）
+  maker.add(batter);
+
+  // こぼれた生地：鉄板のふち → 本体のふち → 側面を伝って垂れ → 台の上に広がる
+  // 断面の道筋（半径, 高さ）。生地はこの面の上に厚みを持って乗る
+  const SPILL_PATH = (() => {
+    const pts = [[0.47, 0], [0.5, 0], [0.515, 0.006], [0.55, 0.023], [0.568, 0.025], [BODY_R - 0.03, 0.025],
+      [BODY_R - 0.008, 0.014], [BODY_R, -0.012], [BODY_R, -0.08], [BODY_R, TABLE_Y], [BODY_R + PUDDLE_MAX + 0.05, TABLE_Y]];
+    const len = [0];
+    for (let k = 1; k < pts.length; k++) len.push(len[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]));
+    return { pts, len, total: len[len.length - 1], table: len[len.length - 2] };
+  })();
+  // 道筋の上の距離 s の位置と、外向きの法線
+  function spillAt(sv){
+    const { pts, len } = SPILL_PATH;
+    let k = 1;
+    while (k < pts.length - 1 && len[k] < sv) k++;
+    const t = clamp((sv - len[k - 1]) / (len[k] - len[k - 1]), 0, 1);
+    const dr = pts[k][0] - pts[k - 1][0], dy = pts[k][1] - pts[k - 1][1], l = Math.hypot(dr, dy);
+    return { r: pts[k - 1][0] + dr * t, y: pts[k - 1][1] + dy * t, nr: -dy / l, ny: dr / l };
+  }
+  const SPILL_K = 90;   // 道筋方向の分割数
+  const spillS = [];
+  for (let k = 0; k < SPILL_K; k++) spillS.push(SPILL_PATH.total * k / (SPILL_K - 1));
+  const spillGeo = new THREE.BufferGeometry();
+  spillGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array((SPILL_BINS + 1) * SPILL_K * 3), 3));
+  {
+    const idx = [];
+    for (let b = 0; b < SPILL_BINS; b++) for (let k = 0; k < SPILL_K - 1; k++){
+      const a = b * SPILL_K + k, c = a + SPILL_K;
+      idx.push(a, a + 1, c, c, a + 1, c + 1);
+    }
+    spillGeo.setIndex(idx);
+  }
+  const spill = new THREE.Mesh(spillGeo, new THREE.MeshPhysicalMaterial({ color:srgb(COLOR_BATTER), roughness:0.45, clearcoat:0.8, clearcoatRoughness:0.12, side:THREE.DoubleSide }));
+  spill.receiveShadow = true;
+  spill.visible = false;
+  maker.add(spill);
+  const spillFront = new Float32Array(SPILL_BINS);   // 各区分で生地が届いている所（道筋上の距離）
+  const BIN_W = Math.PI * 2 * 0.56 / SPILL_BINS;     // 区分の幅（ふちのあたり）
+  const blurRing = (a, passes) => {
+    let x = Float32Array.from(a);
+    for (let p = 0; p < passes; p++){
+      const y = new Float32Array(SPILL_BINS);
+      for (let b = 0; b < SPILL_BINS; b++)
+        y[b] = (x[(b + SPILL_BINS - 1) % SPILL_BINS] + 2 * x[b] + x[(b + 1) % SPILL_BINS]) / 4;
+      x = y;
+    }
+    return x;
+  };
+  // こぼれた生地を垂らす。まだ垂れている途中なら true を返す
+  function updateSpill(dt){
+    const v = blurRing(spillV, 3);
+    const coat = SPILL_T * BIN_W * SPILL_PATH.table;   // 側面を覆うのに要る量
+    let moving = false, any = false;
+    for (let b = 0; b < SPILL_BINS; b++){
+      if (v[b] <= 1e-9) continue;
+      any = true;
+      const target = v[b] < coat ? v[b] / (SPILL_T * BIN_W)
+        : SPILL_PATH.table + Math.min(PUDDLE_MAX, PUDDLE_GROW * Math.sqrt((v[b] - coat) / (PUDDLE_T * BIN_W)));
+      if (spillFront[b] < target){
+        spillFront[b] = Math.min(target, spillFront[b] + SPILL_SPEED * dt);
+        moving = true;
+      }
+    }
+    spill.visible = any;
+    if (!any) return false;
+    // 区分ごとの差をならして、垂れた先が丸い舌のような形になるようにする
+    const fr = blurRing(spillFront, 4);
+    const vb = blurRing(v, 2);
+    const p = spillGeo.attributes.position.array;
+    for (let b = 0; b <= SPILL_BINS; b++){
+      const bb = b % SPILL_BINS, ang = (b / SPILL_BINS) * Math.PI * 2;
+      const ca = Math.cos(ang), sa = Math.sin(ang);
+      const f = fr[bb], thin = smooth(0, coat * 0.3, vb[bb]) * smooth(0, 0.05, f);
+      for (let k = 0; k < SPILL_K; k++){
+        const sv = Math.min(spillS[k], f);
+        const q = spillAt(sv);
+        const base = smooth(SPILL_PATH.table - 0.02, SPILL_PATH.table + 0.02, sv);
+        const t = (SPILL_T * (1 - base) + PUDDLE_T * base) * thin * smooth(0, 0.05, f - sv) ** 0.5;
+        const r = q.r + q.nr * t, y = q.y + q.ny * t + 0.001;
+        const o = (b * SPILL_K + k) * 3;
+        p[o] = r * ca; p[o + 1] = y; p[o + 2] = r * sa;
+      }
+    }
+    spillGeo.attributes.position.needsUpdate = true;
+    spillGeo.computeVertexNormals();
+    return moving;
+  }
+  const wafGeo = gridGeometry(M, insideF);
+  // ワッフル：焼き色は頂点の色、焼き面のざらつきと焼きむらは模様で足す
+  // 焼き色の濃い所は砂糖がカラメルになってつやが出る。生っぽい所と焦げた所はつや消し
+  const caramelGloss = m => {
+    m.onBeforeCompile = sh => {
+      // 模様は真上から貼っているので、側面（切り立った所）では縦に引き伸ばされて縦線のギザギザに見える。
+      // 面が上を向いていない所ほど、模様と凹凸を弱める
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <bumpmap_pars_fragment>', 'float bumpFade = 1.0;\n' +
+          THREE.ShaderChunk.bumpmap_pars_fragment.replace(/bumpScale \*/g, 'bumpScale * bumpFade *'))
+        .replace('#include <map_fragment>', `
+          float upK = smoothstep(0.45, 0.85, abs(dot(normalize(vNormal), normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz))));
+          bumpFade = upK;
+          vec4 texelColor = mapTexelToLinear(texture2D(map, vUv));
+          diffuseColor *= mix(vec4(0.92, 0.9, 0.86, 1.0), texelColor, upK);`)
+        .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+        float lum = dot(vColor, vec3(0.3, 0.59, 0.11));
+        float gloss = smoothstep(0.02, 0.07, lum) * (1.0 - smoothstep(0.12, 0.45, lum));
+        roughnessFactor *= 1.0 - 0.5 * gloss;`);
+    };
+    return m;
+  };
+  const wafMat = caramelGloss(new THREE.MeshStandardMaterial({ vertexColors:true, map:crustMap, bumpMap:crustBump, bumpScale:0.0018, roughness:0.78 }));
+  const waffle = shadowy(new THREE.Mesh(wafGeo, wafMat));
+  // ワッフルの裏面（下の鉄板に当たった面）。表の面とふちでつながり、中身の詰まった形になる
+  const wafBottomGeo = new THREE.BufferGeometry();
+  wafBottomGeo.setAttribute('position', new THREE.BufferAttribute(Float32Array.from(wafGeo.attributes.position.array), 3));
+  wafBottomGeo.setAttribute('color', wafGeo.attributes.color);   // 色は表と同じものを使う
+  wafBottomGeo.setAttribute('uv', wafGeo.attributes.uv);
+  const wafBottom = shadowy(new THREE.Mesh(wafBottomGeo, caramelGloss(new THREE.MeshStandardMaterial({ vertexColors:true, map:crustMap, bumpMap:crustBump, bumpScale:0.0018, roughness:0.78, side:THREE.BackSide }))));
+  waffle.add(wafBottom);
+  waffle.visible = false;
+  scene.add(waffle);
+
+  // ---------- 演出の小さな動き ----------
+  // 決まった時間で 0→1 に進む動き。fn(進み具合) を毎フレーム呼ぶ
+  const tweens = [];
+  const tween = (dur, fn) => { tweens.push({ t:0, dur, fn }); fn(0); };
+  function updateTweens(dt){
+    for (let i = tweens.length - 1; i >= 0; i--){
+      const tw = tweens[i];
+      tw.t += dt;
+      const k = Math.min(1, tw.t / tw.dur);
+      tw.fn(k);
+      if (k >= 1) tweens.splice(i, 1);
+    }
+  }
+  const easeOutBack = k => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2);   // 少し行き過ぎて戻る
+  const easeOutBounce = k => {   // 落ちて弾む
+    if (k < 1 / 2.75) return 7.5625 * k * k;
+    if (k < 2 / 2.75){ k -= 1.5 / 2.75; return 7.5625 * k * k + 0.75; }
+    if (k < 2.5 / 2.75){ k -= 2.25 / 2.75; return 7.5625 * k * k + 0.9375; }
+    k -= 2.625 / 2.75; return 7.5625 * k * k + 0.984375;
+  };
+
+  // ---------- 完成のきらきら ----------
+  // 4本の光の筋がある星の形。濃さを1画素ずつ計算して書く（グラデーションは拡大するとノイズになる）
+  const sparkTex = (() => {
+    const S = 128, c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++){
+      const dx = (x + 0.5) / S * 2 - 1, dy = (y + 0.5) / S * 2 - 1, r = Math.hypot(dx, dy);
+      const core = Math.max(0, 1 - r / 0.35) ** 2;
+      const rays = Math.max(0, 1 - Math.abs(dx) / 0.06) * Math.max(0, 1 - Math.abs(dy)) + Math.max(0, 1 - Math.abs(dy) / 0.06) * Math.max(0, 1 - Math.abs(dx));
+      const a = Math.min(1, core + rays * 0.9);
+      const k = (y * S + x) * 4;
+      d[k] = d[k + 1] = d[k + 2] = 255;
+      d[k + 3] = Math.round(255 * a);
+    }
+    g.putImageData(img, 0, 0);
+    return new THREE.CanvasTexture(c);
+  })();
+  const sparks = [];
+  for (let i = 0; i < SPARK_COUNT; i++){
+    // 足し合わせる描き方だと白い皿や明るい布の上で見えなくなるので、普通に重ねて描く
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:sparkTex, transparent:true, depthWrite:false }));
+    sp.visible = false;
+    sp.userData = { life:0, max:1, vel:new THREE.Vector3(), spin:0, tw:0 };
+    scene.add(sp);
+    sparks.push(sp);
+  }
+  // ワッフルの上から、きらきらを周りへはじけるように飛ばす
+  let sparkNext = 0;
+  function burstSparks(count){
+    for (let n = 0; n < count; n++){
+      const sp = sparks[sparkNext];
+      sparkNext = (sparkNext + 1) % SPARK_COUNT;
+      const a = Math.random() * Math.PI * 2, out = SPARK_SPEED * (0.4 + Math.random() * 0.6);
+      sp.position.set(DISH_X + Math.cos(a) * 0.1, DISH_TOP + 0.1 + Math.random() * 0.05, DISH_Z + Math.sin(a) * 0.1);
+      const u = sp.userData;
+      u.vel.set(Math.cos(a) * out, SPARK_SPEED * (0.8 + Math.random() * 0.9), Math.sin(a) * out);
+      u.life = 0;
+      u.max = SPARK_LIFE * (0.6 + Math.random() * 0.4);
+      u.tw = Math.random() * Math.PI * 2;
+      sp.material.color.copy(srgb(SPARK_COLORS[Math.floor(Math.random() * SPARK_COLORS.length)]));
+      sp.material.rotation = Math.random() * Math.PI;
+      sp.visible = true;
+    }
+  }
+  function updateSparks(dt){
+    for (const sp of sparks){
+      if (!sp.visible) continue;
+      const u = sp.userData;
+      u.life += dt;
+      if (u.life >= u.max){ sp.visible = false; continue; }
+      u.vel.y -= SPARK_GRAVITY * dt;
+      u.vel.multiplyScalar(1 - 1.2 * dt);   // 空気でだんだん遅くなる
+      sp.position.addScaledVector(u.vel, dt);
+      const k = u.life / u.max;
+      const twinkle = 0.65 + 0.35 * Math.sin(u.tw + u.life * 22);   // ちかちか瞬く
+      sp.scale.setScalar(SPARK_SIZE * (0.5 + 0.8 * Math.sin(Math.PI * Math.min(1, k * 1.5))) * twinkle);
+      sp.material.opacity = 1 - k * k;
+    }
+  }
+
+  // ---------- トッピング ----------
+  const wafHas = new Uint8Array(M * M);   // ワッフルのある細かいマス（トッピングを乗せられる所）
+  // ワッフルの上面の高さ（ワッフルから見た位置 lx, lz）。ワッフルの無い所は null
+  function wafTop(lx, lz){
+    const fx = (lx / (PLATE_R * 2) + 0.5) * (M - 1), fy = (lz / (PLATE_R * 2) + 0.5) * (M - 1);
+    if (fx < 0 || fy < 0 || fx > M - 2 || fy > M - 2) return null;
+    const x0 = Math.floor(fx), y0 = Math.floor(fy), tx = fx - x0, ty = fy - y0;
+    if (!wafHas[Math.round(fy) * M + Math.round(fx)]) return null;
+    const p = wafGeo.attributes.position.array, h = i => p[i * 3 + 1], a = y0 * M + x0;
+    return (h(a) * (1 - tx) + h(a + 1) * tx) * (1 - ty) + (h(a + M) * (1 - tx) + h(a + M + 1) * tx) * ty;
+  }
+  // トッピングを置ける面の高さ（ワッフルから見た位置）。ワッフルの上 → 皿の上 → テーブルの上の順に探す。どこにも無ければ null
+  function surfaceTop(lx, lz){
+    const y = wafTop(lx, lz);
+    if (y !== null) return y;
+    const wx = lx + waffle.position.x, wz = lz + waffle.position.z;
+    if (Math.abs(wx) > 6 || Math.abs(wz) > 6) return null;   // テーブルの外
+    const r = Math.hypot(wx - DISH_X, wz - DISH_Z), last = DISH_SURF[DISH_SURF.length - 1];
+    let wy = TABLE_Y;
+    if (r <= last[0]){
+      let k = 1;
+      while (k < DISH_SURF.length - 1 && DISH_SURF[k][0] < r) k++;
+      const [r0, y0] = DISH_SURF[k - 1], [r1, y1] = DISH_SURF[k];
+      wy = TABLE_Y + y0 + (y1 - y0) * clamp((r - r0) / (r1 - r0), 0, 1);
+    }
+    return wy - waffle.position.y;
+  }
+  const toppings = new THREE.Group();
+  waffle.add(toppings);
+  // バニラアイス：ディッシャーですくった丸い玉。下のふちは少し広がってでこぼこしている
+  const iceGeo = (() => {
+    const g = new THREE.SphereGeometry(ICE_R, 48, 32);
+    const p = g.attributes.position.array, nz = makeNoise(16, 51);
+    for (let i = 0; i < p.length; i += 3){
+      const x = p[i], y = p[i + 1], z = p[i + 2], a = Math.atan2(z, x);
+      const t = y / ICE_R;   // -1（下）〜 1（上）
+      const bump = 1 + 0.06 * (nz(a * 5 + 8, t * 4 + 8) - 0.5) * 2;
+      let r = bump, yy = y * 0.82;
+      if (t < -0.15){   // 下の方：ふちが外へ広がり、底は平ら
+        const k = Math.min(1, (-0.15 - t) / 0.5);
+        r *= 1 + 0.18 * k * (0.7 + 0.6 * nz(a * 9 + 3, 2));
+        yy = Math.max(yy, -ICE_R * 0.3);
+      }
+      p[i] = x * r; p[i + 1] = yy + ICE_R * 0.3; p[i + 2] = z * r;
+    }
+    g.computeVertexNormals();
+    return g;
+  })();
+  const iceMat = new THREE.MeshPhysicalMaterial({ map:iceMap, roughness:0.55, bumpMap:iceBump, bumpScale:0.0015, sheen:new THREE.Color(0.25, 0.25, 0.22) });
+  // ブルーベリー：少しつぶれた濃い紫の玉。表面は白っぽい粉をふいたようなつや消しで、上に星形のくぼみ
+  const blueGeo = new THREE.SphereGeometry(BLUE_R, 24, 16);
+  blueGeo.scale(1, 0.85, 1);
+  blueGeo.translate(0, BLUE_R * 0.85, 0);
+  const blueMat = new THREE.MeshPhysicalMaterial({ color:srgb(0x2e3570), roughness:0.6, sheen:new THREE.Color(0.35, 0.38, 0.55) });
+  const crownGeo = (() => {
+    const sh = new THREE.Shape();
+    for (let k = 0; k < 10; k++){
+      const a = k / 10 * Math.PI * 2, r = (k % 2 ? 0.18 : 0.42) * BLUE_R;
+      if (k === 0) sh.moveTo(Math.cos(a) * r, Math.sin(a) * r); else sh.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    const g = new THREE.ShapeGeometry(sh);
+    g.rotateX(-Math.PI / 2);
+    return g;
+  })();
+  const crownMat = new THREE.MeshStandardMaterial({ color:srgb(0x15122a), roughness:0.8, side:THREE.DoubleSide });
+  // ホイップ：星形の口金で、くるくる巻きながら絞り出した形。
+  // 下から上へ細くなり、巻いた段のふくらみと口金の筋がねじれながら上へ続き、てっぺんはつんととがる
+  const whipGeo = (() => {
+    const U = 96, V = 48, pos = [], idx = [];
+    for (let v = 0; v <= V; v++){
+      const t = v / V;   // 0（下）〜 1（てっぺん）
+      for (let u = 0; u < U; u++){
+        const a = u / U * Math.PI * 2;
+        const coil = 0.82 + 0.18 * Math.cos(Math.PI * 2 * WHIP_TURNS * t - a);   // 巻いた段のふくらみ（らせん）
+        const ridge = 1 + 0.09 * Math.cos(WHIP_RIDGES * a + 6 * t);              // 口金の筋（少しねじれる）
+        const r = WHIP_R * Math.pow(1 - t, 0.85) * coil * ridge;
+        const y = WHIP_H * (t + 0.04 * Math.cos(Math.PI * 2 * WHIP_TURNS * t - a) * (1 - t));   // 段ごとに少し上下する
+        pos.push(Math.cos(a) * r, y, Math.sin(a) * r);
+      }
+    }
+    pos.push(0, 0, 0);   // 底のまん中
+    const bottom = (V + 1) * U;
+    for (let v = 0; v < V; v++) for (let u = 0; u < U; u++){
+      const a = v * U + u, b = v * U + (u + 1) % U, c = a + U, d = b + U;   // 周方向は端をつないで継ぎ目を作らない
+      idx.push(a, c, b, b, c, d);
+    }
+    for (let u = 0; u < U; u++) idx.push(bottom, u, (u + 1) % U);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  })();
+  const whipMat = new THREE.MeshPhysicalMaterial({ color:srgb(0xfbf7ee), roughness:0.6, sheen:new THREE.Color(0.2, 0.2, 0.18), bumpMap:iceBump, bumpScale:0.0006 });
+  // いちご：とがった先を上に、へたを下にして乗せる
+  const berryGeo = new THREE.LatheGeometry([[0, 0], [0.75, 0.04], [1, 0.3], [0.88, 0.62], [0.5, 0.9], [0, 1]]
+    .map(([r, y]) => new THREE.Vector2(r * BERRY_R, y * BERRY_H)), 32);
+  const berryMat = new THREE.MeshPhysicalMaterial({ map:berryTex, bumpMap:berryTex, bumpScale:0.0008, roughness:0.35, clearcoat:0.7, clearcoatRoughness:0.15 });
+  const leafGeo = (() => {
+    const sh = new THREE.Shape();
+    for (let k = 0; k < 12; k++){
+      const a = k / 12 * Math.PI * 2, r = (k % 2 ? 0.45 : 1.25) * BERRY_R;
+      if (k === 0) sh.moveTo(Math.cos(a) * r, Math.sin(a) * r); else sh.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    const g = new THREE.ShapeGeometry(sh);
+    g.rotateX(-Math.PI / 2);
+    return g;
+  })();
+  const leafMat = new THREE.MeshStandardMaterial({ color:srgb(0x3d8a2e), roughness:0.6, side:THREE.DoubleSide });
+  const chocoMat = new THREE.MeshPhysicalMaterial({ color:srgb(0x3b1d0e), roughness:0.25, clearcoat:1, clearcoatRoughness:0.08 });
+  // カラースプレー：細長い粒をまとめて描く（粒ごとに色と向きを変える）
+  const sprinkleGeo = new THREE.CylinderGeometry(SPRINKLE_R, SPRINKLE_R, SPRINKLE_LEN, 6);
+  sprinkleGeo.rotateZ(Math.PI / 2);   // 寝かせる
+  const sprinkles = new THREE.InstancedMesh(sprinkleGeo, new THREE.MeshStandardMaterial({ color:0xffffff, roughness:0.4 }), SPRINKLE_MAX);
+  // 色は数を0にする前に入れる（色の入れ物は、そのときの数の分しか作られないため）
+  for (let i = 0; i < SPRINKLE_MAX; i++) sprinkles.setColorAt(i, srgb(SPRINKLE_COLORS[i % SPRINKLE_COLORS.length]));
+  sprinkles.count = 0;
+  waffle.add(sprinkles);
+  const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _one = new THREE.Vector3(1, 1, 1), _up = new THREE.Vector3(0, 1, 0);
+  function addSprinkles(cx, cz){
+    for (let k = 0; k < SPRINKLE_PER_MOVE && sprinkles.count < SPRINKLE_MAX; k++){
+      const a = Math.random() * Math.PI * 2, r = SPRINKLE_SPREAD * Math.sqrt(Math.random());
+      const x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r, y = surfaceTop(x, z);
+      if (y === null) continue;
+      // 少し上から落ちてくる（粒ごとに落ち始めをずらす）
+      const idx = sprinkles.count++, y0 = y + SPRINKLE_R, h = SPRINKLE_FALL_H * (0.6 + Math.random() * 0.8);
+      const q = new THREE.Quaternion().setFromAxisAngle(_up, Math.random() * Math.PI);
+      tween(SPRINKLE_FALL * (0.7 + Math.random() * 0.6), t => {
+        _m4.compose(_p.set(x, y0 + h * (1 - t) * (1 - t), z), q, _one);
+        sprinkles.setMatrixAt(idx, _m4);
+        sprinkles.instanceMatrix.needsUpdate = true;
+      });
+    }
+  }
+  // 粉砂糖：細かい白い粒を点で描く（数が多いので、粒ごとの形は作らない）
+  const sugarTex = (() => {
+    // 丸い粒の画像。濃さを1画素ずつ計算して書く（グラデーションは拡大するとノイズになる）
+    const S = 32, c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++){
+      const dx = (x + 0.5) / S * 2 - 1, dy = (y + 0.5) / S * 2 - 1, k = (y * S + x) * 4;
+      d[k] = d[k + 1] = d[k + 2] = 255;
+      d[k + 3] = dx * dx + dy * dy < 1 ? 255 : 0;
+    }
+    g.putImageData(img, 0, 0);
+    return new THREE.CanvasTexture(c);
+  })();
+  const sugarGeo = new THREE.BufferGeometry();
+  sugarGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SUGAR_MAX * 3), 3));
+  sugarGeo.setDrawRange(0, 0);
+  const sugar = new THREE.Points(sugarGeo, new THREE.PointsMaterial({ color:srgb(COLOR_SUGAR), size:SUGAR_SIZE, map:sugarTex, alphaTest:0.5 }));
+  sugar.frustumCulled = false;
+  waffle.add(sugar);
+  let sugarCount = 0;
+  function addSugar(cx, cz){
+    const p = sugarGeo.attributes.position.array;
+    for (let k = 0; k < SUGAR_PER_MOVE && sugarCount < SUGAR_MAX; k++){
+      const a = Math.random() * Math.PI * 2, r = SUGAR_SPREAD * Math.sqrt(Math.random());
+      const x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r, y = surfaceTop(x, z);
+      if (y === null) continue;
+      p[sugarCount * 3] = x; p[sugarCount * 3 + 1] = y + 0.001; p[sugarCount * 3 + 2] = z;   // 面に埋もれないよう少しだけ浮かせる
+      sugarCount++;
+    }
+    sugarGeo.setDrawRange(0, sugarCount);
+    sugarGeo.attributes.position.needsUpdate = true;
+  }
+  // なぞって振りかけるトッピング
+  const DRAG_TOPPINGS = { sprinkle:addSprinkles, sugar:addSugar };
+  // ---- タップで置くトッピング（ホイップ・いちご・ブルーベリー・バニラアイス） ----
+  // make が形を作る。押している間は同じ形を半透明で見せ、離したらその形をそのまま置いて動きを付ける
+  function makeWhip(){
+    return shadowy(new THREE.Mesh(whipGeo, whipMat));
+  }
+  function makeIce(){
+    return shadowy(new THREE.Mesh(iceGeo, iceMat));
+  }
+  function makeBlueberry(){
+    const g = new THREE.Group(), b = new THREE.Group();
+    b.add(shadowy(new THREE.Mesh(blueGeo, blueMat)));
+    const crown = new THREE.Mesh(crownGeo, crownMat);
+    crown.position.y = BLUE_R * 1.69;
+    b.add(crown);
+    b.rotation.set((Math.random() - 0.5) * 0.6, 0, (Math.random() - 0.5) * 0.6);   // 少し傾いて転がった向き
+    g.add(b);
+    return g;
+  }
+  function makeBerry(){
+    const g = new THREE.Group();
+    g.add(shadowy(new THREE.Mesh(berryGeo, berryMat)));
+    const leaf = new THREE.Mesh(leafGeo, leafMat);
+    leaf.position.y = 0.002;
+    g.add(leaf);
+    return g;
+  }
+  // 置いたときの動き
+  const popIn = (g, y) => tween(POP_TIME, k => { const e = Math.max(0.001, easeOutBack(k)); g.scale.set(1.15 - 0.15 * e, e, 1.15 - 0.15 * e); });   // ぽんと乗ってつぶれ、少し行き過ぎて落ち着く
+  const pipeIn = (g, y) => tween(WHIP_TIME, k => { g.scale.y = Math.max(0.001, easeOutBack(k)); });   // 下から絞り出されて盛り上がる
+  const dropIn = (g, y) => tween(DROP_TIME, k => { g.position.y = y + DROP_H * (1 - easeOutBounce(k)); });                            // 上から落ちてきて弾む
+  const TAP_TOPPINGS = {
+    whip:  { make:makeWhip,      yOff:-0.004, land:pipeIn },
+    ice:   { make:makeIce,       yOff:-0.006, land:popIn },
+    blue:  { make:makeBlueberry, yOff:-0.002, land:dropIn },
+    berry: { make:makeBerry,     yOff:-0.002, land:dropIn },
+  };
+  // 押している間の半透明の見本
+  const ghostMats = new Map();
+  const ghostMat = m => {
+    if (!ghostMats.has(m)){
+      const g = m.clone();
+      g.transparent = true; g.opacity = PREVIEW_OPACITY; g.depthWrite = false;
+      ghostMats.set(m, g);
+    }
+    return ghostMats.get(m);
+  };
+  let preview = null;   // { kind, obj }
+  function showPreview(kind, q){
+    const obj = TAP_TOPPINGS[kind].make();
+    obj.rotation.y = Math.random() * Math.PI * 2;
+    obj.traverse(o => {
+      if (!o.isMesh) return;
+      o.userData.mat = o.material; o.userData.cast = o.castShadow;
+      o.material = ghostMat(o.material); o.castShadow = false;
+    });
+    toppings.add(obj);
+    preview = { kind, obj };
+    movePreview(q);
+  }
+  function movePreview(q){
+    if (!preview) return;
+    preview.obj.visible = !!q;   // 置ける面の外では消す（離しても置かない）
+    if (q){ preview.obj.position.set(q.x, q.y + TAP_TOPPINGS[preview.kind].yOff, q.z); preview.y = q.y; }
+  }
+  // 離したとき：見本をそのまま本物にして、置いた動きを付ける
+  function dropPreview(){
+    if (!preview) return;
+    const { kind, obj } = preview;
+    preview = null;
+    if (!obj.visible){ toppings.remove(obj); return; }
+    obj.traverse(o => { if (o.isMesh){ o.material = o.userData.mat; o.castShadow = o.userData.cast; } });
+    TAP_TOPPINGS[kind].land(obj, obj.position.y);
+  }
+  // チョコソース：なぞった道筋に沿った細い管
+  let chocoLine = null;
+  function growChoco(x, y, z){
+    const pts = chocoLine.userData.pts, last = pts[pts.length - 1];
+    if (last && Math.hypot(x - last.x, z - last.z) < CHOCO_STEP) return;
+    pts.push(new THREE.Vector3(x, y + CHOCO_R * 0.5, z));
+    if (pts.length < 2) return;
+    chocoLine.geometry.dispose();
+    chocoLine.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), pts.length * 3, CHOCO_R, 8, false);
+  }
+  function clearToppings(){
+    for (const c of [...toppings.children]){
+      toppings.remove(c);
+      if (c.userData.pts) c.geometry.dispose();   // チョコソースの線だけは毎回作った形なので消す
+    }
+    sprinkles.count = 0;
+    sugarCount = 0;
+    sugarGeo.setDrawRange(0, 0);
+    chocoLine = null;
+    preview = null;
+  }
+
+  // おたま：注ぎ口（丸い部分のふちの一点）を原点にして、そこを軸に傾ける
+  const steelMat = new THREE.MeshStandardMaterial({ color:srgb(0xd4d6da), metalness:1, roughness:0.22, side:THREE.DoubleSide });
+  const ladle = new THREE.Group();
+  const ladleTilt = new THREE.Group();
+  ladle.add(ladleTilt);
+  {
+    const bowl = shadowy(new THREE.Mesh(new THREE.SphereGeometry(LADLE_R, 40, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), steelMat));
+    bowl.position.set(-LADLE_R, 0, 0);
+    ladleTilt.add(bowl);
+    const rim = shadowy(new THREE.Mesh(new THREE.TorusGeometry(LADLE_R, 0.006, 8, 64), steelMat));
+    rim.rotation.x = Math.PI / 2;
+    rim.position.set(-LADLE_R, 0, 0);
+    ladleTilt.add(rim);
+    const liquid = new THREE.Mesh(new THREE.CircleGeometry(LADLE_R * 0.86, 40), batterMat);
+    liquid.rotation.x = -Math.PI / 2;
+    liquid.position.set(-LADLE_R, -0.05, 0);
+    ladleTilt.add(liquid);
+    // 柄：注ぎ口と反対側のふちから、奥の上へ伸ばす（手前のカメラをさえぎらない向き）
+    const start = new THREE.Vector3(-2 * LADLE_R, 0, 0), dir = new THREE.Vector3(-0.45, 0.75, -0.48).normalize(), len = 0.9;
+    const handle = shadowy(new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.014, len, 12), steelMat));
+    handle.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+    handle.position.copy(start).addScaledVector(dir, len / 2);
+    ladleTilt.add(handle);
+  }
+  ladle.visible = false;
+  ladle.position.set(ladleTarget.x, LADLE_Y, ladleTarget.z);
+  maker.add(ladle);
+  // おたまから鉄板へ落ちる生地
+  const stream = new THREE.Mesh(new THREE.CylinderGeometry(STREAM_R, STREAM_R * 0.8, 1, 12), batterMat);
+  stream.visible = false;
+  maker.add(stream);
+  let ladleAngle = 0;
+
+  // 煙：やわらかい丸の画像を使った板（常にカメラを向く）を、ふたのすき間から出して上へ流す
+  const smokeTex = (() => {
+    // 濃さを1画素ずつ計算して書く（グラデーションはディザが入り、拡大するとノイズになる）
+    const S = 128, c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++){
+      const dx = (x + 0.5) / S * 2 - 1, dy = (y + 0.5) / S * 2 - 1, q = Math.max(0, 1 - (dx * dx + dy * dy));
+      const k = (y * S + x) * 4;
+      d[k] = d[k + 1] = d[k + 2] = 255;
+      d[k + 3] = Math.round(255 * q * q);   // 中心ほど濃く、縁へなめらかに消える
+    }
+    g.putImageData(img, 0, 0);
+    return new THREE.CanvasTexture(c);
+  })();
+  const smokes = [];
+  for (let i = 0; i < SMOKE_MAX; i++){
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:smokeTex, transparent:true, depthWrite:false, opacity:0 }));
+    sp.visible = false;
+    sp.userData = { life:0, vel:new THREE.Vector3(), alpha:0, grow:0 };
+    scene.add(sp);
+    smokes.push(sp);
+  }
+  let smokeAcc = 0, smokeNext = 0;
+  function emitSmoke(black){
+    const sp = smokes[smokeNext];
+    smokeNext = (smokeNext + 1) % SMOKE_MAX;
+    const a = Math.random() * Math.PI * 2, r = BODY_R * (0.85 + Math.random() * 0.15);
+    sp.position.set(Math.cos(a) * r, THICK * 0.6, Math.sin(a) * r);
+    const u = sp.userData;
+    u.life = 0;
+    u.vel.set(Math.cos(a) * 0.05 + (Math.random() - 0.5) * 0.04, 0.22 + Math.random() * 0.12, Math.sin(a) * 0.05 + (Math.random() - 0.5) * 0.04);
+    u.alpha = black ? 0.55 : 0.18;
+    u.grow = black ? 0.5 : 0.35;
+    sp.material.color.copy(srgb(black ? 0x1c1a19 : 0xe8e6e2));
+    sp.scale.setScalar(0.12);
+    sp.visible = true;
+  }
+  // ふたを開けた瞬間に、閉じこめていた湯気（焦げていれば黒い煙）がふわっと立ちのぼる
+  function emitPuff(black){
+    for (let n = 0; n < PUFF_COUNT; n++){
+      const sp = smokes[smokeNext];
+      smokeNext = (smokeNext + 1) % SMOKE_MAX;
+      const a = Math.random() * Math.PI * 2, r = PLATE_R * 0.7 * Math.sqrt(Math.random());
+      sp.position.set(Math.cos(a) * r, THICK * 0.8, Math.sin(a) * r);
+      const u = sp.userData;
+      u.life = Math.random() * 0.4;
+      u.vel.set((Math.random() - 0.5) * 0.08, 0.35 + Math.random() * 0.2, (Math.random() - 0.5) * 0.08);
+      u.alpha = black ? 0.6 : 0.32;
+      u.grow = black ? 0.55 : 0.45;
+      sp.material.color.copy(srgb(black ? 0x1c1a19 : 0xf4f2ee));
+      sp.scale.setScalar(0.14);
+      sp.visible = true;
+    }
+  }
+  function updateSmoke(dt){
+    for (const sp of smokes){
+      if (!sp.visible) continue;
+      const u = sp.userData;
+      u.life += dt;
+      if (u.life >= SMOKE_LIFE){ sp.visible = false; continue; }
+      sp.position.addScaledVector(u.vel, dt);
+      u.vel.y *= 1 - 0.3 * dt;
+      const k = u.life / SMOKE_LIFE;
+      sp.scale.setScalar(0.12 + u.grow * u.life);
+      sp.material.opacity = u.alpha * Math.min(1, u.life / 0.3) * (1 - k);   // ふわっと出て、だんだん薄れて消える
+    }
+  }
+
+  // 細かいマス目の面の法線を、となりの頂点との高さの差から求める（y0〜y1 行だけ）
+  function gridNormals(geo, n, y0 = 0, y1 = n - 1){
+    const p = geo.attributes.position.array, cell = PLATE_R * 2 / (n - 1);
+    if (!geo.attributes.normal) geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(n * n * 3), 3));
+    const nm = geo.attributes.normal.array;
+    for (let y = Math.max(0, y0); y <= Math.min(n - 1, y1); y++){
+      const yu = Math.max(0, y - 1), yd = Math.min(n - 1, y + 1);
+      for (let x = 0; x < n; x++){
+        const xl = Math.max(0, x - 1), xr = Math.min(n - 1, x + 1);
+        const nx = -(p[(y * n + xr) * 3 + 1] - p[(y * n + xl) * 3 + 1]) / ((xr - xl) * cell);
+        const nz = -(p[(yd * n + x) * 3 + 1] - p[(yu * n + x) * 3 + 1]) / ((yd - yu) * cell);
+        const l = Math.hypot(nx, 1, nz), o = (y * n + x) * 3;
+        nm[o] = nx / l; nm[o + 1] = 1 / l; nm[o + 2] = nz / l;
+      }
+    }
+    geo.attributes.normal.needsUpdate = true;
+  }
+
+  // 金型の形を面に反映する
+  // 描いた所のふちを少しだけ丸めてから壁を切り立たせ、平らな天面と急な壁の出っ張りにする
+  // 描き変えた範囲だけを作り直す（ぼかしが届く分だけ広げる）
+  function updateMold(){
+    if (!dirty.any) return;
+    dirty.any = false;
+    const r = BLUR * F, w = 2 * r + 1;
+    const x0 = Math.max(0, dirty.x0 - r), x1 = Math.min(M - 1, dirty.x1 + r);
+    const y0 = Math.max(0, dirty.y0 - r), y1 = Math.min(M - 1, dirty.y1 + r);
+    const ty0 = Math.max(0, y0 - r), ty1 = Math.min(M - 1, y1 + r), cols = x1 - x0 + 1;
+    // 横方向のぼかし（縦にも r 行ぶん広めに）→ 縦方向のぼかし
+    const tmp = new Float32Array((ty1 - ty0 + 1) * cols);
+    for (let y = ty0; y <= ty1; y++) for (let x = x0; x <= x1; x++){
+      let sm = 0;
+      for (let k = -r; k <= r; k++) sm += maskF[y * M + clamp(x + k, 0, M - 1)];
+      tmp[(y - ty0) * cols + (x - x0)] = sm / w;
+    }
+    const p = moldGeo.attributes.position.array;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){
+      let sm = 0;
+      for (let k = -r; k <= r; k++) sm += tmp[(clamp(y + k, 0, M - 1) - ty0) * cols + (x - x0)];
+      const i = y * M + x;
+      BF[i] = insideF[i] ? smooth(EDGE_LO, EDGE_HI, sm / w) : 0;
+      p[i * 3 + 1] = MOLD_H * BF[i];
+    }
+    // 生地の流れの計算には、同じ場所の細かいマスの値を使う
+    for (let y = Math.max(0, Math.floor(y0 / F) - 1); y <= Math.min(N - 1, Math.ceil(y1 / F) + 1); y++)
+      for (let x = Math.max(0, Math.floor(x0 / F) - 1); x <= Math.min(N - 1, Math.ceil(x1 / F) + 1); x++){
+        B[y * N + x] = BF[y * F * M + x * F];
+        let mx = 0, mn = 1;
+        for (let fy = Math.max(0, (y - 1) * F); fy <= Math.min(M - 1, (y + 1) * F); fy++)
+          for (let fx = Math.max(0, (x - 1) * F); fx <= Math.min(M - 1, (x + 1) * F); fx++){
+            const v = BF[fy * M + fx];
+            if (v > mx) mx = v;
+            if (v < mn) mn = v;
+          }
+        Bb[y * N + x] = mx;
+        Bs[y * N + x] = mn;
+      }
+    moldGeo.attributes.position.needsUpdate = true;
+    gridNormals(moldGeo, M, y0 - 1, y1 + 1);
+    // 円周に寄せた頂点は上向きにしておく
+    const nm = moldGeo.attributes.normal.array;
+    for (let y = Math.max(0, y0 - 1); y <= Math.min(M - 1, y1 + 1); y++) for (let x = 0; x < M; x++){
+      const i = y * M + x;
+      if (!insideF[i]){ nm[i * 3] = 0; nm[i * 3 + 1] = 1; nm[i * 3 + 2] = 0; }
+    }
+  }
+
+  // 焼く前の生地の形
+  // 生地の表面の高さ（なめらかにしたもの）と厚みを、描くときに使う画像に書き込む
+  // 注いでいる間は毎フレーム呼ぶので、作業用の配列は使い回す
+  const blurA = new Float32Array(N * N), blurB = new Float32Array(N * N), blurOut = new Float32Array(N * N);
+  // 半径 BLUR のぼかしを3回かける（src → blurOut）
+  function blur3(src){
+    const r = BLUR, w = 2 * r + 1;
+    let from = src;
+    for (let pass = 0; pass < 3; pass++){
+      const to = pass === 2 ? blurOut : (pass === 0 ? blurA : blurB);
+      // 横方向（端は端の値を繰り返す）。足し引きで窓をずらす
+      for (let y = 0; y < N; y++){
+        const row = y * N;
+        let sm = from[row] * (r + 1);
+        for (let k = 1; k <= r; k++) sm += from[row + Math.min(k, N - 1)];
+        for (let x = 0; x < N; x++){
+          blurTmp[row + x] = sm / w;
+          sm += from[row + Math.min(x + r + 1, N - 1)] - from[row + Math.max(x - r, 0)];
+        }
+      }
+      // 縦方向
+      for (let x = 0; x < N; x++){
+        let sm = blurTmp[x] * (r + 1);
+        for (let k = 1; k <= r; k++) sm += blurTmp[Math.min(k, N - 1) * N + x];
+        for (let y = 0; y < N; y++){
+          to[y * N + x] = sm / w;
+          sm += blurTmp[Math.min(y + r + 1, N - 1) * N + x] - blurTmp[Math.max(y - r, 0) * N + x];
+        }
+      }
+      from = to;
+    }
+    return blurOut;
+  }
+  const blurTmp = new Float32Array(N * N);
+  // 金型の高さをぼかしたもの（生地を入れる画面に移るときに作る。ぼかしは足し算なので、表面の高さ＝これ＋ぼかした厚み）
+  const groundBlur = new Float32Array(N * N);
+  function updateGroundBlur(){
+    const g = new Float32Array(N * N);
+    for (let i = 0; i < N * N; i++) g[i] = ground(i);
+    groundBlur.set(blur3(g));
+  }
+  function updateBatter(){
+    const rb = blur3(dough);   // 厚みをなめらかにしたもの
+    for (let i = 0; i < N * N; i++){
+      // 表面の高さ（液体なので金型の壁をまたいでも平らにつながる）と、ふちを丸い斜面にした厚み
+      let q = Math.round(clamp((groundBlur[i] + rb[i]) / LEVEL_MAX, 0, 1) * 65535), o = i * 4;
+      levelData[o] = q >> 8; levelData[o + 1] = q & 255;
+      q = Math.round(clamp(rb[i] * rimFade[i] / LEVEL_MAX, 0, 1) * 65535);
+      levelData[o + 2] = q >> 8; levelData[o + 3] = q & 255;
+    }
+    levelTex.needsUpdate = true;
+  }
+
+  // 焼き上がったワッフルの形と色。
+  // 上面は、ならした平らな生地の表面を、金型を描いた所だけそのまま押し下げた形。裏面は下の鉄板の形
+  // （厚みを金型に合わせて作り直すと、金型の壁のそばで表面が持ち上がり、ふちが盛り上がって見えるため）
+  function updateWaffle(){
+    const p = wafGeo.attributes.position.array, c = wafGeo.attributes.color.array, pb = wafBottomGeo.attributes.position.array;
+    // 生地の表面の高さをなめらかにする。ならしてあるので表面は金型をまたいで平ら
+    const sc = new Float32Array(N * N);
+    // 生地の無い所は0にする（鉄板の高さにすると、生地の外でも金型の出っ張りの上だけ表面が残り、
+    // 押した所の薄い板が生地の外まで伸びてギザギザに途切れる）
+    for (let i = 0; i < N * N; i++) sc[i] = inside[i] && dough[i] > 1e-4 ? ground(i) + dough[i] : 0;
+    const sb = boxBlur(boxBlur(boxBlur(sc)));
+    for (let i = 0; i < N * N; i++) sb[i] *= rimFade[i];
+    const su = upsample(sb);
+    const ds = new Float32Array(M * M), lidF = new Float32Array(M * M), botF = new Float32Array(M * M);
+    // 焼きむらの斑点の位置を毎回ずらす
+    const ox = Math.random() * M, oy = Math.random() * M;
+    for (let i = 0; i < M * M; i++){
+      const x = i % M, y = Math.floor(i / M);
+      // 平らな表面（ふたの高さまで）を、金型を描いた所だけ上はそのまま押し下げ、下はそのまま押し上げる。
+      // 押す深さは金型の高さまでで、生地が薄いときは押した所に WAF_MIN の厚みが残るよう浅くする（薄い膜にしない）
+      const surf = Math.min(su[i], THICK);
+      const dep = clamp((surf - WAF_MIN) / 2, 0, MOLD_H);
+      lidF[i] = surf - dep * BF[i];
+      botF[i] = dep * BF[i];
+      let d = Math.max(0, lidF[i] - botF[i]);
+      ds[i] = d;
+    }
+    for (let i = 0; i < M * M; i++) wafHas[i] = insideF[i] && ds[i] > 0.004 ? 1 : 0;
+    // ワッフルの中心（ワッフルから見た位置）。完成したときはここを中心に寄って回る
+    {
+      let sx = 0, sz = 0, n = 0;
+      for (let i = 0; i < M * M; i++) if (wafHas[i]){ sx += (i % M) / (M - 1) - 0.5; sz += Math.floor(i / M) / (M - 1) - 0.5; n++; }
+      wafCenter.set(n ? sx / n * PLATE_R * 2 : 0, THICK * 0.4, n ? sz / n * PLATE_R * 2 : 0);
+    }
+    // 真ん中の高さ：そのかたまりの平らな所の表面の高さの半分（平らな所の裏面がちょうど鉄板・皿に着く）
+    // かたまりごとの表面の高さを、ふちの少し外まで広げておく（ふちでも同じ真ん中の高さで閉じるように）
+    const lm = new Float32Array(N * N), R = 6;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++){
+      let mx = 0;
+      for (let yy = Math.max(0, y - R); yy <= Math.min(N - 1, y + R); yy++)
+        for (let xx = Math.max(0, x - R); xx <= Math.min(N - 1, x + R); xx++) if (levelMap[yy * N + xx] > mx) mx = levelMap[yy * N + xx];
+      lm[y * N + x] = mx;
+    }
+    const lmu = upsample(lm);
+    for (let i = 0; i < M * M; i++){
+      const d = ds[i], b = BF[i], cap = Math.max(0.01, lidF[i] - botF[i]);
+      if (!insideF[i]){ p[i * 3 + 1] = -0.05; continue; }
+      // 裏面は上面を真ん中の高さで上下反転した形にする（ふちは上下とも丸くすぼまり、裏面にも金型の形が付く）。
+      // 厚みが0の所は表と裏が真ん中で重なって閉じる
+      const mid = Math.min(lmu[i], THICK) / 2;
+      p[i * 3 + 1] = mid + d / 2;
+      pb[i * 3 + 1] = mid - d / 2;
+      const contact = smooth(0.02, 0.06, d);            // ふたに当たって焼けた度合い（生地が十分ある所はふたに押されている）
+      const thin = 1 - smooth(0, 0.5 * cap, d);         // 薄い所は早く焼ける
+      // 出っ張りに押された所は濃く、出っ張っていない所は焼けにくくまだらに（焼き時間に掛ける倍率）
+      const x = i % M, y = Math.floor(i / M);
+      const blotch = (blotchN(x + ox, y + oy) - 0.5) * 2;
+      const speed = BAKE_FLAT + (BAKE_PRESSED - BAKE_FLAT) * b + BAKE_UNEVEN * (1 - b) * blotch;
+      const col = ramp(bakeSec * (speed * (0.55 + 0.45 * contact) + 0.25 * thin));
+      // 15秒を超えたら、焼け具合の差に関係なく全体が真っ黒になる
+      const burn = smooth(SMOKE_BLACK, SMOKE_BLACK + 1.5, bakeSec);
+      for (let j = 0; j < 3; j++) col[j] += (COLOR_RAMP[COLOR_RAMP.length - 1][1][j] - col[j]) * burn;
+      const n = 0.97 + Math.random() * 0.06;
+      for (let j = 0; j < 3; j++) c[i * 3 + j] = LIN[Math.round(clamp(col[j], 0, 255))] * n;   // 頂点の色は linear で渡す
+    }
+    // 生地のある所の三角形だけを残す（生地の無い所まで面を作ると、皿へ運ぶ途中に薄い膜が見えてしまう）
+    const idx = new Uint32Array((M - 1) * (M - 1) * 6), has = i => insideF[i] && ds[i] > 0.0005;
+    let ni = 0;
+    for (let r = 0; r < M - 1; r++) for (let c2 = 0; c2 < M - 1; c2++){
+      const a = r * M + c2, b2 = a + M, d2 = a + 1, e = a + M + 1;
+      if (!(insideF[a] && insideF[b2] && insideF[d2] && insideF[e])) continue;
+      if (has(a) || has(b2) || has(d2) || has(e)){
+        idx[ni++] = a; idx[ni++] = b2; idx[ni++] = d2; idx[ni++] = b2; idx[ni++] = e; idx[ni++] = d2;
+      }
+    }
+    const ia = new THREE.BufferAttribute(idx.subarray(0, ni), 1);
+    wafGeo.setIndex(ia);
+    wafBottomGeo.setIndex(ia);
+    wafBottomGeo.attributes.position.needsUpdate = true;
+    gridNormals(wafBottomGeo, M);
+    wafGeo.attributes.position.needsUpdate = true;
+    wafGeo.attributes.color.needsUpdate = true;
+    gridNormals(wafGeo, M);
+  }
+
+  let moldQueued = false, batterQueued = false, flowing = false;
+  const moldChanged = () => { moldQueued = true; flowing = true; };   // 金型が変わると生地も流れ直す
+
+  // ---------- カメラ・画面サイズ ----------
+  // 見る先ごとの位置へカメラを寄せていく。縦長の画面では横幅が収まるまで離す
+  const DISH_TARGET = new THREE.Vector3(DISH_X, DISH_TOP, DISH_Z);
+  const wafCenter = new THREE.Vector3();        // ワッフルの中心（ワッフルから見た位置）
+  const _focus = new THREE.Vector3();
+  let finaleK = 0;                              // 完成の演出の進み具合（0：皿全体を見る → 1：ワッフルの中心に寄る）
+  const MOLD_TARGET = new THREE.Vector3(0, 0, 0);
+  const camTgt = new THREE.Vector3(), camPos = new THREE.Vector3();
+  const goalTgt = new THREE.Vector3(), goalPos = new THREE.Vector3();
+  // 完成品を見るときの回転とズーム（指で動かした分）
+  let orbitYaw = 0, orbitPitch = DISH_CAM_PITCH, orbitZoom = 1;
+  function framing(target, pitchDeg, yawDeg, minDist, halfWidth, zoom = 1){
+    const halfW = Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * camera.aspect;
+    const d = Math.max(minDist, halfWidth / halfW) * zoom;
+    const p = THREE.MathUtils.degToRad(pitchDeg), y = THREE.MathUtils.degToRad(yawDeg);
+    goalTgt.copy(target);
+    goalPos.set(Math.sin(y) * Math.cos(p) * d, Math.sin(p) * d, Math.cos(y) * Math.cos(p) * d).add(target);
+  }
+  function cameraGoal(){
+    if (view === 'mold') framing(MOLD_TARGET, MOLD_CAM_PITCH, 0, MOLD_CAM_DIST, PLATE_R + 0.06);
+    else if (view === 'dish'){
+      // 完成したら、回る中心を皿の中心からワッフルの中心へ移す（中心がずれたまま回ると、ワッフルが画面の外へ振れる）
+      _focus.copy(waffle.position).add(wafCenter);
+      _focus.lerpVectors(DISH_TARGET, _focus, finaleK);
+      framing(_focus, orbitPitch, CAM_YAW + orbitYaw, DISH_CAM_DIST, DISH_R + 0.1, orbitZoom);
+    }
+    else framing(CAM_TARGET, CAM_PITCH, CAM_YAW, CAM_DIST, BODY_R + 0.12);
+  }
+  // k=1 で目標の位置にそのまま合わせる
+  function moveCamera(k){
+    cameraGoal();
+    camPos.lerp(goalPos, k);
+    camTgt.lerp(goalTgt, k);
+    camera.position.copy(camPos);
+    camera.lookAt(camTgt);
+  }
+  const cameraSettled = () => camPos.distanceTo(goalPos) < 0.01 && camTgt.distanceTo(goalTgt) < 0.01;
+  function resize(){
+    const w = cv.clientWidth, h = cv.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    moveCamera(1);
+  }
+
+  // ---------- 金型を描く・生地を入れる ----------
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const floor = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit = new THREE.Vector3();
+  const toPlate = e => {
+    const r = cv.getBoundingClientRect();
+    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    if (!ray.ray.intersectPlane(floor, hit)) return null;
+    // 鉄板から大きく外れた所は鉄板のすぐ外に寄せる（遠すぎる点へ線を引くと、描く範囲が壊れたり止まったりする）
+    const g = toGrid(hit.x, hit.z), m = BRUSH_MAX + 2;
+    return { x:clamp(g.x, -m, N - 1 + m), y:clamp(g.y, -m, N - 1 + m) };
+  };
+  // 金型の画面では描き、生地の画面では注ぐ。ふたが開いていてカメラが止まっている間だけ触れる
+  // 生地を入れる画面は切り替わった瞬間から触れる（カメラやふたの動きを待たない）
+  const canTouch = () => state === 'pour' || (state === 'mold' && lidAngle < LID_OPEN * 0.9 && cameraSettled());
+  let drawing = null, last = null;
+  // 鉄板の円の中に収めて、おたまの行き先にする
+  function aimLadle(){
+    const r = Math.hypot(hit.x, hit.z), R = PLATE_R * 0.95;
+    ladleTarget.set(r > R ? hit.x * R / r : hit.x, 0, r > R ? hit.z * R / r : hit.z);
+  }
+  // ---------- ふたを手で閉じる（生地を入れる画面で、ふたをつかんで下ろす） ----------
+  let lidPtr = null, lidGrabOffset = 0;   // つかんだ所と、ふたの今の角度の差（つかんだ瞬間にふたが跳ねないように）
+  const hingeHit = new THREE.Vector3(), hingePlane = new THREE.Plane();
+  // 指の位置から、ちょうつがいを軸にしたふたの角度を求める（ちょうつがいの軸に垂直な面に指の線を当てる）
+  function lidAngleAt(e){
+    const r = cv.getBoundingClientRect();
+    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    hingePlane.set(new THREE.Vector3(1, 0, 0), 0);
+    if (!ray.ray.intersectPlane(hingePlane, hingeHit)) return null;
+    const dy = hingeHit.y - lid.position.y, dz = hingeHit.z - lid.position.z;
+    return Math.atan2(-dy, dz);
+  }
+  function grabLid(e){
+    const r = cv.getBoundingClientRect();
+    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    return ray.intersectObject(lidPick, false).length > 0;
+  }
+  cv.addEventListener('pointerdown', e => {
+    if (state !== 'pour' || lidPtr !== null || drawing !== null || !grabLid(e)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();   // ふたをつかんだときは生地を注がない
+    cv.setPointerCapture(e.pointerId);
+    lidPtr = e.pointerId;
+    ladleAngle = 0;
+    const a = lidAngleAt(e);
+    lidGrabOffset = a === null ? 0 : lidAngle - a;
+  });
+  cv.addEventListener('pointermove', e => {
+    if (e.pointerId !== lidPtr) return;
+    e.stopImmediatePropagation();
+    const a = lidAngleAt(e);
+    if (a !== null){ lidAngle = lidTarget = clamp(a + lidGrabOffset, LID_OPEN, 0); }
+  });
+  const releaseLid = e => {
+    if (e.pointerId !== lidPtr) return;
+    lidPtr = null;
+    // 閉じる所まで下ろして離したら焼き始める。生地が入っていないときや途中で離したときは開いた位置へ戻る
+    if (lidAngle > LID_CLOSE_AT && state === 'pour' && totalDough() >= 1) startBake();
+    else lidTarget = LID_OPEN;
+  };
+  cv.addEventListener('pointerup', releaseLid);
+  cv.addEventListener('pointercancel', releaseLid);
+
+  // 描く／消しゴムの切り替え（なぞっている途中は切り替えない）
+  function setEraser(on){
+    erasing = on;
+    $('pen').setAttribute('aria-pressed', String(!on));
+    $('eraser').setAttribute('aria-pressed', String(on));
+  }
+  for (const [id, on] of [['pen', false], ['eraser', true]])
+    $(id).addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (state !== 'mold' || drawing !== null) return;
+      setEraser(on);
+    });
+
+  // ---------- 線の太さ（スライダーを動かしている間は、鉄板の真ん中に筆の大きさの見本を出す） ----------
+  // 見本は本体と一緒に動くよう maker に入れる。金型の出っ張りに隠れないよう、いつも手前に描く
+  const brushPreview = new THREE.Group();
+  const brushFillMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0, depthTest:false, depthWrite:false });
+  const brushRingMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0, depthTest:false, depthWrite:false });
+  for (const [geo, mat] of [[new THREE.CircleGeometry(1, 64), brushFillMat], [new THREE.RingGeometry(0.9, 1, 64), brushRingMat]]){
+    const m = new THREE.Mesh(geo, mat);
+    m.rotation.x = -Math.PI / 2;
+    m.renderOrder = 10;
+    brushPreview.add(m);
+  }
+  brushPreview.position.y = 0.002;   // 鉄板の面の高さ（出っ張りの根元の太さが筆の太さになるので、そこに合わせる）
+  brushPreview.visible = false;
+  maker.add(brushPreview);
+  let brushHeld = false, brushShowUntil = 0, brushAlpha = 0;
+  function setBrush(v){
+    brushR = clamp(v, BRUSH_MIN, BRUSH_MAX);
+    const r = brushR * PLATE_R * 2 / (N - 1);   // マス目の半径を鉄板の上の長さに直す
+    brushPreview.scale.set(r, 1, r);
+  }
+  setBrush(BRUSH);
+  const brushSize = $('brushSize');
+  const showBrush = () => { brushShowUntil = performance.now() + BRUSH_PREVIEW_HOLD * 1000; };
+  brushSize.addEventListener('input', () => { setBrush(+brushSize.value); showBrush(); });
+  brushSize.addEventListener('pointerdown', () => { brushHeld = true; showBrush(); });
+  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'])
+    brushSize.addEventListener(t, () => { brushHeld = false; showBrush(); });
+  // 毎フレーム：動かしている間はふわっと出し、離してしばらくしたらふわっと消す
+  function updateBrushPreview(dt){
+    const on = state === 'mold' && (brushHeld || performance.now() < brushShowUntil);
+    brushAlpha += ((on ? 1 : 0) - brushAlpha) * Math.min(1, dt * 12);
+    brushPreview.visible = brushAlpha > 0.01;
+    brushFillMat.opacity = 0.35 * brushAlpha;
+    brushRingMat.opacity = 0.9 * brushAlpha;
+  }
+
+  cv.addEventListener('pointerdown', e => {
+    if (!canTouch() || drawing !== null) return;
+    const p = toPlate(e);
+    if (!p) return;
+    if (state === 'pour') aimLadle();
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    drawing = e.pointerId;
+    last = p;
+    if (state === 'mold'){ stampCircle(p.x, p.y); moldChanged(); }
+  });
+  cv.addEventListener('pointermove', e => {
+    // マウスでは押していなくてもおたまがついてくる
+    if (state === 'pour' && lidPtr === null && (e.pointerId === drawing || e.pointerType === 'mouse') && toPlate(e)) aimLadle();
+    if (e.pointerId !== drawing) return;
+    const p = toPlate(e);
+    if (!p) return;
+    if (state === 'mold'){ stampLine(last, p); moldChanged(); }
+    last = p;
+  });
+  const endDraw = e => { if (e.pointerId === drawing) drawing = null; };
+  cv.addEventListener('pointerup', endDraw);
+  cv.addEventListener('pointercancel', endDraw);
+
+  // ---------- 完成品を回す・ズームする（1本指ドラッグで回転、2本指ピンチ・ホイールでズーム） ----------
+  // ---------- トッピングを乗せる（チョコソース・カラースプレー・粉砂糖はなぞる。ほかは押している間に半透明の見本が出て、離した所に置く） ----------
+  // ワッフルの上だけでなく、皿やテーブルの上にも置ける
+  let topKind = 'choco', topPtr = null;
+  // 指の先にある、トッピングを置ける面の点（ワッフルから見た位置）。高さを求め直しながら近づける
+  function pickSurface(e){
+    const r = cv.getBoundingClientRect();
+    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const pl = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), w = new THREE.Vector3();
+    let h = THICK * 0.6, got = null;
+    for (let k = 0; k < 6; k++){
+      pl.constant = -(waffle.position.y + h);
+      if (!ray.ray.intersectPlane(pl, w)) return null;
+      const lx = w.x - waffle.position.x, lz = w.z - waffle.position.z, y = surfaceTop(lx, lz);
+      if (y === null) return null;
+      got = { x:lx, y, z:lz };
+      h = y;
+    }
+    return got;
+  }
+  cv.addEventListener('pointerdown', e => {
+    if (!(state === 'result' && toppingMode) || topPtr !== null) return;
+    const q = pickSurface(e);
+    if (!q) return;
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    topPtr = e.pointerId;
+    if (TAP_TOPPINGS[topKind]) showPreview(topKind, q);   // 押している間は半透明の見本を出す（指に付いてくる）
+    else if (topKind === 'choco'){
+      chocoLine = shadowy(new THREE.Mesh(new THREE.BufferGeometry(), chocoMat));
+      chocoLine.userData.pts = [];
+      toppings.add(chocoLine);
+      growChoco(q.x, q.y, q.z);
+    } else DRAG_TOPPINGS[topKind](q.x, q.z);
+  });
+  cv.addEventListener('pointermove', e => {
+    if (e.pointerId !== topPtr) return;
+    const q = pickSurface(e);
+    if (preview){ movePreview(q); return; }
+    if (!q) return;
+    if (topKind === 'choco') growChoco(q.x, q.y, q.z);
+    else DRAG_TOPPINGS[topKind](q.x, q.z);
+  });
+  const endTop = e => {
+    if (e.pointerId !== topPtr) return;
+    topPtr = null; chocoLine = null;
+    if (e.type === 'pointerup') dropPreview();
+    else if (preview){ toppings.remove(preview.obj); preview = null; }   // 取り消されたときは置かない
+  };
+  cv.addEventListener('pointerup', endTop);
+  cv.addEventListener('pointercancel', endTop);
+  const topButtons = [...document.querySelectorAll('#toppingRow button')];
+  function selectTopping(kind){
+    topKind = kind;
+    for (const b of topButtons) b.setAttribute('aria-pressed', String(b.dataset.top === kind));
+  }
+  for (const b of topButtons) b.addEventListener('pointerdown', e => { e.preventDefault(); selectTopping(b.dataset.top); });
+  // 皿に移し終えたら、トッピングのボタンを出す
+  function showTopping(){
+    toppingMode = true;
+    selectTopping('choco');
+    $('pourRow').classList.add('hidden');
+    $('toppingBox').classList.remove('hidden');
+  }
+  $('done').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (!toppingMode) return;
+    toppingMode = false;
+    topPtr = null;
+    $('toppingBox').classList.add('hidden');
+    // 完成の演出：きらきらがはじけ、カメラが寄って、そのあと自動でゆっくり回る
+    burstSparks(SPARK_COUNT / 2);
+    tween(SPARK_WAVE_GAP, k => { if (k >= 1) burstSparks(SPARK_COUNT / 2); });
+    const p0 = orbitPitch, z0 = orbitZoom;
+    tween(FINALE_TIME, k => {
+      const e = k * k * (3 - 2 * k);
+      orbitPitch = p0 + (FINALE_PITCH - p0) * e;
+      orbitZoom = z0 + (FINALE_ZOOM - z0) * e;
+      finaleK = e;
+    });
+    showResult();
+  });
+
+  const canOrbit = () => state === 'result' && resultReady;
+  const orbitPtrs = new Map();
+  let pinchDist = 0;
+  const pinchLen = () => { const [a, b] = [...orbitPtrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+  cv.addEventListener('pointerdown', e => {
+    if (!canOrbit()) return;
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    orbitPtrs.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if (orbitPtrs.size === 2) pinchDist = pinchLen();
+  });
+  cv.addEventListener('pointermove', e => {
+    const p = orbitPtrs.get(e.pointerId);
+    if (!p || !canOrbit()) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX; p.y = e.clientY;
+    if (orbitPtrs.size === 1){
+      orbitYaw -= dx * ORBIT_SPEED;
+      orbitPitch = clamp(orbitPitch + dy * ORBIT_SPEED, ORBIT_PITCH_MIN, ORBIT_PITCH_MAX);
+    } else if (orbitPtrs.size === 2){
+      const d = pinchLen();
+      if (pinchDist > 0 && d > 0) orbitZoom = clamp(orbitZoom * pinchDist / d, ZOOM_MIN, ZOOM_MAX);
+      pinchDist = d;
+    }
+  });
+  const endOrbit = e => { orbitPtrs.delete(e.pointerId); if (orbitPtrs.size === 2) pinchDist = pinchLen(); };
+  cv.addEventListener('pointerup', endOrbit);
+  cv.addEventListener('pointercancel', endOrbit);
+  cv.addEventListener('wheel', e => {
+    if (!canOrbit()) return;
+    e.preventDefault();
+    orbitZoom = clamp(orbitZoom * Math.exp(e.deltaY * 0.001), ZOOM_MIN, ZOOM_MAX);
+  }, { passive:false });
+
+
+  // ---------- 画面の切り替え ----------
+  // 金型を作る画面（最初の画面）から、生地を入れる画面へ進む。「もう一回」で金型を作る画面へ戻る
+  // 生地を入れる画面：ワッフルメーカー全体を見て生地を注ぐ
+  // ワッフルメーカーを画面の外（左）へ滑らせて片付ける／戻す
+  function slideMaker(show){
+    const x0 = maker.position.x, x1 = show ? 0 : -MAKER_SLIDE;
+    maker.visible = true;
+    tween(MAKER_SLIDE_TIME, k => {
+      const e = show ? 1 - (1 - k) * (1 - k) * (1 - k) : k * k * k;   // 出ていくときはだんだん速く、戻るときはだんだんゆっくり
+      maker.position.x = x0 + (x1 - x0) * e;
+      if (!show && k >= 1) maker.visible = false;   // 外へ出たら隠す（ワッフルを回して見るときに映り込まないように）
+    });
+  }
+  function toPourScreen(){
+    if (state !== 'mold') return;
+    state = 'pour';
+    view = 'maker';
+    drawing = null;
+    batter.visible = true;
+    updateMoldTex();
+    updateGroundBlur();
+    updateBatter();
+    $('moldRow').classList.add('hidden');
+    $('brushRow').classList.add('hidden');
+    $('pourRow').classList.add('hidden');
+    $('startRow').classList.remove('hidden');   // ふたは手で閉じても、「焼く」で自動で閉じてもよい
+  }
+  // 金型を作る画面へ戻る（焼き上がりから。ワッフルメーカーを戻し、金型はそのまま描き足せる）
+  function toMoldScreen(){
+    slideMaker(true);
+    state = 'mold';
+    view = 'mold';
+    drawing = null;
+    batter.visible = false;
+    setEraser(false);
+    $('moldRow').classList.remove('hidden');
+    $('brushRow').classList.remove('hidden');
+  }
+  $('toPour').addEventListener('pointerdown', e => { e.preventDefault(); toPourScreen(); });
+
+  // ---------- 焼く（ふたを手で閉じるか「焼く」を押すと焼き始め、「取り出す」を押すまで焼け続ける） ----------
+  function startBake(){
+    if (state !== 'pour') return;
+    if (totalDough() < 1) return;   // 生地が入っていなければ焼かない
+    drawing = null;
+    if (moldQueued){ moldQueued = false; updateMold(); }
+    for (let i = 0; i < N * N; i++) dough[i] *= RISE;   // 焼くと生地がふくらむ
+    fillGaps();
+    squeeze();
+    removeIslands();
+    levelDough();
+    // ふくらんだ形は見せない（ふたが閉じていく間は注いだときの生地のまま。取り出すと焼けたワッフルに替わる）
+    flowing = false;
+    ladleAngle = 0;
+    state = 'bake';
+    document.documentElement.setAttribute('data-howto-hidden', '');   // 焼いている間は時間で焦げていくのでボタンを隠す
+    bakeStart = performance.now();
+    lidTarget = 0;   // ふたが自動で閉じる
+    lidPtr = null;   // ふたをつかんでいる途中に「焼く」を押したときは、つかんでいた指を離したことにする
+    $('startRow').classList.add('hidden');
+    $('pourRow').classList.remove('hidden');
+  }
+  $('startBake').addEventListener('pointerdown', e => { e.preventDefault(); startBake(); });
+  function endBake(){
+    if (state !== 'bake') return;
+    bakeSec = (performance.now() - bakeStart) / 1000;
+    state = 'result';
+    document.documentElement.removeAttribute('data-howto-hidden');
+    lidTarget = LID_OPEN;
+    $('pourRow').classList.add('hidden');
+    updateWaffle();
+    batter.visible = false;
+    emitPuff(bakeSec > SMOKE_BLACK);
+    waffle.position.set(0, 0, 0);
+    waffle.rotation.set(0, 0, 0);
+    waffle.scale.set(1, 1, 1);
+    waffle.visible = true;
+    transfer = -1;          // ふたが開いたら皿へ移し始める（ループで進める）
+    resultReady = false;
+  }
+  // トッピングを終えたら結果のボタンを出す
+  function showResult(){
+    resultReady = true;
+    $('result').classList.remove('hidden');
+    resultShownAt = performance.now();
+  }
+  $('bake').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (state === 'bake') endBake();
+  });
+
+  // もう一回：金型は残し、生地は空にする
+  function again(){
+    if (state !== 'result' || !resultReady) return;
+    resultReady = false;
+    orbitPtrs.clear();
+    orbitYaw = 0; orbitPitch = DISH_CAM_PITCH; orbitZoom = 1; finaleK = 0;
+    for (const sp of sparks) sp.visible = false;
+    dough.fill(0);
+    updateBatter();
+    spillV.fill(0); spillFront.fill(0); updateSpill(0);
+    waffle.visible = false;
+    clearToppings();
+    $('result').classList.add('hidden');
+    toMoldScreen();
+  }
+  $('again').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); again(); });
+
+  // ---------- 共有 ----------
+  function shareText(){
+    return 'ワッフルを焼いた！\n'
+      + location.href.split(/[?#]/)[0] + '\n#金型ワッフル';
+  }
+  function resultCanvas(){
+    renderer.render(scene, camera);   // 描画直後に読み出す（描画バッファが消える前に）
+    const c = document.createElement('canvas');
+    c.width = 600;
+    c.height = Math.round(600 * cv.height / cv.width);
+    const g = c.getContext('2d');
+    g.fillStyle = css('--bg');
+    g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(cv, 0, 0, c.width, c.height);
+    return c;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(c){
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type:'image/png' });
+  }
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    if (performance.now() - resultShownAt < GHOST_GUARD) return;
+    const text = shareText();
+    const c = resultCanvas();
+    const file = resultImageFile(c);
+    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    const fallback = () => {
+      navigator.clipboard?.writeText(text).catch(() => {});
+      $('share-img').src = c.toDataURL('image/png');
+      $('share-text').textContent = text;
+      $('share-view').classList.remove('hidden');
+      $('share-close').focus({ preventScroll:true });
+    };
+    // 共有シートが出なかったときは 3) へ：失敗したとき、またはキャンセル扱いでも押してすぐに終わったとき。
+    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    const shareStart = performance.now();
+    const failed = err => {
+      const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
+      if (!err || err.name !== 'AbortError' || instant) fallback();
+    };
+    // 1) 画像を渡せる共有シート: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files:[file] })){
+      navigator.share({ text, files:[file] }).catch(failed);
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share){
+      navigator.share({ text }).catch(failed);
+      return;
+    }
+    fallback();
+  });
+  const shareOpen = () => !$('share-view').classList.contains('hidden');
+  const closeShareView = () => {
+    $('share-view').classList.add('hidden');
+    $('share').focus({ preventScroll:true });
+  };
+  $('share-close').addEventListener('click', closeShareView);
+  $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
+
+  // ---------- キーボード（PC） ----------
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && shareOpen()){ closeShareView(); return; }
+    if (shareOpen()) return;
+    if (e.code === 'Space'){
+      e.preventDefault();
+      if (e.repeat) return;
+      if (state === 'pour') startBake();
+      else if (state === 'bake') endBake();
+      else if (state === 'result') again();
+    } else if (e.key === 'Enter' && state === 'result'){
+      e.preventDefault();
+      again();
+    }
+  });
+
+  // ---------- iPhone 対策 ----------
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て、描く操作や長押しが奪われるのを防ぐ
+  const isHold = t => t instanceof Element && !!t.closest('#cv,#bake');
+  document.addEventListener('touchstart', e => { if (isHold(e.target)) e.preventDefault(); }, { passive:false });
+  document.addEventListener('touchmove', e => { if (drawing !== null) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => {
+    if (e.target instanceof Element && e.target.closest('#share-text')) return;
+    e.preventDefault();
+  });
+  document.addEventListener('contextmenu', e => { if (isHold(e.target)) e.preventDefault(); });
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+
+  // ---------- ループ ----------
+  let lastTime = performance.now();
+  let spillMoving = false, spillAcc = 0;
+  function loop(now){
+    const dt = Math.min((now - lastTime) / 1000, 1 / 30);
+    lastTime = now;
+    if (moldQueued){ moldQueued = false; updateMold(); }
+    if (state === 'pour'){
+      // 生地を注ぐ（押さえている間）
+      // おたまを指の場所へ動かし、押している間は傾けて注ぐ（傾ききってから生地が落ちる）
+      const k = Math.min(1, dt * LADLE_FOLLOW);
+      ladle.position.x += (ladleTarget.x - ladle.position.x) * k;
+      ladle.position.z += (ladleTarget.z - ladle.position.z) * k;
+      ladleAngle += ((drawing !== null ? LADLE_TILT : 0) - ladleAngle) * Math.min(1, dt * LADLE_TILT_SPEED);
+      const pouring = ladleAngle > LADLE_TILT * 0.7;
+      if (pouring){
+        const g = toGrid(ladle.position.x, ladle.position.z);
+        pour(g.x, g.y, dt);
+        flowing = true;
+        const gi = clamp(Math.round(g.y), 0, N - 1) * N + clamp(Math.round(g.x), 0, N - 1);
+        const bottom = ground(gi) + dough[gi], top = ladle.position.y;
+        stream.position.set(ladle.position.x, (top + bottom) / 2, ladle.position.z);
+        stream.scale.y = Math.max(top - bottom, 0.001);
+      }
+      stream.visible = pouring;
+      // 生地が流れる（止まったら計算をやめる）
+      if (flowing){
+        let moved = 0;
+        for (let s = 0; s < FLOW_STEPS; s++) moved += flowStep();
+        batterQueued = true;
+        if (moved < 1e-5 && drawing === null) flowing = false;
+      }
+    }
+    if (batterQueued){ batterQueued = false; updateBatter(); }
+    // こぼれた生地の形は重いので、作り直すのは1秒に SPILL_FPS 回まで
+    spillAcc += dt;
+    if ((spillMoving || flowing) && spillAcc >= 1 / SPILL_FPS){ spillMoving = updateSpill(spillAcc); spillAcc = 0; }
+    lidAngle += (lidTarget - lidAngle) * Math.min(1, dt * LID_SPEED);
+    lid.rotation.x = lidAngle;
+    ladleTilt.rotation.z = -ladleAngle;
+    ladle.visible = state === 'pour' && lidAngle < LID_OPEN * 0.8;   // ふたを下ろし始めたら、おたまはどける
+    if (state !== 'pour') stream.visible = false;
+    // 焼き上がったワッフルを持ち上げて皿へ移す（ふたが開いてから）。カメラも皿へ向ける
+    if (state === 'result' && !resultReady && !toppingMode){
+      if (transfer < 0 && lidAngle < LID_OPEN * 0.9){ transfer = 0; view = 'dish'; slideMaker(false); }
+      if (transfer >= 0){
+        transfer = Math.min(transfer + dt, TRANSFER_TIME);
+        const s = smooth(0, 1, transfer / TRANSFER_TIME);
+        // 皿の上では、隠している生地の無い所が皿の下に入るよう少しだけ浮かせる
+        waffle.position.set(DISH_X * s, (DISH_TOP + 0.002) * s + TRANSFER_LIFT * Math.sin(Math.PI * s), DISH_Z * s);
+        waffle.rotation.z = -TILT_MAX * Math.sin(Math.PI * s);   // 持ち上げて運ぶ間は進む向きへ少し傾ける
+        if (transfer >= TRANSFER_TIME){
+          waffle.rotation.z = 0;
+          // 皿に置いた瞬間に少しつぶれて戻る
+          tween(LAND_TIME, k => {
+            const q = LAND_SQUASH * Math.sin(Math.PI * k) * (1 - k);
+            waffle.scale.set(1 + q * 0.5, 1 - q, 1 + q * 0.5);
+          });
+          showTopping();
+        }
+      }
+    }
+    moveCamera(Math.min(1, dt * (canOrbit() ? 18 : CAM_MOVE)));   // 完成品を回している間は指にすぐ付いてくる
+    // 焼いている間：10秒から薄い煙、15秒を超えると黒い煙がふたのすき間から出る（焼き時間は出さない）
+    if (state === 'bake'){
+      const t = (now - bakeStart) / 1000;
+      if (t >= SMOKE_START){
+        const black = t > SMOKE_BLACK;
+        smokeAcc += dt * SMOKE_RATE[black ? 1 : 0];
+        while (smokeAcc >= 1){ smokeAcc -= 1; emitSmoke(black); }
+      }
+    } else smokeAcc = 0;
+    updateSmoke(dt);
+    updateTweens(dt);
+    updateSparks(dt);
+    updateBrushPreview(dt);
+    // 完成品は、指で触っていない間は自動でゆっくり回る
+    if (canOrbit() && orbitPtrs.size === 0) orbitYaw += AUTO_ROTATE * dt;
+    // ランプ：焼いている間は点き、ほかは消える（ふわっと切り替える）
+    lampMat.emissiveIntensity += ((state === 'bake' ? 2.2 : 0) - lampMat.emissiveIntensity) * Math.min(1, dt * 8);
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+
+  updateMold();
+  updateBatter();
+  batter.visible = false;   // 最初は金型を作る画面
+  resize();
+  addEventListener('resize', resize);
+  new ResizeObserver(resize).observe(cv);   // 下のボタンの段数が変わって描く範囲が変わったときも合わせる
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

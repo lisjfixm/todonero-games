@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/tissue-rush/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ティッシュラッシュ</title>
+<meta name="description" content="50枚のティッシュを出し切るタイム勝負">
+<style>
+  :root{
+    --bg:#f2f2f2; --fg:#222; --sub:#666;
+    /* ティッシュ箱：生成りの地に、くすんだ緑の波の帯 */
+    --box-base:#f6f2ea; --box-band:#8fb09e; --box-band2:#cfe0d5; --box-ink:#2f3d36;
+    --box-cut:#d8ccb6;      /* 穴の切り口（紙の断面） */
+    --inner:#d3cec5; --inner-dark:#8a847a;   /* フィルム越しに見える中のティッシュ */
+    --tissue:#ffffff;
+    --wall:#ebe5da; --desk:#b98d5e; --desk-grain:#8a6238; --desk-side:#94693f; --floor:#7d6b5a;
+    --panel:#f6f2ea; --accent:#5f8a74;
+    --howto-bg:#f6f2ea; --howto-fg:#2f3d36;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--wall); color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #game{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(30,36,32,.45)}
+  #over .panel{
+    background:var(--panel);color:var(--box-ink);border-radius:18px;padding:30px 24px 24px;
+    width:min(86%,320px);text-align:center;box-shadow:0 12px 32px rgba(0,0,0,.25);
+  }
+  #result-head{font-size:16px;font-weight:bold;letter-spacing:.08em;color:var(--accent);margin:0 0 6px}
+  #result-time{
+    font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;
+    font-size:52px;font-weight:700;font-variant-numeric:tabular-nums;margin:0 0 4px;
+  }
+  #result-best{font-size:15px;font-weight:bold;font-variant-numeric:tabular-nums;color:var(--box-ink);opacity:.7;margin:0 0 20px}
+  /* ベスト更新！：ぽんと飛び出してから、ゆっくり弾みつづける */
+  #result-best.new{
+    color:var(--accent);opacity:1;font-size:18px;
+    animation:best-pop .6s cubic-bezier(.2,1.6,.4,1) both, best-bounce 1.4s ease-in-out .6s infinite;
+  }
+  @keyframes best-pop{
+    from{transform:scale(0) rotate(-10deg);opacity:0}
+    60%{transform:scale(1.4) rotate(4deg);opacity:1}
+    to{transform:scale(1) rotate(0)}
+  }
+  @keyframes best-bounce{
+    0%,100%{transform:scale(1);text-shadow:0 0 0 rgba(0,0,0,0)}
+    50%{transform:scale(1.15);text-shadow:0 2px 10px rgba(0,0,0,.18)}
+  }
+  @media (prefers-reduced-motion:reduce){ #result-best.new{animation:none} }
+  #over button{
+    display:block;width:100%;min-height:50px;margin-top:10px;font-size:17px;font-weight:bold;
+    border:0;border-radius:999px;font-family:inherit;cursor:pointer;
+  }
+  #retry{background:var(--accent);color:#fff}
+  #share{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+  /* 効果音のON/OFF（右上） */
+  #mute{
+    position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);
+    width:44px;height:44px;padding:0;border:0;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(246,242,234,.88);color:var(--box-ink);box-shadow:0 2px 8px rgba(0,0,0,.15);
+  }
+  #mute svg{width:24px;height:24px;display:block}
+  button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="cv" aria-label="ティッシュ箱。ティッシュを上にスワイプして引き抜く"></canvas>
+  <div id="over" class="hidden">
+    <div class="panel" aria-live="polite">
+      <p id="result-head">50枚 出し切った！</p>
+      <p id="result-time">0.00秒</p>
+      <p id="result-best">ベスト 0.00秒</p>
+      <button id="share" type="button">共有</button>
+      <button id="retry" type="button">もう一回</button>
+    </div>
+  </div>
+  <button id="mute" type="button" aria-label="効果音" aria-pressed="false"></button>
+  <section class="howto" hidden>
+    <h2>遊び方</h2>
+    <p>箱に入った50枚のティッシュを、できるだけ速く全部引き抜くタイムアタックです。最初の1枚に触れた瞬間に計測が始まり、50枚目を抜いたところでタイムが決まります。ベストタイムはこのブラウザに保存され、結果は画像つきで共有できます。</p>
+    <h2>操作</h2>
+    <p>箱から出ているティッシュに指を置き、上へスワイプすると1枚抜けます。1回のスワイプで抜けるのは1枚だけなので、1枚ごとに指を離して掴み直してください。PC ではマウスのドラッグで同じように遊べます。</p>
+    <h2>コツ</h2>
+    <p>途中で指を離しても、引き出した分はそのまま残り、続きから引けます。大きく振り上げるより、一定の短い距離をテンポよく繰り返すほうがタイムは縮みます。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  const TOTAL = 50;        // 箱に入っているティッシュの枚数
+  const PULL_DIST = 110;   // 1枚が抜けるまでに上へ引く距離（画面上のpx）
+  const SWAY = 0.5;        // 指の横移動にティッシュの先端がついていく割合
+  // 箱とティッシュの大きさ（3D空間の単位）
+  const BOX_W = 2.4, BOX_H = 0.7, BOX_D = 1.2;   // 横幅・高さ（厚み）・奥行き
+
+  // 部屋と机（1単位 ≒ 10cm。机の天板の上面が高さ0）
+  const DESK_W = 14, DESK_T = 0.3;            // 天板の幅・厚み
+  const DESK_FRONT = 2.6, DESK_BACK = -3.9;   // 天板の手前と奥の位置（奥は壁に付けている）
+  const ROOM_FLOOR = -7;                      // 部屋の床の高さ（机の高さ70cm相当）
+  // 取り出し口（角の丸い細長い穴。実物と同じく、穴の下にフィルムが張ってある）
+  const SLOT_HALF_L = 0.82;   // 穴の長さの半分
+  const SLOT_HALF_W = 0.21;   // 穴の幅の半分（両端の丸みの半径）
+  const SLOT_DEPTH = 0.03;    // 箱の紙の厚み（穴の切り口の高さ。フィルムはこの下）
+  const SLOT_INNER = 0.06;    // フィルムの下に見える中のティッシュまでの深さ
+  const REST_H = 0.45;     // 何もしていないとき箱から出ている部分の高さ
+  const T_BASE = 0.62;     // 根元の半幅（取り出し口に沿って横に広がっている）
+  const T_TIP = 0.06;      // 何もしていないときの先端の半幅（ふんわりした山になる）
+  const T_PINCH = 0.12;    // 引っぱっているときの先端（指でつまんだ所）の半幅
+  const T_WIDE = 0.72;     // 引っぱって紙が開いたときの中ほどの半幅
+  const OPEN_LEN = 0.8;    // これだけ引き出すと紙が開ききる
+  const FOLD = 0.07;       // 中ほどのしわの深さ
+  const FOLD_BASE = 0.05;  // 根元のしわの深さ（取り出し口の幅に収まる程度）
+  const TISSUE_GLOW = 0.15; // ティッシュの陰の明るさの底上げ（0〜1、大きいほどしわの陰が薄い）
+  // ティッシュだけ明るい所をなだらかに丸めて白飛びを防ぐ（大きいほど全体が白くなる）
+  const TISSUE_EXPOSURE = 1.6;
+  const TISSUE_NORMAL_SCALE = 0.6;  // 紙の凹凸（ノーマルマップ）の強さ
+  const TISSUE_NORMAL_REPEAT = 3;   // 紙の凹凸の細かさ（1枚に何回くり返すか）
+
+  // 1枚ごとの形のばらつき（毎回同じ形にならないように）
+  const VARY_H = 0.4;        // 出ている高さのばらつき（±割合）
+  const VARY_FOLD = 0.6;     // しわの深さのばらつき（±割合）
+  const VARY_LEAN = 0.3;     // 先端の傾きのばらつき（左右・前後）
+  const VARY_CRUMPLE = 0.04; // くしゃっとしたでこぼこの大きさ
+  const VARY_EDGE = 0.15;    // 上端のふちのガタガタ具合
+  const VARY_CURL = 0.3;     // 左右の端の反り（前後どちらに反るかもランダム）
+  const VARY_BEND = 0.15;    // 縦方向のうねり
+  const VARY_PINCH = 0.8;    // 引っぱっているとき：つまんだ先端の細さのばらつき（±割合）
+  const VARY_WIDE = 0.4;     // 引っぱっているとき：開く幅のばらつき（±割合）
+  const VARY_ASYM = 0.6;     // 引っぱっているとき：左右の開き方の偏り
+  const VARY_TWIST = 1.2;    // 引っぱっているとき：ねじれの大きさ（ラジアン）
+  const VARY_DIAG = 1.6;     // 引っぱっているとき：しわの斜め具合
+
+  // 抜けたティッシュの落下（布として計算する）
+  const GRAVITY = 9.8;     // 重力
+  const AIR_FLAT = 9;      // 面に垂直な空気抵抗（大きいほどふわっと落ちる）
+  const AIR_ALL = 0.993;   // 全体の空気抵抗（1ステップごとに速度に掛ける。1に近いほど勢いが残る）
+  const FRICTION = 0.5;    // 床や箱に触れているときの横すべりの残り具合
+  const ITER = 4;          // 布の形を保つ計算の繰り返し回数（多いほど伸びにくい）
+  const STEP = 1 / 120;    // 落下計算の刻み（秒）
+  const FLING = 1.0;       // 引いた指の速さをティッシュに伝える割合（1で指と同じ速さで飛ぶ）
+  const FLING_MAX = 12;    // 抜けた瞬間の速さの上限
+  const TIP_KICK = 1.4;    // 抜けた瞬間に先端が倒れる勢い（向きはランダム）
+  const SLEEP_V = 0.03;    // この速さ以下が続いたら止まったとみなす
+  const SLEEP_TIME = 0.6;  // 止まったとみなすまでの時間（秒）
+  const LAYER = 0.001;     // 重なったティッシュがちらつかないよう1枚ごとに浮かせる高さ
+  // 効果音（すべて Web Audio で合成する）
+  const SE_VOLUME = 0.8;      // 効果音全体の音量
+  const RUSTLE_VOL = 0.35;    // 引っぱっているときのカサカサ音の最大音量
+  const RUSTLE_SPEED = 1500;  // この指の速さ（px/秒）でカサカサ音が最大になる
+  const POP_VOL = 0.7;        // 抜けたときの「シュッ」の音量
+  const CHIME_VOL = 0.22;     // 出し切ったときの音の音量
+
+  // カメラ：箱のまわりが画面に収まるよう、画面の縦横比から距離を決める
+  const FOV = 40;
+  const FIT_HALF_W = 1.4;  // 画面に収める横幅の半分（小さいほど寄る）
+  const CAM_DIR = new THREE.Vector3(0, 0.6, 1).normalize();  // 斜め上から見下ろす
+
+  const $ = id => document.getElementById(id);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const cv = $('cv');
+
+  // ---------- 3D ----------
+  const renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true });
+  renderer.setClearColor(new THREE.Color(css('--wall')));
+  // 机に箱やティッシュの影を落とす（机の上に置いてある感じを出すため）
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // 影を受ける物は Phong（つや無し）にする。
+  // r128 の Lambert は影がすべての平行光源をまとめて消してしまい、影の濃さを調整できないため
+  const matte = p => new THREE.MeshPhongMaterial(Object.assign({ shininess:0, specular:new THREE.Color(0x000000) }, p));
+  // 白いティッシュは光が当たると真っ白に飛ぶので、トーンマッピングで明るい所を丸める。
+  // 効かせるのはティッシュだけ（ほかの物は toneMapped を切って今の色のまま）
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = TISSUE_EXPOSURE;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 200);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  // 室内灯（少し暖かい白）。影の濃さを調整するため、同じ向きの光を
+  // 「影を落とす光」と「影を落とさない光」に分ける（影の中では前者の分だけ暗くなる）
+  const SUN_POWER = 0.75;
+  const SHADOW_STRENGTH = 1 / 6;   // 影の濃さ（1で真っ暗な影、0で影なし）
+  const sunFill = new THREE.DirectionalLight(0xfff4e6, SUN_POWER * (1 - SHADOW_STRENGTH));
+  sunFill.position.set(3, 9, 5);
+  scene.add(sunFill);
+  const sun = new THREE.DirectionalLight(0xfff4e6, SUN_POWER * SHADOW_STRENGTH);
+  sun.position.set(3, 9, 5);
+  // 影の濃さが0なら影の計算そのものをしない
+  sun.castShadow = SHADOW_STRENGTH > 0;
+  renderer.shadowMap.enabled = SHADOW_STRENGTH > 0;
+  sun.shadow.mapSize.set(1024, 1024);
+  Object.assign(sun.shadow.camera, { left:-6, right:6, top:6, bottom:-6, near:1, far:30 });
+  sun.shadow.bias = -0.0005;
+  sun.shadow.normalBias = 0.02;   // 面の傾きによる影の縞（シャドウアクネ）を防ぐ
+  scene.add(sun);
+
+  // ---------- 部屋と机 ----------
+  // 木目は canvas に描いて天板に貼る（画像ファイルを使わないため）
+  function woodTexture(){
+    const S = 512;
+    const c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d');
+    g.fillStyle = css('--desk'); g.fillRect(0, 0, S, S);
+    g.strokeStyle = css('--desk-grain');
+    for (let n = 0; n < 70; n++){
+      const y0 = Math.random() * S;
+      const amp = 2 + Math.random() * 8;
+      const k = 1 + Math.floor(Math.random() * 3);     // 横につないでも継ぎ目が出ない波の数
+      const ph = Math.random() * Math.PI * 2;
+      g.globalAlpha = 0.12 + Math.random() * 0.3;
+      g.lineWidth = 1 + Math.random() * 2.5;
+      g.beginPath();
+      for (let x = 0; x <= S; x += 8){
+        const y = y0 + amp * Math.sin(x / S * Math.PI * 2 * k + ph);
+        if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(DESK_W / 7, (DESK_FRONT - DESK_BACK) / 7);
+    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return tex;
+  }
+
+  // 机の天板（上面だけ木目、側面は無地）
+  const deskD = DESK_FRONT - DESK_BACK;
+  const deskSide = matte({ color:new THREE.Color(css('--desk-side')) });
+  const deskTop = matte({ map:woodTexture() });
+  const desk = new THREE.Mesh(
+    new THREE.BoxGeometry(DESK_W, DESK_T, deskD),
+    [deskSide, deskSide, deskTop, deskSide, deskSide, deskSide]
+  );
+  desk.position.set(0, -DESK_T / 2, (DESK_FRONT + DESK_BACK) / 2);
+  desk.receiveShadow = true;
+  scene.add(desk);
+
+  // 壁
+  const wall = new THREE.Mesh(
+    new THREE.PlaneGeometry(60, 30),
+    matte({ color:new THREE.Color(css('--wall')) })
+  );
+  wall.position.set(0, ROOM_FLOOR + 15, DESK_BACK);
+  wall.receiveShadow = true;
+  scene.add(wall);
+
+  // 部屋の床（机から落ちたティッシュはここまで落ちる）
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(60, 60),
+    matte({ color:new THREE.Color(css('--floor')) })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, ROOM_FLOOR, DESK_BACK + 30);
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // ---------- 箱 ----------
+  // 箱の柄は面ごとに canvas で描いて貼る。
+  // 波の帯は側面をぐるっと一周つながるよう、箱の周囲のどの位置かから計算する
+  const PERIM = (BOX_W + BOX_D) * 2;
+  const TEX_PX = 420;   // 箱の柄の解像度（3D空間の1単位あたりのピクセル数）
+  const FONT_JP = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif';
+  const FONT_NUM = '"Avenir Next","Helvetica Neue",Arial,' + FONT_JP;
+  const maxAniso = renderer.capabilities.getMaxAnisotropy();
+
+  function faceCanvas(wu, hu){
+    const c = document.createElement('canvas');
+    c.width = Math.round(wu * TEX_PX); c.height = Math.round(hu * TEX_PX);
+    return c;
+  }
+  function faceTexture(c){
+    const t = new THREE.CanvasTexture(c);
+    t.anisotropy = maxAniso;
+    return t;
+  }
+
+  // 字間をあけた英字（見出し用）
+  function spacedWidth(g, text, sp){
+    let s = 0;
+    for (const ch of text) s += g.measureText(ch).width + sp;
+    return s - sp;
+  }
+  function spacedText(g, text, x, y, sp){
+    for (const ch of text){ g.fillText(ch, x, y); x += g.measureText(ch).width + sp; }
+  }
+
+  // 側面の地：生成りの地に、下側の波の帯と細い波線（s0 はこの面の左端が周囲のどこか、wu は面の幅）
+  function drawSideBase(g, w, h, s0, wu){
+    g.fillStyle = css('--box-base'); g.fillRect(0, 0, w, h);
+    const wave = (x, base, amp, k, ph) =>
+      base + amp * Math.sin((s0 + x / w * wu) / PERIM * Math.PI * 2 * k + ph);
+    const band = (color, base, amp, k, ph) => {
+      g.fillStyle = color;
+      g.beginPath(); g.moveTo(0, h);
+      for (let x = 0; x <= w; x += 6) g.lineTo(x, wave(x, base, amp, k, ph));
+      g.lineTo(w, h); g.closePath(); g.fill();
+    };
+    band(css('--box-band2'), h * 0.68, h * 0.06, 3, 0.8);
+    band(css('--box-band'), h * 0.79, h * 0.05, 4, 2.1);
+    g.strokeStyle = css('--box-band'); g.lineWidth = Math.max(2, h * 0.008);
+    g.beginPath();
+    for (let x = 0; x <= w; x += 6){
+      const y = wave(x, h * 0.61, h * 0.04, 2, 4.0);
+      if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.stroke();
+  }
+
+  // 正面：残り枚数を印刷してあるように描く（枚数が変わるたびに描き直す）
+  const frontCv = faceCanvas(BOX_W, BOX_H);
+  const frontTex = faceTexture(frontCv);
+  function drawBoxLabel(left){
+    const g = frontCv.getContext('2d');
+    const w = frontCv.width, h = frontCv.height;
+    drawSideBase(g, w, h, 0, BOX_W);
+    g.fillStyle = css('--box-ink');
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    // 見出し
+    g.font = '600 ' + Math.round(h * 0.055) + 'px ' + FONT_NUM;
+    spacedText(g, 'TISSUE RUSH', w * 0.06, h * 0.14, h * 0.014);
+    // 「残り ○○ 枚」：数字を大きく、前後の文字は小さく
+    const num = String(left);
+    const big = '700 ' + Math.round(h * 0.38) + 'px ' + FONT_NUM;
+    const small = '700 ' + Math.round(h * 0.085) + 'px ' + FONT_JP;
+    g.font = big;   const nw = g.measureText(num).width;
+    g.font = small; const lw = g.measureText('残り').width, mw = g.measureText('枚').width;
+    const gap = h * 0.035;
+    let x = (w - (lw + gap + nw + gap + mw)) / 2;
+    const base = h * 0.51;
+    g.font = small; g.fillText('残り', x, base); x += lw + gap;
+    g.font = big;   g.fillText(num, x, base);    x += nw + gap;
+    g.font = small; g.fillText('枚', x, base);
+    frontTex.needsUpdate = true;
+  }
+
+  // 右・奥・左の面（柄は1回描くだけ）
+  function sideTexture(wu, s0, label){
+    const c = faceCanvas(wu, BOX_H);
+    const g = c.getContext('2d');
+    drawSideBase(g, c.width, c.height, s0, wu);
+    if (label){
+      g.fillStyle = css('--box-ink'); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+      g.font = '600 ' + Math.round(c.height * 0.055) + 'px ' + FONT_NUM;
+      const sp = c.height * 0.014;
+      spacedText(g, label, (c.width - spacedWidth(g, label, sp)) / 2, c.height * 0.36, sp);
+    }
+    return faceTexture(c);
+  }
+
+  // 上面：細かい点の柄と、取り出し口のまわりの切り口
+  function topTexture(){
+    const c = faceCanvas(BOX_W, BOX_D);
+    const g = c.getContext('2d');
+    const w = c.width, h = c.height;
+    g.fillStyle = css('--box-base'); g.fillRect(0, 0, w, h);
+    g.fillStyle = css('--box-band2');
+    const step = h * 0.09;
+    for (let iy = 0, y = step / 2; y < h; iy++, y += step){
+      for (let x = (iy % 2 ? step : step / 2); x < w; x += step){
+        g.beginPath(); g.arc(x, y, h * 0.012, 0, Math.PI * 2); g.fill();
+      }
+    }
+    // ふちの細い線
+    g.strokeStyle = css('--box-band'); g.lineWidth = Math.max(2, h * 0.01);
+    const m = h * 0.07;
+    g.strokeRect(m, m, w - m * 2, h - m * 2);
+    return faceTexture(c);
+  }
+
+  const lambert = map => matte({ map });
+  const boxBottom = matte({ color:new THREE.Color(css('--box-base')) });
+  // 面の順番：右・左・上・下・手前・奥
+  const box = new THREE.Mesh(
+    new THREE.BoxGeometry(BOX_W, BOX_H, BOX_D),
+    [
+      lambert(sideTexture(BOX_D, BOX_W, 'TISSUE RUSH')),
+      lambert(sideTexture(BOX_D, BOX_W * 2 + BOX_D, 'TISSUE RUSH')),
+      new THREE.MeshBasicMaterial({ visible:false }),   // 上面は穴の空いた別の板で作る
+      boxBottom,
+      lambert(frontTex),
+      lambert(sideTexture(BOX_W, BOX_W + BOX_D, ''))
+    ]
+  );
+  box.position.y = BOX_H / 2;
+  box.castShadow = true;
+  box.receiveShadow = true;
+  scene.add(box);
+
+  // ---------- 取り出し口 ----------
+  // 角の丸い細長い形（両端が半円）。上面の穴・切り口・フィルム・中のティッシュで同じ形を使う
+  const slotHx = SLOT_HALF_L - SLOT_HALF_W;   // 半円の中心までの距離
+  function slotPath(path){
+    const r = SLOT_HALF_W;
+    path.moveTo(-slotHx, -r);
+    path.lineTo(slotHx, -r);
+    path.absarc(slotHx, 0, r, -Math.PI / 2, Math.PI / 2, false);
+    path.lineTo(-slotHx, r);
+    path.absarc(-slotHx, 0, r, Math.PI / 2, Math.PI * 1.5, false);
+    return path;
+  }
+  // 平らな板の UV を、指定した幅・奥行きの範囲で 0〜1 に合わせる
+  function fitUV(geo, w, d){
+    const p = geo.attributes.position, uv = geo.attributes.uv;
+    for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / w + 0.5, p.getY(i) / d + 0.5);
+    uv.needsUpdate = true;
+    return geo;
+  }
+  // 板を水平に寝かせて置く（形の y が奥行き方向になる）
+  function layFlat(mesh, y){
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.y = y;
+    scene.add(mesh);
+    return mesh;
+  }
+
+  // 上面：穴の空いた板（柄は前と同じ）
+  const topShape = new THREE.Shape();
+  topShape.moveTo(-BOX_W / 2, -BOX_D / 2); topShape.lineTo(BOX_W / 2, -BOX_D / 2);
+  topShape.lineTo(BOX_W / 2, BOX_D / 2);   topShape.lineTo(-BOX_W / 2, BOX_D / 2);
+  topShape.closePath();
+  topShape.holes.push(slotPath(new THREE.Path()));
+  const boxTop = layFlat(new THREE.Mesh(
+    fitUV(new THREE.ShapeGeometry(topShape, 24), BOX_W, BOX_D),
+    matte({ map:topTexture() })
+  ), BOX_H);
+  boxTop.castShadow = true;
+  boxTop.receiveShadow = true;
+
+  // 穴の切り口：紙の断面と、その下の箱の内側の壁（穴のふちに沿った帯）
+  {
+    const pts = slotPath(new THREE.Path()).getSpacedPoints(64);
+    const depth = SLOT_DEPTH + SLOT_INNER;
+    const pos = [], idx = [];
+    pts.forEach(p => { pos.push(p.x, BOX_H, -p.y, p.x, BOX_H - depth, -p.y); });
+    for (let i = 0; i < pts.length - 1; i++){
+      const a = i * 2;
+      idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    scene.add(new THREE.Mesh(geo, matte({
+      color:new THREE.Color(css('--box-cut')), side:THREE.DoubleSide
+    })));
+  }
+
+  // 中のティッシュ（フィルム越しに見える）：ふちほど暗く、切れ目の下はさらに暗い
+  function innerTexture(){
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = Math.round(512 * SLOT_HALF_W / SLOT_HALF_L);
+    const g = c.getContext('2d');
+    const w = c.width, h = c.height;
+    g.fillStyle = css('--inner-dark'); g.fillRect(0, 0, w, h);
+    const grad = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    grad.addColorStop(0, css('--inner'));
+    grad.addColorStop(0.75, css('--inner'));
+    grad.addColorStop(1, css('--inner-dark'));
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+    // 上下のふち側に落ちる影
+    const edge = g.createLinearGradient(0, 0, 0, h);
+    edge.addColorStop(0, 'rgba(0,0,0,0.35)');
+    edge.addColorStop(0.3, 'rgba(0,0,0,0)');
+    edge.addColorStop(0.7, 'rgba(0,0,0,0)');
+    edge.addColorStop(1, 'rgba(0,0,0,0.35)');
+    g.fillStyle = edge; g.fillRect(0, 0, w, h);
+    // 切れ目の下の影
+    g.strokeStyle = 'rgba(40,36,32,0.55)'; g.lineCap = 'round';
+    g.lineWidth = h * 0.12; g.filter = 'blur(' + Math.round(h * 0.04) + 'px)';
+    g.beginPath(); g.moveTo(w * 0.1, h / 2); g.lineTo(w * 0.9, h / 2); g.stroke();
+    g.filter = 'none';
+    return faceTexture(c);
+  }
+  layFlat(new THREE.Mesh(
+    fitUV(new THREE.ShapeGeometry(slotPath(new THREE.Shape()), 24), SLOT_HALF_L * 2, SLOT_HALF_W * 2),
+    matte({ map:innerTexture() })
+  ), BOX_H - SLOT_DEPTH - SLOT_INNER);
+
+  // フィルム：うっすら白い透明フィルム。真ん中に切れ目があり、切れ目のふちが光る
+  function filmTexture(){
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = Math.round(512 * SLOT_HALF_W / SLOT_HALF_L);
+    const g = c.getContext('2d');
+    const w = c.width, h = c.height;
+    g.fillStyle = 'rgba(255,255,255,0.32)'; g.fillRect(0, 0, w, h);
+    // つや（斜めの明るい筋）
+    const sheen = g.createLinearGradient(0, 0, w, h);
+    sheen.addColorStop(0.25, 'rgba(255,255,255,0)');
+    sheen.addColorStop(0.4, 'rgba(255,255,255,0.45)');
+    sheen.addColorStop(0.55, 'rgba(255,255,255,0)');
+    g.fillStyle = sheen; g.fillRect(0, 0, w, h);
+    // 切れ目（フィルムが無い部分）
+    const x0 = w * 0.1, x1 = w * 0.9, gap = h * 0.07;
+    g.globalCompositeOperation = 'destination-out';
+    g.strokeStyle = '#000'; g.lineCap = 'round'; g.lineWidth = gap;
+    g.beginPath(); g.moveTo(x0, h / 2); g.lineTo(x1, h / 2); g.stroke();
+    g.globalCompositeOperation = 'source-over';
+    // 切れ目のふち（フィルムの切り口が少し反って光る）
+    g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = Math.max(2, h * 0.02);
+    [-1, 1].forEach(s => {
+      g.beginPath(); g.moveTo(x0, h / 2 + s * gap * 0.75); g.lineTo(x1, h / 2 + s * gap * 0.75); g.stroke();
+    });
+    return faceTexture(c);
+  }
+  layFlat(new THREE.Mesh(
+    fitUV(new THREE.ShapeGeometry(slotPath(new THREE.Shape()), 24), SLOT_HALF_L * 2, SLOT_HALF_W * 2),
+    new THREE.MeshPhongMaterial({
+      map:filmTexture(), transparent:true, depthWrite:false,
+      shininess:90, specular:new THREE.Color(0x777777)
+    })
+  ), BOX_H - SLOT_DEPTH);
+
+  // ここまでに置いた物（部屋・机・箱）はトーンマッピングをかけない
+  scene.traverse(o => {
+    if (!o.material) return;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.toneMapped = false; });
+  });
+
+  // ティッシュ：分割した板の頂点を毎フレーム動かして形を作る
+  const SX = 12, SY = 18;
+  const NX = SX + 1, NY = SY + 1, NP = NX * NY;
+  // 紙の凹凸のノーマルマップ：繊維のざらつきを高さとして作り、その傾きを色にする
+  // （画像ファイルを使わないため、つなぎ目が出ないように端を折り返して計算する）
+  function tissueNormalTexture(){
+    const N = 256;
+    const hgt = new Float32Array(N * N);
+    const wrap = v => ((v % N) + N) % N;
+    // ぼんやりした凸凹：細かさの違う格子の乱数をなめらかにつないで重ねる
+    [[8, 1], [16, 0.6], [32, 0.35], [64, 0.2]].forEach(([cells, amp]) => {
+      const grid = new Float32Array(cells * cells).map(() => Math.random());
+      const s = t => t * t * (3 - 2 * t);
+      for (let y = 0; y < N; y++){
+        for (let x = 0; x < N; x++){
+          const fx = x / N * cells, fy = y / N * cells;
+          const x0 = Math.floor(fx), y0 = Math.floor(fy);
+          const tx = s(fx - x0), ty = s(fy - y0);
+          const g = (i, j) => grid[(j % cells) * cells + (i % cells)];
+          const a = g(x0, y0), b = g(x0 + 1, y0), c = g(x0, y0 + 1), d = g(x0 + 1, y0 + 1);
+          hgt[y * N + x] += (a + (b - a) * tx + (c - a) * ty + (a - b - c + d) * tx * ty) * amp;
+        }
+      }
+    });
+    // 繊維：短い筋をたくさん重ねる
+    for (let k = 0; k < 900; k++){
+      let x = Math.random() * N, y = Math.random() * N;
+      const ang = Math.random() * Math.PI, len = 6 + Math.random() * 22;
+      const dx = Math.cos(ang), dy = Math.sin(ang), amp = 0.15 + Math.random() * 0.25;
+      for (let t = 0; t < len; t++, x += dx, y += dy) hgt[wrap(Math.round(y)) * N + wrap(Math.round(x))] += amp;
+    }
+    // 高さの傾き → 法線の色
+    const c = document.createElement('canvas');
+    c.width = c.height = N;
+    const g = c.getContext('2d');
+    const img = g.createImageData(N, N);
+    const H = (x, y) => hgt[wrap(y) * N + wrap(x)];
+    for (let y = 0; y < N; y++){
+      for (let x = 0; x < N; x++){
+        const nx = (H(x - 1, y) - H(x + 1, y)) * 2;
+        const ny = (H(x, y - 1) - H(x, y + 1)) * 2;
+        const l = Math.hypot(nx, ny, 1);
+        const i = (y * N + x) * 4;
+        img.data[i]     = (nx / l * 0.5 + 0.5) * 255;
+        img.data[i + 1] = (ny / l * 0.5 + 0.5) * 255;
+        img.data[i + 2] = (1 / l * 0.5 + 0.5) * 255;
+        img.data[i + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(TISSUE_NORMAL_REPEAT, TISSUE_NORMAL_REPEAT);
+    tex.anisotropy = maxAniso;
+    return tex;
+  }
+
+  // ノーマルマップを使うため Phong にする（つやはほぼ無し）。
+  // しわの陰が暗くなりすぎないよう、少し自分で明るさを持たせる
+  const tMat = new THREE.MeshPhongMaterial({
+    color:new THREE.Color(css('--tissue')), side:THREE.DoubleSide,
+    emissive:new THREE.Color(TISSUE_GLOW, TISSUE_GLOW, TISSUE_GLOW),
+    shininess:4, specular:new THREE.Color(0x0a0a0a),
+    normalMap:tissueNormalTexture(),
+    normalScale:new THREE.Vector2(TISSUE_NORMAL_SCALE, TISSUE_NORMAL_SCALE)
+  });
+  const tGeo = new THREE.PlaneGeometry(1, 1, SX, SY);
+  const tissue = new THREE.Mesh(tGeo, tMat);
+  tissue.frustumCulled = false;
+  tissue.castShadow = true;
+  scene.add(tissue);
+
+  // 次に出てくる1枚の形をランダムに決める
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  let look;
+  // 格子上の乱数を隣とならす（回数が多いほど大きなまとまりになる）
+  function smoothGrid(f, passes){
+    for (let n = 0; n < passes; n++){
+      const g = new Float32Array(NP);
+      for (let iy = 0; iy < NY; iy++){
+        for (let ix = 0; ix < NX; ix++){
+          let s = 0, c = 0;
+          for (let dy = -1; dy <= 1; dy++){
+            for (let dx = -1; dx <= 1; dx++){
+              const jx = ix + dx, jy = iy + dy;
+              if (jx < 0 || jy < 0 || jx >= NX || jy >= NY) continue;
+              s += f[jy * NX + jx]; c++;
+            }
+          }
+          g[iy * NX + ix] = s / c;
+        }
+      }
+      f = g;
+    }
+    return f;
+  }
+
+  function newLook(){
+    // でこぼこ：大きなうねり＋細かいしわの2段にする（とがりすぎないよう、ならしてから使う）
+    const coarse = smoothGrid(new Float32Array(NP).map(() => rnd(-1, 1)), 4);
+    const fine = smoothGrid(new Float32Array(NP).map(() => rnd(-1, 1)), 1);
+    const crumple = new Float32Array(NP);
+    for (let i = 0; i < NP; i++) crumple[i] = (coarse[i] * 3 + fine[i] * 0.3) * VARY_CRUMPLE;
+    // 上端のふち：左右方向にゆるくガタガタさせる
+    const edgeRaw = Array.from({ length:NX }, () => rnd(-1, 1));
+    const edge = new Float32Array(NX);
+    for (let ix = 0; ix < NX; ix++){
+      const a = edgeRaw[Math.max(ix - 1, 0)], b = edgeRaw[ix], c = edgeRaw[Math.min(ix + 1, NX - 1)];
+      edge[ix] = (a + b * 2 + c) / 4 * VARY_EDGE;
+    }
+    look = {
+      h:1 + rnd(-VARY_H, VARY_H),
+      fold:1 + rnd(-VARY_FOLD, VARY_FOLD),
+      f1:rnd(1, 2.5), p1:rnd(0, Math.PI * 2),      // 大きなしわの数と位置
+      f2:rnd(2.5, 4), p2:rnd(0, Math.PI * 2),      // 小さなしわの数と位置
+      a2:rnd(0.1, 0.3),
+      edge,
+      curlL:rnd(-VARY_CURL, VARY_CURL), curlR:rnd(-VARY_CURL, VARY_CURL),
+      bend:rnd(-VARY_BEND, VARY_BEND), bendK:rnd(0.8, 2.2), bendP:rnd(0, Math.PI * 2),
+      fp2:rnd(2.5, 4), pp2:rnd(0, Math.PI * 2), ap2:rnd(0.1, 0.3),
+      leanX:rnd(-VARY_LEAN, VARY_LEAN), leanZ:rnd(-VARY_LEAN, VARY_LEAN),
+      // 引っぱっている最中の形
+      pinch:1 + rnd(-VARY_PINCH, VARY_PINCH),
+      wide:T_WIDE * (1 + rnd(-VARY_WIDE, VARY_WIDE)),
+      gam:Math.log(0.5) / Math.log(rnd(0.35, 0.65)),  // いちばん広がる高さ
+      asym:rnd(-VARY_ASYM, VARY_ASYM),
+      twist:rnd(-VARY_TWIST, VARY_TWIST),
+      diag:rnd(-VARY_DIAG, VARY_DIAG),
+      fp:rnd(1, 2.5), pp:rnd(0, Math.PI * 2),
+      foldP:1 + rnd(-VARY_FOLD, VARY_FOLD),
+      crumple
+    };
+  }
+  newLook();
+
+  function shapeTissue(h, tx){
+    // 何もしていないときの高さは1枚ごとに変える（引き出した分はそのまま足す）
+    h += REST_H * (look.h - 1);
+    const pos = tGeo.attributes.position;
+    for (let i = 0; i < NP; i++){
+      const ix = i % NX, iy = Math.floor(i / NX);
+      const u = ix / SX * 2 - 1;      // 左右 -1〜1
+      const v = 1 - iy / SY;          // 根元0〜先端1
+      // 何もしていないとき：取り出し口に沿った横長の根元から、ふんわりした山になる
+      const hwRest = T_TIP + (T_BASE - T_TIP) * Math.cos(v * Math.PI / 2);
+      // 引っぱっているとき：つまんだ先端から紙が開き、根元で取り出し口に絞られる
+      // （つまむ細さ・開く幅・いちばん広がる高さは1枚ごとに違う）
+      const pinch = T_PINCH * look.pinch;
+      const vp = Math.pow(v, look.gam);
+      const hwPull = pinch + (T_BASE - pinch) * (1 - v) + (look.wide - (pinch + T_BASE) / 2) * Math.sin(vp * Math.PI);
+      const open = Math.min(Math.max((h - REST_H * look.h) / OPEN_LEN, 0), 1);
+      let hw = hwRest + (hwPull - hwRest) * open;
+      // 左右の開き方を偏らせる（引っぱるほど強く出る）
+      hw *= 1 + (u < 0 ? 1 : -1) * look.asym * open * v;
+      const cr = look.crumple[i] * v;   // でこぼこは根元ほど小さく（取り出し口に収める）
+      const xc = (tx + look.leanX) * v * v;   // 紙の中心線
+      let x = xc + u * hw + cr * 0.5;
+      // 先端を丸い山形にする（左右の端ほど低く）
+      // 上端のふちはガタガタにする（先端に近いほど強く）
+      // 根元はフィルムの切れ目の高さ（箱の紙の厚みぶん下）から出る
+      const y = BOX_H - SLOT_DEPTH * (1 - v) + v * h - h * 0.15 * Math.abs(u) * v * v + cr * 0.5
+        + look.edge[ix] * Math.pow(v, 4) * (1 + h);
+      // しわ：根元は取り出し口に収まる浅さ、中ほどで深くなる
+      // 何もしていないときは大小2つの縦じわ、引っぱると斜めのしわに変わっていく
+      const ampRest = FOLD_BASE + (FOLD * look.fold - FOLD_BASE) * Math.sin(v * Math.PI);
+      const ampPull = FOLD_BASE + (FOLD * look.foldP - FOLD_BASE) * Math.sin(v * Math.PI);
+      const waveRest = (Math.sin(u * Math.PI * look.f1 + look.p1) + look.a2 * Math.sin(u * Math.PI * look.f2 + look.p2)) / (1 + look.a2);
+      const wavePull = (Math.sin((u + look.diag * v) * Math.PI * look.fp + look.pp)
+        + look.ap2 * Math.sin((u - look.diag * 0.5 * v) * Math.PI * look.fp2 + look.pp2)) / (1 + look.ap2);
+      const amp = ampRest + (ampPull - ampRest) * open;
+      const wave = waveRest + (wavePull - waveRest) * open;
+      // 左右の端の反り・縦方向のうねりを足す（根元は取り出し口に収まるよう0にする）
+      const curl = (u < 0 ? look.curlL : look.curlR) * u * u * v;
+      const bend = look.bend * Math.sin(v * Math.PI * look.bendK + look.bendP) * v;
+      let z = amp * wave + look.leanZ * v * v + cr + curl + bend;
+      // 引っぱるほど先端に向かってねじれる
+      const ang = look.twist * v * open;
+      const dx = x - xc;
+      x = xc + dx * Math.cos(ang) - z * Math.sin(ang);
+      z = dx * Math.sin(ang) + z * Math.cos(ang);
+      pos.setXYZ(i, x, y, z);
+    }
+    pos.needsUpdate = true;
+    tGeo.computeVertexNormals();
+  }
+
+  // ---------- 抜けたティッシュ（布の計算） ----------
+  // 頂点同士のつながり：縦横・斜め・1つ飛ばし（折れにくさ）
+  const cons = [];
+  for (let iy = 0; iy < NY; iy++){
+    for (let ix = 0; ix < NX; ix++){
+      const i = iy * NX + ix;
+      if (ix + 1 < NX) cons.push(i, i + 1);
+      if (iy + 1 < NY) cons.push(i, i + NX);
+      if (ix + 1 < NX && iy + 1 < NY){ cons.push(i, i + NX + 1); cons.push(i + 1, i + NX); }
+      if (ix + 2 < NX) cons.push(i, i + 2);
+      if (iy + 2 < NY) cons.push(i, i + NX * 2);
+    }
+  }
+  const CON = new Uint16Array(cons);
+  const NC = CON.length / 2;
+
+  const fallen = [];       // 抜けたティッシュ（止まった後もそのまま残す）
+
+  function dropTissue(vx, vy){
+    const geo = tGeo.clone();
+    const mesh = new THREE.Mesh(geo, tMat);
+    mesh.frustumCulled = false;
+    mesh.castShadow = true;
+    // 自分のしわに自分の影が落ちて黒い筋になるので、ティッシュは影を受けない
+    mesh.receiveShadow = false;
+    scene.add(mesh);
+    const p = Float32Array.from(geo.attributes.position.array);
+    const rest = new Float32Array(NC);
+    for (let c = 0; c < NC; c++){
+      const a = CON[c * 2] * 3, b = CON[c * 2 + 1] * 3;
+      rest[c] = Math.hypot(p[a] - p[b], p[a + 1] - p[b + 1], p[a + 2] - p[b + 2]);
+    }
+    // 抜けた瞬間の速さ：指の勢い＋先端がランダムな向きに倒れる勢い
+    const ang = Math.random() * Math.PI * 2;
+    const kick = TIP_KICK * (0.6 + Math.random() * 0.4);
+    const v = new Float32Array(NP * 3);
+    for (let i = 0; i < NP; i++){
+      const row = 1 - Math.floor(i / NX) / SY;   // 根元0〜先端1
+      v[i * 3]     = vx + Math.cos(ang) * kick * row;
+      v[i * 3 + 1] = vy;
+      v[i * 3 + 2] = Math.sin(ang) * kick * row;
+    }
+    fallen.push({
+      mesh, geo, p, v, rest,
+      prev:new Float32Array(NP * 3),
+      touch:new Uint8Array(NP),
+      lift:LAYER * (fallen.length + 1),   // 後から落ちたものほどわずかに上に載る
+      still:0, active:true
+    });
+  }
+
+  // 直方体にめり込んだ頂点を、いちばん近い面から押し出す
+  function pushOut(t, i, x0, x1, y0, y1, z0, z1){
+    const p = t.p, k = i * 3;
+    const x = p[k], y = p[k + 1], z = p[k + 2];
+    if (x <= x0 || x >= x1 || y <= y0 || y >= y1 || z <= z0 || z >= z1) return;
+    const m = Math.min(x - x0, x1 - x, y - y0, y1 - y, z - z0, z1 - z);
+    if (m === y1 - y){ p[k + 1] = y1; t.touch[i] = 1; }
+    else if (m === x - x0) p[k] = x0;
+    else if (m === x1 - x) p[k] = x1;
+    else if (m === y - y0) p[k + 1] = y0;
+    else if (m === z - z0) p[k + 2] = z0;
+    else p[k + 2] = z1;
+  }
+
+  // 床・壁・机・箱にめり込んだ頂点を押し出す
+  function collide(t, i){
+    const p = t.p, k = i * 3;
+    if (p[k + 1] < ROOM_FLOOR + t.lift){ p[k + 1] = ROOM_FLOOR + t.lift; t.touch[i] = 1; }
+    if (p[k + 2] < DESK_BACK + 0.01) p[k + 2] = DESK_BACK + 0.01;
+    pushOut(t, i, -DESK_W / 2, DESK_W / 2, -DESK_T, t.lift, DESK_BACK - 1, DESK_FRONT);
+    pushOut(t, i, -BOX_W / 2, BOX_W / 2, -1, BOX_H + t.lift, -BOX_D / 2, BOX_D / 2);
+  }
+
+  function stepCloth(t, dt){
+    const p = t.p, v = t.v, prev = t.prev;
+    const n = t.geo.attributes.normal.array;
+    const drag = Math.min(AIR_FLAT * dt, 1);
+    for (let i = 0; i < NP; i++){
+      const k = i * 3;
+      let vx = v[k], vy = v[k + 1] - GRAVITY * dt, vz = v[k + 2];
+      // 面に垂直な向きの動きほど空気に止められる（傾いていると横に滑空する）
+      const vn = (vx * n[k] + vy * n[k + 1] + vz * n[k + 2]) * drag;
+      vx = (vx - vn * n[k]) * AIR_ALL;
+      vy = (vy - vn * n[k + 1]) * AIR_ALL;
+      vz = (vz - vn * n[k + 2]) * AIR_ALL;
+      prev[k] = p[k]; prev[k + 1] = p[k + 1]; prev[k + 2] = p[k + 2];
+      p[k] += vx * dt; p[k + 1] += vy * dt; p[k + 2] += vz * dt;
+      t.touch[i] = 0;
+    }
+    for (let it = 0; it < ITER; it++){
+      for (let c = 0; c < NC; c++){
+        const a = CON[c * 2] * 3, b = CON[c * 2 + 1] * 3;
+        const dx = p[b] - p[a], dy = p[b + 1] - p[a + 1], dz = p[b + 2] - p[a + 2];
+        const d = Math.hypot(dx, dy, dz) || 1e-6;
+        const f = (d - t.rest[c]) / d * 0.5;
+        p[a] += dx * f; p[a + 1] += dy * f; p[a + 2] += dz * f;
+        p[b] -= dx * f; p[b + 1] -= dy * f; p[b + 2] -= dz * f;
+      }
+      for (let i = 0; i < NP; i++) collide(t, i);
+    }
+    let maxV = 0;
+    for (let i = 0; i < NP; i++){
+      const k = i * 3;
+      let vx = (p[k] - prev[k]) / dt, vy = (p[k + 1] - prev[k + 1]) / dt, vz = (p[k + 2] - prev[k + 2]) / dt;
+      if (t.touch[i]){ vx *= FRICTION; vz *= FRICTION; }
+      v[k] = vx; v[k + 1] = vy; v[k + 2] = vz;
+      maxV = Math.max(maxV, Math.abs(vx) + Math.abs(vy) + Math.abs(vz));
+    }
+    // 動かなくなったら計算をやめる（形はそのまま残す）
+    t.still = maxV < SLEEP_V ? t.still + dt : 0;
+    if (t.still > SLEEP_TIME) t.active = false;
+  }
+
+  function updateFallen(dt){
+    for (const t of fallen){
+      if (!t.active) continue;
+      t.acc = (t.acc || 0) + dt;
+      while (t.acc >= STEP && t.active){ stepCloth(t, STEP); t.acc -= STEP; }
+      t.geo.attributes.position.array.set(t.p);
+      t.geo.attributes.position.needsUpdate = true;
+      t.geo.computeVertexNormals();
+    }
+  }
+
+  function clearFallen(){
+    for (const t of fallen){ scene.remove(t.mesh); t.geo.dispose(); }
+    fallen.length = 0;
+  }
+
+  // ---------- 効果音 ----------
+  let actx = null, master = null, noiseBuf = null;
+  let rustleGain = null, rustleFilter = null;
+  let muted = false;
+
+  // ブラウザの自動再生制限があるので、最初の操作のときに音を使えるようにする
+  function ensureAudio(){
+    if (!actx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      actx = new AC();
+      master = actx.createGain();
+      master.gain.value = muted ? 0 : SE_VOLUME;
+      master.connect(actx.destination);
+      // 紙の音の素になる白色雑音（1秒分を繰り返し使う）
+      noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      // 引っぱっている間のカサカサ音：雑音を流しっぱなしにして、音量を指の速さで上げ下げする
+      const src = actx.createBufferSource();
+      src.buffer = noiseBuf; src.loop = true;
+      rustleFilter = actx.createBiquadFilter();
+      rustleFilter.type = 'bandpass'; rustleFilter.frequency.value = 3000; rustleFilter.Q.value = 0.8;
+      const hp = actx.createBiquadFilter();
+      hp.type = 'highpass'; hp.frequency.value = 900;
+      rustleGain = actx.createGain(); rustleGain.gain.value = 0;
+      src.connect(rustleFilter); rustleFilter.connect(hp); hp.connect(rustleGain); rustleGain.connect(master);
+      src.start();
+    }
+    if (actx.state !== 'running') actx.resume();
+  }
+  ['pointerdown', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, ensureAudio, true));
+
+  // カサカサ音の音量を毎フレーム合わせる（指が止まったら消える）
+  function updateRustle(now){
+    if (!actx) return;
+    let target = 0;
+    if (grab && now - grab.tm < 80){
+      const sp = Math.hypot(grab.vx, grab.vy);
+      // 毎フレーム少しずつ揺らして、紙がこすれるザラつきを出す
+      target = Math.min(1, sp / RUSTLE_SPEED) * RUSTLE_VOL * (0.6 + Math.random() * 0.4);
+    }
+    const t = actx.currentTime;
+    rustleGain.gain.setTargetAtTime(target, t, 0.03);
+    rustleFilter.frequency.setTargetAtTime(1800 + Math.random() * 2500, t, 0.02);
+  }
+
+  // 1枚抜けたときの「シュッ」：雑音を短く鳴らし、こもった音から高い音へすべらせる
+  function playPop(){
+    if (!actx) return;
+    const t = actx.currentTime;
+    const src = actx.createBufferSource();
+    src.buffer = noiseBuf;
+    const bp = actx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.Q.value = 1.2;
+    const f0 = 1800 + Math.random() * 600;
+    bp.frequency.setValueAtTime(f0, t);
+    bp.frequency.exponentialRampToValueAtTime(f0 * 3, t + 0.12);
+    const g = actx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(POP_VOL, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    src.connect(bp); bp.connect(g); g.connect(master);
+    src.start(t, Math.random() * 0.8, 0.2);
+  }
+
+  // 出し切ったときの音：やわらかい3音
+  function playChime(){
+    if (!actx) return;
+    const t = actx.currentTime;
+    [784, 988, 1319].forEach((f, i) => {
+      const o = actx.createOscillator();
+      o.type = 'sine'; o.frequency.value = f;
+      const g = actx.createGain();
+      const s = t + i * 0.09;
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(CHIME_VOL, s + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.7);
+      o.connect(g); g.connect(master);
+      o.start(s); o.stop(s + 0.75);
+    });
+  }
+
+  // ミュートボタン
+  const ICON_ON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>'
+    + '<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const ICON_OFF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>'
+    + '<path d="M16.5 9.5l5 5M21.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  function updateMuteButton(){
+    const b = $('mute');
+    b.innerHTML = muted ? ICON_OFF : ICON_ON;
+    b.setAttribute('aria-pressed', String(muted));
+    b.setAttribute('aria-label', muted ? '効果音をオンにする' : '効果音を消す');
+  }
+  $('mute').addEventListener('click', () => {
+    muted = !muted;
+    if (master) master.gain.setTargetAtTime(muted ? 0 : SE_VOLUME, actx.currentTime, 0.01);
+    updateMuteButton();
+  });
+  updateMuteButton();
+
+  // ---------- 状態 ----------
+  let W = 0, H = 0;
+  let state = 'ready';     // ready: 最初の1枚を触る前 / playing / over
+  let count = 0;           // 抜いた枚数
+  let t0 = 0;              // 計測開始時刻
+  let elapsed = 0;         // 経過秒
+  let grab = null;         // 掴んでいるティッシュ {id, x0, y0, x, y, vx, vy, tm}
+  let perPx = 0.01;        // 取り出し口の位置での「1pxあたりの3D距離」
+  let pullExt = 0;         // いま引き出されている長さ（途中で離してもそのまま残る）
+  let pullTx = 0;          // いまの先端の横ずれ（途中で離してもそのまま残る）
+
+  // ベストタイム：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  const BEST_KEY = 'tissueRush.bestTime';
+  let bestTime = 0;   // 0 は記録なし
+  try { bestTime = parseFloat(localStorage.getItem(BEST_KEY)) || 0; } catch(e) {}
+  function saveBest(){ try { localStorage.setItem(BEST_KEY, String(bestTime)); } catch(e) {} }
+
+  // ---------- 画面サイズ ----------
+  function resize(){
+    W = cv.clientWidth; H = cv.clientHeight;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(W, H, false);
+    const aspect = W / H;
+    camera.aspect = aspect;
+    const tanHalf = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
+    const vHalf = Math.max(FIT_HALF_W / aspect, 1.2);
+    const dist = vHalf / tanHalf;
+    // 箱が画面のやや下に来るよう、注視点を上にずらす
+    const target = new THREE.Vector3(0, BOX_H + vHalf * 0.2, 0);
+    camera.position.copy(target).addScaledVector(CAM_DIR, dist);
+    camera.lookAt(target);
+    camera.updateProjectionMatrix();
+    const d = camera.position.distanceTo(new THREE.Vector3(0, BOX_H, 0));
+    perPx = 2 * d * tanHalf / H;
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  function toScreen(x, y, z){
+    const p = new THREE.Vector3(x, y, z).project(camera);
+    return { x:(p.x + 1) / 2 * W, y:(1 - p.y) / 2 * H };
+  }
+
+  // ---------- 表示 ----------
+  // 残り枚数を箱に表示する（時間はプレイ中は出さない）
+  function updateHud(){
+    const left = TOTAL - count;
+    drawBoxLabel(left);
+    cv.setAttribute('aria-label', 'ティッシュ箱。残り' + left + '枚。ティッシュを上にスワイプして引き抜く');
+  }
+
+  // ---------- 進行 ----------
+  function finish(){
+    document.documentElement.removeAttribute('data-howto-hidden');
+    state = 'over';
+    grab = null;
+    elapsed = (performance.now() - t0) / 1000;
+    updateHud();
+    playChime();
+    $('result-head').textContent = TOTAL + '枚 出し切った！';
+    $('result-time').textContent = elapsed.toFixed(2) + '秒';
+    // ベスト（短いほど良い）を更新したら保存する
+    const isNew = bestTime === 0 || elapsed < bestTime;
+    if (isNew){ bestTime = elapsed; saveBest(); }
+    const best = $('result-best');
+    best.textContent = isNew ? 'ベスト更新！' : 'ベスト ' + bestTime.toFixed(2) + '秒';
+    best.classList.toggle('new', isNew);
+    $('over').classList.remove('hidden');
+    $('retry').focus({ preventScroll:true });
+  }
+
+  function restart(){
+    state = 'ready';
+    count = 0; elapsed = 0; grab = null;
+    pullExt = 0; pullTx = 0;
+    clearFallen();
+    newLook();
+    $('over').classList.add('hidden');
+    updateHud();
+  }
+
+  // ---------- 入力 ----------
+  // 指を置ける範囲：ティッシュと箱の上部まわりを広めにとる（指で掴みやすくするため）
+  function canGrab(x, y){
+    const l = toScreen(-BOX_W / 2, BOX_H, BOX_D / 2);
+    const r = toScreen(BOX_W / 2, BOX_H, BOX_D / 2);
+    const s = toScreen(0, BOX_H, 0);
+    const b = toScreen(0, BOX_H * 0.5, BOX_D / 2);
+    const tipY = s.y - (REST_H + pullExt) / perPx;   // 途中まで引き出したままなら先端も高い
+    return x > l.x - 20 && x < r.x + 20 && y > tipY - 70 && y < b.y;
+  }
+
+  function localPos(e){
+    const r = cv.getBoundingClientRect();
+    return { x:e.clientX - r.left, y:e.clientY - r.top };
+  }
+
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (state === 'over' || grab || count >= TOTAL) return;
+    const p = localPos(e);
+    if (!canGrab(p.x, p.y)) return;
+    cv.setPointerCapture(e.pointerId);
+    // 途中まで引き出してあれば、その続きから引けるように起点をずらす
+    grab = {
+      id:e.pointerId,
+      x0:p.x - pullTx / (perPx * SWAY), y0:p.y + pullExt / perPx,
+      x:p.x, y:p.y, vx:0, vy:0, tm:performance.now()
+    };
+    // 最初の1枚に触れた瞬間から計測する
+    if (state === 'ready'){
+      state = 'playing'; t0 = performance.now();
+      // 計測中はパネルを開けないように「遊び方」ボタンを隠す
+      document.documentElement.setAttribute('data-howto-hidden', '');
+    }
+  });
+
+  cv.addEventListener('pointermove', e => {
+    if (!grab || e.pointerId !== grab.id) return;
+    const p = localPos(e);
+    // 指の速さ（px/秒）をならして覚えておく：抜けた瞬間の勢いに使う
+    const now = performance.now();
+    const dtm = Math.max((now - grab.tm) / 1000, 1 / 240);
+    grab.vx = grab.vx * 0.5 + (p.x - grab.x) / dtm * 0.5;
+    grab.vy = grab.vy * 0.5 + (p.y - grab.y) / dtm * 0.5;
+    grab.tm = now;
+    grab.x = p.x; grab.y = p.y;
+    if (grab.y0 - grab.y >= PULL_DIST){
+      // 抜けた瞬間の形のまま布にして落とす
+      shapeTissue(REST_H + (grab.y0 - grab.y) * perPx, (grab.x - grab.x0) * perPx * SWAY);
+      const cap = v => Math.max(-FLING_MAX, Math.min(FLING_MAX, v));
+      dropTissue(cap(grab.vx * perPx * FLING), cap(-grab.vy * perPx * FLING));
+      playPop();
+      newLook();   // 次の1枚は別の形で出てくる
+      pullExt = 0; pullTx = 0;
+      // 1枚ごとに指を離して掴み直す（1回のスワイプで何枚も抜けないように）
+      grab = null;
+      count++;
+      if (count >= TOTAL) finish();
+      else updateHud();
+    }
+  });
+
+  // 指を離したら掴みを解除する。キャンバスで拾えなかった場合に備えて document とキャプチャ解除でも拾う
+  const release = e => { if (grab && e.pointerId === grab.id) grab = null; };
+  cv.addEventListener('pointerup', release);
+  cv.addEventListener('pointercancel', release);
+  cv.addEventListener('lostpointercapture', release);
+  document.addEventListener('pointerup', release);
+  document.addEventListener('pointercancel', release);
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
+  document.addEventListener('touchmove', e => { if (grab) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => e.preventDefault());
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+
+  // PC：結果画面ではスペース / Enter でもう一回
+  document.addEventListener('keydown', e => {
+    if (state === 'over' && (e.key === ' ' || e.key === 'Enter') && document.activeElement !== $('share')){
+      e.preventDefault();
+      restart();
+    }
+  });
+
+  $('retry').addEventListener('click', restart);
+
+  // ---------- 共有 ----------
+  function shareText(){
+    return 'ティッシュを出し切った！\n' + TOTAL + '枚 ' + elapsed.toFixed(2) + '秒\n'
+      + location.href.split(/[?#]/)[0] + '\n#ティッシュラッシュ';
+  }
+
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(){
+    const c = document.createElement('canvas');
+    c.width = 600; c.height = 600;
+    const g = c.getContext('2d');
+    const font = '"Hiragino Sans","Noto Sans JP",system-ui,sans-serif';
+    g.fillStyle = css('--box-base'); g.fillRect(0, 0, 600, 600);
+    g.fillStyle = css('--box-ink'); g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = 'bold 44px ' + font; g.fillText('ティッシュラッシュ', 300, 170);
+    g.font = 'bold 36px ' + font; g.fillText(TOTAL + '枚', 300, 280);
+    g.font = 'bold 84px ' + font; g.fillText(elapsed.toFixed(2) + '秒', 300, 390);
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type:'image/png' });
+  }
+
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    const file = resultImageFile();
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files:[file] })){
+      navigator.share({ text, files:[file] }).catch(() => {});
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share){
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    navigator.clipboard?.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+
+  // ---------- ループ ----------
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    if (state === 'playing') elapsed = (now - t0) / 1000;
+    tissue.visible = count < TOTAL;
+    if (tissue.visible){
+      // 途中で離したときは、引き出した形のまま残す
+      if (grab){
+        pullExt = Math.max(0, grab.y0 - grab.y) * perPx;
+        pullTx = (grab.x - grab.x0) * perPx * SWAY;
+      }
+      shapeTissue(REST_H + pullExt, pullTx);
+    }
+    updateFallen(dt);
+    updateRustle(now);
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+  updateHud();
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

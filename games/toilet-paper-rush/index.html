@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/toilet-paper-rush/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>トイレットペーパーラッシュ</title>
+<meta name="description" content="トイレットペーパーを出し切るタイム勝負">
+<style>
+  :root{
+    --bg:#f2f2f2; --fg:#222;
+    /* トイレの部屋 */
+    --wall:#8b827b;                                   /* 壁（無地のグレージュ） */
+    --baseboard:#f2f2f0;                              /* 幅木（白） */
+    --floor:#c9cecc; --floor-grout:#a9afad;          /* 床（30cm角のグレーのタイル） */
+    /* ホルダー（金属）と紙 */
+    --metal:#3b3c3f; --metal-ink:#f2f2f0; --core:#c9a77c; --paper:#ffffff; --paper-flower:#ff5f95;
+    /* 結果画面（ティッシュラッシュと同じ色合い） */
+    --panel:#f6f2ea; --ink:#2f3d36; --accent:#5f8a74;
+    --howto-bg:#f6f2ea; --howto-fg:#2f3d36;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--wall); color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #game{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  /* 隠しコマンド（4隅を同時に押さえる）の指がボタンや結果画面の上にあっても、ブラウザの拡大などに取られないように */
+  #mute,#flip,#over{touch-action:none}
+  #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(30,36,32,.45)}
+  #over .panel{
+    background:var(--panel);color:var(--ink);border-radius:18px;padding:30px 24px 24px;
+    width:min(86%,320px);text-align:center;box-shadow:0 12px 32px rgba(0,0,0,.25);
+  }
+  #result-head{font-size:16px;font-weight:bold;letter-spacing:.08em;color:var(--accent);margin:0 0 6px}
+  #result-time{
+    font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;
+    font-size:52px;font-weight:700;font-variant-numeric:tabular-nums;margin:0 0 4px;
+  }
+  #result-best{font-size:15px;font-weight:bold;font-variant-numeric:tabular-nums;color:var(--ink);opacity:.7;margin:0 0 20px}
+  /* ベスト更新！：ぽんと飛び出してから、ゆっくり弾みつづける */
+  #result-best.new{
+    color:var(--accent);opacity:1;font-size:18px;
+    animation:best-pop .6s cubic-bezier(.2,1.6,.4,1) both, best-bounce 1.4s ease-in-out .6s infinite;
+  }
+  @keyframes best-pop{
+    from{transform:scale(0) rotate(-10deg);opacity:0}
+    60%{transform:scale(1.4) rotate(4deg);opacity:1}
+    to{transform:scale(1) rotate(0)}
+  }
+  @keyframes best-bounce{
+    0%,100%{transform:scale(1);text-shadow:0 0 0 rgba(0,0,0,0)}
+    50%{transform:scale(1.15);text-shadow:0 2px 10px rgba(0,0,0,.18)}
+  }
+  @media (prefers-reduced-motion:reduce){ #result-best.new{animation:none} }
+  #over button{
+    display:block;width:100%;min-height:50px;margin-top:10px;font-size:17px;font-weight:bold;
+    border:0;border-radius:999px;font-family:inherit;cursor:pointer;
+  }
+  #retry{background:var(--accent);color:#fff}
+  #share{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+  /* 共有シートが使えない環境で、共有される内容（結果画像と文面）を見せる */
+  #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(30,36,32,.6);touch-action:none}
+  #share-view .panel{
+    background:var(--panel);color:var(--ink);border-radius:18px;padding:16px;
+    width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;box-shadow:0 12px 32px rgba(0,0,0,.25);
+  }
+  #share-img{display:block;width:100%;height:auto;border-radius:10px;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+  #share-text{
+    margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#fff;font-size:14px;line-height:1.6;
+    white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text;
+  }
+  #share-close{
+    display:block;width:100%;min-height:48px;margin-top:12px;font-size:16px;font-weight:bold;
+    border:0;border-radius:999px;font-family:inherit;cursor:pointer;background:var(--accent);color:#fff;
+  }
+  /* 効果音のON/OFF（右上） */
+  #mute{
+    position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);
+    width:44px;height:44px;padding:0;border:0;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(246,242,234,.88);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.15);
+  }
+  #mute svg{width:24px;height:24px;display:block}
+  /* ロールの向きの切り替え（ミュートボタンの下） */
+  #flip{
+    position:absolute;top:calc(env(safe-area-inset-top,0px) + 64px);right:calc(env(safe-area-inset-right,0px) + 10px);
+    width:44px;height:44px;padding:0;border:0;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(246,242,234,.88);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.15);
+  }
+  #flip svg{width:24px;height:24px;display:block}
+  button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="cv" aria-label="トイレットペーパー。紙を下にスワイプして引き出す"></canvas>
+  <div id="over" class="hidden">
+    <div class="panel" aria-live="polite">
+      <p id="result-head">25m 出し切った！</p>
+      <p id="result-time">0.00秒</p>
+      <p id="result-best">ベスト 0.00秒</p>
+      <button id="share" type="button">共有</button>
+      <button id="retry" type="button">もう一回</button>
+    </div>
+  </div>
+  <button id="mute" type="button" aria-label="効果音" aria-pressed="false"></button>
+  <button id="flip" type="button" aria-label="ロールの向き"></button>
+  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+    <div class="panel">
+      <img id="share-img" alt="共有される結果画像">
+      <p id="share-text"></p>
+      <button id="share-close" type="button">閉じる</button>
+    </div>
+  </div>
+  <section class="howto" data-pos="top-left" hidden>
+    <h2>遊び方</h2>
+    <p>ロールに巻かれた25mのトイレットペーパーを、できるだけ速く全部引き出すタイムアタックです。紙をつかんだ瞬間に計測が始まり、出し切ったところでタイムが決まります。残りの長さはホルダーのふたに表示され、ベストタイムはこのブラウザに保存されます。</p>
+    <h2>操作</h2>
+    <p>ロールから床までの紙のあたりに指を置き、下へスワイプすると紙が出ます。上へ動かしても紙は戻りません。PC ではマウスのドラッグで同じように遊べます。右上のボタンでは、効果音のオンとオフや、紙を前と壁側のどちらに垂らすかを切り替えられます。</p>
+    <h2>コツ</h2>
+    <p>指を動かしたまま離すと、その勢いでロールが回り続けて紙が出ていきます。指を止めてから離すと勢いは付きません。回っているロールは紙をつかむと止まるので、勢いのあるうちはつかみ直しを少し待つのも手です。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  // 3D空間の1単位 ≒ 10cm。床の高さが0、壁が z=0
+  const TOTAL_M = 25;              // ロール1本の長さ（m）
+  const TOTAL = TOTAL_M * 10;      // 同じ長さを3D空間の単位で
+  const PAPER_W = 1.1;             // 紙の幅（11cm）
+  const SHEET = 1.1;               // ミシン目の間隔（1枚の長さ）
+  const ROLL_R = 0.6;              // 巻き始めのロールの半径
+  const CORE_R = 0.22;             // 芯の半径
+  const ROLL_Y = 6.0;              // ロールの中心の高さ（床から60cm）
+  const ROLL_Z = 0.85;             // ロールの中心の壁からの距離
+  const START_HANG = 1.6;          // 始めに垂れている紙の長さ
+
+  // 引き出し
+  const FLING = 1.0;               // 指を離したときの指の速さをロールに伝える割合
+  const FLING_MAX = 50;            // 指を離したときの紙の速さの上限（単位/秒）
+  const ROLL_FRICTION = 2.0;       // ロールの回転が止まっていく強さ（一定分）
+  const ROLL_DRAG = 0.9;           // ロールの回転が止まっていく強さ（速いほど強く効く分）
+
+  // 床にたまる紙
+  const STEP = 0.15;               // 紙の帯を作る点の間隔
+  const PILE_R = 2.4;              // 床にたまる範囲の半径
+  const PILE_LAYER = 0.005;        // 折り返すたびに積み上がる高さ
+  const FOLD_MIN = 0.5, FOLD_MAX = 1.6;   // 1回の折り返しまでの長さ
+  // 床の紙のボリューム（ぺたんと平らにならず、ふんわり盛り上がるように）
+  const LOOP_MIN = 0.1, LOOP_MAX = 0.45;  // 折り返しごとの紙のたわみ（浮き上がる高さ）
+  const TWIST_MAX = 1.2;                  // 紙が横に立ち上がる角度の最大（ラジアン）
+  // ロールの跳ね（芯が棒に引っかかっているので、勢いよく回ると上下にカタカタ揺れる）
+  const BOUNCE_KICK = 4;           // 跳ね上がる勢い（単位/秒）
+  const BOUNCE_GRAVITY = 98;       // 落ちてくる速さ（重力。1単位=10cm なので 9.8m/s²）
+  const BOUNCE_REST = 0.35;        // 棒に当たって跳ね返る割合
+  const RATTLE_SPEED = 40;         // この紙の速さ（単位/秒）で一番よく跳ねる
+  const PAPER_GAP = 0.012;         // ロールから出た紙をロールの表面から浮かせる距離（1.2mm）
+  const PAPER_WRAP = 2.6;          // 紙がロールの外周に沿う角度（ラジアン、前の真横から上を越えて後ろまで。約150°）。
+                                   // 紙の端はカメラから見えないロールの後ろ側で終わる
+  const PAPER_WRAP_UNDER = 4.9;    // 壁側に垂らすときの巻き付く角度（後ろの真横から上・前を回って、前の真横の約100°下まで）
+  const BEND_H = 0.6;                     // 垂れた紙が床の紙へなめらかに曲がり込む高さ（6cm）
+  const HEAP_H = 1.2;                     // 全部出し切ったときの、山の真ん中の盛り上がり（12cm。折り重なりの分はこれとは別）
+
+  // 見た目
+  const TISSUE_GLOW = 0.15;        // 紙の陰の明るさの底上げ
+  const PAPER_EXPOSURE = 1.6;      // 紙だけ明るい所をなだらかに丸めて白飛びを防ぐ
+  // 紙の凹凸（ノーマルマップ）の強さ：場所ごとに別々に調整できる
+  const ROLL_NORMAL_SCALE = 0.5;   // ホルダーのロール
+  const HANG_NORMAL_SCALE = 1.0;   // ロールから垂れている紙
+  const FLOOR_NORMAL_SCALE = 0.5;  // 床にたまった紙
+  const WALL_NORMAL_SCALE = 0.0625; // 壁の凹凸（ノーマルマップ）の強さ
+  const WALL_NORMAL_TILE = 2;      // 壁の凹凸の画像1枚が何単位ぶんか（小さいほど細かい）
+  const SUN_POWER = 0.75;
+  const SHADOW_STRENGTH = 1 / 6;   // 影の濃さ（1で真っ暗な影、0で影なし）
+
+  const GRAB_MARGIN = 110;         // 紙をつかめる範囲：紙の左右にこれだけ広げる（px）
+  const GRAB_MARGIN_TOP = 40;      // 紙をつかめる範囲：ふたの上にこれだけ広げる（px）
+  const RESULT_DELAY = 1.5;        // 出し切ってから結果を出すまでの時間（秒）
+
+  // 効果音
+  const SE_VOLUME = 0.8;           // 効果音全体の音量
+  const RUSTLE_VOL = 0.35;         // 紙が出ていくときのサラサラ音の最大音量
+  const RUSTLE_SPEED = 30;         // この紙の速さ（単位/秒）でサラサラ音が最大になる
+  const TICK_VOL = 0.18;           // ロールが回るときのカラカラ音の音量
+  const SHARE_INSTANT = 0.5;       // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const FLOWER_RATE = 0.01;        // 紙がお花柄になる確率（1回ごと）
+  // 隠しコマンド：入れると次の回は必ずお花柄
+  const SECRET_KEYS = '1029384756';   // PC：この順に数字キーを押す
+  const CORNER_SIZE = 80;             // スマホ：画面の4隅のこの範囲（px）を同時に押さえる
+  const CORNER_HOLD = 5;              // スマホ：4隅を押さえ続ける時間（秒）
+  const BOUNCE_VOL = 0.4;          // 跳ねたロールが棒に落ちたときのコトッという音の最大音量
+  const CHIME_VOL = 0.22;          // 出し切ったときの音の音量
+
+  // カメラ：ふたの文字と床の着地点が必ず画面に収まる、いちばん近い距離を計算して決める
+  const FOV = 40;
+  const FRAME_MARGIN = 14;         // 画面の端から空けるすき間（px）。上はミュートボタンの下からこの分空ける
+  const CAM_TARGET = new THREE.Vector3(0, 3.4, 1.0);   // 計算の出発点（実際の注視点は計算で上下に動く）
+  const CAM_DIR = new THREE.Vector3(0.45, 0.22, 1).normalize();   // 少し右上から見る
+
+  const $ = id => document.getElementById(id);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const cv = $('cv');
+
+  // ---------- 3D ----------
+  const renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true });
+  renderer.setClearColor(new THREE.Color(css('--wall')));
+  renderer.shadowMap.enabled = SHADOW_STRENGTH > 0;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // 白い紙は光が当たると真っ白に飛ぶので、紙だけトーンマッピングで明るい所を丸める
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = PAPER_EXPOSURE;
+  const maxAniso = renderer.capabilities.getMaxAnisotropy();
+  // 影を受ける物は Phong（つや無し）にする（r128 の Lambert は影の濃さを調整できないため）
+  const matte = p => new THREE.MeshPhongMaterial(Object.assign({ shininess:0, specular:new THREE.Color(0x000000) }, p));
+  const metal = p => new THREE.MeshPhongMaterial(Object.assign({
+    color:new THREE.Color(css('--metal')), shininess:90, specular:new THREE.Color(0xaaaaaa)   // 黒めっき
+  }, p));
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 200);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  // 照明は「影を落とす光」と「影を落とさない光」に分けて、影の濃さを調整できるようにする
+  const sunFill = new THREE.DirectionalLight(0xfff8ef, SUN_POWER * (1 - SHADOW_STRENGTH));
+  sunFill.position.set(4, 10, 8);
+  scene.add(sunFill);
+  const sun = new THREE.DirectionalLight(0xfff8ef, SUN_POWER * SHADOW_STRENGTH);
+  sun.position.set(4, 10, 8);
+  sun.target.position.copy(CAM_TARGET);
+  scene.add(sun.target);
+  sun.castShadow = SHADOW_STRENGTH > 0;
+  sun.shadow.mapSize.set(1024, 1024);
+  Object.assign(sun.shadow.camera, { left:-8, right:8, top:8, bottom:-8, near:1, far:40 });
+  sun.shadow.bias = -0.0005;
+  sun.shadow.normalBias = 0.02;
+  scene.add(sun);
+
+  function canvasTexture(c, rx, ry){
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(rx, ry);
+    t.anisotropy = maxAniso;
+    return t;
+  }
+
+  // ---------- 部屋（無地の壁・白い幅木・タイルの床） ----------
+  // 床：板を V 字に組んだヘリンボーン。板の幅 u・長さ L=4u で、2L ごとに継ぎ目なくくり返す
+  // 床：30cm角のタイル（1枚の画像に4×4枚。タイルごとにほんの少し明るさを変える）
+  function floorTileTexture(){
+    const S = 512, n = 4, step = S / n;
+    const c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d');
+    g.fillStyle = css('--floor'); g.fillRect(0, 0, S, S);
+    for (let iy = 0; iy < n; iy++){
+      for (let ix = 0; ix < n; ix++){
+        g.fillStyle = 'rgba(' + (Math.random() < 0.5 ? '0,0,0' : '255,255,255') + ',' + rnd(0, 0.04).toFixed(3) + ')';
+        g.fillRect(ix * step, iy * step, step, step);
+      }
+    }
+    g.strokeStyle = css('--floor-grout'); g.lineWidth = Math.max(2, step * 0.06);
+    for (let i = 0; i <= n; i++){
+      g.beginPath(); g.moveTo(i * step, 0); g.lineTo(i * step, S); g.stroke();
+      g.beginPath(); g.moveTo(0, i * step); g.lineTo(S, i * step); g.stroke();
+    }
+    return canvasTexture(c, 40 / 12, 40 / 12);
+  }
+
+  const SIDE_X = -3.4;     // 左の壁の位置（部屋の角）
+  const ROOM_H = 24;
+  // 壁のノーマルマップ：色や柄は付けず、塗り壁のような細かいざらつきの凹凸だけを付ける
+  // （細かさの違う乱数の凸凹を重ねて高さにし、その傾きを色にする。端を折り返して継ぎ目を出さない）
+  function wallNormalTexture(){
+    const N = 256;
+    const hgt = new Float32Array(N * N);
+    const wrap = v => ((v % N) + N) % N;
+    [[16, 0.5], [32, 0.6], [64, 0.8], [128, 0.6]].forEach(([cells, amp]) => {
+      const grid = new Float32Array(cells * cells).map(() => Math.random());
+      const s = t => t * t * (3 - 2 * t);
+      for (let y = 0; y < N; y++){
+        for (let x = 0; x < N; x++){
+          const fx = x / N * cells, fy = y / N * cells;
+          const x0 = Math.floor(fx), y0 = Math.floor(fy);
+          const tx = s(fx - x0), ty = s(fy - y0);
+          const gg = (i, j) => grid[(j % cells) * cells + (i % cells)];
+          const a = gg(x0, y0), b = gg(x0 + 1, y0), c = gg(x0, y0 + 1), d = gg(x0 + 1, y0 + 1);
+          hgt[y * N + x] += (a + (b - a) * tx + (c - a) * ty + (a - b - c + d) * tx * ty) * amp;
+        }
+      }
+    });
+    const c = document.createElement('canvas');
+    c.width = c.height = N;
+    const g = c.getContext('2d');
+    const img = g.createImageData(N, N);
+    const Hh = (x, y) => hgt[wrap(y) * N + wrap(x)];
+    for (let y = 0; y < N; y++){
+      for (let x = 0; x < N; x++){
+        const nx = (Hh(x - 1, y) - Hh(x + 1, y)) * 3;
+        const ny = (Hh(x, y - 1) - Hh(x, y + 1)) * 3;
+        const l = Math.hypot(nx, ny, 1);
+        const i = (y * N + x) * 4;
+        img.data[i] = (nx / l * 0.5 + 0.5) * 255;
+        img.data[i + 1] = (ny / l * 0.5 + 0.5) * 255;
+        img.data[i + 2] = (1 / l * 0.5 + 0.5) * 255;
+        img.data[i + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    return canvasTexture(c, 40 / WALL_NORMAL_TILE, ROOM_H / WALL_NORMAL_TILE);
+  }
+  const wallMat = matte({
+    color:new THREE.Color(css('--wall')),
+    normalMap:wallNormalTexture(),
+    normalScale:new THREE.Vector2(WALL_NORMAL_SCALE, WALL_NORMAL_SCALE)
+  });
+  const baseMat = matte({ color:new THREE.Color(css('--baseboard')) });
+  [false, true].forEach(side => {
+    // 壁（無地）。side=true なら左の壁（右向き）、false なら奥の壁（手前向き）
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(40, ROOM_H), wallMat);
+    if (side){ w.rotation.y = Math.PI / 2; w.position.set(SIDE_X, ROOM_H / 2, 20); }
+    else w.position.set(0, ROOM_H / 2, 0);
+    w.receiveShadow = true;
+    scene.add(w);
+    // 床ぎわの白い幅木
+    // 奥の幅木は左の幅木の手前から始める（部屋の角で2本が重なると面がちらつくため）
+    const backLen = 20 - (SIDE_X + 0.08);
+    const b = new THREE.Mesh(side ? new THREE.BoxGeometry(0.08, 0.6, 40) : new THREE.BoxGeometry(backLen, 0.6, 0.08), baseMat);
+    if (side) b.position.set(SIDE_X + 0.04, 0.3, 20); else b.position.set(SIDE_X + 0.08 + backLen / 2, 0.3, 0.04);
+    b.receiveShadow = true;
+    scene.add(b);
+  });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), matte({ map:floorTileTexture() }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, 0, 20);
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // ---------- ホルダー（壁の板・腕・棒・ふた） ----------
+  const HOLD_W = PAPER_W + 0.6;
+  // 芯は棒に引っかかってぶら下がるので、棒は芯の中心ではなく、芯の内側の上の方に当たる位置に置く
+  const ROD_R = 0.07;
+  const ROD_Y = ROLL_Y + CORE_R - ROD_R - 0.01;
+  // ふたのちょうつがい（壁ぎわ・ロールの上）。ふたはここを軸に、ロールの上に乗って傾く
+  const HINGE_Y = ROLL_Y + 0.75, HINGE_Z = 0.15;
+  const backPlate = new THREE.Mesh(new THREE.BoxGeometry(HOLD_W, HINGE_Y + 0.1 - (ROLL_Y - 0.2), 0.06), metal());
+  backPlate.position.set(0, (HINGE_Y + 0.1 + ROLL_Y - 0.2) / 2, 0.03);
+  scene.add(backPlate);
+  [-1, 1].forEach(s => {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.22, ROLL_Z), metal());
+    arm.position.set(s * (PAPER_W / 2 + 0.2), ROD_Y, ROLL_Z / 2);
+    arm.castShadow = true;
+    scene.add(arm);
+  });
+  const rod = new THREE.Mesh(new THREE.CylinderGeometry(ROD_R, ROD_R, PAPER_W + 0.42, 16).rotateZ(Math.PI / 2), metal());
+  rod.position.set(0, ROD_Y, ROLL_Z);
+  scene.add(rod);
+
+  // ふた：ちょうつがいから前へのびる板と、その先で下に折れた板。ロールの上に乗っていて、
+  // ロールが細くなると下がり、跳ねると一緒に持ち上がる。前の板に残りの長さを印刷する
+  const LID_LEN = 1.05;    // ちょうつがいから前の端までの長さ（前に折れた板がロールの前の上に乗る長さ）
+  const LID_T = 0.04;      // 板の厚み
+  const FLAP_H = 0.35;     // 前に折れた板の高さ
+  const LID_MIN_TILT = -0.6;   // ふたが上がれる角度の限界（ラジアン、マイナスが上）
+  const LID_MAX_TILT = 0.75;   // ふたが下がれる角度の限界（ラジアン）
+  const lid = new THREE.Group();
+  lid.position.set(0, HINGE_Y, HINGE_Z);
+  scene.add(lid);
+  // 上の板は前に折れた板の手前で止める（2枚が重なると角の面がちらつくため）
+  const PLATE_LEN = LID_LEN - LID_T;
+  const lidPlate = new THREE.Mesh(new THREE.BoxGeometry(HOLD_W, LID_T, PLATE_LEN), metal());
+  lidPlate.position.set(0, LID_T / 2, PLATE_LEN / 2);   // 板の下の面がちょうつがいの軸を通る
+  lidPlate.castShadow = true;
+  lid.add(lidPlate);
+  const hinge = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, HOLD_W, 16).rotateZ(Math.PI / 2), metal());
+  hinge.position.set(0, HINGE_Y + 0.02, HINGE_Z);
+  scene.add(hinge);
+  // ふたの内側（上の板の下の面・前の板の裏・前の板の下の端）の点（ちょうつがいから見た y, z）
+  const lidInner = [];
+  for (let i = 0; i <= 24; i++) lidInner.push([0, (LID_LEN - LID_T) * i / 24]);
+  for (let k = 1; k <= 10; k++) lidInner.push([LID_T - FLAP_H * k / 10, LID_LEN - LID_T]);
+  for (let i = 1; i <= 4; i++) lidInner.push([LID_T - FLAP_H, LID_LEN - LID_T + LID_T * i / 4]);
+  // 角度 th のとき、ふたがロールか垂れた紙に当たっているか
+  function lidHits(th, R, rollY){
+    const c = Math.cos(th), s = Math.sin(th);
+    for (const [ly, lz] of lidInner){
+      const y = HINGE_Y + ly * c - lz * s, z = HINGE_Z + ly * s + lz * c;
+      if (Math.hypot(y - rollY, z - ROLL_Z) < R + PAPER_GAP + 0.015) return true;   // ロール（に巻き付いた紙）に当たる
+      if (y < rollY && z > ROLL_Z && z < ROLL_Z + R + PAPER_GAP + 0.015) return true;   // 垂れた紙に当たる
+    }
+    return false;
+  }
+  // ふたを上から下ろしていき、最初にロール（か紙）に当たった角度で止める
+  function updateLid(R, rollY){
+    let th = LID_MIN_TILT;
+    for (const step of [0.02, 0.002]){
+      while (th + step <= LID_MAX_TILT && !lidHits(th + step, R, rollY)) th += step;
+    }
+    lid.rotation.x = th;
+  }
+
+  const FONT_JP = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif';
+  const FONT_NUM = '"Avenir Next","Helvetica Neue",Arial,' + FONT_JP;
+  const labelCv = document.createElement('canvas');
+  labelCv.width = 720; labelCv.height = Math.round(720 * FLAP_H / HOLD_W);
+  const labelTex = new THREE.CanvasTexture(labelCv);
+  labelTex.anisotropy = maxAniso;
+  let labelText = '';
+  function drawLabel(leftM){
+    const text = leftM.toFixed(1);
+    if (text === labelText) return;    // 表示が変わるときだけ描き直す
+    labelText = text;
+    const g = labelCv.getContext('2d');
+    const w = labelCv.width, h = labelCv.height;
+    // 金属のヘアライン
+    const grad = g.createLinearGradient(0, 0, 0, h);
+    const mc = new THREE.Color(css('--metal'));
+    grad.addColorStop(0, '#' + mc.clone().offsetHSL(0, 0, 0.12).getHexString());
+    grad.addColorStop(0.5, '#' + mc.getHexString());
+    grad.addColorStop(1, '#' + mc.clone().offsetHSL(0, 0, -0.08).getHexString());
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+    g.globalAlpha = 0.08; g.strokeStyle = '#fff';
+    for (let y = 0; y < h; y += 3){ g.beginPath(); g.moveTo(0, y + Math.random()); g.lineTo(w, y + Math.random()); g.stroke(); }
+    g.globalAlpha = 1;
+    // 「残り ○○.○ m」：数字を大きく、前後の文字は小さく
+    g.fillStyle = css('--metal-ink'); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    const big = '700 ' + Math.round(h * 0.62) + 'px ' + FONT_NUM;
+    const small = '700 ' + Math.round(h * 0.2) + 'px ' + FONT_JP;
+    g.font = big;   const nw = g.measureText(text).width;
+    g.font = small; const lw = g.measureText('残り').width, mw = g.measureText('m').width;
+    const gap = h * 0.06;
+    let x = (w - (lw + gap + nw + gap + mw)) / 2;
+    const base = h * 0.76;
+    g.font = small; g.fillText('残り', x, base); x += lw + gap;
+    g.font = big;   g.fillText(text, x, base);   x += nw + gap;
+    g.font = small; g.fillText('m', x, base);
+    labelTex.needsUpdate = true;
+  }
+  const flapMat = metal();
+  // 面の順番：右・左・上・下・手前・奥
+  const flap = new THREE.Mesh(
+    new THREE.BoxGeometry(HOLD_W, FLAP_H, LID_T),
+    [flapMat, flapMat, flapMat, flapMat, metal({ map:labelTex, color:new THREE.Color(0xffffff), shininess:40 }), flapMat]
+  );
+  flap.position.set(0, LID_T - FLAP_H / 2, LID_LEN - LID_T / 2);
+  flap.castShadow = true;
+  lid.add(flap);
+  updateLid(ROLL_R, ROLL_Y);
+
+  // 芯（ボール紙の筒）
+  const core = new THREE.Mesh(
+    new THREE.CylinderGeometry(CORE_R, CORE_R, PAPER_W + 0.04, 32, 1, true).rotateZ(Math.PI / 2),
+    matte({ color:new THREE.Color(css('--core')), side:THREE.DoubleSide })
+  );
+  core.position.set(0, ROLL_Y, ROLL_Z);
+  scene.add(core);
+
+  // ここまでに置いた物（部屋・ホルダー・芯）はトーンマッピングをかけない
+  scene.traverse(o => {
+    if (!o.material) return;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.toneMapped = false; });
+  });
+
+  // ---------- 紙の見た目 ----------
+  // 紙の凹凸のノーマルマップ：繊維のざらつきを高さとして作り、その傾きを色にする
+  function paperNormalCanvas(){
+    const N = 256;
+    const hgt = new Float32Array(N * N);
+    const wrap = v => ((v % N) + N) % N;
+    [[8, 1], [16, 0.6], [32, 0.35], [64, 0.2]].forEach(([cells, amp]) => {
+      const grid = new Float32Array(cells * cells).map(() => Math.random());
+      const s = t => t * t * (3 - 2 * t);
+      for (let y = 0; y < N; y++){
+        for (let x = 0; x < N; x++){
+          const fx = x / N * cells, fy = y / N * cells;
+          const x0 = Math.floor(fx), y0 = Math.floor(fy);
+          const tx = s(fx - x0), ty = s(fy - y0);
+          const gg = (i, j) => grid[(j % cells) * cells + (i % cells)];
+          const a = gg(x0, y0), b = gg(x0 + 1, y0), c = gg(x0, y0 + 1), d = gg(x0 + 1, y0 + 1);
+          hgt[y * N + x] += (a + (b - a) * tx + (c - a) * ty + (a - b - c + d) * tx * ty) * amp;
+        }
+      }
+    });
+    for (let k = 0; k < 900; k++){
+      let x = Math.random() * N, y = Math.random() * N;
+      const ang = Math.random() * Math.PI, len = 6 + Math.random() * 22;
+      const dx = Math.cos(ang), dy = Math.sin(ang), amp = 0.15 + Math.random() * 0.25;
+      for (let t = 0; t < len; t++, x += dx, y += dy) hgt[wrap(Math.round(y)) * N + wrap(Math.round(x))] += amp;
+    }
+    const c = document.createElement('canvas');
+    c.width = c.height = N;
+    const g = c.getContext('2d');
+    const img = g.createImageData(N, N);
+    const Hh = (x, y) => hgt[wrap(y) * N + wrap(x)];
+    for (let y = 0; y < N; y++){
+      for (let x = 0; x < N; x++){
+        const nx = (Hh(x - 1, y) - Hh(x + 1, y)) * 2;
+        const ny = (Hh(x, y - 1) - Hh(x, y + 1)) * 2;
+        const l = Math.hypot(nx, ny, 1);
+        const i = (y * N + x) * 4;
+        img.data[i] = (nx / l * 0.5 + 0.5) * 255;
+        img.data[i + 1] = (ny / l * 0.5 + 0.5) * 255;
+        img.data[i + 2] = (1 / l * 0.5 + 0.5) * 255;
+        img.data[i + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    return c;
+  }
+  const normalCv = paperNormalCanvas();
+
+  // 紙1枚ぶんの柄：うっすらした型押しの点と、端のミシン目
+  // vertical=true ならミシン目を縦（ロールの側面用）、false なら横（垂れた紙・床の紙用）
+  // flower=true ならお花柄を印刷する
+  function sheetCanvas(vertical, flower){
+    const S = 256;
+    const c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d');
+    g.fillStyle = css(flower ? '--paper-flower' : '--paper'); g.fillRect(0, 0, S, S);   // お花柄の紙は薄いピンク
+    g.fillStyle = 'rgba(0,0,0,0.05)';
+    const n = 9, step = S / n;
+    for (let iy = 0; iy < n; iy++){
+      for (let ix = 0; ix < n; ix++){
+        g.beginPath(); g.arc((ix + 0.5 + (iy % 2) * 0.5) * step, (iy + 0.5) * step, step * 0.14, 0, Math.PI * 2); g.fill();
+      }
+    }
+    if (flower) drawFlowers(g, S, vertical);
+    g.fillStyle = 'rgba(0,0,0,0.22)';
+    for (let i = 0; i < S; i += 10){
+      if (vertical) g.fillRect(0, i, 3, 6); else g.fillRect(i, S - 3, 6, 3);
+    }
+    return c;
+  }
+  // お花柄：紙1枚に小さな花を散らす。位置は（長さ方向, 幅方向）の割合。ミシン目と端にかからない範囲に置く
+  const FLOWERS = [
+    [0.18, 0.22, 'pink', 1.0], [0.52, 0.14, 'blue', 0.8], [0.84, 0.36, 'pink', 0.9],
+    [0.34, 0.52, 'blue', 1.0], [0.68, 0.70, 'pink', 1.1], [0.16, 0.80, 'blue', 0.85], [0.86, 0.86, 'pink', 0.75]
+  ];
+  // 紙の色はトーンマッピングで大きく白っぽくなるので、テクスチャの色は濃いめにしてある
+  //（紙 #ff5f95 は画面では薄いピンク #e4bbcc 前後に見える）。ピンクの花は紙より濃く見えるようにする
+  const FLOWER_COLORS = { pink:'#c2335f', blue:'#7ea6d6' };
+  function drawFlowers(g, S, vertical){
+    FLOWERS.forEach(([a, w, col, k], i) => {
+      // 長さ方向は、ロール用（vertical）は横、垂れた紙用は縦
+      const x = (vertical ? a : w) * S, y = (vertical ? w : a) * S;
+      const r = 13 * k, rot = i * 0.9;
+      // 葉っぱ2枚
+      g.fillStyle = '#86b98a';
+      [rot + 2.4, rot + 3.9].forEach(t => {
+        g.beginPath();
+        g.ellipse(x + Math.cos(t) * r * 1.35, y + Math.sin(t) * r * 1.35, r * 0.55, r * 0.25, t, 0, Math.PI * 2);
+        g.fill();
+      });
+      // 花びら5枚
+      g.fillStyle = FLOWER_COLORS[col];
+      for (let j = 0; j < 5; j++){
+        const t = rot + j * Math.PI * 2 / 5;
+        g.beginPath();
+        g.ellipse(x + Math.cos(t) * r * 0.62, y + Math.sin(t) * r * 0.62, r * 0.5, r * 0.36, t, 0, Math.PI * 2);
+        g.fill();
+      }
+      // まん中
+      g.fillStyle = '#e9c25c';
+      g.beginPath(); g.arc(x, y, r * 0.3, 0, Math.PI * 2); g.fill();
+    });
+  }
+  function paperMaterial(map, normal, scale){
+    return new THREE.MeshPhongMaterial({
+      color:new THREE.Color(css('--paper')), side:THREE.DoubleSide, map,
+      emissive:new THREE.Color(TISSUE_GLOW, TISSUE_GLOW, TISSUE_GLOW),
+      shininess:4, specular:new THREE.Color(0x0a0a0a),
+      normalMap:normal, normalScale:new THREE.Vector2(scale, scale)
+    });
+  }
+
+  // ---------- ロール ----------
+  // 側面：開いた円柱を、残りの量に合わせて太さを変える（軸は横向き）
+  const rollSideTex = canvasTexture(sheetCanvas(true, false), 3, 1);
+  const rollSideFlowerTex = canvasTexture(sheetCanvas(true, true), 3, 1);
+  const rollSide = new THREE.Mesh(
+    new THREE.CylinderGeometry(1, 1, PAPER_W, 64, 1, true).rotateZ(Math.PI / 2),
+    paperMaterial(rollSideTex, canvasTexture(normalCv, 3, 1), ROLL_NORMAL_SCALE)
+  );
+  rollSide.position.set(0, ROLL_Y, ROLL_Z);
+  rollSide.castShadow = true;
+  scene.add(rollSide);
+
+  // 両端：芯から外周までの輪。巻いた紙の層の筋を、半径の位置に合わせて描く
+  function ringCanvas(){
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 4;
+    const g = c.getContext('2d');
+    g.fillStyle = css('--paper'); g.fillRect(0, 0, 512, 4);
+    for (let x = 0; x < 512; x += rnd(2, 6)){
+      g.fillStyle = 'rgba(0,0,0,' + rnd(0.03, 0.12).toFixed(3) + ')';
+      g.fillRect(x, 0, 1, 4);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.anisotropy = maxAniso;
+    return t;
+  }
+  const CAP_SEG = 64;
+  const capMat = new THREE.MeshPhongMaterial({
+    color:new THREE.Color(css('--paper')), side:THREE.DoubleSide, map:ringCanvas(),
+    emissive:new THREE.Color(TISSUE_GLOW, TISSUE_GLOW, TISSUE_GLOW), shininess:4, specular:new THREE.Color(0x0a0a0a)
+  });
+  const capMeshes = [];
+  const caps = [-1, 1].map(s => {
+    const pos = new Float32Array((CAP_SEG + 1) * 2 * 3), uv = new Float32Array((CAP_SEG + 1) * 2 * 2), idx = [];
+    for (let k = 0; k < CAP_SEG; k++){ const a = k * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    const m = new THREE.Mesh(geo, capMat);
+    m.position.set(s * PAPER_W / 2, ROLL_Y, ROLL_Z);
+    m.castShadow = true;
+    scene.add(m);
+    capMeshes.push(m);
+    return geo;
+  });
+  function updateCaps(R){
+    const uOut = (R - CORE_R) / (ROLL_R - CORE_R);
+    caps.forEach(geo => {
+      const p = geo.attributes.position.array, uv = geo.attributes.uv.array;
+      for (let k = 0; k <= CAP_SEG; k++){
+        const a = k / CAP_SEG * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+        p.set([0, c * CORE_R, s * CORE_R, 0, c * R, s * R], k * 6);
+        uv.set([0, k / CAP_SEG, uOut, k / CAP_SEG], k * 4);
+      }
+      geo.attributes.position.needsUpdate = true;
+      geo.attributes.uv.needsUpdate = true;
+      geo.computeVertexNormals();
+      geo.computeBoundingSphere();
+    });
+  }
+
+  // ---------- 引き出した紙（ロールから垂れて床にたまる帯） ----------
+  const MAXP = Math.ceil(TOTAL / STEP) + Math.ceil(ROLL_Y / STEP) + 140;
+  const stripPos = new Float32Array(MAXP * 2 * 3), stripUV = new Float32Array(MAXP * 2 * 2);
+  const stripIdx = new Uint32Array((MAXP - 1) * 6);
+  for (let i = 0; i < MAXP - 1; i++){
+    const a = i * 2;
+    stripIdx.set([a, a + 1, a + 2, a + 1, a + 3, a + 2], i * 6);
+  }
+  const stripGeo = new THREE.BufferGeometry();
+  stripGeo.setAttribute('position', new THREE.BufferAttribute(stripPos, 3));
+  stripGeo.setAttribute('uv', new THREE.BufferAttribute(stripUV, 2));
+  stripGeo.setIndex(new THREE.BufferAttribute(stripIdx, 1));
+  const stripTex = canvasTexture(sheetCanvas(false, false), 1, 1);
+  stripTex.wrapS = THREE.ClampToEdgeWrapping;
+  const stripFlowerTex = canvasTexture(sheetCanvas(false, true), 1, 1);
+  stripFlowerTex.wrapS = THREE.ClampToEdgeWrapping;
+  // 垂れている紙と床の紙は1本の帯だが、凹凸の強さを別にするため材質を2つ使い分ける（0：垂れた紙、1：床の紙）
+  const stripNormal = canvasTexture(normalCv, 1, 1);
+  const strip = new THREE.Mesh(stripGeo, [
+    paperMaterial(stripTex, stripNormal, HANG_NORMAL_SCALE),
+    paperMaterial(stripTex, stripNormal, FLOOR_NORMAL_SCALE)
+  ]);
+  strip.frustumCulled = false;
+  strip.castShadow = true;
+  scene.add(strip);
+
+  // 床にたまった紙の点（いちばん古い先端から順に、増える一方）
+  const pileX = new Float32Array(MAXP), pileY = new Float32Array(MAXP), pileZ = new Float32Array(MAXP);
+  const pileWX = new Float32Array(MAXP), pileWY = new Float32Array(MAXP), pileWZ = new Float32Array(MAXP), pileS = new Float32Array(MAXP);
+  let pileN = 0;
+  // 紙が床に着く位置。紙を前に垂らすときはロールの前、壁側に垂らすときは壁ぎわ
+  const LAND_X = 0, LAND_Z_OVER = ROLL_Z + ROLL_R * 0.8, LAND_Z_UNDER = 0.6;
+  let under = false;          // ロールの向き：false＝紙を前に垂らす / true＝紙を壁側（ロールの後ろ）に垂らす
+  let landZ = LAND_Z_OVER;
+  let gen;   // 床にたまっていく紙の、次に置く位置と向き
+  function resetPile(){
+    pileN = 0;
+    const f = rnd(FOLD_MIN, FOLD_MAX);
+    gen = {
+      x:LAND_X, z:landZ, a:rnd(0, Math.PI * 2), layer:0, len:0,
+      fold:f, foldLen:f, loop:rnd(LOOP_MIN, LOOP_MAX), twist:0, twistTo:rnd(-TWIST_MAX, TWIST_MAX)
+    };
+  }
+  // たまった紙の山の高さ：真ん中ほど高く、出した量が増えるほど高くなる
+  const heapAt = (x, z) => {
+    const r = Math.hypot(x - LAND_X, z - landZ) / PILE_R;
+    return HEAP_H * Math.min(1, gen.len / TOTAL) * Math.max(0, 1 - r * r);
+  };
+  // 床にたまる長さが len になるまで点を足す。紙は着地点のまわりで折り返しながら積もる
+  function growPile(len){
+    while (gen.len <= len && pileN < MAXP - 1){
+      if (pileN > 0){
+        if (gen.fold <= 0){
+          gen.a += Math.PI + rnd(-0.9, 0.9);
+          gen.fold = gen.foldLen = rnd(FOLD_MIN, FOLD_MAX);
+          gen.loop = Math.min(rnd(LOOP_MIN, LOOP_MAX), gen.foldLen * 0.4);
+          gen.twistTo = rnd(-TWIST_MAX, TWIST_MAX);
+          gen.layer += PILE_LAYER;
+        }
+        gen.twist += (gen.twistTo - gen.twist) * 0.15;   // ねじれはなめらかに変える
+        const dx = LAND_X - gen.x, dz = landZ - gen.z;
+        if (Math.hypot(dx, dz) > PILE_R) gen.a = Math.atan2(dz, dx) + rnd(-0.5, 0.5);
+        gen.x = Math.max(SIDE_X + 0.6, gen.x + Math.cos(gen.a) * STEP);   // 左の壁にめり込まない
+        gen.z = Math.max(0.6, gen.z + Math.sin(gen.a) * STEP);
+        gen.fold -= STEP;
+      }
+      pileX[pileN] = gen.x; pileZ[pileN] = gen.z;
+      // 紙の幅の向き：進む向きに直角で、ねじれの分だけ立ち上がる
+      const ct = Math.cos(gen.twist), st = Math.sin(gen.twist);
+      pileWX[pileN] = -Math.sin(gen.a) * ct; pileWY[pileN] = st; pileWZ[pileN] = Math.cos(gen.a) * ct;
+      // 高さ：山の高さ＋積み重なり＋折り返しの間のたわみ。立ち上がった紙の下の端が床に埋まらないようにする
+      const sag = gen.loop * Math.sin(Math.PI * Math.min(1, Math.max(0, 1 - gen.fold / gen.foldLen)));
+      const y = heapAt(gen.x, gen.z) + gen.layer + sag + 0.006 + Math.random() * 0.01;
+      pileY[pileN] = Math.max(y, Math.abs(st) * PAPER_W / 2 + 0.01);
+      pileS[pileN] = gen.len;
+      pileN++;
+      gen.len += STEP;
+    }
+  }
+
+  // 帯の形を作り直す（out：ロールから出ている紙の長さ、R：今のロールの半径）
+  function buildStrip(out, R, dropped, bounce){
+    const rollY = ROLL_Y + bounce;   // 跳ねている分だけ、紙の出口も上下する
+    const half = PAPER_W / 2;
+    let n = 0, nFloor = 0;   // nFloor：床の紙の点の数
+    const put = (cx, cy, cz, wx, wy, wz, s) => {
+      if (n >= MAXP) return;
+      stripPos.set([cx - wx * half, cy - wy * half, cz - wz * half, cx + wx * half, cy + wy * half, cz + wz * half], n * 6);
+      stripUV.set([0, s / SHEET, 1, s / SHEET], n * 4);
+      n++;
+    };
+    // 紙はロールの表面から少し浮かせる。表面ぴったりだと、ロールの面と紙の面が重なって
+    // ロールの暗い面が紙を透けてチラチラ見えるため
+    const wrapR = R + PAPER_GAP;
+    const side = under ? -1 : 1;              // 紙が垂れる側（前：+1 / 壁側：-1）
+    const topZ = ROLL_Z + side * wrapR;
+    const contactY = heapAt(LAND_X, landZ) + gen.layer + 0.03;   // 山の上に着地する
+    const hangBottom = contactY + BEND_H;   // まっすぐ垂れている部分の下端（ここから床の紙へ曲がり込む）
+    const hangLen = rollY - hangBottom;
+    if (dropped || out > rollY - contactY){
+      // 床の紙（先端から）→ 曲がり込み → 上へ垂れた紙
+      const pileLen = dropped ? out : out - hangLen - BEND_H;
+      growPile(pileLen);
+      let last = -1;
+      for (let i = 0; i < pileN && pileS[i] <= pileLen; i++){
+        put(pileX[i], pileY[i], pileZ[i], pileWX[i], pileWY[i], pileWZ[i], pileS[i]);
+        last = i;
+      }
+      nFloor = n;
+      if (!dropped){
+        // 垂れた紙の幅の向き：床の紙の最後の向きに近い側を選ぶ（途中で裏返らないように）
+        const hx = last >= 0 && pileWX[last] < 0 ? -1 : 1;
+        if (last >= 0){
+          // 床の紙の最後の点から、垂れた紙の下端まで、なめらかな曲線（3次ベジェ）でつなぐ
+          const p0 = new THREE.Vector3(pileX[last], pileY[last], pileZ[last]);
+          const p3 = new THREE.Vector3(LAND_X, hangBottom, landZ);
+          const t0 = last > 0
+            ? new THREE.Vector3(pileX[last] - pileX[last - 1], pileY[last] - pileY[last - 1], pileZ[last] - pileZ[last - 1]).normalize()
+            : new THREE.Vector3(0, 0, 1);
+          const len = p0.distanceTo(p3);
+          const p1 = p0.clone().addScaledVector(t0, len * 0.35).add(new THREE.Vector3(0, len * 0.15, 0));
+          const p2 = p3.clone().add(new THREE.Vector3(0, -Math.min(len * 0.4, BEND_H), 0));   // 着地点より下には沈めない
+          const w0 = new THREE.Vector3(pileWX[last], pileWY[last], pileWZ[last]);
+          const w3 = new THREE.Vector3(hx, 0, 0);
+          const K = Math.max(2, Math.ceil(len / STEP));
+          const sA = pileS[last];
+          for (let k = 1; k < K; k++){
+            const t = k / K, u = 1 - t;
+            const p = p0.clone().multiplyScalar(u * u * u)
+              .addScaledVector(p1, 3 * u * u * t).addScaledVector(p2, 3 * u * t * t).addScaledVector(p3, t * t * t);
+            const e = t * t * (3 - 2 * t);
+            const w = w0.clone().multiplyScalar(1 - e).addScaledVector(w3, e).normalize();
+            const y = Math.max(p.y, Math.abs(w.y) * half + 0.01);   // 床に埋まらない
+            put(p.x, y, p.z, w.x, w.y, w.z, sA + (pileLen + BEND_H - sA) * t);
+          }
+        }
+        const m = Math.max(2, Math.ceil(hangLen / STEP) + 1);
+        for (let j = 0; j < m; j++){
+          const f = j / (m - 1);
+          const y = hangBottom + hangLen * f;
+          // 下の方は着地点へ向かって少し手前に流れる
+          const z = topZ + (landZ - topZ) * (1 - f) * (1 - f) + side * 0.05 * Math.sin(Math.PI * f);
+          put(LAND_X, y, z, hx, 0, 0, pileLen + BEND_H + hangLen * f);
+        }
+      }
+    } else {
+      // まだ床に届いていない：先端からロールまで垂れているだけ
+      const m = Math.max(2, Math.ceil(out / STEP) + 1);
+      for (let j = 0; j < m; j++){
+        const f = j / (m - 1);
+        put(LAND_X, rollY - out * (1 - f), topZ + side * 0.03 * Math.sin(Math.PI * f), 1, 0, 0, out * f);
+      }
+    }
+    // 紙はロールの外周に沿って巻き付けて、紙の端をカメラから見えない所で終わらせる
+    // 前に垂らすとき：前の真横から上を越えて後ろまで / 壁側に垂らすとき：後ろの真横から上・前を回って下の奥まで
+    // （角度 ph は前の真横が0、上が π/2、後ろの真横が π）
+    if (n > 0 && !dropped){
+      const sTop = stripUV[(n - 1) * 4 + 1] * SHEET;
+      // 幅の向きは垂れた紙の一番上と同じにする（途中で裏返らないように）
+      const wx = stripPos[(n - 1) * 6 + 3] - stripPos[(n - 1) * 6] < 0 ? -1 : 1;
+      const wrap = under ? PAPER_WRAP_UNDER : PAPER_WRAP;
+      const ph0 = under ? Math.PI : 0, dir = under ? -1 : 1;
+      const K = Math.ceil(wrap / 0.1);
+      for (let k = 1; k <= K; k++){
+        const a = wrap * k / K, ph = ph0 + dir * a;
+        put(LAND_X, rollY + wrapR * Math.sin(ph), ROLL_Z + wrapR * Math.cos(ph), wx, 0, 0, sTop + wrapR * a);
+      }
+    }
+    stripGeo.setDrawRange(0, Math.max(0, n - 1) * 6);
+    // 床の紙の区間は材質1、残り（垂れた紙）は材質0で描く
+    stripGeo.clearGroups();
+    const floorIdx = Math.max(0, nFloor - 1) * 6, allIdx = Math.max(0, n - 1) * 6;
+    if (floorIdx > 0) stripGeo.addGroup(0, floorIdx, 1);
+    if (allIdx > floorIdx) stripGeo.addGroup(floorIdx, allIdx - floorIdx, 0);
+    stripGeo.attributes.position.needsUpdate = true;
+    stripGeo.attributes.uv.needsUpdate = true;
+    stripGeo.computeVertexNormals();
+  }
+
+  // ---------- 効果音 ----------
+  let actx = null, master = null, noiseBuf = null;
+  let rustleGain = null, rustleFilter = null;
+  let muted = false;
+
+  // ブラウザの自動再生制限があるので、最初の操作のときに音を使えるようにする
+  function ensureAudio(){
+    if (!actx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      actx = new AC();
+      master = actx.createGain();
+      master.gain.value = muted ? 0 : SE_VOLUME;
+      master.connect(actx.destination);
+      noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      // 紙が出ていくサラサラ音：雑音を流しっぱなしにして、音量を紙の速さで上げ下げする
+      const src = actx.createBufferSource();
+      src.buffer = noiseBuf; src.loop = true;
+      rustleFilter = actx.createBiquadFilter();
+      rustleFilter.type = 'bandpass'; rustleFilter.frequency.value = 2500; rustleFilter.Q.value = 0.7;
+      const hp = actx.createBiquadFilter();
+      hp.type = 'highpass'; hp.frequency.value = 700;
+      rustleGain = actx.createGain(); rustleGain.gain.value = 0;
+      src.connect(rustleFilter); rustleFilter.connect(hp); hp.connect(rustleGain); rustleGain.connect(master);
+      src.start();
+    }
+    if (actx.state !== 'running') actx.resume();
+  }
+  ['pointerdown', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, ensureAudio, true));
+
+  function updateRustle(speed){
+    if (!actx) return;
+    const target = Math.min(1, speed / RUSTLE_SPEED) * RUSTLE_VOL * (speed > 0.05 ? 0.7 + Math.random() * 0.3 : 0);
+    const t = actx.currentTime;
+    rustleGain.gain.setTargetAtTime(target, t, 0.03);
+    rustleFilter.frequency.setTargetAtTime(1800 + Math.min(1, speed / RUSTLE_SPEED) * 2200 + Math.random() * 600, t, 0.02);
+  }
+
+  // ロールが半回転するたびの「カタッ」（速く回るとカラカラに聞こえる）
+  let lastTick = 0;
+  function playTick(){
+    if (!actx) return;
+    const t = actx.currentTime;
+    if (t - lastTick < 0.025) return;
+    lastTick = t;
+    const src = actx.createBufferSource();
+    src.buffer = noiseBuf;
+    const bp = actx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = 2200 + Math.random() * 600; bp.Q.value = 3;
+    const g = actx.createGain();
+    g.gain.setValueAtTime(TICK_VOL, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
+    src.connect(bp); bp.connect(g); g.connect(master);
+    src.start(t, Math.random() * 0.9, 0.03);
+  }
+
+  // 跳ねたロール（芯）が棒に落ちたときの「コトッ」。落ちる速さ v（単位/秒）が大きいほど大きい音
+  function playBounce(v){
+    if (!actx) return;
+    const t = actx.currentTime;
+    const vol = BOUNCE_VOL * Math.min(1, v / 3);
+    // ボール紙の芯が当たる鈍い音（こもったノイズ）
+    const src = actx.createBufferSource();
+    src.buffer = noiseBuf;
+    const bp = actx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = 900 + Math.random() * 200; bp.Q.value = 2.5;
+    const g = actx.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+    src.connect(bp); bp.connect(g); g.connect(master);
+    src.start(t, Math.random() * 0.9, 0.07);
+    // 低い「トッ」
+    const o = actx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(220, t);
+    o.frequency.exponentialRampToValueAtTime(120, t + 0.05);
+    const og = actx.createGain();
+    og.gain.setValueAtTime(vol * 0.6, t);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+    o.connect(og); og.connect(master);
+    o.start(t); o.stop(t + 0.07);
+  }
+
+  // 出し切ったときの音：やわらかい3音
+  function playChime(){
+    if (!actx) return;
+    const t = actx.currentTime;
+    [784, 988, 1319].forEach((f, i) => {
+      const o = actx.createOscillator();
+      o.type = 'sine'; o.frequency.value = f;
+      const g = actx.createGain();
+      const s = t + i * 0.09;
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(CHIME_VOL, s + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.7);
+      o.connect(g); g.connect(master);
+      o.start(s); o.stop(s + 0.75);
+    });
+  }
+
+  // ミュートボタン
+  const ICON_ON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>'
+    + '<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const ICON_OFF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>'
+    + '<path d="M16.5 9.5l5 5M21.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  function updateMuteButton(){
+    const b = $('mute');
+    b.innerHTML = muted ? ICON_OFF : ICON_ON;
+    b.setAttribute('aria-pressed', String(muted));
+    b.setAttribute('aria-label', muted ? '効果音をオンにする' : '効果音を消す');
+  }
+  $('mute').addEventListener('click', () => {
+    muted = !muted;
+    if (master) master.gain.setTargetAtTime(muted ? 0 : SE_VOLUME, actx.currentTime, 0.01);
+    updateMuteButton();
+  });
+  updateMuteButton();
+
+  // ロールの向きの切り替えボタン（アイコンは今の向き：左の線が壁、丸がロール、縦線が垂れた紙）
+  function flipIcon(u){
+    const px = u ? 8 : 18;
+    return '<svg viewBox="0 0 24 24" aria-hidden="true">'
+      + '<path d="M3 2v20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+      + '<circle cx="13" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="2"/>'
+      + '<circle cx="13" cy="9" r="1.6" fill="currentColor"/>'
+      + '<path d="M' + px + ' 9v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  }
+  function updateFlipButton(){
+    const b = $('flip');
+    b.innerHTML = flipIcon(under);
+    b.setAttribute('aria-label', under ? '紙を前に垂らす' : '紙を壁側に垂らす');
+  }
+  $('flip').addEventListener('click', () => {
+    under = !under;
+    landZ = under ? LAND_Z_UNDER : LAND_Z_OVER;
+    dirty = true;
+    updateFlipButton();
+  });
+  updateFlipButton();
+
+  // ---------- 状態 ----------
+  let W = 0, H = 0;
+  let state = 'ready';     // ready: 最初に触る前 / playing / over
+  let t0 = 0, elapsed = 0;
+  let pulled = 0;          // 引き出した長さ（0〜TOTAL）
+  let speed = 0;           // 紙が出ていく速さ（単位/秒）
+  let angle = 0;           // ロールの回転角
+  let dropped = false;     // 出し切って、垂れていた紙が床に落ちたか
+  let dirty = true;        // 紙の帯を作り直す必要があるか
+  let bounceY = 0, bounceV = 0;   // ロールの跳ね（棒に乗っている位置からの高さと速さ）
+  let grab = null;         // 引っぱっている指 {id, y, vy, tm}
+  let perPx = 0.01;        // ロールの位置での「1pxあたりの3D距離」
+
+  const rollRadius = () => Math.sqrt(CORE_R * CORE_R + (ROLL_R * ROLL_R - CORE_R * CORE_R) * (1 - pulled / TOTAL));
+
+  // ベストタイム：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  const BEST_KEY = 'toiletPaperRush.bestTime';
+  let bestTime = 0;
+  try { bestTime = parseFloat(localStorage.getItem(BEST_KEY)) || 0; } catch(e) {}
+  function saveBest(){ try { localStorage.setItem(BEST_KEY, String(bestTime)); } catch(e) {} }
+
+  // ---------- 画面サイズ ----------
+  function resize(){
+    W = cv.clientWidth; H = cv.clientHeight;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(W, H, false);
+    camera.aspect = W / H;
+    camera.updateProjectionMatrix();
+    const tanHalf = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
+
+    // 画面に必ず入れる点：ふた（文字の板）の四隅と、床の着地点のまわり
+    const hw = HOLD_W / 2 + 0.05;
+    // ふたは太いロールが跳ねたときに一番上がるので、跳ねていないときと一番跳ねたときの両方の姿勢で角の位置を出す
+    const lidPts = [];
+    [ROLL_R, ROLL_R - 0.1].forEach(R => {
+      const bmax = Math.max(0, Math.min(2 * (CORE_R - ROD_R) - 0.02, HINGE_Y - 0.01 - (ROLL_Y + R)));
+      [0, bmax].forEach(b => {
+        updateLid(R, ROLL_Y + b);
+        lid.updateMatrixWorld(true);
+        [
+          [-hw, LID_T + 0.03, LID_LEN + 0.03], [hw, LID_T + 0.03, LID_LEN + 0.03],
+          [-hw, LID_T - FLAP_H, LID_LEN + 0.03], [hw, LID_T - FLAP_H, LID_LEN + 0.03],
+          [-hw, LID_T + 0.08, 0], [hw, LID_T + 0.08, 0]
+        ].forEach(p => lidPts.push(lid.localToWorld(new THREE.Vector3(...p))));
+      });
+    });
+    updateLid(rollRadius(), ROLL_Y + bounceY);   // 今の姿勢に戻す
+    const must = lidPts.concat([
+      [-1.0, 0, LAND_Z_OVER], [1.0, 0, LAND_Z_OVER], [0, 0, LAND_Z_OVER + 0.9],
+      [-1.0, 0, LAND_Z_UNDER], [1.0, 0, LAND_Z_UNDER]   // 向きを切り替えてもカメラが動かないよう、両方の着地点を入れる
+    ].map(p => new THREE.Vector3(...p)));
+
+    // 使える範囲（-1〜1 の画面座標）。上はミュートボタンにかからないようにする
+    // 上の端は右上のボタン（ミュート・ロールの向き）の下
+    const cr = cv.getBoundingClientRect(), mr = $('flip').getBoundingClientRect();
+    const topPx = Math.max(FRAME_MARGIN, mr.bottom - cr.top + FRAME_MARGIN);
+    const lim = {
+      top: 1 - 2 * topPx / H, bottom: -1 + 2 * FRAME_MARGIN / H,
+      side: 1 - 2 * FRAME_MARGIN / W
+    };
+
+    const target = CAM_TARGET.clone();
+    const place = dist => {
+      camera.position.copy(target).addScaledVector(CAM_DIR, dist);
+      camera.lookAt(target);
+      camera.updateMatrixWorld();
+    };
+    // 点が画面のどこに来るか（上下の端・左右のはみ出し）
+    const measure = () => {
+      let yMin = Infinity, yMax = -Infinity, xMax = 0;
+      must.forEach(p => {
+        const q = p.clone().project(camera);
+        yMin = Math.min(yMin, q.y); yMax = Math.max(yMax, q.y); xMax = Math.max(xMax, Math.abs(q.x));
+      });
+      return { yMin, yMax, xMax };
+    };
+    let dist = 20;
+    for (let it = 0; it < 6; it++){
+      // 今の注視点で、全部の点が収まるいちばん近い距離を二分探索で探す
+      let lo = 2, hi = 80;
+      for (let k = 0; k < 30; k++){
+        const mid = (lo + hi) / 2;
+        place(mid);
+        const m = measure();
+        const ok = m.yMax <= lim.top && m.yMin >= lim.bottom && m.xMax <= lim.side;
+        if (ok) hi = mid; else lo = mid;
+      }
+      dist = hi;
+      place(dist);
+      // 点の上下の真ん中が、使える範囲の真ん中に来るよう注視点を上下に動かす
+      const m = measure();
+      const off = (m.yMax + m.yMin) / 2 - (lim.top + lim.bottom) / 2;
+      target.y += off * dist * tanHalf;
+    }
+    // 最後に、動かした注視点でもう一度ぴったりの距離に合わせる
+    let lo = 2, hi = 80;
+    for (let k = 0; k < 30; k++){
+      const mid = (lo + hi) / 2;
+      place(mid);
+      const m = measure();
+      if (m.yMax <= lim.top && m.yMin >= lim.bottom && m.xMax <= lim.side) hi = mid; else lo = mid;
+    }
+    place(hi);
+
+    const d = camera.position.distanceTo(new THREE.Vector3(0, ROLL_Y, ROLL_Z + ROLL_R));
+    perPx = 2 * d * tanHalf / H;
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  function toScreen(x, y, z){
+    const p = new THREE.Vector3(x, y, z).project(camera);
+    return { x:(p.x + 1) / 2 * W, y:(1 - p.y) / 2 * H };
+  }
+
+  // ---------- 進行 ----------
+  function updateLabel(){ drawLabel((TOTAL - pulled) / 10); }
+
+  // 紙を dp だけ引き出す（ロールが回り、細くなる）
+  function pull(dp){
+    if (state === 'over' || dp <= 0) return;
+    dp = Math.min(dp, TOTAL - pulled);
+    const R = rollRadius();
+    const before = Math.floor(angle / Math.PI);
+    angle += dp / R;
+    if (Math.floor(angle / Math.PI) !== before) playTick();
+    pulled += dp;
+    dirty = true;
+    updateLabel();
+    if (pulled >= TOTAL) finish();
+  }
+
+  let resultTimer = 0;   // 結果を出すまでの待ち
+  function finish(){
+    document.documentElement.removeAttribute('data-howto-hidden');
+    state = 'over';
+    grab = null; speed = 0;
+    dropped = true;     // 最後の紙は芯から外れて床に落ちる
+    dirty = true;
+    elapsed = (performance.now() - t0) / 1000;
+    playChime();
+    $('result-head').textContent = TOTAL_M + 'm 出し切った！';
+    $('result-time').textContent = elapsed.toFixed(2) + '秒';
+    // ベスト（短いほど良い）を更新したら保存する
+    const isNew = bestTime === 0 || elapsed < bestTime;
+    if (isNew){ bestTime = elapsed; saveBest(); }
+    const best = $('result-best');
+    best.textContent = isNew ? 'ベスト更新！' : 'ベスト ' + bestTime.toFixed(2) + '秒';
+    best.classList.toggle('new', isNew);
+    // 出し切った様子を少し見せてから結果を出す（タイムは出し切った瞬間で止まっている）
+    resultTimer = setTimeout(() => {
+      resultTimer = 0;
+      $('over').classList.remove('hidden');
+      $('retry').focus({ preventScroll:true });
+    }, RESULT_DELAY * 1000);
+  }
+
+  // 紙の柄を決める：隠しコマンドの予約があれば必ずお花柄、なければ FLOWER_RATE の確率でお花柄
+  let flowerNext = false;   // 隠しコマンドで次の回をお花柄にする予約
+  function choosePattern(){
+    const flower = flowerNext || Math.random() < FLOWER_RATE;
+    flowerNext = false;
+    setPattern(flower);
+  }
+  function setPattern(flower){
+    rollSide.material.map = flower ? rollSideFlowerTex : rollSideTex;
+    strip.material.forEach(m => { m.map = flower ? stripFlowerTex : stripTex; });
+    capMat.color.set(css(flower ? '--paper-flower' : '--paper'));   // ロールの両端（巻いた紙の断面）も紙の色にする
+  }
+
+  function restart(){
+    state = 'ready';
+    choosePattern();
+    pulled = 0; speed = 0; angle = 0; elapsed = 0;
+    dropped = false; grab = null; dirty = true;
+    bounceY = 0; bounceV = 0;
+    resetPile();
+    updateLabel();
+    clearTimeout(resultTimer); resultTimer = 0;
+    $('over').classList.add('hidden');
+  }
+
+  // ---------- 入力 ----------
+  // 指を置ける範囲：ロールから床までの、紙の幅のまわりの縦の帯（指で掴みやすいよう広めに）
+  function canGrab(x, y){
+    const R = rollRadius();
+    const pts = [
+      toScreen(-PAPER_W / 2, ROLL_Y, ROLL_Z + (under ? -R : R)), toScreen(PAPER_W / 2, ROLL_Y, ROLL_Z + (under ? -R : R)),
+      toScreen(-PAPER_W / 2, 0, landZ), toScreen(PAPER_W / 2, 0, landZ)
+    ];
+    const minX = Math.min(...pts.map(p => p.x)) - GRAB_MARGIN, maxX = Math.max(...pts.map(p => p.x)) + GRAB_MARGIN;
+    const top = toScreen(0, HINGE_Y + 0.1, HINGE_Z).y - GRAB_MARGIN_TOP;
+    return x > minX && x < maxX && y > top;
+  }
+
+  function localPos(e){
+    const r = cv.getBoundingClientRect();
+    return { x:e.clientX - r.left, y:e.clientY - r.top };
+  }
+
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (state === 'over' || grab) return;
+    // スマホで画面の隅に置いた指は、隠しコマンド用として紙をつかまない
+    if (e.pointerType === 'touch' && cornerOf(e.clientX, e.clientY) >= 0) return;
+    const p = localPos(e);
+    if (!canGrab(p.x, p.y)) return;
+    cv.setPointerCapture(e.pointerId);
+    grab = { id:e.pointerId, y:p.y, vy:0, tm:performance.now() };
+    speed = 0;    // 回っているロールも、紙をつかむと止まる
+    if (state === 'ready'){
+      state = 'playing'; t0 = performance.now();
+      document.documentElement.setAttribute('data-howto-hidden', '');
+    }
+  });
+
+  cv.addEventListener('pointermove', e => {
+    if (!grab || e.pointerId !== grab.id) return;
+    const p = localPos(e);
+    const now = performance.now();
+    const dtm = Math.max((now - grab.tm) / 1000, 1 / 240);
+    const dy = p.y - grab.y;
+    // 指の下向きの速さ（px/秒）をならして覚えておく：離したときの勢いに使う
+    grab.vy = grab.vy * 0.5 + (dy / dtm) * 0.5;
+    grab.tm = now; grab.y = p.y;
+    // 下へ動かした分だけ紙が出る（上へ動かしても紙は戻らない）
+    if (dy > 0) pull(dy * perPx);
+  });
+
+  const release = e => {
+    if (!grab || e.pointerId !== grab.id) return;
+    // 指を離したら、その勢いでロールが回り続ける（止まってから離したら勢いは無し）
+    const fresh = performance.now() - grab.tm < 80;
+    speed = fresh ? Math.min(FLING_MAX, Math.max(0, grab.vy * perPx * FLING)) : 0;
+    grab = null;
+  };
+  cv.addEventListener('pointerup', release);
+  cv.addEventListener('pointercancel', release);
+  cv.addEventListener('lostpointercapture', release);
+  document.addEventListener('pointerup', release);
+  document.addEventListener('pointercancel', release);
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
+  document.addEventListener('touchmove', e => { if (grab) e.preventDefault(); }, { passive:false });
+  // （共有される文面だけは選んでコピーできるようにする）
+  document.addEventListener('selectstart', e => {
+    if (e.target instanceof Node && $('share-text').contains(e.target)) return;
+    e.preventDefault();
+  });
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+
+  // 隠しコマンド：入ったら次の回をお花柄に予約する。
+  // まだ引き始めていない（最初に触る前）ときは、これから遊ぶ回がその「次の回」なので、すぐお花柄にする
+  function secretCommand(){
+    if (state === 'ready') setPattern(true);
+    else flowerNext = true;
+  }
+  // PC：数字キーを SECRET_KEYS の順に押す
+  let keyLog = '';   // 直近に押したキー（SECRET_KEYS の長さぶん）
+  document.addEventListener('keydown', e => {
+    keyLog = (keyLog + (e.key.length === 1 ? e.key : ' ')).slice(-SECRET_KEYS.length);
+    if (keyLog !== SECRET_KEYS) return;
+    keyLog = '';
+    secretCommand();
+  });
+  // スマホ：ゲーム画面の4隅を同時に CORNER_HOLD 秒押さえ続ける
+  const cornerTouches = new Map();   // 隅を押さえている指（pointerId → 隅の番号）
+  let cornerTimer = 0;
+  let cornerGesture = false;         // 2つ以上の隅を同時に押さえた（指を離したときのボタンの反応を止める）
+  function cornerOf(x, y){
+    const g = $('game').getBoundingClientRect();
+    const l = x < g.left + CORNER_SIZE, r = x > g.right - CORNER_SIZE, t = y < g.top + CORNER_SIZE, b = y > g.bottom - CORNER_SIZE;
+    return t && l ? 0 : t && r ? 1 : b && l ? 2 : b && r ? 3 : -1;
+  }
+  const heldCorners = () => new Set(cornerTouches.values()).size;
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    const c = cornerOf(e.clientX, e.clientY);
+    if (c < 0) return;
+    cornerTouches.set(e.pointerId, c);
+    if (heldCorners() >= 2) cornerGesture = true;
+    if (heldCorners() === 4 && !cornerTimer){
+      cornerTimer = setTimeout(() => { cornerTimer = 0; secretCommand(); }, CORNER_HOLD * 1000);
+    }
+  }, true);
+  const cornerRelease = e => {
+    if (!cornerTouches.delete(e.pointerId)) return;
+    if (cornerTimer && heldCorners() < 4){ clearTimeout(cornerTimer); cornerTimer = 0; }   // 1本でも離したらやり直し
+    if (cornerTouches.size === 0) setTimeout(() => { cornerGesture = false; }, 400);
+  };
+  document.addEventListener('pointerup', cornerRelease, true);
+  document.addEventListener('pointercancel', cornerRelease, true);
+  // 右上の隅にはミュート・ロールの向きのボタンがあるので、隅を押さえたあと指を離してもボタンが反応しないようにする
+  document.addEventListener('click', e => {
+    if (cornerGesture){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+
+  // PC：結果画面ではスペース / Enter でもう一回
+  document.addEventListener('keydown', e => {
+    if (state === 'over' && !$('over').classList.contains('hidden') && $('share-view').classList.contains('hidden')
+      && (e.key === ' ' || e.key === 'Enter') && document.activeElement !== $('share')){
+      e.preventDefault();
+      restart();
+    }
+  });
+
+  $('retry').addEventListener('click', restart);
+
+  // ---------- 共有 ----------
+  function shareText(){
+    return 'トイレットペーパーを出し切った！\n' + TOTAL_M + 'm ' + elapsed.toFixed(2) + '秒\n'
+      + location.href.split(/[?#]/)[0] + '\n#トイレットペーパーラッシュ';
+  }
+
+  // 結果画像を描く
+  function resultCanvas(){
+    const c = document.createElement('canvas');
+    c.width = 600; c.height = 600;
+    const g = c.getContext('2d');
+    const font = '"Hiragino Sans","Noto Sans JP",system-ui,sans-serif';
+    g.fillStyle = css('--panel'); g.fillRect(0, 0, 600, 600);
+    g.fillStyle = css('--ink'); g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = 'bold 40px ' + font; g.fillText('トイレットペーパーラッシュ', 300, 170);
+    g.font = 'bold 36px ' + font; g.fillText(TOTAL_M + 'm', 300, 280);
+    g.font = 'bold 84px ' + font; g.fillText(elapsed.toFixed(2) + '秒', 300, 390);
+    return c;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(c){
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type:'image/png' });
+  }
+
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const text = shareText();
+    const c = resultCanvas();
+    const file = resultImageFile(c);
+    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    const fallback = () => {
+      navigator.clipboard?.writeText(text).catch(() => {});
+      $('share-img').src = c.toDataURL('image/png');
+      $('share-text').textContent = text;
+      $('share-view').classList.remove('hidden');
+      $('share-close').focus({ preventScroll:true });
+    };
+    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
+    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    const shareStart = performance.now();
+    const failed = err => {
+      const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
+      if (!err || err.name !== 'AbortError' || instant) fallback();
+    };
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files:[file] })){
+      navigator.share({ text, files:[file] }).catch(failed);
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share){
+      navigator.share({ text }).catch(failed);
+      return;
+    }
+    fallback();
+  });
+  const closeShareView = () => {
+    $('share-view').classList.add('hidden');
+    $('share').focus({ preventScroll:true });
+  };
+  $('share-close').addEventListener('click', closeShareView);
+  $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('share-view').classList.contains('hidden')) closeShareView();
+  });
+
+  // ---------- ループ ----------
+  let last = performance.now();
+  let lastPulled = 0;
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    // 指を離している間は、ロールが惰性で回って紙が出続ける
+    if (!grab && state === 'playing' && speed > 0){
+      speed = Math.max(0, speed - (ROLL_FRICTION + ROLL_DRAG * speed) * dt);
+      pull(speed * dt);
+    }
+    // 効果音用の紙の速さ（指で引いているときも含む）
+    const soundSpeed = (pulled - lastPulled) / Math.max(dt, 1e-3);
+    lastPulled = pulled;
+    updateRustle(state === 'over' ? 0 : soundSpeed);
+
+    // ロールの跳ね：指を離して勢いよく回っているときにカタカタ跳ねる。紙を引いている間は下に押さえられて跳ねない
+    // 跳ねられる高さ：芯の内側の下が棒に当たるまで。ただしロールの上がふたに当たらない範囲
+    const BOUNCE_MAX = Math.max(0, Math.min(2 * (CORE_R - ROD_R) - 0.02, HINGE_Y - 0.01 - (ROLL_Y + rollRadius())));
+    if (grab){
+      bounceY *= Math.exp(-20 * dt); bounceV = 0;
+    } else {
+      if (state === 'playing' && speed > 1 && bounceY < 0.02){
+        const k = Math.min(1, speed / RATTLE_SPEED);
+        if (Math.random() < k * dt * 14) bounceV += rnd(0.5, 1) * BOUNCE_KICK * k;
+      }
+      const wasUp = bounceY > 1e-4;   // このフレームの前に浮いていたか（棒の上で止まっているときは鳴らさない）
+      bounceV -= BOUNCE_GRAVITY * dt;
+      bounceY += bounceV * dt;
+      if (bounceY < 0){
+        // 棒に落ちた：落ちる速さがある程度あれば音を鳴らす（止まりかけの小さな揺れでは鳴らさない）
+        if (wasUp && -bounceV > 0.5) playBounce(-bounceV);
+        bounceY = 0; bounceV = -bounceV * BOUNCE_REST; if (bounceV < 0.3) bounceV = 0;
+      }
+      if (bounceY > BOUNCE_MAX){ bounceY = BOUNCE_MAX; bounceV = -Math.abs(bounceV) * 0.3; }
+    }
+    const rollY = ROLL_Y + bounceY;
+    if (rollSide.position.y !== rollY){
+      rollSide.position.y = rollY;
+      capMeshes.forEach(m => { m.position.y = rollY; });
+      core.position.y = rollY;
+      dirty = true;
+    }
+    if (dirty) updateLid(rollRadius(), rollY);   // ふたはロールの上に乗ったまま動く
+
+    if (dirty){
+      const R = rollRadius();
+      // 出し切ったら芯に紙は残らない（芯だけになる）
+      const empty = pulled >= TOTAL;
+      rollSide.visible = !empty;
+      capMeshes.forEach(m => { m.visible = !empty; });
+      rollSide.scale.set(1, R, R);
+      rollSide.rotation.x = under ? -angle : angle;   // 壁側に垂らすときは逆に回る
+      updateCaps(R);
+      buildStrip(START_HANG + pulled, R, dropped, bounceY);
+      dirty = false;
+    }
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+  resetPile();
+  updateLabel();
+  choosePattern();
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

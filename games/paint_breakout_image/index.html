@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/paint_breakout_image/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>塗り合いバトル</title>
+<meta name="description" content="ブロック崩しで陣地を塗り合う対戦">
+<style>
+  :root{
+    --bg:#0b0e1a;
+    --ink:#e8ecf7;
+    --dim:#6b7290;
+    --red:#ff3030;
+    --blue:#87cefa;
+    --accent:#ffa500;
+    --howto-bg:#0b0e1a;
+    --howto-fg:#e8ecf7;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(120% 80% at 50% 0%, #17203a 0%, var(--bg) 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Helvetica Neue",Arial,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:12px;
+    overflow:auto;
+  }
+  #wrap{ margin:auto; max-width:100%; }
+  #stage{ position:relative; display:flex; }
+  /* 幅と高さの両方に収める（縦が足りない画面でも見切れない） */
+  canvas{
+    display:block;
+    border-radius:10px;
+    background:#070a14;
+    box-shadow:0 0 0 1px #232a44, 0 24px 60px -20px #000;
+    touch-action:none;
+    width:auto;height:auto;
+    max-width:100%;
+    max-height:calc(100vh - 24px);
+    max-height:calc(100dvh - 24px);
+  }
+  /* 横に説明を置けない幅では、説明を下に回して盤面を少し小さくする */
+  /* ハンバーガー */
+  #menuBtn{
+    position:absolute;top:8px;left:8px;z-index:3;
+    width:34px;height:30px;padding:0;
+    background:rgba(12,17,32,.7);border:1px solid #2b3557;border-radius:7px;
+    color:var(--ink);font:600 15px/1 inherit;cursor:pointer;
+  }
+  #menuBtn:hover{background:#1a2340}
+  #panel{
+    position:absolute;inset:0;z-index:2;
+    overflow:auto;padding:52px 22px 22px;
+    background:rgba(7,10,20,.95);
+    border-radius:10px;
+    font-size:13px;line-height:1.75;
+  }
+  #panel[hidden]{display:none}
+  #panel h2{
+    font-size:11px;letter-spacing:.18em;color:var(--dim);
+    margin:18px 0 6px;font-weight:600;
+  }
+  .p1{color:var(--blue)}
+  .p2{color:var(--red)}
+  kbd{
+    display:inline-block;min-width:22px;padding:2px 6px;margin-right:2px;
+    border:1px solid #333c60;border-bottom-width:2px;border-radius:5px;
+    background:#121830;font:600 12px/1.4 inherit;text-align:center;
+  }
+  #panel p{margin:0 0 6px;color:#aab2cc}
+  #panel dl{margin:0;color:#aab2cc}
+  #panel .file{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  #panel .file span{width:80px;flex:none}
+  #panel input[type=file]{
+    font:inherit;font-size:11px;color:#aab2cc;max-width:150px;
+  }
+  #panel button{
+    font:600 12px inherit;color:var(--ink);background:#1a2340;
+    border:1px solid #38436e;border-radius:6px;padding:6px 10px;cursor:pointer;
+  }
+  #panel button:hover{background:#233060}
+  #panel dt svg{width:17px;height:17px;display:block;margin:0 auto}
+  #panel dt{
+    display:inline-block;width:26px;height:22px;line-height:22px;text-align:center;
+    padding-top:2px;
+    background:#0d1018;border:1px solid currentColor;border-radius:5px;
+    font-weight:700;font-size:12px;margin:0 6px 4px 0;vertical-align:top;
+  }
+  #panel dd{display:inline;margin:0}
+  #panel dd::after{content:"";display:block;height:4px}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="cv" width="480" height="720"></canvas>
+    <button id="menuBtn" type="button" aria-label="メニュー">☰</button>
+
+    <div id="panel" hidden>
+      <p><button type="button" data-howto-open>遊び方</button></p>
+
+      <h2>そうさ</h2>
+      <p class="p1">手前（青）　<kbd>←</kbd><kbd>→</kbd></p>
+      <p class="p2">奥（赤）　<kbd>A</kbd><kbd>D</kbd></p>
+      <p style="color:var(--dim)"><kbd>Space</kbd> スタート / 再戦</p>
+      <p style="color:var(--dim)"><kbd>C</kbd> CPU対戦の切り替え</p>
+
+      <h2>ルール</h2>
+      <p>自分の色のブロックはすり抜ける。</p>
+      <p>相手の色のブロックは跳ね返り、自分の色に塗り替わる。</p>
+      <p>ボールは時間とともに速くなる。落とすと元の速さに戻る。</p>
+      <p>相手のボールを打ち返すと自分の色になる。奪われて0個になった側は、すぐパドルから1個出る。</p>
+      <p>ボールを全部落とすと1秒間おあずけ。</p>
+      <p>制限時間（30秒）が切れた時点で、陣地の多いほうが勝ち。</p>
+
+      <h2>背景画像</h2>
+      <p>ブロックの部分を好きな画像2枚に置き換えられる。塗り替えるほど自分の画像が出てくる。</p>
+      <p class="file"><span class="p1">手前（青）</span><input type="file" id="img0" accept="image/*"></p>
+      <p class="file"><span class="p2">奥（赤）</span><input type="file" id="img1" accept="image/*"></p>
+      <p><button id="imgClear" type="button">画像を外す</button></p>
+      <p style="color:var(--dim)">画像はこの端末の中だけで表示され、どこにも送信されない。</p>
+
+      <h2>アイテム</h2>
+      <p>塗り替えたマスから自陣に落ちてくる。パドルで受けると発動。</p>
+      <dl>
+        <dt style="color:#ffa500;border-color:#ffa500"><svg viewBox="-9 -9 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M-7 2.5h4.4M2.6 2.5H7" stroke-width="2"/><path d="M0 6.5V-6.6M-3-3.4 0-6.9 3-3.4"/></svg></dt><dd>貫通：3秒間、跳ね返らず塗りながら進む</dd>
+        
+        
+        <dt style="color:#c77dff;border-color:#c77dff"><svg viewBox="-9 -9 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="-0.8" cy="1.8" r="5" fill="currentColor" stroke="none"/><path d="M2.4-1.6C5.4-3.6 4.4-3.6 4.4-6.2" stroke-width="1.6"/><path d="M4.4-6.2 6.6-7.4M4.4-6.2 3.2-8.2M4.4-6.2 6.4-5" stroke-width="1.2"/></svg></dt><dd>爆弾：次の1回、当たったマスの3×3を塗る</dd>
+        
+        <dt style="color:#4de3c8;border-color:#4de3c8"><svg viewBox="-9 -9 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g fill="currentColor" stroke="none"><circle cx="-2.6" cy="1.8" r="3.8"/><circle cx="3.4" cy="-1.6" r="2.6"/><circle cx="1.6" cy="5.4" r="1.8"/></g></svg></dt><dd>増殖：ボールが1個増える</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+
+<section class="howto" hidden data-pos="none">
+  <h2>遊び方</h2>
+  <p>手前の青と奥の赤に分かれ、ブロック崩しで陣地を塗り合う30秒の対戦です。ボールは自分の色のマスをすり抜け、相手の色のマスに当たると跳ね返り、そのマスを自分の色に変えます。時間切れの時点で、全120マスのうち多く塗ったほうが勝ちです。</p>
+  <h2>操作</h2>
+  <p>キーボード専用で、スマホの画面操作には対応していません。青は←→、赤は A と D でパドルを動かします。Space でスタートと再戦を行い、C で赤を CPU に切り替えると1人でも遊べます。</p>
+  <h2>コツ</h2>
+  <p>相手のボールを打ち返すと自分のものになりますが、速さは基本に戻ります。自分のボールは時間とともに速くなり、全部落とすと1秒待って基本の速さから出直しです。塗り替えたマスからは3割の確率でアイテムが自陣へ落ちるので、パドルで受け取ってください。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+
+<script>
+/* ============================================================
+   TUNE — 調整用の数値はここに集約
+   ============================================================ */
+const TUNE = {
+  ballSpeed:        4.4,  // ボールの基本速度(px/frame)
+  accelPerSec:      0.09, // 1秒あたりの加速量(px/frame)。落とすと基本速度に戻る
+  maxSpeed:         8.0,  // ボール速度の上限
+  maxBounceAngle:   1.05, // パドル端で跳ねる最大角(ラジアン)
+  minBounceAngle:   0.10, // 真上に飛んで千日手になるのを防ぐ最小角(0で無効)
+  paddleW:          88,   // パドルの幅
+  paddleSpeed:      7.0,  // パドルの移動速度(px/frame)
+  penaltyFrames:    60,  // ボールを全部落としてから復帰するまでのフレーム数
+
+  itemChance:       0.30, // ボールが当たって塗り替えたときアイテムが出る確率
+  itemSpeed:        2.2,  // アイテムが落ちる速さ(px/frame)
+  maxItems:         3,    // 同時に落ちているアイテムの上限(1人あたり)
+  pierceTime:       180,  // 貫通の持続フレーム
+  maxBalls:         0,    // 1人が同時に持てるボールの上限（0で無制限）
+  timeLimit:        1800, // 制限時間(フレーム)。60で1秒なので1800=30秒
+
+  cpuSpeed:         1.00, // CPUのパドル速度（1.0で人と同じ）
+  cpuError:         18,   // 狙う位置の誤差(px)。大きいほど弱い
+  cpuReact:         7,    // 狙いを決め直す間隔(フレーム)。大きいほど鈍い
+  cpuAim:           0.70, // 打ち返す向きを調整する強さ(0で狙わない)
+  imageTint:        0.28, // 画像を使うとき、上に重ねる陣地色の濃さ(0で色なし)
+  cpuItemSlack:     50,   // これだけ余裕(フレーム)があればアイテムを取りにいく
+};
+
+/* ---------- 盤面の定数 ---------- */
+const W = 480, H = 720;
+const COLS = 10, ROWS = 12;
+const BW = W / COLS, BH = 30;
+const FIELD_TOP = (H - ROWS * BH) / 2;   // ROWS を変えると自動で中央に収まる
+const R = 7;
+const PAD_H = 12;
+const PAD_Y = { 0: H - 56, 1: 44 };   // 0=赤(下) 1=青(上)
+
+const COL = {
+  0: { main:'#87cefa', dark:'#1f4a63', glow:'#d8f0ff' },   // 手前＝味方（青）
+  1: { main:'#ff3030', dark:'#5e1717', glow:'#ff9090' },   // 奥＝敵（赤）
+};
+const ACCENT = '#ffa500';   // アイテムと被弾表示
+
+const ITEMS = ['pierce','bomb','multi'];
+// アイテムごとの色。プレイヤーの赤・青とぶつからない色域から選ぶ
+const ITEM_COL = {
+  pierce: '#ffa500',   // 橙
+  bomb:   '#c77dff',   // 紫
+  multi:  '#4de3c8',   // 青緑
+};
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+/* ---------- 状態 ---------- */
+const grid  = new Uint8Array(COLS * ROWS);
+const flash = new Float32Array(COLS * ROWS);
+let pads, balls, items, fx, penalty, timeLeft, wallFlash, phase, winner;
+let cpuOn = false;
+const cpu = { x:W/2, wait:0 };
+
+const keys = {};
+addEventListener('keydown', e => {
+  if (['ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+  keys[e.code] = true;
+  if (e.code === 'KeyC'){ cpuOn = !cpuOn; cpu.x = pads ? pads[1].x : W / 2; }
+  if (e.code === 'Space'){
+    if (phase === 'ready') phase = 'play';
+    else if (phase === 'over') reset();
+  }
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+
+function serve(owner){
+  const dir = owner === 0 ? -1 : 1;
+  const a = Math.random() * 0.5 - 0.25;
+  return {
+    owner,
+    x: W / 2 + (Math.random() * 80 - 40),
+    y: owner === 0 ? H - 130 : 130,
+    vx: Math.sin(a) * TUNE.ballSpeed,
+    vy: Math.cos(a) * TUNE.ballSpeed * dir,
+  };
+}
+
+function reset(){
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      grid[r * COLS + c] = r < ROWS / 2 ? 1 : 0;
+  flash.fill(0);
+  pads    = { 0:{ x:W/2 }, 1:{ x:W/2 } };
+  balls   = [serve(0), serve(1)];
+  items   = [];
+  fx      = { 0:{ pierce:0, bomb:false },
+              1:{ pierce:0, bomb:false } };
+  penalty = { 0:0, 1:0 };
+  timeLeft  = TUNE.timeLimit;
+  wallFlash = { 0:0, 1:0 };
+  phase   = 'ready';
+  winner  = null;
+}
+reset();
+
+/* ---------- 塗り ---------- */
+function rad(){ return R; }
+
+function paint(i, owner, drop){
+  grid[i] = owner;
+  flash[i] = 1;
+  if (!drop) return;
+  if (Math.random() >= TUNE.itemChance) return;
+  if (items.filter(it => it.owner === owner).length >= TUNE.maxItems) return;
+  const r = Math.floor(i / COLS), c = i % COLS;
+  items.push({
+    owner,
+    type: ITEMS[Math.floor(Math.random() * ITEMS.length)],
+    x: c * BW + BW / 2,
+    y: FIELD_TOP + r * BH + BH / 2,
+    vy: owner === 0 ? TUNE.itemSpeed : -TUNE.itemSpeed,
+  });
+}
+
+// 爆弾のまとめ塗り（当たったマスの3×3）
+function paintArea(r, c, owner){
+  const offs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  for (const [dr, dc] of offs){
+    const rr = r + dr, cc = c + dc;
+    if (rr < 0 || rr >= ROWS || cc < 0 || cc >= COLS) continue;
+    const i = rr * COLS + cc;
+    if (grid[i] !== owner) paint(i, owner, false);
+  }
+}
+
+// ボールを1個増やす（上限まで）
+function addBall(owner, src){
+  const mine = balls.filter(b => b.owner === owner);
+  const from = src || mine[0];
+  if (!from || (TUNE.maxBalls && mine.length >= TUNE.maxBalls)) return;
+  balls.push({ owner, x:from.x, y:from.y, vx:-from.vx, vy:from.vy });
+}
+
+// 自分のパドルからボールを1個撃ち出す
+function addBallFromPaddle(owner, speed){
+  const mine = balls.filter(b => b.owner === owner && !b.dead).length;
+  if (TUNE.maxBalls && mine >= TUNE.maxBalls) return;
+  const dir = owner === 0 ? -1 : 1;
+  const a = Math.random() * 0.5 - 0.25;
+  balls.push({
+    owner,
+    x: pads[owner].x,
+    y: owner === 0 ? PAD_Y[0] - R - 1 : PAD_Y[1] + PAD_H + R + 1,
+    vx: Math.sin(a) * speed,
+    vy: Math.cos(a) * speed * dir,
+  });
+}
+
+// 相手側の壁は跳ね返るだけ（落とせるのは自分側の壁だけ）
+function breakWall(b){
+  wallFlash[1 - b.owner] = 1;
+}
+
+/* ---------- ボールの移動 ---------- */
+// 当たったブロック群を処理する。跳ね返るなら true
+function hitCells(b, r0, r1, c0, c1){
+  const f = fx[b.owner];
+  let first = null;
+  for (let r = r0; r <= r1; r++){
+    for (let c = c0; c <= c1; c++){
+      const i = r * COLS + c;
+      if (grid[i] === b.owner) continue;
+      if (!first){
+        first = { r, c, i };
+        paint(i, b.owner, true);
+        if (f.bomb){ paintArea(r, c, b.owner); f.bomb = false; }
+        return first;
+      }
+    }
+  }
+  return first;
+}
+
+function stepX(b, dx){
+  if (b.dead) return;
+  const rr = rad(b);
+  b.x += dx;
+  if (b.x < rr)     { b.x = rr;     b.vx =  Math.abs(b.vx); }
+  if (b.x > W - rr) { b.x = W - rr; b.vx = -Math.abs(b.vx); }
+
+  let r0 = Math.floor((b.y - rr - FIELD_TOP) / BH);
+  let r1 = Math.floor((b.y + rr - FIELD_TOP) / BH);
+  if (r1 < 0 || r0 > ROWS - 1) return;
+  r0 = Math.max(0, r0); r1 = Math.min(ROWS - 1, r1);
+  const c0 = Math.max(0, Math.floor((b.x - rr) / BW));
+  const c1 = Math.min(COLS - 1, Math.floor((b.x + rr) / BW));
+
+  const hit = hitCells(b, r0, r1, c0, c1);
+  if (!hit || fx[b.owner].pierce > 0) return;
+  if (dx > 0) { b.x = hit.c * BW - rr;       b.vx = -Math.abs(b.vx); }
+  else        { b.x = (hit.c + 1) * BW + rr; b.vx =  Math.abs(b.vx); }
+}
+
+function stepY(b, dy){
+  if (b.dead) return;
+  const rr = rad(b);
+  b.y += dy;
+
+  // 相手側の壁に当てたらダメージ（落とせるのは自分側の壁だけ）
+  if (b.owner === 0 && b.y < rr)     { b.y = rr;     b.vy =  Math.abs(b.vy); breakWall(b); }
+  if (b.owner === 1 && b.y > H - rr) { b.y = H - rr; b.vy = -Math.abs(b.vy); breakWall(b); }
+
+  let r0 = Math.floor((b.y - rr - FIELD_TOP) / BH);
+  let r1 = Math.floor((b.y + rr - FIELD_TOP) / BH);
+  if (r1 >= 0 && r0 <= ROWS - 1){
+    r0 = Math.max(0, r0); r1 = Math.min(ROWS - 1, r1);
+    const c0 = Math.max(0, Math.floor((b.x - rr) / BW));
+    const c1 = Math.min(COLS - 1, Math.floor((b.x + rr) / BW));
+    const hit = hitCells(b, r0, r1, c0, c1);
+    if (hit && fx[b.owner].pierce <= 0){
+      if (dy > 0) { b.y = FIELD_TOP + hit.r * BH - rr;       b.vy = -Math.abs(b.vy); }
+      else        { b.y = FIELD_TOP + (hit.r + 1) * BH + rr; b.vy =  Math.abs(b.vy); }
+      return;
+    }
+  }
+  hitPaddle(b);
+}
+
+function hitPaddle(b){
+  const rr = rad(b);
+  for (const side of [0, 1]){
+    const p = pads[side], py = PAD_Y[side], hw = TUNE.paddleW / 2;
+    if (b.x < p.x - hw - rr || b.x > p.x + hw + rr) continue;
+    if (b.y + rr < py || b.y - rr > py + PAD_H) continue;
+    if (side === 0 && b.vy <= 0) continue;
+    if (side === 1 && b.vy >= 0) continue;
+
+    // 相手のボールを打ち返したら自分のものになる
+    const prev = b.owner;
+    if (prev !== side){
+      b.owner = side;
+      // 奪われた側のボールが0個になったら、その場でパドルから1個出す
+      if (!balls.some(x => x.owner === prev && !x.dead))
+        addBallFromPaddle(prev, TUNE.ballSpeed);
+    }
+
+    const t = Math.max(-1, Math.min(1, (b.x - p.x) / hw));
+    let ang = t * TUNE.maxBounceAngle;
+    if (Math.abs(ang) < TUNE.minBounceAngle)
+      ang = TUNE.minBounceAngle * (ang < 0 ? -1 : 1);
+    // 奪ったボールは基本速度から仕切り直し
+    const sp = prev !== side
+      ? TUNE.ballSpeed
+      : Math.min(TUNE.maxSpeed, Math.hypot(b.vx, b.vy));
+    b.vx = Math.sin(ang) * sp;
+    b.vy = Math.cos(ang) * sp * (side === 0 ? -1 : 1);
+    b.y  = side === 0 ? py - rr : py + PAD_H + rr;
+  }
+}
+
+// ボールは時間とともに速くなる（落として出し直すと基本速度から）
+function accelerate(b, s){
+  const sp = Math.hypot(b.vx, b.vy);
+  if (sp >= TUNE.maxSpeed) return;
+  const k = Math.min(TUNE.maxSpeed, sp + TUNE.accelPerSec * s / 60) / sp;
+  b.vx *= k; b.vy *= k;
+}
+
+function moveBall(b, s){
+  const dist = Math.hypot(b.vx, b.vy) * s;
+  const n = Math.max(1, Math.ceil(dist / 3));
+  for (let i = 0; i < n; i++){
+    stepX(b, b.vx * s / n);
+    stepY(b, b.vy * s / n);
+  }
+  // 塗り替えでブロックの中に取り残されたときの救済
+  const r = Math.floor((b.y - FIELD_TOP) / BH), c = Math.floor(b.x / BW);
+  if (r >= 0 && r < ROWS && c >= 0 && c < COLS){
+    const i = r * COLS + c;
+    if (grid[i] !== b.owner) paint(i, b.owner, false);
+  }
+}
+
+/* ---------- アイテム ---------- */
+function activate(type, owner){
+  const f = fx[owner];
+  if (type === 'pierce') f.pierce = TUNE.pierceTime;
+  else if (type === 'bomb') f.bomb = true;
+  else if (type === 'multi') addBall(owner);
+}
+
+function updateItems(s){
+  for (let k = items.length - 1; k >= 0; k--){
+    const it = items[k];
+    it.y += it.vy * s;
+    if (it.y < -20 || it.y > H + 20){ items.splice(k, 1); continue; }
+    // おあずけ中は受け取れない
+    if (penalty[it.owner] > 0) continue;
+    const p = pads[it.owner], py = PAD_Y[it.owner], hw = TUNE.paddleW / 2;
+    if (it.x > p.x - hw - 9 && it.x < p.x + hw + 9 &&
+        it.y + 9 > py && it.y - 9 < py + PAD_H){
+      activate(it.type, it.owner);
+      items.splice(k, 1);
+    }
+  }
+}
+
+/* ---------- CPU（上側・青） ---------- */
+// 相手の陣地がいちばん薄い列。ここへ打ち返せば突破に近づく
+function weakColumn(o){
+  let best = 0, bestN = 99;
+  for (let c = 0; c < COLS; c++){
+    let n = 0;
+    for (let r = 0; r < ROWS; r++) if (grid[r * COLS + c] !== o) n++;
+    if (n < bestN){ bestN = n; best = c; }
+  }
+  return best * BW + BW / 2;
+}
+
+// 壁の反射だけ見て、パドルの高さに来るときのxを見積もる
+function predictX(b, lineY){
+  let x = b.x, y = b.y, vx = b.vx, vy = b.vy;
+  if (vy >= 0) return null;
+  let guard = 0;
+  while (y > lineY && guard++ < 4000){
+    const t = Math.min((y - lineY) / -vy, 8);
+    x += vx * t; y += vy * t;
+    if (x < R){ x = R; vx = -vx; }
+    if (x > W - R){ x = W - R; vx = -vx; }
+  }
+  return x;
+}
+
+function cpuControl(s){
+  const o = 1, p = pads[o], line = PAD_Y[o] + PAD_H;
+
+  cpu.wait -= s;
+  if (cpu.wait <= 0){
+    cpu.wait = TUNE.cpuReact;
+
+    // 迫ってくるボールのうち、いちばん早く届くもの
+    let best = null, bestT = 1e9;
+    for (const b of balls){
+      if (b.vy >= 0) continue;
+      const t = (b.y - line) / -b.vy;
+      if (t < 0 || t > bestT) continue;
+      bestT = t; best = b;
+    }
+
+    // 余裕があるうちはアイテムを取りにいく
+    let item = null;
+    if (bestT > TUNE.cpuItemSlack){
+      for (const i of items){
+        if (i.owner !== o) continue;
+        const t = (i.y - line) / -i.vy;
+        if (t < 0 || t > bestT - 12) continue;      // ボールの守りが間に合う範囲だけ
+        if (Math.abs(i.x - p.x) / (TUNE.paddleSpeed * TUNE.cpuSpeed) > t) continue;
+        if (!item || i.y < item.y === (o === 0)) item = i;
+      }
+    }
+
+    if (item){
+      cpu.x = item.x;
+    } else if (best){
+      let x = predictX(best, line);
+      if (x === null) x = best.x;
+      // 狙いをつける：薄い列へ返せる位置で受ける
+      const aim = Math.max(-1, Math.min(1, (weakColumn(o) - x) / 240));
+      x -= aim * (TUNE.paddleW / 2) * TUNE.cpuAim;
+      // 迫っているときほど正確に合わせる
+      const rush = Math.max(0.35, Math.min(1, bestT / 90));
+      cpu.x = x + (Math.random() * 2 - 1) * TUNE.cpuError * rush;
+    } else {
+      cpu.x = W / 2 + (Math.random() * 2 - 1) * 60;
+    }
+  }
+
+  const hw = TUNE.paddleW / 2;
+  const target = Math.max(hw, Math.min(W - hw, cpu.x));
+  const max = TUNE.paddleSpeed * TUNE.cpuSpeed * s;
+  const d = target - p.x;
+  if (Math.abs(d) > 2) p.x += Math.max(-max, Math.min(max, d));
+}
+
+/* ---------- 更新 ---------- */
+function count(owner){
+  let n = 0;
+  for (let i = 0; i < grid.length; i++) if (grid[i] === owner) n++;
+  return n;
+}
+
+function update(s){
+  const psp = TUNE.paddleSpeed * s;
+  if (keys['ArrowLeft'])  pads[0].x -= psp;
+  if (keys['ArrowRight']) pads[0].x += psp;
+  if (cpuOn){
+    if (phase === 'play') cpuControl(s);
+  } else {
+    if (keys['KeyA'])     pads[1].x -= psp;
+    if (keys['KeyD'])     pads[1].x += psp;
+  }
+  for (const k of [0, 1]){
+    const hw = TUNE.paddleW / 2;
+    pads[k].x = Math.max(hw, Math.min(W - hw, pads[k].x));
+  }
+
+  for (let i = 0; i < flash.length; i++)
+    if (flash[i] > 0) flash[i] = Math.max(0, flash[i] - 0.045 * s);
+
+  if (phase !== 'play') return;
+
+  for (const o of [0, 1]){
+    if (fx[o].pierce > 0) fx[o].pierce = Math.max(0, fx[o].pierce - s);
+  }
+
+  for (let i = balls.length - 1; i >= 0; i--){
+    const b = balls[i];
+    accelerate(b, s);
+    moveBall(b, s);
+    if (b.dead || b.y > H + rad(b) || b.y < -rad(b)) balls.splice(i, 1);
+  }
+
+  // ボールを全部落としたらおあずけ、時間が来たら1個から再開
+  for (const o of [0, 1]){
+    const mine = balls.filter(b => b.owner === o).length;
+    if (mine === 0 && penalty[o] <= 0) penalty[o] = TUNE.penaltyFrames;
+    // おあずけ中でも相手のボールを奪い返したらそこで復帰
+    if (mine > 0 && penalty[o] > 0) penalty[o] = 0;
+    if (penalty[o] > 0){
+      penalty[o] -= s;
+      if (penalty[o] <= 0){ penalty[o] = 0; balls.push(serve(o)); }
+    }
+  }
+
+  updateItems(s);
+
+  for (const o of [0, 1])
+    if (wallFlash[o] > 0) wallFlash[o] = Math.max(0, wallFlash[o] - 0.03 * s);
+
+  // 制限時間が切れたら、陣地の多いほうが勝ち
+  timeLeft -= s;
+  if (timeLeft <= 0){
+    timeLeft = 0;
+    const blue = count(0), red = COLS * ROWS - blue;
+    winner = blue === red ? -1 : (blue > red ? 0 : 1);
+    phase = 'over';
+  }
+}
+
+/* ---------- 背景画像 ---------- */
+const bgImg = { 0:null, 1:null };
+const bgUrl = { 0:null, 1:null };
+
+function setImage(side, file){
+  if (!file) return;
+  if (bgUrl[side]) URL.revokeObjectURL(bgUrl[side]);
+  bgUrl[side] = URL.createObjectURL(file);
+  const im = new Image();
+  im.onload = () => { bgImg[side] = im; };
+  im.onerror = () => { bgImg[side] = null; };
+  im.src = bgUrl[side];
+}
+
+// 盤面全体に「はみ出しなし」で敷いたときに使う、画像側の切り出し範囲
+function coverRect(im){
+  if (im._cover) return im._cover;
+  const fw = W, fh = ROWS * BH;
+  const k = Math.min(im.width / fw, im.height / fh);
+  const sw = fw * k, sh = fh * k;
+  im._cover = { sx:(im.width - sw) / 2, sy:(im.height - sh) / 2, sw, sh };
+  return im._cover;
+}
+
+/* ---------- 描画 ---------- */
+function draw(){
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.fillStyle = 'rgba(255,48,48,0.05)';   ctx.fillRect(0, 0, W, H / 2);
+  ctx.fillStyle = 'rgba(135,206,250,0.05)'; ctx.fillRect(0, H / 2, W, H / 2);
+
+  for (let r = 0; r < ROWS; r++){
+    for (let c = 0; c < COLS; c++){
+      const i = r * COLS + c, o = grid[i];
+      const x = c * BW, y = FIELD_TOP + r * BH;
+      const im = bgImg[o];
+      if (im){
+        // 画像のうち、このマスに当たる部分だけを切り出して敷く（継ぎ目なし）
+        const cr = coverRect(im);
+        ctx.drawImage(
+          im,
+          cr.sx + cr.sw * (c / COLS), cr.sy + cr.sh * (r / ROWS),
+          cr.sw / COLS, cr.sh / ROWS,
+          x, y, BW, BH
+        );
+        // どちらの陣地かは色を薄く重ねて示す
+        if (TUNE.imageTint > 0){
+          ctx.globalAlpha = TUNE.imageTint;
+          ctx.fillStyle = COL[o].main;
+          ctx.fillRect(x, y, BW, BH);
+          ctx.globalAlpha = 1;
+        }
+      } else {
+        ctx.fillStyle = COL[o].main;
+        ctx.fillRect(x, y, BW, BH);
+      }
+      if (flash[i] > 0.02){
+        // 塗り替えた直後だけ明るく光らせる
+        ctx.fillStyle = COL[o].glow;
+        ctx.globalAlpha = flash[i];
+        ctx.fillRect(x, y, BW, BH);
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  // アイテム
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const it of items){
+    const ic = ITEM_COL[it.type] || ACCENT;
+    ctx.fillStyle = '#0d1018';
+    ctx.strokeStyle = ic;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(it.x - 10, it.y - 10, 20, 20, 5);
+    ctx.fill();
+    ctx.shadowColor = ic; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
+    drawIcon(it.type, it.x, it.y);
+  }
+
+  // パドル
+  for (const side of [0, 1]){
+    ctx.fillStyle = COL[side].main;
+    ctx.fillRect(pads[side].x - TUNE.paddleW / 2, PAD_Y[side], TUNE.paddleW, PAD_H);
+  }
+
+  // ボール（同じ色のブロックに埋もれないよう暗い枠をつける）
+  for (const b of balls){
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, rad(b), 0, Math.PI * 2);
+    ctx.fillStyle = fx[b.owner].pierce > 0 ? '#ffffff' : COL[b.owner].glow;
+    ctx.shadowColor = COL[b.owner].main;
+    ctx.shadowBlur = 14;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#070a14';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+
+  // 壁に当たった瞬間の光り
+  for (const o of [0, 1]){
+    if (wallFlash[o] <= 0) continue;
+    ctx.fillStyle = ACCENT;
+    ctx.globalAlpha = wallFlash[o];
+    ctx.fillRect(0, o === 1 ? 0 : H - 6, W, 6);
+    ctx.globalAlpha = 1;
+  }
+
+  // 残り時間
+  const sec = Math.max(0, Math.ceil(timeLeft / 60));
+  ctx.textAlign = 'center';
+  ctx.font = '700 22px Helvetica Neue, Arial, sans-serif';
+  ctx.fillStyle = sec <= 10 ? ACCENT : '#e8ecf7';
+  ctx.fillText(Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'), W / 2, 22);
+
+  // 状態表示
+  ctx.font = '600 12px "Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillStyle = COL[1].main; ctx.fillText(status(1), W - 12, 16);
+  ctx.fillStyle = COL[0].main; ctx.fillText(status(0), W - 12, H - 16);
+
+  if (phase !== 'play') overlay();
+}
+
+// アイテムの絵柄。中心を原点にした ±8 の範囲に描く
+function drawIcon(type, x, y){
+  const col = ITEM_COL[type] || ACCENT;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = col;
+  ctx.fillStyle = col;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  if (type === 'pierce'){            // 壁を突き抜ける矢
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-7, 2.5); ctx.lineTo(-2.6, 2.5);
+    ctx.moveTo(2.6, 2.5); ctx.lineTo(7, 2.5);
+    ctx.stroke();
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(0, 6.5); ctx.lineTo(0, -6.6);
+    ctx.moveTo(-3, -3.4); ctx.lineTo(0, -6.9); ctx.lineTo(3, -3.4);
+    ctx.stroke();
+
+  } else if (type === 'bomb'){       // 導火線つきの爆弾
+    ctx.beginPath(); ctx.arc(-0.8, 1.8, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(2.4, -1.6); ctx.quadraticCurveTo(5.4, -3.6, 4.4, -6.2);
+    ctx.stroke();
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(4.4, -6.2); ctx.lineTo(6.6, -7.4);
+    ctx.moveTo(4.4, -6.2); ctx.lineTo(3.2, -8.2);
+    ctx.moveTo(4.4, -6.2); ctx.lineTo(6.4, -5.0);
+    ctx.stroke();
+
+  } else {                           // 増殖
+    ctx.beginPath(); ctx.arc(-2.6, 1.8, 3.8, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(3.4, -1.6, 2.6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(1.6, 5.4, 1.8, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function status(o){
+  const f = fx[o], t = [];
+  if (penalty[o] > 0) t.push('復帰まで ' + (penalty[o] / 60).toFixed(1));
+  if (f.pierce > 0) t.push('貫通 ' + (f.pierce / 60).toFixed(1));
+  if (f.bomb)  t.push('爆弾');
+  return t.join('　');
+}
+
+function overlay(){
+  ctx.fillStyle = 'rgba(7,10,20,0.78)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+
+  if (phase === 'ready'){
+    ctx.font = '400 14px "Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif';
+    if (cpuOn){
+      ctx.fillStyle = COL[1].main;
+      ctx.fillText('奥：CPU', W / 2, H / 2 - 18);
+    }
+    ctx.fillStyle = '#e8ecf7';
+    ctx.font = '600 16px "Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif';
+    ctx.fillText('Space でスタート', W / 2, H / 2 + 14);
+  } else {
+    const blue = count(0), red = COLS * ROWS - blue;
+    ctx.fillStyle = winner < 0 ? '#e8ecf7' : COL[winner].main;
+    ctx.font = '700 30px Helvetica Neue, Arial, sans-serif';
+    ctx.fillText(winner < 0 ? '引き分け' : (winner === 0 ? '青の勝ち' : '赤の勝ち'), W / 2, H / 2 - 26);
+    ctx.font = '700 20px Helvetica Neue, Arial, sans-serif';
+    ctx.fillStyle = COL[0].main; ctx.textAlign = 'right'; ctx.fillText(String(blue), W / 2 - 14, H / 2 + 14);
+    ctx.fillStyle = '#8d95b4'; ctx.textAlign = 'center'; ctx.fillText('-', W / 2, H / 2 + 14);
+    ctx.fillStyle = COL[1].main; ctx.textAlign = 'left';  ctx.fillText(String(red), W / 2 + 14, H / 2 + 14);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#8d95b4';
+    ctx.font = '400 14px Helvetica Neue, Arial, sans-serif';
+    ctx.fillText('Space でもう一度', W / 2, H / 2 + 54);
+  }
+}
+
+/* ---------- メニュー ---------- */
+const panel = document.getElementById('panel');
+document.getElementById('menuBtn').onclick = () => {
+  panel.hidden = !panel.hidden;
+};
+panel.onclick = e => { if (e.target === panel) panel.hidden = true; };
+
+document.getElementById('img0').onchange = e => setImage(0, e.target.files[0]);
+document.getElementById('img1').onchange = e => setImage(1, e.target.files[0]);
+document.getElementById('imgClear').onclick = () => {
+  for (const k of [0, 1]){
+    if (bgUrl[k]) URL.revokeObjectURL(bgUrl[k]);
+    bgUrl[k] = null; bgImg[k] = null;
+    document.getElementById('img' + k).value = '';
+  }
+};
+
+/* ---------- ループ ---------- */
+let last = performance.now();
+function loop(now){
+  const s = Math.min(2.5, (now - last) / 16.667);
+  last = now;
+  update(s);
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

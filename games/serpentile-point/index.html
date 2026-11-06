@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ja">
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/serpentile-point/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ヘキサポイント</title>
+<meta name="description" content="タイルで矢印を誘導してコインを集める">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFECF6;        /* page */
+    --plate:#DCD7EA;     /* board panel */
+    --riser:#C1B9DC;     /* extruded lower edge of the board */
+    --face:#FDFCFF;      /* tile top */
+    --seam:#E2DCF0;      /* tile join */
+    --line:#464070;      /* the path itself */
+    --route:#1EC4A8;     /* predicted route */
+    --coin:#FFC93C;      /* collectible */
+    --coin-rim:#9C5B00;
+    --runner:#E4326F;    /* character */
+    --ui:#5A4FCF;        /* chrome */
+    --fg:#39325A; --fg-dim:#7B7398;
+    --howto-bg:#EFECF6; --howto-fg:#39325A;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.6;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:640px;margin:0 auto;padding:clamp(12px,3vw,28px)}
+
+  .hud{position:absolute;top:20px;right:20px;display:flex;flex-direction:column;
+    align-items:flex-end;gap:2px;font-family:"IBM Plex Mono",monospace;
+    color:var(--ui);pointer-events:none}
+  .hud .now{display:flex;align-items:center;gap:7px;font-size:20px;font-weight:600}
+  .hud .best{font-size:11px;letter-spacing:.1em;color:var(--fg-dim)}
+
+  .stage{position:relative}
+  .board{background:var(--plate);border-radius:18px;padding:12px}
+  .board svg{display:block;width:100%;height:auto}
+
+  .cell{cursor:pointer;transform-box:view-box;
+    transition:transform .2s cubic-bezier(.33,.02,.16,1)}
+  .riser{fill:var(--riser)}
+  .face{fill:var(--face);stroke:var(--seam);stroke-width:.75}
+  .link{fill:none;stroke:var(--line);stroke-width:7;stroke-linecap:butt}
+  .cell:hover .face{fill:#EFEBFB}
+  .cell{-webkit-tap-highlight-color:transparent}
+  @media (prefers-reduced-motion: reduce){ .cell{transition:none} }
+
+  .ghost{fill:none;stroke:var(--route);stroke-width:3;stroke-linecap:round;pointer-events:none}
+  #pins,#runner{pointer-events:none}
+  .halo{fill:var(--face)}
+  .coin{fill:var(--coin);stroke:var(--coin-rim);stroke-width:2.5}
+  .coin-hi{fill:#FFF0BC}
+  .runner{fill:var(--runner);stroke:#fff;stroke-width:3;stroke-linejoin:round}
+  #runnerBody{transform-box:fill-box;transform-origin:center}
+  @keyframes pickup{
+    0%{transform:scale(1)} 30%{transform:scale(1.8)} 100%{transform:scale(1)} }
+  #runnerBody.pop{animation:pickup .34s cubic-bezier(.3,1.5,.5,1)}
+  @media (prefers-reduced-motion: reduce){ #runnerBody.pop{animation:none} }
+
+  .veil{position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;border-radius:14px;
+    background:rgba(239,236,246,.92);text-align:center;padding:20px}
+  .veil.hidden{display:none}
+  @keyframes veilIn{from{opacity:0}to{opacity:1}}
+  @keyframes veilRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .veil{animation:veilIn .28s ease both}
+  .veil h2{animation:veilRise .36s .05s cubic-bezier(.2,.7,.3,1) both}
+  .veil p{animation:veilRise .36s .12s cubic-bezier(.2,.7,.3,1) both}
+  .veil button{animation:veilRise .36s .19s cubic-bezier(.2,.7,.3,1) both}
+  @media (prefers-reduced-motion: reduce){
+    .veil,.veil h2,.veil p,.veil button{animation:none} }
+  .veil h2{font-size:22px;font-weight:500;margin:0;color:var(--ui)}
+  .veil p{margin:0;font-size:13px;color:var(--fg-dim);max-width:30ch}
+  button{font-family:inherit;font-size:15px;font-weight:500;color:#fff;
+    background:var(--ui);border:none;border-radius:12px;padding:12px 28px;cursor:pointer;
+    box-shadow:0 4px 0 #4034A8}
+  button:hover{background:#6A5FDC}
+  button:active{transform:translateY(2px);box-shadow:0 2px 0 #4034A8}
+  button:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
+  .howto-close,.howto-close:hover,.howto-close:active{background:transparent;box-shadow:none;transform:none}
+</style>
+
+<div class="wrap">
+  <div class="stage">
+    <div class="board"><svg id="board" role="img" aria-label="Hexagonal tile board"></svg></div>
+    <div class="hud" aria-live="polite">
+      <div class="now">
+        <svg width="20" height="20" viewBox="-11 -11 22 22" aria-hidden="true">
+          <circle class="coin" r="8"/><circle class="coin-hi" cx="-2.6" cy="-3" r="2.1"/>
+        </svg><span id="score">0</span>
+      </div>
+      <div class="best">BEST <span id="best">0</span></div>
+    </div>
+    <div class="veil" id="veil">
+      <h2 id="veilTitle" hidden></h2>
+      <p id="veilText" hidden></p>
+      <button id="startBtn" type="button">Start</button>
+      <button type="button" data-howto-open>遊び方</button>
+    </div>
+  </div>
+</div>
+
+<section class="howto" data-pos="none" hidden>
+  <h2>遊び方</h2>
+  <p>六角形のタイルが並ぶ盤の上を矢印が線に沿って走り続けるので、タイルを回して進路を変え、タイルの境目にあるコインを通過させて集めるスコアアタックです。コインは常に3枚あり、1枚取るごとに1点入って別の場所に現れます。ゴールはなく、矢印が盤の外へ出ると終了で、走る速さは時間とともに上がります。</p>
+  <h2>操作</h2>
+  <p>タイルをタップすると、時計回りに60度回ります。PC ではクリックです。矢印が乗っているタイルも回せて、そのときは矢印もいっしょに動きます。</p>
+  <h2>コツ</h2>
+  <p>青緑の線は矢印がこの先たどる道を最大10枚先まで示し、回すたびに更新されます。線が盤の端で切れていたら、そこへ着く前につなぎ直してください。外周のタイルに接する場所にコインは出ないので、内側を周回すれば安全に集められます。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+
+<script>
+const DIRS=[[1,-1],[0,-1],[-1,0],[-1,1],[0,1],[1,0]];
+const RADIUS=3, SQ3=Math.sqrt(3), R=42, D=R*SQ3/2;
+const SPEED0=30, SPEED_GAIN=1.5, PIN_COUNT=3, PREVIEW=10;
+
+function allMatchings(){
+  const out=[];
+  (function go(a,c){
+    if(!a.length){out.push(c.map(p=>p.slice()));return;}
+    const x=a[0];
+    for(let i=1;i<a.length;i++){
+      const y=a[i], rest=a.filter((_,j)=>j!==0&&j!==i);
+      c.push([x,y]); go(rest,c); c.pop();
+    }
+  })([0,1,2,3,4,5],[]);
+  return out;
+}
+const ORIENTATIONS=allMatchings();
+
+const ck=(q,r)=>q+","+r;
+const CELLS=(()=>{const o=[];for(let q=-RADIUS;q<=RADIUS;q++)for(let r=-RADIUS;r<=RADIUS;r++)
+  if(Math.max(Math.abs(q),Math.abs(r),Math.abs(q+r))<=RADIUS)o.push([q,r]);return o;})();
+const CELLSET=new Set(CELLS.map(([q,r])=>ck(q,r)));
+
+const px=q=>1.5*R*q, py=(q,r)=>SQ3*R*(r+q/2);
+let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+for(const [q,r] of CELLS){
+  minx=Math.min(minx,px(q)-R); maxx=Math.max(maxx,px(q)+R);
+  miny=Math.min(miny,py(q,r)-R); maxy=Math.max(maxy,py(q,r)+R);
+}
+const PAD=6;
+const CENTER=new Map(CELLS.map(([q,r])=>[ck(q,r),[px(q)-minx+PAD, py(q,r)-miny+PAD]]));
+
+function mid(k){const a=(30+60*k)*Math.PI/180;return [D*Math.cos(a),-D*Math.sin(a)];}
+const gapOf=(a,b)=>Math.min(((b-a)%6+6)%6, ((a-b)%6+6)%6);
+const T_ADJ=(R/2)*(4/3)*Math.tan(Math.PI/6);
+const T_SKIP=(1.5*R)*(4/3)*Math.tan(Math.PI/12);
+const LEN=[0,(2*Math.PI/3)*(R/2),(Math.PI/3)*(1.5*R),2*D];
+
+function ctrlPoints(a,b){
+  const A=mid(a), B=mid(b), g=gapOf(a,b);
+  if(g===3) return [A,
+    [A[0]+(B[0]-A[0])/3, A[1]+(B[1]-A[1])/3],
+    [A[0]+2*(B[0]-A[0])/3, A[1]+2*(B[1]-A[1])/3], B];
+  const t=g===1?T_ADJ:T_SKIP, s=1-t/D;
+  return [A,[A[0]*s,A[1]*s],[B[0]*s,B[1]*s],B];
+}
+function pathD(cx,cy,a,b){
+  const P=ctrlPoints(a,b), f=v=>`${(cx+v[0]).toFixed(2)} ${(cy+v[1]).toFixed(2)}`;
+  return gapOf(a,b)===3 ? `M${f(P[0])} L${f(P[3])}` : `M${f(P[0])} C${f(P[1])} ${f(P[2])} ${f(P[3])}`;
+}
+function tangentAt(a,b,u){
+  const P=ctrlPoints(a,b), m=1-u;
+  const c=j=>3*m*m*(P[1][j]-P[0][j])+6*m*u*(P[2][j]-P[1][j])+3*u*u*(P[3][j]-P[2][j]);
+  return [c(0),c(1)];
+}
+function pointAt(cx,cy,a,b,u){
+  const P=ctrlPoints(a,b), m=1-u;
+  const c=j=>m*m*m*P[0][j]+3*m*m*u*P[1][j]+3*m*u*u*P[2][j]+u*u*u*P[3][j];
+  return [cx+c(0), cy+c(1)];
+}
+function hexPts(cx,cy,rad){
+  const p=[];
+  for(let i=0;i<6;i++){const a=i*Math.PI/3;p.push((cx+rad*Math.cos(a)).toFixed(2)+","+(cy-rad*Math.sin(a)).toFixed(2));}
+  return p.join(" ");
+}
+
+// Coins only appear on edges whose BOTH tiles are off the outer ring, so a coin
+// never sits on a tile you could derail from.
+const hexDist=(q,r)=>Math.max(Math.abs(q),Math.abs(r),Math.abs(q+r));
+const INNER_EDGES=[];
+for(const [q,r] of CELLS){
+  if(hexDist(q,r)>=RADIUS) continue;
+  for(let k=0;k<3;k++){
+    const nq=q+DIRS[k][0], nr=r+DIRS[k][1];
+    if(CELLSET.has(ck(nq,nr)) && hexDist(nq,nr)<RADIUS)
+      INNER_EDGES.push({key:ck(q,r)+"/"+k,q,r,k});
+  }
+}
+const edgeKey=(q,r,k)=>{
+  const nq=q+DIRS[k][0], nr=r+DIRS[k][1];
+  return k<3 ? ck(q,r)+"/"+k : ck(nq,nr)+"/"+((k+3)%6);
+};
+function edgePos(q,r,k){
+  const [cx,cy]=CENTER.get(ck(q,r)), m=mid(k);
+  return [cx+m[0], cy+m[1]];
+}
+
+const board=document.getElementById("board");
+board.setAttribute("viewBox",`0 0 ${(maxx-minx+PAD*2).toFixed(1)} ${(maxy-miny+PAD*2).toFixed(1)}`);
+
+const tiles=new Map();
+let pins, runner, score, elapsed, raf, last;
+let phase="title", best=0;
+
+// window.storage is available in some hosts and absent in others; either way the
+// best score survives every round of the current session.
+async function loadBest(){
+  try{
+    const r=await window.storage.get("serpentile:best");
+    if(r&&r.value){ best=parseInt(r.value,10)||0; showBest(); }
+  }catch(e){}
+}
+async function saveBest(){
+  try{ await window.storage.set("serpentile:best",String(best)); }catch(e){}
+}
+function showBest(){
+  const el=document.getElementById("best");
+  el.textContent=best;
+  el.parentElement.hidden = best===0;
+  if(phase!=="over") paintTitle();
+}
+function paintTitle(){
+  const vt=document.getElementById("veilTitle"), vx=document.getElementById("veilText");
+  vt.hidden=true;
+  vx.textContent = best>0 ? `Best ${best}` : "";
+  vx.hidden = best===0;
+}
+
+function buildBoard(){
+  tiles.clear();
+  const RISE=7;
+  let svg=`<g class="riser">`+CELLS.map(([q,r])=>{
+    const [cx,cy]=CENTER.get(ck(q,r));
+    return `<polygon points="${hexPts(cx,cy+RISE,R)}"/>`;
+  }).join("")+`</g>`;
+  for(const [q,r] of CELLS){
+    const k=ck(q,r), [cx,cy]=CENTER.get(k);
+    const base=ORIENTATIONS[Math.floor(Math.random()*ORIENTATIONS.length)];
+    const steps=Math.floor(Math.random()*6);
+    tiles.set(k,{base,steps});
+    svg+=`<g class="cell" data-k="${k}"`+
+         ` style="transform-origin:${cx.toFixed(2)}px ${cy.toFixed(2)}px;transform:rotate(${steps*60}deg)">`;
+    svg+=`<polygon class="face" points="${hexPts(cx,cy,R)}"/>`;
+    for(const [a,b] of base) svg+=`<path class="link" d="${pathD(cx,cy,a,b)}"/>`;
+    svg+=`<path class="ghost" d=""/>`;
+    svg+=`</g>`;
+  }
+  svg+=`<g id="pins"></g><g id="runner" transform="translate(-99,-99)">`+
+    `<path id="runnerBody" class="runner" d="M12 0 L-7 -9 L-3.5 0 L-7 9 Z"/></g>`;
+  board.innerHTML=svg;
+  cellEl.clear(); ghostEl.clear(); ghostPrev.clear();
+  for(const el of board.querySelectorAll(".cell")){
+    cellEl.set(el.dataset.k,el);
+    ghostEl.set(el.dataset.k,el.querySelector(".ghost"));
+  }
+}
+// The runner is stored as an arc of the tile's own (unrotated) geometry, so a
+// rotation moves the runner with the tile instead of relocating it.
+// SVG rotate(+60deg) carries edge k to position k-1, hence the negative shifts.
+const boardEdge=(k,b)=>((b-tiles.get(k).steps)%6+6)%6;  // tile frame -> board direction
+const tileEdge=(k,e)=>(e+tiles.get(k).steps)%6;         // board direction -> tile frame
+const cellEl=new Map(), ghostEl=new Map(), ghostPrev=new Map();
+function tileMatrix(k){
+  const el=cellEl.get(k);
+  if(!el) return [1,0,0,1];
+  const m=/matrix\(([^)]+)\)/.exec(getComputedStyle(el).transform||"");
+  if(!m) return [1,0,0,1];
+  const v=m[1].split(",").map(Number);
+  return [v[0],v[1],v[2],v[3]];
+}
+function basePartner(k,b){
+  for(const [x,y] of tiles.get(k).base){ if(x===b) return y; if(y===b) return x; }
+  return -1;
+}
+// Finish a pending rotation instantly. Used only at the moment the runner
+// crosses a tile boundary, so the two tiles are never at half angles there.
+function snapTile(k){
+  const el=cellEl.get(k);
+  if(!el) return;
+  el.style.transition="none";
+  el.style.transform=`rotate(${tiles.get(k).steps*60}deg)`;
+  el.getBoundingClientRect();
+  el.style.transition="";
+}
+
+function spawnPin(){
+  const taken=new Set(pins.map(p=>p.key));
+  const free=INNER_EDGES.filter(e=>!taken.has(e.key));
+  if(!free.length) return;
+  pins.push(free[Math.floor(Math.random()*free.length)]);
+}
+function drawPins(){
+  document.getElementById("pins").innerHTML=pins.map(p=>{
+    const [x,y]=edgePos(p.q,p.r,p.k);
+    return `<circle class="halo" cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="12"/>`+
+           `<circle class="coin" cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="8.5"/>`+
+           `<circle class="coin-hi" cx="${(x-2.8).toFixed(2)}" cy="${(y-3.2).toFixed(2)}" r="2.2"/>`;
+  }).join("");
+}
+
+function segLength(){ return LEN[gapOf(runner.bIn,runner.bOut)]; }
+function drawRunner(){
+  const [cx,cy]=CENTER.get(runner.cell);
+  const p=pointAt(0,0,runner.bIn,runner.bOut,runner.u);
+  const v=tangentAt(runner.bIn,runner.bOut,runner.u);
+  const [a,b,c,d]=tileMatrix(runner.cell);
+  const x=cx+a*p[0]+c*p[1], y=cy+b*p[0]+d*p[1];
+  const vx=a*v[0]+c*v[1], vy=b*v[0]+d*v[1];
+  const deg=Math.atan2(vy,vx)*180/Math.PI;
+  document.getElementById("runner").setAttribute("transform",
+    `translate(${x.toFixed(2)},${y.toFixed(2)}) rotate(${deg.toFixed(2)})`);
+}
+
+// Sub-curve of a cubic from parameter u to 1 (de Casteljau), so the preview
+// starts exactly under the runner rather than at the arc's start.
+function splitAfter(P,u){
+  const L=(A,B)=>[A[0]+(B[0]-A[0])*u, A[1]+(B[1]-A[1])*u];
+  const q0=L(P[0],P[1]), q1=L(P[1],P[2]), q2=L(P[2],P[3]);
+  const r0=L(q0,q1), r1=L(q1,q2);
+  return [L(r0,r1), r1, q2, P[3]];
+}
+function drawGhost(){
+  const acc=new Map();
+  let cell=runner.cell, bIn=runner.bIn, bOut=runner.bOut, u=runner.u;
+  const seen=new Set();
+  for(let n=0;n<PREVIEW;n++){
+    if(seen.has(cell+"|"+bIn)) break;
+    seen.add(cell+"|"+bIn);
+    const [cx,cy]=CENTER.get(cell);
+    let P=ctrlPoints(bIn,bOut);
+    if(u>0) P=splitAfter(P,u);
+    const f=v=>`${(cx+v[0]).toFixed(2)} ${(cy+v[1]).toFixed(2)}`;
+    if(!acc.has(cell)) acc.set(cell,[]);
+    acc.get(cell).push(`M${f(P[0])} C${f(P[1])} ${f(P[2])} ${f(P[3])}`);
+    const out=boardEdge(cell,bOut);
+    const [q,r]=cell.split(",").map(Number);
+    const nk=ck(q+DIRS[out][0], r+DIRS[out][1]);
+    if(!CELLSET.has(nk)) break;
+    cell=nk; u=0;
+    bIn=tileEdge(cell,(out+3)%6);
+    bOut=basePartner(cell,bIn);
+  }
+  for(const [k,el] of ghostEl){
+    const d=acc.has(k)?acc.get(k).join(" "):"";
+    if(ghostPrev.get(k)!==d){ el.setAttribute("d",d); ghostPrev.set(k,d); }
+  }
+}
+
+function collectAt(q,r,k){
+  const key=edgeKey(q,r,k);
+  const i=pins.findIndex(p=>p.key===key);
+  if(i<0) return;
+  pins.splice(i,1);
+  score++;
+  document.getElementById("score").textContent=score;
+  const body=document.getElementById("runnerBody");
+  body.classList.remove("pop"); void body.getBoundingClientRect();
+  body.classList.add("pop");
+  spawnPin(); drawPins();
+}
+
+function advance(){
+  const [q,r]=runner.cell.split(",").map(Number);
+  snapTile(runner.cell);
+  const out=boardEdge(runner.cell,runner.bOut);
+  collectAt(q,r,out);
+  const nq=q+DIRS[out][0], nr=r+DIRS[out][1];
+  if(!CELLSET.has(ck(nq,nr))){ gameOver(); return false; }
+  runner.cell=ck(nq,nr);
+  snapTile(runner.cell);
+  runner.bIn=tileEdge(runner.cell,(out+3)%6);
+  runner.bOut=basePartner(runner.cell,runner.bIn);
+  return true;
+}
+
+function frame(ts){
+  if(phase!=="play") return;
+  if(last===null) last=ts;
+  const dt=Math.min((ts-last)/1000,.05); last=ts;
+  elapsed+=dt;
+  let travel=(SPEED0+SPEED_GAIN*elapsed)*dt;
+  while(travel>0){
+    const L=segLength(), rest=(1-runner.u)*L;
+    if(travel<rest){ runner.u+=travel/L; break; }
+    travel-=rest; runner.u=0;
+    if(!advance()) return;
+  }
+  drawRunner(); drawGhost();
+  raf=requestAnimationFrame(frame);
+}
+
+function gameOver(){
+  phase="over";
+  cancelAnimationFrame(raf);
+  const record=score>best;
+  if(record){ best=score; showBest(); saveBest(); }
+  const vt=document.getElementById("veilTitle"), vx=document.getElementById("veilText");
+  vt.hidden=false; vt.textContent=record?"New Record":"Game Over";
+  vx.hidden=false;
+  vx.textContent=record?`Score ${score}`:`Score ${score}   Best ${best}`;
+  document.getElementById("startBtn").textContent="Retry";
+  document.getElementById("veil").classList.remove("hidden");
+}
+
+function start(){
+  buildBoard();
+  pins=[]; score=0; elapsed=0; last=null;
+  document.getElementById("score").textContent="0";
+  const home=ck(0,0), bIn=tileEdge(home,Math.floor(Math.random()*6));
+  runner={cell:home, bIn, bOut:basePartner(home,bIn), u:0};
+  for(let i=0;i<PIN_COUNT;i++) spawnPin();
+  drawPins(); drawRunner(); drawGhost();
+  phase="play";
+  document.getElementById("veil").classList.add("hidden");
+  raf=requestAnimationFrame(frame);
+}
+
+function turn(el){
+  if(phase!=="play") return;
+  const k=el.dataset.k;
+  const t=tiles.get(k);
+  t.steps+=1;
+  el.style.transform=`rotate(${t.steps*60}deg)`;
+  drawGhost();
+}
+board.addEventListener("click",e=>{
+  const t=e.target.closest(".cell");
+  if(t) turn(t);
+});
+document.getElementById("startBtn").onclick=start;
+
+buildBoard();
+showBest();
+loadBest();
+</script>
+<script src="../../common/js/howto.js" defer></script>

@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/circle-bounce/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Circle Bounce</title>
+<meta name="description" content="輪を回してボールを受け止めるブロック崩し">
+<style>
+  :root {
+    --bg0: #0a0b0f;
+    --bg1: #14161d;
+    --howto-bg: #14161d; --howto-fg: #eef1f7;
+    --fg:  #eef1f7;
+    --dim: rgba(238, 241, 247, 0.45);
+    --accent: #7aa2ff;
+  }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    overflow: hidden;
+    background: var(--bg0);
+    color: var(--fg);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #stage {
+    position: fixed; inset: 0;
+    touch-action: none;
+    background: radial-gradient(120% 90% at 50% 42%, var(--bg1) 0%, var(--bg0) 62%, #06070a 100%);
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  /* top は図形の位置に合わせて JS で設定する */
+  #hud {
+    position: fixed; left: 0; right: 0; top: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    pointer-events: none;
+  }
+  #hud .row { display: flex; align-items: flex-start; gap: 28px; }
+  #hud .stat { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  #hud .k {
+    font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase;
+    color: var(--dim); font-weight: 500;
+  }
+  #hud .v {
+    font-size: 20px; letter-spacing: 0.06em; font-weight: 300;
+    font-variant-numeric: tabular-nums;
+  }
+  #hud .stat.sub .v { font-size: 15px; color: var(--dim); }
+
+  #msg {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px;
+    pointer-events: none; text-align: center;
+    transition: opacity 240ms ease;
+  }
+  #msg.hidden { opacity: 0; }
+  #title { font-size: 12px; letter-spacing: 0.42em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
+  #big   { font-size: 26px; letter-spacing: 0.3em; font-weight: 200; text-transform: uppercase; }
+  #sub   { font-size: 13px; line-height: 2; color: var(--dim); font-weight: 300; white-space: pre-line; }
+
+  #share {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 24px;
+    background: none;
+    border: 1px solid rgba(238, 241, 247, 0.35);
+    border-radius: 999px;
+    color: var(--fg);
+    font-family: inherit;
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 400;
+    pointer-events: auto; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #share.on { display: block; }
+
+  /* 感度スライダーは図形の右下に常時表示（top は JS で設定） */
+  #settings {
+    position: fixed;
+    top: 0;
+    right: calc(16px + env(safe-area-inset-right, 0px));
+    display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+    pointer-events: auto;
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim);
+  }
+  #settings .row { display: flex; align-items: baseline; gap: 8px; }
+  #sens {
+    -webkit-appearance: none; appearance: none;
+    width: 96px; height: 2px; border-radius: 2px;
+    background: rgba(238, 241, 247, 0.25);
+    outline: none; accent-color: var(--accent);
+  }
+  #sens::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--fg); cursor: pointer;
+  }
+  #sens::-moz-range-thumb {
+    width: 14px; height: 14px; border: none; border-radius: 50%;
+    background: var(--fg); cursor: pointer;
+  }
+  #sensv { color: var(--fg); font-size: 12px; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+
+  #toast {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    font-size: 20px; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 300;
+    pointer-events: none; opacity: 0;
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+  /* STAGE CLEAR 表示中はぶつからないよう下へずらす */
+  #toast.shift { transform: translateY(58px); }
+
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="cv"></canvas></div>
+
+<div id="hud">
+  <div class="row">
+    <div class="stat sub"><span class="k">Stage</span><span class="v" id="s-stage">1</span></div>
+    <div class="stat"><span class="k">Score</span><span class="v" id="s-score">0</span></div>
+    <div class="stat sub"><span class="k">High</span><span class="v" id="s-high">0</span></div>
+  </div>
+</div>
+
+<div id="msg">
+  <div id="title"></div>
+  <div id="big"></div>
+  <div id="sub"></div>
+  <button id="share" type="button">Share</button>
+</div>
+
+<div id="settings">
+  <div class="row"><span>Sens</span><span id="sensv">1.0</span></div>
+  <input id="sens" type="range" min="0.2" max="2.5" step="0.1" value="1.0">
+</div>
+<div id="toast"></div>
+
+<section class="howto" hidden data-pos="top-left">
+  <h2>遊び方</h2>
+  <p>14枚の辺でできた図形を回し、中のボールを受け止めて辺を壊していくブロック崩しです。辺を1枚壊すごとに1点入り、全部壊すと形が変わって次のステージへ進みます。辺のない所からボールが外へ出ると消え、全部なくなるとゲームオーバーです。ハイスコアはこのブラウザに保存されます。</p>
+  <h2>操作</h2>
+  <p>画面をタップして始め、図形の中心のまわりをなぞるように指をドラッグすると、動かした角度の分だけ図形が回ります。右下のスライダーで回転の感度を変えられます。PC ではマウスのドラッグで回します。</p>
+  <h2>コツ</h2>
+  <p>色の付いた辺を壊すとアイテムが出ます。シールドは外へ出るボールを1回はね返し、ボムは辺を3枚続けて壊し、マルチボールはボールを増やします(最大4個)。中心の近くをなぞると、小さな動きで大きく回せます。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+
+<script>
+(function () {
+  'use strict';
+
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+  var elStage  = document.getElementById('s-stage');
+  var elScore  = document.getElementById('s-score');
+  var elHigh   = document.getElementById('s-high');
+  var hudEl    = document.getElementById('hud');
+  var setEl    = document.getElementById('settings');
+  var msgEl    = document.getElementById('msg');
+  var titleEl  = document.getElementById('title');
+  var bigEl    = document.getElementById('big');
+  var subEl    = document.getElementById('sub');
+  var toastEl  = document.getElementById('toast');
+  var shareEl  = document.getElementById('share');
+  var sensEl   = document.getElementById('sens');
+  var sensvEl  = document.getElementById('sensv');
+
+  // ---- パラメータ ----
+  var SEG_COUNT     = 14;     // 1ステージの辺の数
+  var PTS_PER_EDGE  = 10;     // 1辺を構成する点の数（形状の再現精度）
+  var BALL_R        = 0.042;
+  var BASE_SPEED    = 1.30;
+  var SPEED_UP      = 1.0;    // 辺を壊すごとの加速（1.0 = 加速なし。1.02 などで有効化）
+  var SCATTER       = 0;      // 反射角のゆらぎ（0 = 完全反射。0.18 などで有効化）
+  var ARRIVE_ANIM   = 0.45;
+  var ARRIVE_RISE   = 0.20;   // 到着演出でどれだけ外から入ってくるか（当たり判定も連動）
+  var DEBRIS_LIFE   = 0.55;
+  var TRAIL_LEN     = 16;
+  var OUT_MARGIN    = 0.28;   // 輪郭からこれだけ外に出たら場外
+  var SHIELD_MARGIN = 0.05;   // 輪郭からこれだけ外でシールド発動
+  var SWEEP_RESCUE  = 0.60;   // 回転で壁に追い越された時、これ以内なら内側へ戻す
+  var ROT_GAIN      = 1.0;    // 回転の感度（スタート／リザルト画面のスライダーで変更）
+  var SUBSTEPS      = 6;
+  var EDGE_TRIM     = 0.45;   // 辺の描画の切り詰め（隙間の見た目）
+
+  // クリア時のスロー猶予
+  var CLEAR_SLOW    = 2.20;   // 猶予の長さ（秒・実時間）
+  var SLOW_SCALE    = 0.22;   // 猶予中の時間倍率
+  var SLOW_EASE     = 0.60;   // 終盤これだけの時間をかけて等速に戻す
+
+  // アイテム
+  var SCORE_PER_EDGE = 1;     // 辺を1枚壊したときの加点
+  var HIGH_KEY       = 'circle-bounce-high';
+
+  var ITEM_PER_STAGE = 3;
+  var BOMB_EDGES     = 3;
+  var BOMB_INTERVAL  = 0.14;  // ボムが1枚ずつ壊す間隔（秒）
+  var WAVE_LIFE      = 0.55;  // 衝撃波の寿命（秒）
+  var MAX_BALLS      = 4;
+  var SPLIT_ANGLE    = 0.9;
+  var TOAST_TIME     = 1.0;
+
+  var ITEMS = {
+    shield: { col: '87, 217, 163',  label: 'Shield +1' },
+    bomb:   { col: '255, 143, 107', label: 'Bomb' },
+    multi:  { col: '255, 209, 102', label: 'Multi Ball' }
+  };
+  var ITEM_KEYS = ['shield', 'bomb', 'multi'];
+
+  var COL_RING   = '238, 241, 247';
+  var COL_ACCENT = '122, 162, 255';
+
+  // ステージ形状（順番に出現）
+  var SHAPES = ['circle', 'square', 'triangle', 'pentagon', 'star', 'hexagon'];
+
+  // ---- 形状の生成 ----
+  function shapeCorners(name) {
+    var pts = [], i, a;
+    function poly(n, rot) {
+      var out = [];
+      for (var k = 0; k < n; k++) {
+        var t = rot + k / n * Math.PI * 2;
+        out.push([Math.cos(t), Math.sin(t)]);
+      }
+      return out;
+    }
+    if (name === 'circle') {
+      for (i = 0; i < 180; i++) { a = i / 180 * Math.PI * 2; pts.push([Math.cos(a), Math.sin(a)]); }
+    } else if (name === 'square')   { pts = poly(4, -Math.PI / 4);
+    } else if (name === 'triangle') { pts = poly(3, -Math.PI / 2);
+    } else if (name === 'pentagon') { pts = poly(5, -Math.PI / 2);
+    } else if (name === 'hexagon')  { pts = poly(6, -Math.PI / 2);
+    } else if (name === 'star') {
+      for (i = 0; i < 10; i++) {
+        a = -Math.PI / 2 + i / 10 * Math.PI * 2;
+        var r = (i % 2 === 0) ? 1 : 0.46;
+        pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+      }
+    }
+    return pts;
+  }
+
+  // 閉じた輪郭を分割する。角（頂点）は必ず点として含めるので、角が丸まらない
+  function buildOutline(corners, m) {
+    var n = corners.length, total = 0, i, p, q, L;
+    for (i = 0; i < n; i++) {
+      p = corners[i]; q = corners[(i + 1) % n];
+      total += Math.hypot(q[0] - p[0], q[1] - p[1]);
+    }
+    var step = total / m, out = [];
+    for (i = 0; i < n; i++) {
+      p = corners[i]; q = corners[(i + 1) % n];
+      L = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      var k = Math.max(1, Math.round(L / step));
+      for (var j = 0; j < k; j++) {
+        var t = j / k;
+        out.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]);
+      }
+    }
+    return out;
+  }
+
+  // 角度 → 輪郭までの距離（0..359度のテーブル）
+  function buildRadiusTable(corners) {
+    var tbl = new Float32Array(360), n = corners.length;
+    for (var d = 0; d < 360; d++) {
+      var a = d * Math.PI / 180;
+      var dx = Math.cos(a), dy = Math.sin(a), best = 0;
+      for (var i = 0; i < n; i++) {
+        var p = corners[i], q = corners[(i + 1) % n];
+        var ex = q[0] - p[0], ey = q[1] - p[1];
+        var den = dx * ey - dy * ex;
+        if (Math.abs(den) < 1e-9) continue;
+        var t = (p[0] * ey - p[1] * ex) / den;          // 原点からの距離
+        var u = (p[0] * dy - p[1] * dx) / den;          // 辺上の位置 0..1
+        if (t > 0 && u >= 0 && u <= 1 && t > best) best = t;
+      }
+      tbl[d] = best || 1;
+    }
+    return tbl;
+  }
+
+  // 角度 → その方向の輪郭を担当する辺のインデックス
+  function buildEdgeTable(pts, ptEdge) {
+    var tbl = new Int16Array(360), n = pts.length;
+    var ang = new Float64Array(n);
+    for (var i = 0; i < n; i++) ang[i] = Math.atan2(pts[i][1], pts[i][0]);
+    for (var d = 0; d < 360; d++) {
+      var a = (d + 0.5) * Math.PI / 180;
+      if (a > Math.PI) a -= Math.PI * 2;
+      var best = 0, bestDiff = 99;
+      for (var j = 0; j < n; j++) {
+        var diff = Math.abs(a - ang[j]);
+        if (diff > Math.PI) diff = Math.PI * 2 - diff;
+        if (diff < bestDiff) { bestDiff = diff; best = j; }
+      }
+      tbl[d] = ptEdge[best];
+    }
+    return tbl;
+  }
+
+  function edgeAt(theta) {
+    var d = theta * 180 / Math.PI;
+    d = ((d % 360) + 360) % 360;
+    return edgeTbl[Math.floor(d)];
+  }
+
+  function radiusAt(theta) {
+    var d = theta * 180 / Math.PI;
+    d = ((d % 360) + 360) % 360;
+    var i = Math.floor(d), f = d - i;
+    var a = radiusTbl[i], b = radiusTbl[(i + 1) % 360];
+    return a + (b - a) * f;
+  }
+
+  // ---- 描画サイズ ----
+  var W = 0, H = 0, cx = 0, cy = 0, R = 0, dpr = 1;
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width  = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx = W / 2; cy = H / 2;
+    R = Math.min(W, H) * 0.40;
+
+    // UI を図形のすぐ外側に寄せる（縦長画面で離れすぎないように）
+    hudEl.style.top = Math.max(12, cy - R - 64) + 'px';
+    setEl.style.top = Math.min(H - 56, cy + R + 22) + 'px';
+  }
+  window.addEventListener('resize', resize);
+
+  // ---- 状態 ----
+  var STATE_READY = 0, STATE_PLAY = 1, STATE_OVER = 2;
+  var state = STATE_READY;
+
+  var slots = [], debris = [], balls = [], waves = [], outline = [], radiusTbl = null, edgeTbl = null;
+  var bombQueue = 0, bombTimer = 0, bombStage = 0;
+  var shapeName = 'circle';
+  var ringAngle = 0, speed = 0;
+  var stage = 1, broken = 0, score = 0, highScore = 0;
+  var elapsed = 0, overAt = 0, clearMsg = 0, slowT = 0;
+
+  // ハイスコアだけブラウザに保存する
+  function loadHigh() {
+    try {
+      var v = parseInt(localStorage.getItem(HIGH_KEY), 10);
+      highScore = isFinite(v) && v > 0 ? v : 0;
+    } catch (e) { highScore = 0; }
+  }
+  function saveHigh() {
+    try { localStorage.setItem(HIGH_KEY, String(highScore)); } catch (e) {}
+  }
+  var shields = 0, toastT = 0, toastMsg = '';
+
+  function shapeForStage(n) { return SHAPES[(n - 1) % SHAPES.length]; }
+
+  function buildRing() {
+    shapeName = shapeForStage(stage);
+    var corners = shapeCorners(shapeName);
+    radiusTbl = buildRadiusTable(corners);
+    outline = buildOutline(corners, SEG_COUNT * PTS_PER_EDGE);
+
+    var total = outline.length;
+    var ptEdge = new Int16Array(total);
+    slots = [];
+    for (var i = 0; i < SEG_COUNT; i++) {
+      var from = Math.round(i * total / SEG_COUNT);
+      var to   = Math.round((i + 1) * total / SEG_COUNT);
+      var pts = [];
+      for (var k = from; k <= to; k++) {
+        pts.push(outline[k % total]);
+        if (k < to) ptEdge[k % total] = i;
+      }
+      slots.push({ alive: true, anim: 1, item: null, pts: pts });
+    }
+    edgeTbl = buildEdgeTable(outline, ptEdge);
+    var pool = [];
+    for (var j = 0; j < SEG_COUNT; j++) pool.push(j);
+    var n = Math.min(ITEM_PER_STAGE, SEG_COUNT);
+    for (var m = 0; m < n; m++) {
+      var pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+      slots[pick].item = ITEM_KEYS[Math.floor(Math.random() * ITEM_KEYS.length)];
+    }
+  }
+
+  function makeBall(x, y, ang) {
+    return { x: x, y: y, vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed, trail: [] };
+  }
+
+  function reset() {
+    stage = 1;
+    buildRing();
+    debris = [];
+    waves = [];
+    bombQueue = 0; bombTimer = 0;
+    ringAngle = 0;
+    speed = BASE_SPEED;
+    for (var i = 0; i < SEG_COUNT; i++) slots[i].anim = 0;   // 初期リングは到着演出なし
+    var pa = Math.random() * Math.PI * 2;
+    balls = [makeBall(Math.cos(pa) * 0.25, Math.sin(pa) * 0.25, Math.random() * Math.PI * 2)];
+    broken = 0; score = 0; elapsed = 0; clearMsg = 0; slowT = 0;
+    shields = 0; toastT = 0; toastMsg = '';
+  }
+
+  function aliveCount() {
+    var n = 0;
+    for (var i = 0; i < SEG_COUNT; i++) if (slots[i].alive) n++;
+    return n;
+  }
+
+  function normalizeBall(b) {
+    var m = Math.hypot(b.vx, b.vy);
+    if (m > 1e-6) { b.vx = b.vx / m * speed; b.vy = b.vy / m * speed; }
+  }
+
+  function toast(msg) { toastMsg = msg; toastT = TOAST_TIME; }
+
+  // ---- 破壊とアイテム ----
+  function destroySlot(i, grant, ball, fromBomb) {
+    var s = slots[i];
+    var item = s.item;
+    s.alive = false; s.anim = 0; s.item = null;
+    debris.push({
+      pts: s.pts, t: 1, big: !!fromBomb,
+      col: fromBomb ? ITEMS.bomb.col : (item ? ITEMS[item].col : COL_ACCENT)
+    });
+    if (fromBomb) {
+      var mid = s.pts[Math.floor(s.pts.length / 2)];
+      waves.push({ x: mid[0], y: mid[1], t: 1 });
+    }
+    broken++;
+    score += SCORE_PER_EDGE;
+    speed *= SPEED_UP;
+    for (var k = 0; k < balls.length; k++) normalizeBall(balls[k]);
+
+    var cleared = false;
+    if (aliveCount() === 0) {
+      stage++;
+      clearMsg = CLEAR_SLOW;
+      slowT = CLEAR_SLOW;
+      buildRing();
+      cleared = true;
+    }
+    if (grant && item) grantItem(item, ball, cleared);
+  }
+
+  function grantItem(type, ball, cleared) {
+    toast(ITEMS[type].label);
+    if (type === 'shield') {
+      shields++;
+    } else if (type === 'bomb') {
+      // 1枚ずつ順に爆破して見せる（ボムが連鎖したら枚数を加算）
+      if (cleared) return;          // クリアと同時なら次ステージには持ち越さない
+      bombQueue += BOMB_EDGES;
+      bombStage = stage;
+    } else if (type === 'multi') {
+      var src = ball || balls[0];
+      if (src && balls.length < MAX_BALLS) {
+        balls.push(makeBall(src.x, src.y, Math.atan2(src.vy, src.vx) + SPLIT_ANGLE));
+      }
+    }
+  }
+
+  // ---- 更新 ----
+  function updateFx(dt) {
+    for (var i = 0; i < SEG_COUNT; i++) {
+      var s = slots[i];
+      if (s.alive && s.anim > 0) s.anim = Math.max(0, s.anim - dt / ARRIVE_ANIM);
+    }
+    for (var j = debris.length - 1; j >= 0; j--) {
+      debris[j].t -= dt / DEBRIS_LIFE;
+      if (debris[j].t <= 0) debris.splice(j, 1);
+    }
+    for (var w = waves.length - 1; w >= 0; w--) {
+      waves[w].t -= dt / WAVE_LIFE;
+      if (waves[w].t <= 0) waves.splice(w, 1);
+    }
+    if (toastT > 0) toastT = Math.max(0, toastT - dt);
+
+    // ボムの連続爆破
+    if (bombQueue > 0) {
+      bombTimer -= dt;
+      if (bombTimer <= 0) {
+        if (stage !== bombStage) {
+          bombQueue = 0;                       // 途中でクリアしたら打ち止め
+        } else {
+          var live = [];
+          for (var q = 0; q < SEG_COUNT; q++) if (slots[q].alive) live.push(q);
+          if (!live.length) { bombQueue = 0; }
+          else {
+            var st0 = stage;
+            destroySlot(live[Math.floor(Math.random() * live.length)], true, null, true);
+            bombQueue--;
+            bombTimer = BOMB_INTERVAL;
+            if (stage !== st0) bombQueue = 0;   // クリアしたら打ち止め
+          }
+        }
+      }
+    }
+    for (var b = 0; b < balls.length; b++) {
+      var bl = balls[b];
+      bl.trail.push([bl.x, bl.y]);
+      while (bl.trail.length > TRAIL_LEN) bl.trail.shift();
+    }
+  }
+
+  // 線分と点の最近点
+  function closestOnSeg(px, py, ax, ay, bx, by, out) {
+    var ex = bx - ax, ey = by - ay;
+    var len2 = ex * ex + ey * ey;
+    var t = len2 > 0 ? ((px - ax) * ex + (py - ay) * ey) / len2 : 0;
+    t = t < 0 ? 0 : (t > 1 ? 1 : t);
+    out[0] = ax + ex * t;
+    out[1] = ay + ey * t;
+  }
+
+  var _c = [0, 0];
+  var _nr = { d: 0, cx: 0, cy: 0, nx: 0, ny: 0 };
+
+  // 到着演出中の辺は外側にあるので、当たり判定も同じ倍率で扱う
+  function edgeScale(edge) {
+    var ease = edge.anim * edge.anim;
+    return 1 + ease * ARRIVE_RISE;
+  }
+
+  // 辺（折れ線）への最近点と、中心側を向く法線
+  function nearestOnEdge(edge, lx, ly) {
+    var pts = edge.pts, bestD = Infinity, bx = 0, by = 0, bnx = 0, bny = 0;
+    var sc = edgeScale(edge);
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p = pts[i], q = pts[i + 1];
+      closestOnSeg(lx, ly, p[0] * sc, p[1] * sc, q[0] * sc, q[1] * sc, _c);
+      var dx = lx - _c[0], dy = ly - _c[1];
+      var d = Math.hypot(dx, dy);
+      if (d < bestD) {
+        bestD = d; bx = _c[0]; by = _c[1];
+        // 面の内向き法線
+        var nx = -(q[1] - p[1]), ny = q[0] - p[0];
+        var m = Math.hypot(nx, ny) || 1; nx /= m; ny /= m;
+        if (nx * (-bx) + ny * (-by) < 0) { nx = -nx; ny = -ny; }
+        // 角（最近点が頂点）では頂点からボールへの向きを法線にする。
+        // 面法線のままだと角で跳ね返り方向と押し出し位置がずれる
+        if (d > 1e-6 && (dx * nx + dy * ny) > 0) { nx = dx / d; ny = dy / d; }
+        bnx = nx; bny = ny;
+      }
+    }
+    _nr.d = bestD; _nr.cx = bx; _nr.cy = by; _nr.nx = bnx; _nr.ny = bny;
+    return _nr;
+  }
+
+  function step(dt) {
+    var h = dt / SUBSTEPS;
+    for (var s = 0; s < SUBSTEPS; s++) {
+      var ca = Math.cos(-ringAngle), sa = Math.sin(-ringAngle);   // world → local
+      var cb = Math.cos(ringAngle),  sb = Math.sin(ringAngle);    // local → world
+
+      for (var bi = balls.length - 1; bi >= 0; bi--) {
+        var b = balls[bi];
+        b.x += b.vx * h;
+        b.y += b.vy * h;
+
+        // 形状ローカル座標へ
+        var lx = b.x * ca - b.y * sa, ly = b.x * sa + b.y * ca;
+        var lvx = b.vx * ca - b.vy * sa, lvy = b.vx * sa + b.vy * ca;
+
+        var dLocal = Math.hypot(lx, ly);
+        var theta = Math.atan2(ly, lx);
+        var cov = slots[edgeAt(theta)];
+        // 到着演出中は輪郭も外側にあるので、その分を見込む
+        var rEdge = radiusAt(theta) * (cov.alive ? edgeScale(cov) : 1);
+
+        // 回転で壁がボールを追い越した場合は、壊さず内側へ戻す
+        if (dLocal > rEdge && dLocal < rEdge + SWEEP_RESCUE) {
+          if (cov.alive) {
+            var nrr = nearestOnEdge(cov, lx, ly);
+            lx = nrr.cx + nrr.nx * (BALL_R * 1.15);
+            ly = nrr.cy + nrr.ny * (BALL_R * 1.15);
+            b.x = lx * cb - ly * sb; b.y = lx * sb + ly * cb;
+            continue;
+          }
+        }
+
+        var hit = -1, hd = Infinity, nx = 0, ny = 0, hcx = 0, hcy = 0;
+        for (var ei = 0; ei < SEG_COUNT; ei++) {
+          var sl = slots[ei];
+          if (!sl.alive) continue;
+          var nr = nearestOnEdge(sl, lx, ly);
+          if (nr.d < hd) { hd = nr.d; hit = ei; nx = nr.nx; ny = nr.ny; hcx = nr.cx; hcy = nr.cy; }
+        }
+
+        // 到着演出中の壁がボールを追い越した場合は、壊さず内側へ押し出すだけ
+        if (hit >= 0 && hd < BALL_R && slots[hit].anim > 0) {
+          lx = hcx + nx * (BALL_R + 0.001);
+          ly = hcy + ny * (BALL_R + 0.001);
+          b.x = lx * cb - ly * sb; b.y = lx * sb + ly * cb;
+          continue;
+        }
+
+        if (hit >= 0 && hd < BALL_R) {
+          var dot = lvx * nx + lvy * ny;
+          if (dot < 0) { lvx -= 2 * dot * nx; lvy -= 2 * dot * ny; }
+          var rot = (Math.random() * 2 - 1) * SCATTER;
+          var rc = Math.cos(rot), rs = Math.sin(rot);
+          var rvx = lvx * rc - lvy * rs, rvy = lvx * rs + lvy * rc;
+          if (rvx * nx + rvy * ny > 0) { lvx = rvx; lvy = rvy; }
+          lx = hcx + nx * (BALL_R + 0.001);
+          ly = hcy + ny * (BALL_R + 0.001);
+
+          b.x = lx * cb - ly * sb; b.y = lx * sb + ly * cb;
+          b.vx = lvx * cb - lvy * sb; b.vy = lvx * sb + lvy * cb;
+          destroySlot(hit, true, b);
+          normalizeBall(b);
+          continue;
+        }
+
+        // 場外判定（輪郭からどれだけ外か）
+        if (dLocal > rEdge + SHIELD_MARGIN && shields > 0) {
+          shields--;
+          toast('Shield used');
+          var sx = lx / dLocal, sy = ly / dLocal;
+          var sd = lvx * sx + lvy * sy;
+          if (sd > 0) { lvx -= 2 * sd * sx; lvy -= 2 * sd * sy; }
+          var back = Math.max(rEdge - BALL_R - 0.01, 0.05);
+          lx = sx * back; ly = sy * back;
+          b.x = lx * cb - ly * sb; b.y = lx * sb + ly * cb;
+          b.vx = lvx * cb - lvy * sb; b.vy = lvx * sb + lvy * cb;
+          normalizeBall(b);
+        } else if (dLocal > rEdge + OUT_MARGIN) {
+          balls.splice(bi, 1);
+          if (balls.length === 0) {
+            state = STATE_OVER;
+            document.documentElement.removeAttribute('data-howto-hidden');
+            overAt = performance.now();
+            // 途中の表示が残ってリザルトと重ならないように消す
+            clearMsg = 0; slowT = 0; toastT = 0;
+            debris.length = 0; waves.length = 0;
+            if (score > highScore) { highScore = score; saveHigh(); }
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  // ---- 入力：ドラッグで回す ----
+  var dragging = false, dragAngle = 0;
+
+  function localAngle(e) {
+    var dx = e.clientX - cx, dy = e.clientY - cy;
+    if (Math.hypot(dx, dy) < R * 0.15) return null;
+    return Math.atan2(dy, dx);
+  }
+
+  function onDown(e) {
+    e.preventDefault();
+    if (state === STATE_READY) { state = STATE_PLAY; document.documentElement.setAttribute('data-howto-hidden', ''); }
+    else if (state === STATE_OVER) {
+      if (performance.now() - overAt > 500) { reset(); state = STATE_READY; }
+      return;
+    }
+    var a = localAngle(e);
+    if (a === null) return;
+    dragging = true; dragAngle = a;
+    if (cv.setPointerCapture) cv.setPointerCapture(e.pointerId);
+  }
+
+  function onMove(e) {
+    if (!dragging || state !== STATE_PLAY) return;
+    var a = localAngle(e);
+    if (a === null) return;
+    var diff = a - dragAngle;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    ringAngle += diff * ROT_GAIN;
+    dragAngle = a;
+  }
+
+  function onUp() { dragging = false; }
+
+  // シェアボタン
+  var shareLabel = 'Share';
+  function onShare(e) {
+    e.stopPropagation();
+    var text = 'Circle Bounce — Score ' + score + ' / Stage ' + stage;
+    // 開いているページのURL（file:// のときは付けない）
+    var url = (location.protocol === 'http:' || location.protocol === 'https:') ? location.href : '';
+    if (navigator.share) {
+      var data = { text: text };
+      if (url) data.url = url;
+      navigator.share(data)['catch'](function () {});
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url ? text + '\n' + url : text).then(function () {
+        shareEl.textContent = 'Copied';
+        setTimeout(function () { shareEl.textContent = shareLabel; }, 1200);
+      })['catch'](function () {});
+    }
+  }
+  shareEl.addEventListener('click', onShare);
+  shareEl.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+
+  // 感度スライダー（プレイ中は非表示）
+  function applySens() {
+    ROT_GAIN = parseFloat(sensEl.value);
+    sensvEl.textContent = ROT_GAIN.toFixed(1);
+  }
+  sensEl.addEventListener('input', applySens);
+  sensEl.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+  applySens();
+
+  cv.addEventListener('pointerdown', onDown);
+  cv.addEventListener('pointermove', onMove);
+  cv.addEventListener('pointerup', onUp);
+  cv.addEventListener('pointercancel', onUp);
+  cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  // ---- 描画 ----
+  function strokePath(pts, scale, trim) {
+    var n = pts.length;
+    if (n < 2) return;
+    var a0 = pts[0], a1 = pts[1], b0 = pts[n - 1], b1 = pts[n - 2];
+    ctx.beginPath();
+    ctx.moveTo((a0[0] + (a1[0] - a0[0]) * trim) * scale, (a0[1] + (a1[1] - a0[1]) * trim) * scale);
+    for (var i = 1; i < n - 1; i++) ctx.lineTo(pts[i][0] * scale, pts[i][1] * scale);
+    ctx.lineTo((b0[0] + (b1[0] - b0[0]) * trim) * scale, (b0[1] + (b1[1] - b0[1]) * trim) * scale);
+    ctx.stroke();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    var lw = Math.max(2, R * 0.020);
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(ringAngle);
+
+    // 輪郭ガイド
+    ctx.strokeStyle = 'rgba(' + COL_RING + ', 0.07)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (var g = 0; g < outline.length; g++) {
+      var p = outline[g];
+      if (g === 0) ctx.moveTo(p[0] * R, p[1] * R); else ctx.lineTo(p[0] * R, p[1] * R);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // 壊れた辺の残像
+    ctx.lineCap = 'round';
+    for (var j = 0; j < debris.length; j++) {
+      var dbr = debris[j];
+      var e = dbr.t * dbr.t;
+      var amp = dbr.big ? 1 : 0;
+      ctx.shadowColor = 'rgba(' + dbr.col + ', ' + (0.8 * e).toFixed(3) + ')';
+      ctx.shadowBlur = dbr.big ? lw * 5 * e : 0;
+      ctx.strokeStyle = 'rgba(' + dbr.col + ', ' + ((dbr.big ? 0.95 : 0.6) * e).toFixed(3) + ')';
+      ctx.lineWidth = lw * (0.3 + 0.7 * e) * (1 + amp * 1.6);
+      strokePath(dbr.pts, R * (1 + (1 - dbr.t) * (dbr.big ? 0.16 : 0.07)), EDGE_TRIM);
+    }
+    ctx.shadowBlur = 0;
+
+    // ボムの衝撃波
+    for (var wv = 0; wv < waves.length; wv++) {
+      var wa = waves[wv];
+      var pr = 1 - wa.t;
+      ctx.strokeStyle = 'rgba(' + ITEMS.bomb.col + ', ' + (0.55 * wa.t).toFixed(3) + ')';
+      ctx.lineWidth = Math.max(1, lw * 1.2 * wa.t);
+      ctx.beginPath();
+      ctx.arc(wa.x * R, wa.y * R, R * (0.04 + pr * 0.42), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // 生きている辺
+    for (var i = 0; i < SEG_COUNT; i++) {
+      var s = slots[i];
+      if (!s.alive) continue;
+      var ease = s.anim * s.anim;
+      var col = s.item ? ITEMS[s.item].col : COL_RING;
+      ctx.shadowColor = 'rgba(' + col + ', ' + (s.item ? 0.7 : 0.35) + ')';
+      ctx.shadowBlur = lw * (s.item ? 3.4 : 2.2);
+      ctx.strokeStyle = 'rgba(' + col + ', ' + (0.92 - 0.5 * ease).toFixed(3) + ')';
+      ctx.lineWidth = s.item ? lw * 1.5 : lw;
+      strokePath(s.pts, R * edgeScale(s), EDGE_TRIM);
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // ボール（回転の影響を受けないワールド座標）
+    for (var b = 0; b < balls.length; b++) {
+      var bl = balls[b];
+      ctx.save();
+      for (var t = 0; t < bl.trail.length; t++) {
+        var f = (t + 1) / bl.trail.length;
+        ctx.fillStyle = 'rgba(' + COL_ACCENT + ', ' + (0.16 * f * f).toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(cx + bl.trail[t][0] * R, cy + bl.trail[t][1] * R, BALL_R * R * (0.25 + 0.7 * f), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (shields > 0) {
+        ctx.strokeStyle = 'rgba(' + ITEMS.shield.col + ', 0.85)';
+        ctx.lineWidth = Math.max(1.5, R * 0.008);
+        ctx.beginPath();
+        ctx.arc(cx + bl.x * R, cy + bl.y * R, BALL_R * R * 1.7, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.shadowColor = 'rgba(' + COL_ACCENT + ', 0.9)';
+      ctx.shadowBlur = R * 0.10;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(cx + bl.x * R, cy + bl.y * R, BALL_R * R, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function setMsg(title, big, sub) {
+    titleEl.textContent = title;
+    bigEl.textContent = big;
+    subEl.textContent = sub;
+    msgEl.classList.toggle('hidden', !title && !big && !sub);
+  }
+
+  function updateHud() {
+    elStage.textContent = stage;
+    elScore.textContent = score;
+    elHigh.textContent = highScore;
+
+    toastEl.textContent = toastMsg;
+    toastEl.style.opacity = toastT > 0 ? 1 : 0;
+    toastEl.classList.toggle('shift', clearMsg > 0);
+    shareEl.classList.toggle('on', state === STATE_OVER);
+    if (state !== STATE_OVER) shareEl.textContent = shareLabel;
+
+    if (state === STATE_READY) {
+      setMsg('Circle Bounce', '', 'タップでスタート');
+    } else if (state === STATE_OVER) {
+      setMsg('Game Over', 'Stage ' + stage, 'タップでリスタート');
+    } else if (clearMsg > 0) {
+      setMsg('', 'Stage Clear', '');
+    } else {
+      setMsg('', '', '');
+    }
+  }
+
+  // ---- ループ ----
+  var last = 0;
+  function frame(now) {
+    if (!last) last = now;
+    var dtReal = Math.min((now - last) / 1000, 0.05);
+    last = now;
+
+    if (state === STATE_PLAY) {
+      elapsed += dtReal;
+      if (slowT > 0) slowT = Math.max(0, slowT - dtReal);
+      if (clearMsg > 0) clearMsg = Math.max(0, clearMsg - dtReal);
+
+      // クリア直後はスローになり、終盤で等速に戻る
+      var scale = 1;
+      if (slowT > 0) {
+        scale = slowT > SLOW_EASE ? SLOW_SCALE
+              : SLOW_SCALE + (1 - SLOW_SCALE) * (1 - slowT / SLOW_EASE);
+      }
+      var dt = dtReal * scale;
+      updateFx(dt);
+      step(dt);
+    }
+    draw();
+    updateHud();
+    requestAnimationFrame(frame);
+  }
+
+  loadHigh();
+  resize();
+  reset();
+  requestAnimationFrame(frame);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

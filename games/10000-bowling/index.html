@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/10000-bowling/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>1万ボーリング</title>
+<meta name="description" content="1万本のピンを2投で倒すボウリング">
+<style>
+  :root{
+    /* 色の決め事：背景は元の暗い色、床は淡いオレンジの板、球はつやのある赤い無地のボウリングの球、文字やボタンは縁取りなし（暗く透けた地か影だけ） */
+    --bg:#1e2228; --fg:#fff; --ink:#1d2b64;
+    --lane:#f5ad6a; --rail:#d9823e; --pin:#f7f7f7; --pinDown:#b07a5a; --pinStripe:#d32020;
+    --howto-bg:#1e2228; --howto-fg:#fff;
+    --ball:#5a0007; --trail:#ff3b30; --gate:#1f86ff; --pop:#8fd3ff; --guide:#00c853;
+    --spareBand:rgba(32,110,235,.88); --strikeBand:rgba(214,24,34,.9); --gaugeLow:#3ccf5a; --gaugeOn:#ffd21a; --gaugeHot:#ff6a2a; --gaugeOff:rgba(255,255,255,.18); --shade:rgba(18,22,30,.62); --edge:rgba(20,24,32,.55); --textEdge:drop-shadow(0 0 1px rgba(35,38,45,.95)) drop-shadow(0 0 2px rgba(35,38,45,.6)) drop-shadow(0 0 4px rgba(35,38,45,.35)); --ctlBottom:calc(env(safe-area-inset-bottom,0px) + 76px);
+    --font:"Hiragino Maru Gothic ProN","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:var(--font);
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #game{position:relative;margin:0 auto;width:100%;max-width:420px;height:100vh;height:100dvh;overflow:hidden}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  /* ボタンの中の文字やアイコンも選ばせない（長押しで虫眼鏡が出ないように） */
+  button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  button svg{pointer-events:none}
+  #hud{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 0;display:flex;justify-content:flex-start;pointer-events:none}
+  #pinCount{padding:6px 14px;border-radius:18px;background:var(--shade);font-size:16px;font-weight:bold;font-variant-numeric:tabular-nums;white-space:nowrap}
+  /* ゲートを通ったときに出る「×3」「+50」：ゲートの画面上の位置に合わせて JS で動かす */
+  #pops{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  /* 文字の縁取り（--textEdge）：線は引かず、文字のすぐ外が一番濃く、外へいくほど薄くなる縁を、ずらさないぼかしを3段重ねて作る */
+  .gatePop{position:absolute;left:0;top:0;font-size:56px;font-weight:900;color:var(--pop);filter:var(--textEdge);white-space:nowrap;font-variant-numeric:tabular-nums;will-change:transform,opacity}
+  /* 倒している途中の本数：画面幅いっぱい近くまで大きく（「10,000本」が収まる大きさ） */
+  #centerCount{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:min(20vw,96px);font-weight:900;filter:var(--textEdge);line-height:1;white-space:nowrap;pointer-events:none;font-variant-numeric:tabular-nums}
+  /* パワーゲージ：移動のボタンと同じ暗く透けた帯に、たまっていくコマ（緑→黄→橙）。文字は付けない */
+  #power{position:absolute;left:16px;right:16px;bottom:var(--ctlBottom);height:40px;display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:20px;background:var(--shade);pointer-events:none}
+  #powerSegs{flex:1;display:flex;gap:3px;height:16px;align-items:stretch}
+  .seg{flex:1;border-radius:4px;background:var(--gaugeOff)}
+  .seg.on{background:var(--gaugeOn)}
+  .seg.on.low{background:var(--gaugeLow)}
+  .seg.on.hot{background:var(--gaugeHot)}
+  /* 位置のボタン：参考画像のAボタンのような青緑の丸に白い縁 */
+  /* 位置のボタン：左右の矢印は球のすぐ横に付いて動く。決定は下の真ん中 */
+  /* 位置のボタン：左右の矢印と決定を横一列に並べる。縦の位置は、球と画面下の間の真ん中（JS で合わせる） */
+  /* 位置を決める間、球の左右に出す小さな矢印（左右に動かせることを示すだけで、押すものではない） */
+  #posHint{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
+  #posHint svg{position:absolute;top:0;width:var(--hintSize);height:var(--hintSize);margin-top:calc(var(--hintSize) / -2);fill:none;stroke-linecap:round;stroke-linejoin:round}
+  #posHint .l{right:var(--hintGap)}
+  #posHint .r{left:var(--hintGap)}
+  #posHint .edge{stroke:var(--edge);stroke-width:5}
+  #posHint .fg{stroke:#fff;stroke-width:3}
+  /* 決定ボタンは下端をパワーのゲージの下端と同じ高さにそろえる */
+  #posCtrl{position:absolute;left:0;right:0;bottom:var(--ctlBottom);display:flex;justify-content:center;align-items:center;gap:16px;pointer-events:none}
+  .ctl{display:flex;align-items:center;justify-content:center;padding:0;border:none;font-family:inherit;color:#fff;touch-action:none;pointer-events:auto}
+  #posOk{flex:none;width:150px;height:56px;border-radius:28px;background:#fff;color:var(--ink);font-size:18px;font-weight:bold;letter-spacing:.1em}
+  #posOk:active{background:#dfe4ee;transform:translateY(1px)}
+  /* 向きを決めている間だけ、左下の隅に出す（位置を決め直す）。
+     画面上の操作ボタンの決まり：44px の半透明の黒い丸、枠線なし、白い細線のアイコンだけ、画面端から16px */
+  #backPos{position:absolute;left:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:none;border-radius:22px;background:#0008;touch-action:manipulation}
+  #backPos svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  #backPos:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .ctl:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .hidden{display:none !important}
+  /* ストライク・スペアの演出：白く光ってから大きな文字が飛び込み、紙吹雪が舞う */
+  #celebrate{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  #celebFlash{position:absolute;inset:0;background:#fff;opacity:0}
+  #celebrate.on #celebFlash{animation:celebFlash .5s ease-out}
+  #confetti{position:absolute;inset:0;width:100%;height:100%}
+  /* 文字は帯（#celebMid）と同じ高さの箱に入れ、箱の中で上下中央に置く（行の高さを1にして、字の上下の余白の差で帯からずれないようにする） */
+  #celebText{position:absolute;left:0;right:0;top:38%;height:1.25em;display:flex;align-items:center;justify-content:center;line-height:1;font-size:min(13vw,60px);font-weight:900;white-space:nowrap;color:#fff;opacity:0}
+  /* ストライク・スペアの演出：文字の後ろに帯が横から差し込み（ストライクは赤、スペアは青）、文字の所から光の輪が広がり、
+     紙吹雪が文字の所からもう一度はじける。ストライクは輪も紙吹雪も1回ずつ多い */
+  #celebMid{position:absolute;left:0;right:0;top:38%;height:1.25em;font-size:min(13vw,60px)}
+  #celebBand{position:absolute;left:-10%;right:-10%;top:-.15em;bottom:-.15em;background:var(--spareBand);opacity:0;transform:skewY(-4deg) translateX(-110%)}
+  #celebrate.on #celebBand{animation:bandIn .35s cubic-bezier(.2,.9,.3,1) .05s forwards}
+  #celebrate.strike #celebBand{background:var(--strikeBand)}
+  .celebRing{position:absolute;left:50%;top:50%;width:2em;height:2em;margin:-1em 0 0 -1em;background-size:100% 100%;opacity:0}   /* 輪の画像は JS で1画素ずつ作って入れる（グラデーションは拡大するとざらつくため） */
+  #celebrate.on .celebRing{animation:ringOut .9s ease-out .1s forwards}
+  #celebrate.on .celebRing:nth-child(3){animation-delay:.45s}
+  #celebrate.on.spare .celebRing:nth-child(4){display:none}
+  #celebrate.on.strike .celebRing:nth-child(4){animation-delay:.8s}
+  @keyframes bandIn{0%{opacity:1;transform:skewY(-4deg) translateX(-110%)}100%{opacity:1;transform:skewY(-4deg) translateX(0)}}
+  @keyframes ringOut{0%{opacity:1;transform:scale(.3)}100%{opacity:0;transform:scale(6)}}
+  #celebrate.on #celebText{animation:celebIn .55s cubic-bezier(.2,1.6,.4,1) forwards, celebPulse .9s ease-in-out .55s infinite alternate}
+  @keyframes celebFlash{0%{opacity:.85}100%{opacity:0}}
+  @keyframes celebIn{0%{opacity:0;transform:scale(2.6) rotate(-6deg)}60%{opacity:1}100%{opacity:1;transform:scale(1) rotate(-4deg)}}
+  @keyframes celebPulse{from{transform:scale(1) rotate(-4deg)}to{transform:scale(1.07) rotate(-4deg)}}
+  /* 結果：暗く透けた背景の上に白いカード1枚。移動のボタンと同じく白と紺だけで組む */
+  #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,13,20,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  #card{position:relative;width:100%;max-width:340px;display:flex;flex-direction:column;align-items:stretch;gap:18px;padding:24px 20px 20px;border-radius:20px;background:#fff;color:var(--ink)}
+  /* 実物と同じ形式のスコア表：フレームの上段に1投目・2投目の小枠、下段にそのフレームまでの合計 */
+  /* スコア表：1フレームだけなので、2つの小枠を左右半分ずつに並べ、その下に合計を置く（左右の釣り合いを取る） */
+  #sheet{width:200px;margin:0 auto;border-collapse:collapse;color:var(--ink);font-variant-numeric:tabular-nums;table-layout:fixed}
+  #sheet td{border:1.5px solid #c9cfdc;padding:0;text-align:center}
+  #sheet .throws{display:flex}
+  #sheet .box{flex:1 1 0;min-width:0;height:56px;display:flex;align-items:center;justify-content:center;padding:0;font-size:18px;font-weight:bold;border-bottom:1.5px solid #c9cfdc}
+  #sheet .box + .box{border-left:1.5px solid #c9cfdc}
+  #sheet .mark{display:block;width:100%;height:100%;fill:var(--ink)}
+  #sheet .total{font-size:40px;font-weight:900;line-height:1.1;padding:12px 4px 14px}
+  .btns{display:flex;flex-direction:column;gap:10px}
+  /* スコア表の表示演出：カードが出る → 1投目・2投目の順に枠へ判を押すように入る → 合計を数え上げ → 最後に弾む → ボタンが出る */
+  #over:not(.hidden){animation:overIn .25s ease-out both}
+  #over:not(.hidden) #card{animation:cardIn .4s cubic-bezier(.2,1.4,.4,1) both}
+  #sheet .v{display:flex;align-items:center;justify-content:center;width:100%;height:100%;opacity:0}
+  #sheet .v.in{opacity:1;animation:stampIn .32s cubic-bezier(.2,1.5,.4,1)}
+  #sheet .total.done{animation:totalPop .4s cubic-bezier(.2,1.6,.4,1)}
+  #overBtns{opacity:0;pointer-events:none}
+  /* 見える状態はクラス自体で決め、アニメは動きを付けるだけにする（iPhoneでアニメが流れないと、
+     アニメの最後の状態で見せる作りでは透明のまま残り、押せるのに見えないボタンになっていた） */
+  #overBtns.in{opacity:1;pointer-events:auto;animation:btnsIn .3s ease-out}
+  /* 全部倒したとき：数え終わってから、カードの上の縁に「ストライク！」「スペア！」の帯を判のように押し、紙吹雪をはじけさせる */
+  #allBand{position:absolute;left:-12px;right:-12px;top:-40px;height:52px;display:flex;align-items:center;justify-content:center;line-height:1;font-size:30px;font-weight:900;color:#fff;white-space:nowrap;background:var(--spareBand);transform:rotate(-4deg);opacity:0;pointer-events:none}
+  #allBand.strike{background:var(--strikeBand)}
+  #allBand.in{opacity:1;animation:bandStamp .35s cubic-bezier(.2,1.5,.4,1)}
+  #overConfetti{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  @keyframes bandStamp{0%{opacity:0;transform:rotate(-4deg) scale(1.8)}100%{opacity:1;transform:rotate(-4deg) scale(1)}}
+  @keyframes overIn{from{opacity:0}to{opacity:1}}
+  @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.9)}to{opacity:1;transform:none}}
+  @keyframes stampIn{0%{opacity:0;transform:scale(2.4)}100%{opacity:1;transform:scale(1)}}
+  @keyframes totalPop{0%{transform:scale(1.35)}100%{transform:scale(1)}}
+  @keyframes btnsIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  /* 共有シートが出ない環境で、共有される内容（結果画像と文面）をそのまま見せる */
+  #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
+  #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:20px;background:#fff;color:var(--ink)}
+  #share-img{display:block;width:100%;height:auto;border-radius:10px}
+  #share-text{margin:0;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text}
+  .btn{width:100%;height:52px;border-radius:26px;border:none;font-family:inherit;font-size:18px;font-weight:bold;letter-spacing:.06em;background:var(--ink);color:#fff}
+  .btn:active{transform:translateY(1px);filter:brightness(1.15)}
+  .btn.sub{background:#eef1f7;color:var(--ink)}
+  .btn:focus-visible{outline:2px solid var(--gate);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hud">
+    <span id="pinCount" aria-live="polite"></span>
+  </div>
+  <div id="pops" aria-hidden="true"></div>
+  <div id="centerCount" class="hidden" aria-live="polite"></div>
+  <div id="power" class="hidden" aria-hidden="true"><div id="powerSegs"></div></div>
+  <button id="backPos" class="hidden" type="button" aria-label="位置に戻る"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+  <div id="posHint" class="hidden" aria-hidden="true">
+    <svg class="l" viewBox="0 0 24 24"><path class="edge" d="M15 5 8 12l7 7"/><path class="fg" d="M15 5 8 12l7 7"/></svg>
+    <svg class="r" viewBox="0 0 24 24"><path class="edge" d="M9 5l7 7-7 7"/><path class="fg" d="M9 5l7 7-7 7"/></svg>
+  </div>
+  <div id="posCtrl" class="hidden">
+    <button id="posOk" class="ctl" type="button">決定</button>
+  </div>
+  <div id="celebrate" class="hidden" aria-live="assertive"><div id="celebFlash"></div><div id="celebMid"><div id="celebBand"></div><div class="celebRing"></div><div class="celebRing"></div><div class="celebRing"></div></div><canvas id="confetti"></canvas><div id="celebText"></div></div>
+  <div id="over" class="hidden"><div id="card">
+    <div id="allBand" class="hidden" aria-hidden="true"></div>
+    <table id="sheet" aria-label="スコア">
+      <tr>
+        <td><div class="throws"><div class="box" id="throw1"></div><div class="box" id="throw2"></div></div><div class="total" id="frameTotal" aria-hidden="true"></div></td>
+      </tr>
+    </table>
+    <div class="btns" id="overBtns">
+      <button id="retry" class="btn" type="button">もう一回</button>
+      <button id="share" class="btn sub" type="button">共有</button>
+    </div>
+  </div><canvas id="overConfetti" aria-hidden="true"></canvas></div>
+  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+    <div class="panel">
+      <img id="share-img" alt="共有される結果画像">
+      <p id="share-text"></p>
+      <button id="share-close" class="btn" type="button">閉じる</button>
+    </div>
+  </div>
+  <section class="howto" hidden data-pos="top-right">
+    <h2>遊び方</h2>
+    <p>1万本のピンを2投で倒すボウリングです。レーンには30個のゲートが並び、球がくぐると「×」や「+」の数だけ球が増えます。2投で倒した合計がスコアになり、1投目で全部倒せばストライク、2投目で倒しきればスペアです。</p>
+    <h2>操作</h2>
+    <p>まず画面を横にドラッグして球の位置を動かし、「決定」を押します。次に左右へ振れる線をタップして向きを、往復するゲージをタップして強さを決めると投げられます。向きを決めている間は左下のボタンで位置に戻れます。PC では←→キーで位置を動かし、スペースか Enter で決定します。</p>
+    <h2>コツ</h2>
+    <p>「+」は1投につき1回だけ効き、「×」は通った球1個ごとに効きます。先に「+」で球を増やしてから「×」へ通すと、一気に数が伸びます。2投目のゲートの配置は1投目と同じなので、1投目の結果を見て通り道を変えられます。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const fmt = n => n.toLocaleString('ja-JP');
+
+  // ---------- 定数 ----------
+  // ピン
+  const PIN_TOTAL = 10000;     // ピンの本数（1列目1本、2列目2本…の三角形に並べる）
+  const S = 1;                 // ピンの間隔
+  const ROW_GAP = 0.866;       // ピンの列の間隔（正三角形に並べるため √3/2）
+  const PIN_R = 0.2;           // ピンの当たり判定の半径（立っているとき）
+  const PIN_R_DOWN = 0.32;     // 倒れたピンの当たり判定の半径（寝ると横に広がるため）
+  const PIN_H = 1.25;          // ピンの高さ
+  const PIN_FRONT_Z = 160;     // 先頭のピンの位置
+  const PIN_MASS = 0.22;       // ピンの重さ（球との比が大事）
+
+  // 連鎖：物理で動かさないピンは、倒れた向きにある隣のピンを倒していく（ドミノ式）
+  const FALL_JITTER = 20 * Math.PI / 180; // 倒れる向きのばらつき
+  const DOMINO_FALL = 0.4;     // 連鎖で倒れるピンが倒れきるまで（秒）
+  const MAX_ACTIVE = 1500;     // 物理で飛ばすピンの上限（超えた分は連鎖の倒れ方にする）
+  const FLY_CHANCE = 0.3;      // 球に直接当たったピンが宙に飛ぶ確率（残りはその場で倒れる）
+
+  // ピンの描き方：見ている所の近くだけ形で描き、それ以外は点で描く（100万本を形で描くと重すぎるため）
+  const NEAR_MAX = 6000;       // 形で描くピンの上限
+  const NEAR_X = 40;           // 形で描く範囲の横幅（片側）
+  const NEAR_BACK = 30;        // 形で描く範囲：見ている所から手前へ
+  const NEAR_FWD = 30;         // 形で描く範囲：見ている所から奥へ
+  const POINT_SIZE = 0.45;     // 点の大きさ（ピンの太さに合わせる）
+  const NEAR_MIN_PX = 3;       // ピンの太さが画面上でこのピクセル数より細くなる距離では、形で描かず点だけにする
+                               // （細すぎる形は点より薄く見え、その範囲だけ四角く抜けて見えるため）
+
+  // 球とレーン
+  const BALL_R = 0.36;         // 球の半径
+  const FOG_NEAR = 400;        // ここから先は背景の色に少しずつ溶かす
+  const FOG_FAR = 1000;        // ここで背景の色になる
+  const RAIL_W = 0.8;          // 床の両端の縁の幅
+  const RAIL_H = 0.5;          // 床の両端の縁の高さ
+  const CAM_SETTLED = 0.5;     // カメラが球の所へ戻りきったとみなす残りの距離（これより遠い間は位置のボタンを隠す）
+  const HINT_SIZE = 22;        // 球の左右の矢印の大きさ（px）
+  const HINT_GAP = 4;          // 球の縁から矢印までの間（px）
+  const DRAG_GAIN = 1;         // 位置を決めるドラッグの効き（1で指の下の床と同じだけ動く）
+  const TRAIL_SPEED = 20;      // この速さより速い球にだけ尾を引く
+  const TRAIL_FULL = 45;       // この速さで尾が一番濃くなる（TRAIL_SPEED から濃くなっていく）
+  const TRAIL_TIME = 0.03;     // 尾の長さ（この秒数ぶん前にいた所まで伸ばす）
+  const TRAIL_ALPHA = 0.75;    // 尾の根元の濃さ
+  const BALL_ROUGH = 0.08;     // 球の表面のざらつき（小さいほど映り込みがくっきりして、磨いたボウリングの球らしくなる）
+  const BALL_MASS = 1;         // 球の重さ
+  const BALL_SPEED_MIN = 12;   // 強さが一番弱いときの球の速さ
+  const BALL_SPEED_MAX = 90;   // 強さが一番強いときの球の速さ
+  const MAX_MOVE = 0.25;       // 1回で動かす距離の上限（球とピンの半径の和より十分短く。すり抜け防止）
+  const BALL_FRICTION = 0.4;   // 球の減速（レーンは油が塗ってあるので小さめ）
+  const BALL_FIELD_DRAG = 0.15; // ピンが並ぶ所に入ってからの球の減速（速さに比例）。ピンの中を進める距離はおよそ「速さ÷これ」
+                               // （目安：一番弱い球は約15、真ん中の強さは約80、一番強い球は約145＝一番奥（約122）を越える）
+  const FIELD_FRICTION = 0.8;   // ピンの所で、速さに関係なくかかる減速（1秒あたり）
+  const BALL_HIT_SLOW = 0.5;  // 球がピンに当たったときの減速・跳ね返りの効き（1で本来どおり。小さいと球がピンを素通りするように見える）
+  const FLY_MAX = 12;          // 弾かれて宙に飛ぶピンの横向きの速さの上限（速すぎると遠くまで飛んで、奥のピンを倒してしまう）
+  const MAX_AIM = 15 * Math.PI / 180; // 投げる向きの上限（左右）。中央から三角形の奥の角に届くのが約14°
+  const AIM_PERIOD = 1.6;      // 予測線が左右に1往復する時間（秒）
+  const POWER_PERIOD = 1.2;    // 強さのゲージが1往復する時間（秒）
+  const POWER_SEGS = 24;       // パワーゲージのコマの数
+  const POWER_LOW = 0.4;       // ここまでのコマは緑（割合）。その先は黄色
+  const POWER_HOT = 0.8;       // ここから先のコマは橙（割合）
+  const AIM_LEN = 0.5;          // 予測線の長さ（ピンの手前までの長さに対する割合）
+  const AIM_FADE_FROM = 0.1;    // 予測線のこの割合の所から先へ、だんだん薄くして消す
+  const AIM_GUIDE_OPACITY = 0.85; // 球の通り道を示す帯の濃さ（明るい木目の上でも見えるよう濃いめ。色は --guide）
+  const POS_SPEED = 6;         // ◀▶ボタン（PCは←→）を押し始めたときに位置が動く速さ（1秒あたり）
+  const POS_ACCEL = 1.5;       // 押し続けると速くなる割合（1秒押すと 1+1.5 倍）
+  const POS_SPEED_MAX = 60;    // 押し続けたときの速さの上限
+  const LANE_HALF = 8.2;       // ゲートが並ぶ幅（と、投げる位置を動かせる幅）の半分
+  const START_Z = 0;           // 投げる位置
+  const LANE_START = START_Z - 12;
+
+  // ゲート：「×」は通った球の数を掛ける、「+」は最初に通った1球のときだけ足す
+  // 置き場所・種類・数値は「もう一回」のたびにランダムに決める（2投目は1投目と同じ配置）
+  // 床の横幅いっぱいに散らして置き、ゲートの間は空いている（外すと何も起きない）
+  const gateHalf = z => FIELD_HALF;   // ゲートを置ける横幅の半分（床の幅と同じ）
+  const GATE_COUNT = 30;       // ゲートの数（床の幅に広げたので、前の扇形のときと同じくらいの密度になるよう増やした）
+  const GATE_Z_MIN = 15;       // ゲートを置く奥行きの範囲
+  const GATE_Z_MAX = 145;
+  const GATE_GAP_Z = 8;        // 横に重なるゲート同士は、奥行きをこれ以上離す（近すぎると増えた球が次のゲートを飛び越すため）
+  const GW_S = 6;              // 止まっているゲートの幅
+  const GW_M = 4;              // 動くゲートの幅
+  const MOVE_CHANCE = 0.3;     // 動くゲートになる確率
+  const GATE_MOVE_MIN = 3;     // 動くゲートの左右に動く幅（片側）。ゲート自身の幅（4）と同じくらい
+  const GATE_MOVE_MAX = 8;
+  const GATE_SPEED_MAX = 8;    // 動くゲートの一番速いところの速さ（1秒あたり。ピンの間隔が1）
+  const TIMES_CHANCE = 0.55;   // 「×」になる確率（残りは「+」）
+  const TIMES_VALS = [2, 2, 3, 3, 4, 5]; // 「×」の数値の候補
+  const PLUS_PER_Z = 3;        // 「+」の数値は奥ほど大きい（奥行き1あたりの目安）
+  const GATE_H = 2.4;          // ゲートの高さ
+  const MAX_BALLS = 3000;      // 球の上限（重くなりすぎないように）
+  const CELEB_TIME = 2.4;      // ストライク・スペアの演出を見せる時間（秒）。この後に結果を出す
+  const STRIKE_BURST_AT = [0.45, 0.85]; // ストライクのとき、文字の所から紙吹雪がはじける時刻（秒）
+  const SPARE_BURST_AT = [0.45];        // スペアのとき、同じく
+  const SPARE_BURST_N = 140;   // 文字の所からはじける紙吹雪の枚数（1回ぶん）
+  const CONFETTI_N = 180;      // 紙吹雪の枚数
+  const CONFETTI_COLORS = ['#2f6dff', '#ffd21a', '#ffffff', '#ff5a5a', '#36d45a', '#ff9f1a'];
+  const SPAWN_ANIM = 0.4;      // 増えた球がゲートから飛び出して自分の位置に着くまでの時間（秒）
+  const SPAWN_HOP = 1.6;       // 飛び出すときの山なりの高さ
+  const SPAWN_SPREAD = 2.0;    // 増えた球をばらまく横幅（少ないとき）
+  const SPAWN_SPREAD_K = 0.9;  // たくさん増えたときのばらまく幅の広がり方（√増えた数 × これ）
+  const SPAWN_AHEAD = 1.2;     // 増えた球をばらまく奥行き（少ないとき）
+  const SPAWN_ANGLE = 14 * Math.PI / 180; // 増えた球の向きのばらつき（扇形に広がって、奥ほど広い範囲のピンを倒す）
+
+  // 物理
+  const PIN_DAMP = 3;          // 物理で動くピンの減速（速いほど強く効く）
+  const PIN_FRICTION = 3;      // 物理で動くピンの減速（一定）
+  const WALL_BOUNCE = 0.6;     // 床の左右の縁で跳ね返るときの勢いの残り方
+  const BALL_BALL_HIT = true;  // 球どうしをぶつけるか
+  const RESTITUTION = 0.7;     // 跳ね返りの強さ
+  const KNOCK_SPEED = 0.6;     // ピンがこの速さ以上で押されると倒れる
+  const FALL_TIME = 0.35;      // 物理で動くピンが倒れきるまでの時間（秒）
+  const FLY_SPEED = 3;         // この速さ以上で弾かれたピンは宙に飛ぶ（物理で動かす）
+  const FLY_UP = 0.35;         // 宙に飛ぶときの上向きの速さ（弾かれた速さに対する割合）
+  const SPIN_MIN = 6;          // 宙を舞うピンの回転の速さ（rad/s）
+  const SPIN_MAX = 16;
+  const GRAVITY = 25;          // 宙を舞うピンにかかる重力
+  const LAND_MIN = 3;          // 着地したときこの速さ以上なら跳ねる
+  const LAND_BOUNCE = 0.3;     // 着地で跳ねる強さ
+
+  // 当たった瞬間の手応え
+  const SHAKE_PER = 0.02;      // 球がピンにぶつかった速さ1あたりの画面の揺れ
+  const SHAKE_MAX = 0.6;       // 揺れの上限
+  const SHAKE_DECAY = 8;       // 揺れが収まる速さ
+  const SLOW_SCALE = 0.25;     // 最初にピンへ当たった直後のスローの倍率
+  const SLOW_TIME = 0.6;       // スローの長さ（実時間・秒）
+
+  // ゲート通過の表示
+  const POP_TIME = 0.8;        // 「×5」などが浮かんで消えるまで（秒）
+  const POP_RISE = 2.5;        // 浮かぶ高さ
+  const POP_COOLDOWN = 0.25;   // 同じゲートで表示を出し直す間隔（秒、球が多いと出すぎるため）
+  const GATE_OPACITY = 0.38;   // ゲートの濃さ（通常）
+  const GATE_FLASH = 0.45;     // 通った瞬間に足す濃さ
+  const GATE_SPENT = 0.1;      // 使い終わった「+」ゲートの濃さ
+
+  const STEP = 1 / 90;         // 物理の刻み（秒）
+  const END_WAIT = 0.5;        // 全部止まってから結果を出すまで（秒）
+  const IDLE_END = 0.8;        // 倒し進んでいるものが無くなってから、これだけたったら終わる（秒）
+  const ACTIVE_T = 0.6;        // 直近この秒数にピンを倒した球（と飛んだピン）は、まだ倒し進んでいるとみなす
+  const IDLE_BALL_SPEED = 3;   // ただし、これより速く転がっている球があるうちは終わらない
+
+  // カメラ：先頭の球か倒れの波の先を追い、ピンの三角形が広がるほど高く引く
+  const CAM_H = 7;             // 基本の高さ
+  const CAM_H_PER_W = 1.8;     // ピンの列の幅1あたりに足す高さ
+  const CAM_BACK = 16;         // 追う位置からどれだけ後ろに置くか
+  const CAM_BACK_PER_W = 0.45; // ピンの列の幅1あたりに足す後ろへの距離
+  const CAM_AHEAD = 12;        // 追う位置からどれだけ先を見るか
+  const CAM_FOLLOW = 6;        // カメラが追いつく速さ（小さいと速い球が画面の先へ消える）
+  const LOOK_MAX_OFS = 0;      // カメラが見る所の一番奥を、ピンの所の真ん中からどれだけずらすか（＋で奥）
+  const CAM_FIT_MARGIN = 4;    // 球の広がりに足す余白（全部の球が画面に収まるよう引くとき）
+  const CAM_FIT_Z = 1.0;       // 奥行き方向の広がりを横幅に換算する割合
+  const CAM_ZOOM_FOLLOW = 5;   // 球の広がりに合わせて引く速さ
+  const CAM_X_FADE_W = 40;     // ピンの列の幅がこれに近づくほど、横に追うのをやめて中央から見る
+  const TOP_VIEW_PITCH = 40 * Math.PI / 180; // カメラの見下ろす角度がこれを超えたら、倒した数を画面中央に出す
+  const CELL = 1;              // 動くもの同士の当たり判定の区画の大きさ
+
+  // ---------- ピンの並び ----------
+  const PIN_ROWS = [];
+  for (let k = 1, left = PIN_TOTAL; left > 0; k++){ const n = Math.min(k, left); PIN_ROWS.push(n); left -= n; }
+  const ROWS = PIN_ROWS.length;
+  const FIELD_START = PIN_FRONT_Z - 4;                    // ここから先はピンを並べる広い床
+  const FIELD_END = PIN_FRONT_Z + (ROWS - 1) * ROW_GAP + 4;
+  const LOOK_MAX_Z = (PIN_FRONT_Z + FIELD_END) / 2 + LOOK_MAX_OFS; // カメラが見る所の一番奥
+  const FIELD_HALF = Math.max(LANE_HALF, ROWS / 2 + 3);
+  const widthAt = z => clamp((z - PIN_FRONT_Z) / ROW_GAP + 1, 0, ROWS); // その奥行きでのピンの列の幅
+  const TIMEOUT = 20 + PIN_FRONT_Z / BALL_SPEED_MIN + 10; // 投げてから結果を出すまでの最大時間（秒）
+
+  // ピンは1本ずつのオブジェクトにせず、配列で持つ（100万本でも軽いように）
+  const px = new Float32Array(PIN_TOTAL), pz = new Float32Array(PIN_TOTAL);
+  const pAng = new Float32Array(PIN_TOTAL);   // 倒れる向き（画面奥が0）
+  const pStart = new Float32Array(PIN_TOTAL); // 倒れ始めた時刻
+  const pState = new Uint8Array(PIN_TOTAL);   // 0 立っている / 1 連鎖で倒れている途中 / 2 倒れた / 3 物理で動かしている / 4 片付けた
+  const pTrig = new Uint8Array(PIN_TOTAL);    // もう隣を倒したか
+  const pEnergy = new Float32Array(PIN_TOTAL); // 倒れる勢い（隣へ伝わるたびに減る）
+  const pDir = new Float32Array(PIN_TOTAL);    // 連鎖を伝える向き（見た目の倒れる向き pAng とは別。強い連鎖を受け継ぐと変わる）
+  const pBoost = new Uint8Array(PIN_TOTAL);    // 強い勢いを受け継いで、次の刻みで隣へ伝え直す予定か
+  const pBoostT = new Float32Array(PIN_TOTAL); // 受け継いだ時刻
+  const boosted = [];                          // その予定のピンの番号
+  const NEVER = 1e9;                          // 倒れていないピンの「倒れ始めた時刻」
+  {
+    let i = 0;
+    PIN_ROWS.forEach((n, r) => {
+      for (let j = 0; j < n; j++, i++){ px[i] = (j - (n - 1) / 2) * S; pz[i] = PIN_FRONT_Z + r * ROW_GAP; }
+    });
+  }
+
+  // 立っているピンの位置は動かないので、区画ごとの一覧を最初に一度だけ作る
+  const GX0 = -FIELD_HALF, GZ0 = PIN_FRONT_Z - 1;
+  const GW = Math.ceil(FIELD_HALF * 2) + 1, GH = Math.ceil(FIELD_END - GZ0) + 1;
+  const cellStart = new Int32Array(GW * GH + 1), cellItems = new Int32Array(PIN_TOTAL);
+  {
+    const cellOf = i => Math.floor(pz[i] - GZ0) * GW + Math.floor(px[i] - GX0);
+    for (let i = 0; i < PIN_TOTAL; i++) cellStart[cellOf(i) + 1]++;
+    for (let c = 0; c < GW * GH; c++) cellStart[c + 1] += cellStart[c];
+    const cur = cellStart.slice(0, GW * GH);
+    for (let i = 0; i < PIN_TOTAL; i++) cellItems[cur[cellOf(i)]++] = i;
+  }
+  // (x, z) から半径 r の範囲にあるピンの番号を nearBuf に集め、その数を返す
+  const nearBuf = new Int32Array(256);
+  function nearPins(x, z, r){
+    let n = 0;
+    const cx0 = Math.max(0, Math.floor(x - r - GX0)), cx1 = Math.min(GW - 1, Math.floor(x + r - GX0));
+    const cz0 = Math.max(0, Math.floor(z - r - GZ0)), cz1 = Math.min(GH - 1, Math.floor(z + r - GZ0));
+    for (let cz = cz0; cz <= cz1; cz++){
+      for (let cx = cx0; cx <= cx1; cx++){
+        const c = cz * GW + cx;
+        for (let k = cellStart[c]; k < cellStart[c + 1] && n < nearBuf.length; k++) nearBuf[n++] = cellItems[k];
+      }
+    }
+    return n;
+  }
+
+  // ---------- 描画の準備 ----------
+  const wrap = $('game');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const cv = renderer.domElement;
+  wrap.insertBefore(cv, wrap.firstChild);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(css('--bg'));
+  // 遠くを背景の色に溶かす。点で描くピンにも同じ式で掛ける
+  scene.fog = new THREE.Fog(css('--bg'), FOG_NEAR, FOG_FAR);
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+  // 影の濃さは「全体の明るさ」と「日の光」の割合で決まる。全体を明るく、日の光を弱くして影を薄くする
+  scene.add(new THREE.HemisphereLight(0xfff1dc, 0x9a4a1a, 1.15));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.45);
+  sun.position.set(-6, 20, -8);
+  scene.add(sun, sun.target);
+  // 影：球だけに付け、見ている範囲だけを描く（カメラに合わせて動かす）
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 60, bottom: -60, near: 1, far: 300 });
+  sun.shadow.camera.updateProjectionMatrix();
+
+  const bufSize = new THREE.Vector2();
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    // 点の大きさを画面の解像度に合わせる（距離1のときの1ワールド単位が何ピクセルか）
+    renderer.getDrawingBufferSize(bufSize);
+    pointMat.uniforms.uScale.value = bufSize.y / (2 * Math.tan(camera.fov * Math.PI / 360));
+  }
+
+  // 板目（細い板を縦に並べ、1枚ごとに少し色を変える）
+  const boardCanvas = (() => {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 512;
+    const g = c.getContext('2d');
+    const base = new THREE.Color(css('--lane'));
+    const BOARDS = 39;         // 実物のレーンは39枚の板でできている
+    const bw = c.width / BOARDS;
+    for (let i = 0; i < BOARDS; i++){
+      g.fillStyle = '#' + base.clone().offsetHSL(0, 0, (i % 2 ? 0.012 : -0.012)).getHexString();
+      g.fillRect(i * bw, 0, bw + 1, c.height);
+      // 板の継ぎ目（木目の筋は遠くでちらつくので描かない）
+      g.fillStyle = 'rgba(150,55,0,0.16)';
+      g.fillRect(i * bw, 0, 1, c.height);
+    }
+    return c;
+  })();
+  function boardTex(width, length){
+    const t = new THREE.CanvasTexture(boardCanvas);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(width / (LANE_HALF * 2), length / 16);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+
+  // 投げる所からピンの手前までの床（ガターはなく、ピンの所と同じ幅で続く）
+  const laneLen = FIELD_START - LANE_START, laneMid = (FIELD_START + LANE_START) / 2;
+  const laneMesh = new THREE.Mesh(new THREE.BoxGeometry(FIELD_HALF * 2, 0.2, laneLen), new THREE.MeshLambertMaterial({ map: boardTex(FIELD_HALF * 2, laneLen) }));
+  laneMesh.position.set(0, -0.1, laneMid);
+  laneMesh.receiveShadow = true;
+  scene.add(laneMesh);
+  // ピンを並べる広い床
+  const fieldLen = FIELD_END - FIELD_START;
+  const field = new THREE.Mesh(new THREE.BoxGeometry(FIELD_HALF * 2, 0.2, fieldLen), new THREE.MeshLambertMaterial({ map: boardTex(FIELD_HALF * 2, fieldLen) }));
+  field.position.set(0, -0.1, (FIELD_START + FIELD_END) / 2);
+  field.receiveShadow = true;
+  scene.add(field);
+  // 床の両端の縁（参考画像のレーンの縁のように濃いオレンジで一段高く）
+  const railMat = new THREE.MeshLambertMaterial({ color: css('--rail') });
+  for (const side of [-1, 1]){
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(RAIL_W, RAIL_H, FIELD_END - LANE_START), railMat);
+    rail.position.set(side * (FIELD_HALF + RAIL_W / 2), RAIL_H / 2 - 0.2, (FIELD_END + LANE_START) / 2);
+    scene.add(rail);
+  }
+
+  // ピンの形（本数が多いので粗め）
+  const pinProfile = [[0,0],[0.12,0],[0.2,0.35],[0.17,0.6],[0.09,0.88],[0.11,1.08],[0,1.25]]
+    .map(([r, y]) => new THREE.Vector2(r * PIN_R / 0.2, y * PIN_H / 1.25));
+  // ピンの首の赤い2本線（LatheGeometry の縦方向の UV は輪郭の点の番号に比例する）
+  function pinTex(){
+    const c = document.createElement('canvas');
+    c.width = 4; c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = css('--pin'); g.fillRect(0, 0, 4, 256);
+    g.fillStyle = css('--pinStripe');
+    const n = pinProfile.length - 1;
+    // 点4（高さ0.88）と点5（高さ1.08）の間に2本引く。canvas は上下が逆なので 1-v で描く
+    const band = (v0, v1) => g.fillRect(0, (1 - v1) * 256, 4, (v1 - v0) * 256);
+    band(4.15 / n, 4.4 / n);
+    band(4.55 / n, 4.8 / n);
+    return new THREE.CanvasTexture(c);
+  }
+  const pinGeo = new THREE.LatheGeometry(pinProfile, 8);
+  const pinMat = new THREE.MeshLambertMaterial({ map: pinTex() });
+  // 見ている所の近くのピン（毎フレーム詰め直す）
+  const nearMesh = new THREE.InstancedMesh(pinGeo, pinMat, NEAR_MAX);
+  nearMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  nearMesh.frustumCulled = false;
+  scene.add(nearMesh);
+  // 物理で飛ばしたピン（飛んでいる間も、止まった後もこちらで描く）
+  const flyMesh = new THREE.InstancedMesh(pinGeo, pinMat, MAX_ACTIVE);
+  flyMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  flyMesh.frustumCulled = false;
+  scene.add(flyMesh);
+
+  // それ以外のピンは点で描く。倒れ具合は「倒れ始めた時刻」から GPU 側で計算する
+  // aInfo.x = 倒れ始めた時刻、aInfo.y = 倒れる向き（100 なら点では描かない＝物理で飛ばしたピン）
+  const pointPos = new Float32Array(PIN_TOTAL * 3);
+  for (let i = 0; i < PIN_TOTAL; i++){ pointPos[i * 3] = px[i]; pointPos[i * 3 + 2] = pz[i]; }
+  const pointInfo = new Float32Array(PIN_TOTAL * 2);
+  const pointGeo = new THREE.BufferGeometry();
+  pointGeo.setAttribute('position', new THREE.BufferAttribute(pointPos, 3));
+  const infoAttr = new THREE.BufferAttribute(pointInfo, 2);
+  infoAttr.setUsage(THREE.DynamicDrawUsage);
+  pointGeo.setAttribute('aInfo', infoAttr);
+  const HIDE = 100;
+  const pointMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 }, uFall: { value: DOMINO_FALL }, uH: { value: PIN_H }, uR: { value: PIN_R },
+      uSize: { value: POINT_SIZE }, uScale: { value: 1 },
+      uNear: { value: new THREE.Vector4() },
+      uFogColor: { value: scene.fog.color }, uFogNear: { value: FOG_NEAR }, uFogFar: { value: FOG_FAR },
+      uUp: { value: new THREE.Color(css('--pin')) }, uDown: { value: new THREE.Color(css('--pinDown')) },
+    },
+    vertexShader: `
+      attribute vec2 aInfo;
+      uniform float uTime, uFall, uH, uR, uSize, uScale;
+      uniform vec4 uNear;
+      varying float vDown;
+      varying float vDepth;
+      void main(){
+        vec3 p = position;
+        // 形で描いている範囲と、物理で飛ばしたピンは点で描かない
+        bool inNear = p.x >= uNear.x && p.x < uNear.y && p.z >= uNear.z && p.z < uNear.w;
+        if (aInfo.y > 50.0 || inNear){ gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 0.0; return; }
+        float u = clamp((uTime - aInfo.x) / uFall, 0.0, 1.0);
+        float t = 1.5707963 * u * u;   // 倒れ始めはゆっくり、だんだん速く（CPU 側と同じ式）
+        float s = sin(t);
+        // 点はピンの真ん中に置き、倒れたら寝た位置へずらす
+        p.x += sin(aInfo.y) * 0.5 * uH * s;
+        p.z += cos(aInfo.y) * 0.5 * uH * s;
+        p.y = 0.5 * uH * cos(t) + uR * s;
+        vDown = u;
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mv;
+        vDepth = -mv.z;
+        gl_PointSize = max(1.0, uSize * uScale / -mv.z);
+      }`,
+    fragmentShader: `
+      uniform vec3 uUp, uDown, uFogColor;
+      uniform float uFogNear, uFogFar;
+      varying float vDown, vDepth;
+      void main(){
+        vec3 c = mix(uUp, uDown, vDown);
+        // 形で描くピンと同じく、遠くは背景の色に溶かす
+        gl_FragColor = vec4(mix(c, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
+      }`,
+  });
+  const points = new THREE.Points(pointGeo, pointMat);
+  points.frustumCulled = false;
+  scene.add(points);
+  let infoMin = Infinity, infoMax = -1;   // 書き換えた点の範囲（その分だけ GPU へ送る）
+  function setInfo(i, start, ang){
+    pointInfo[i * 2] = start; pointInfo[i * 2 + 1] = ang;
+    if (i < infoMin) infoMin = i;
+    if (i > infoMax) infoMax = i;
+  }
+
+  resize();
+  addEventListener('resize', resize);
+
+  // 球に映り込む周りの景色（上が明るい空、下が床の色）。つやのある球は映り込みが無いとプラスチックのように見えるため
+  function ballEnvMap(){
+    const W = 128, H = 64;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'), img = g.createImageData(W, H), d = img.data;
+    const sky = new THREE.Color(0xffffff), horizon = new THREE.Color(0x9aa3b5), floor = new THREE.Color(css('--lane')), col = new THREE.Color();
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+      const t = y / (H - 1);   // 0 が真上、1 が真下
+      if (t < 0.5) col.copy(sky).lerp(horizon, Math.pow(t / 0.5, 1.5));
+      else col.copy(floor).multiplyScalar(0.8);
+      // 天井の照明を2つ（くっきりした映り込みの点になる）
+      const lx = [0.3, 0.75];
+      for (const l of lx){ const dx = x / W - l, dy = t - 0.18; if (dx * dx * 4 + dy * dy * 9 < 0.004) col.setRGB(1, 1, 1).multiplyScalar(2.5); }
+      const k = (y * W + x) * 4;
+      d[k] = Math.min(255, col.r * 255); d[k + 1] = Math.min(255, col.g * 255); d[k + 2] = Math.min(255, col.b * 255); d[k + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    const tex = new THREE.CanvasTexture(c);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    const pm = new THREE.PMREMGenerator(renderer);
+    const env = pm.fromEquirectangular(tex).texture;
+    tex.dispose(); pm.dispose();
+    return env;
+  }
+  // 球（最大数ぶん確保して、使う数だけ描く）。透けないつやのある球にする
+  const ballMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(BALL_R, 20, 14),
+    new THREE.MeshStandardMaterial({ color: css('--ball'), roughness: BALL_ROUGH, metalness: 0.05, envMap: ballEnvMap(), envMapIntensity: 1.6 }), MAX_BALLS);
+  ballMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  ballMesh.frustumCulled = false;
+  ballMesh.castShadow = true;
+  scene.add(ballMesh);
+
+  // 速い球の尾（球1個につき床と平行な四角を1枚。根元は球の幅で濃く、後ろへ細く薄くなる）
+  const trailPos = new Float32Array(MAX_BALLS * 4 * 3);
+  const trailAlpha = new Float32Array(MAX_BALLS * 4);
+  const trailIdx = new Uint32Array(MAX_BALLS * 6);
+  for (let i = 0; i < MAX_BALLS; i++){
+    const v = i * 4, t = i * 6;
+    trailIdx.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], t);
+  }
+  const trailGeo = new THREE.BufferGeometry();
+  const trailPosAttr = new THREE.BufferAttribute(trailPos, 3).setUsage(THREE.DynamicDrawUsage);
+  const trailAlphaAttr = new THREE.BufferAttribute(trailAlpha, 1).setUsage(THREE.DynamicDrawUsage);
+  trailGeo.setAttribute('position', trailPosAttr);
+  trailGeo.setAttribute('aAlpha', trailAlphaAttr);
+  trailGeo.setIndex(new THREE.BufferAttribute(trailIdx, 1));
+  const trailMesh = new THREE.Mesh(trailGeo, new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color(css('--trail')) } },
+    vertexShader: `
+      attribute float aAlpha;
+      varying float vA;
+      void main(){ vA = aAlpha; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `
+      uniform vec3 uColor;
+      varying float vA;
+      void main(){ gl_FragColor = vec4(uColor, vA); }`,
+    transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  }));
+  trailMesh.frustumCulled = false;
+  scene.add(trailMesh);
+  function drawTrails(){
+    let n = 0;
+    const y = BALL_R * 0.6;
+    for (const b of balls){
+      if (b.gone || (b.born >= 0 && simT - b.born < SPAWN_ANIM)) continue;
+      const sp = Math.hypot(b.vx, b.vz);
+      if (sp <= TRAIL_SPEED) continue;
+      const a = TRAIL_ALPHA * Math.min(1, (sp - TRAIL_SPEED) / (TRAIL_FULL - TRAIL_SPEED));
+      const ux = b.vx / sp, uz = b.vz / sp;
+      const len = sp * TRAIL_TIME;
+      const px0 = -uz * BALL_R * 0.9, pz0 = ux * BALL_R * 0.9;   // 根元の半幅（進む向きに直角）
+      const px1 = px0 * 0.15, pz1 = pz0 * 0.15;                   // 先の半幅
+      const tx = b.x - ux * len, tz = b.z - uz * len;
+      const o = n * 12;
+      trailPos[o] = b.x + px0;  trailPos[o + 1] = y; trailPos[o + 2] = b.z + pz0;
+      trailPos[o + 3] = b.x - px0; trailPos[o + 4] = y; trailPos[o + 5] = b.z - pz0;
+      trailPos[o + 6] = tx + px1; trailPos[o + 7] = y; trailPos[o + 8] = tz + pz1;
+      trailPos[o + 9] = tx - px1; trailPos[o + 10] = y; trailPos[o + 11] = tz - pz1;
+      const q = n * 4;
+      trailAlpha[q] = trailAlpha[q + 1] = a; trailAlpha[q + 2] = trailAlpha[q + 3] = 0;
+      n++;
+    }
+    trailGeo.setDrawRange(0, n * 6);
+    trailPosAttr.updateRange.count = n * 12; trailPosAttr.needsUpdate = true;
+    trailAlphaAttr.updateRange.count = n * 4; trailAlphaAttr.needsUpdate = true;
+  }
+
+  // ゲート
+  function labelTex(text){
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 128;
+    const g = c.getContext('2d');
+    g.font = '900 92px "Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = '#fff';
+    g.fillText(text, 128, 68, 236);
+    return new THREE.CanvasTexture(c);
+  }
+  const gates = [];
+  const gateMat = new THREE.MeshBasicMaterial({ color: css('--gate'), transparent: true, opacity: GATE_OPACITY, side: THREE.DoubleSide, depthWrite: false });
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  // ゲートの配置をランダムに決める。重なる置き方になったら引き直す
+  function randomLayout(){
+    const list = [];
+    for (let n = 0; n < GATE_COUNT; n++){
+      for (let tries = 0; tries < 60; tries++){
+        const z = rand(GATE_Z_MIN, GATE_Z_MAX);
+        const H = gateHalf(z);
+        const moving = Math.random() < MOVE_CHANCE;
+        const w = moving ? GW_M : GW_S;
+        // 動く幅は床の幅に関係なく決める（床の幅に比例させると幅50以上を2〜3秒で往復し、目で追えない速さになっていた）
+        const move = moving ? rand(GATE_MOVE_MIN, GATE_MOVE_MAX) : 0;
+        // 1往復の時間は、一番速いところでも GATE_SPEED_MAX を超えないように決める
+        const period = moving ? Math.max(rand(2.5, 4), 2 * Math.PI * move / GATE_SPEED_MAX) : 1;
+        const x = rand(-1, 1) * Math.max(0, H - w / 2 - move);   // 動いても届く範囲からはみ出さないように
+        // 他のゲートと奥行きが近く、横の範囲（動く分も含む）が重なるなら置かない
+        const hit = list.some(o => Math.abs(o.z - z) < GATE_GAP_Z
+          && Math.abs(o.x - x) < (o.w + w) / 2 + o.move + move + 1);
+        if (hit) continue;
+        const times = Math.random() < TIMES_CHANCE;
+        const val = times ? TIMES_VALS[Math.floor(Math.random() * TIMES_VALS.length)]
+          : Math.max(5, Math.round(z * PLUS_PER_Z * rand(0.5, 1.5) / 5) * 5);
+        list.push({ z, x, w, move, period, op: times ? '×' : '+', val });
+        break;
+      }
+    }
+    return list;
+  }
+
+  // ゲートを作り直す（前の配置は片付ける）
+  function buildGates(){
+    for (const g of gates){
+      scene.remove(g.panel, g.label);
+      g.panel.geometry.dispose(); g.mat.dispose();
+      g.label.geometry.dispose(); g.label.material.dispose(); g.tex.dispose();
+    }
+    gates.length = 0;
+    for (const d of randomLayout()){
+      // 通ったときに光らせるので、ゲートごとに材質を分ける
+      const mat = gateMat.clone();
+      const panel = new THREE.Mesh(new THREE.PlaneGeometry(d.w - 0.3, GATE_H), mat);
+      panel.castShadow = true;   // 床にゲートの影を落とす
+      panel.position.set(0, GATE_H / 2, d.z);
+      scene.add(panel);
+      const tex = labelTex(d.op + d.val);
+      const lw = 3;
+      const label = new THREE.Mesh(new THREE.PlaneGeometry(lw, lw / 2), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+      label.rotation.y = Math.PI;   // カメラ側に文字の表を向ける
+      label.position.set(0, GATE_H / 2, d.z - 0.02);
+      scene.add(label);
+      // カメラは +z を向いているので、画面の右は -x 側になる
+      gates.push({ z: d.z, op: d.op, val: d.val, w: d.w, cx0: -d.x, move: d.move, period: d.period,
+        x0: 0, x1: 0, used: false, panel, label, mat, tex, flash: 0, popT: 0 });
+    }
+  }
+  buildGates();
+  // 動くゲートの位置を時間から決める（判定と見た目の両方をここでそろえる）
+  let gateT = 0;
+  function updateGates(){
+    for (const g of gates){
+      const cx = g.cx0 + g.move * Math.sin(2 * Math.PI * gateT / g.period);
+      g.x0 = cx - g.w / 2; g.x1 = cx + g.w / 2;
+      g.panel.position.x = cx; g.label.position.x = cx;
+    }
+  }
+  updateGates();
+
+  // 球の通り道を示す帯（構えている間だけ出す）。幅は球の直径で、ピンの手前まで伸ばす
+  const aimGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2).translate(0, 0, 0.5); // 根元を原点にして奥へ伸ばす
+  // 根元からの割合（uv の y は根元が1、先が0）で、途中から先へなめらかに透明にする
+  const aimLine = new THREE.Mesh(aimGeo, new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color(css('--guide')) }, uOpacity: { value: AIM_GUIDE_OPACITY }, uFade: { value: AIM_FADE_FROM } },
+    vertexShader: `
+      varying float vT;
+      void main(){ vT = 1.0 - uv.y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `
+      uniform vec3 uColor; uniform float uOpacity, uFade;
+      varying float vT;
+      void main(){ gl_FragColor = vec4(uColor, uOpacity * (1.0 - smoothstep(uFade, 1.0, vT))); }`,
+    transparent: true, depthWrite: false,
+  }));
+  aimLine.frustumCulled = false;
+  // 帯は床に貼り付いたものなので、半透明のものの中で一番先に描く（カメラからの距離で並べると、
+  // 根元が手前にある帯がゲートより後に描かれ、ゲートの板や文字の上に重なって見えていた）
+  aimLine.renderOrder = -1;
+  scene.add(aimLine);
+
+  // ---------- 状態 ----------
+  let mode = 'aim';            // aim（構え）/ rolling（転がっている）/ over（結果）
+  let aimAngle = 0;            // 投げる向き（画面の右が正）
+  let phase = 'pos';           // 構えの段階：pos（位置）/ dir（向き）/ pow（強さ）
+  let phaseT = 0;              // 今の段階に入ってからの時間（秒）
+  let power = 0;               // 強さ（0〜1）
+  let shake = 0;               // 画面の揺れの大きさ
+  let slowT = 0;               // スローの残り時間（秒）
+  let slowUsed = false;        // スローは1投につき最初の1回だけ
+  const pops = [];             // ゲートを通ったときに浮かぶ表示
+  let balls = [];
+  const falling = [];          // 連鎖で倒れている途中のピンの番号
+  const flyers = [];           // 物理で飛ばしたピン（止まった後も描くので残す）
+  let knocked = 0;             // 倒れたピンの数（2投の合計）
+  let throwNo = 1;             // 何投目か（実物と同じく2投まで）
+  let firstKnocked = 0;        // 1投目で倒した数
+  let waveZ = -Infinity;       // 倒れの波の一番奥
+  let simT = 0;                // 投げてからの時間（物理の時間。スロー中はゆっくり進む）
+  let elapsed = 0, settle = 0, acc = 0;
+  let lastKnockAt = 0;         // 最後にピンが倒れた時刻（elapsed と同じ実時間）
+  let busyAt = 0;              // 最後に「まだ倒し進んでいるもの」があった時刻
+  let firstKnockAt = -1;       // この投球で最初にピンが倒れた時刻（-1 ならまだ）
+  let camLead = START_Z, camLeadS = START_Z, camX = 0, spanS = 0;
+
+  function makeBall(x, z, vx, vz){
+    return { x, z, vx, vz, prevZ: z, r: BALL_R, m: BALL_MASS, pin: false, gone: false, born: -1, fx: 0, fz: 0,
+      q: new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.random() * 6.3, Math.random() * 6.3, 0)), rx: x, rz: z };
+  }
+
+  // 最初から（ピンを全部立て直して1投目へ）
+  function reset(){
+    pState.fill(0); pStart.fill(NEVER); pAng.fill(0); pTrig.fill(0);
+    for (let i = 0; i < PIN_TOTAL; i++){ pointInfo[i * 2] = NEVER; pointInfo[i * 2 + 1] = 0; }
+    uploadAllInfo();
+    flyers.length = 0;
+    knocked = 0; firstKnocked = 0; throwNo = 1;
+    buildGates();   // 毎回違う配置にする（2投目は作り直さないので同じ配置）
+    startThrow(true);
+  }
+  // 1投目のあと、倒れたピンを片付ける（実物と同じく立っているピンだけ残す）
+  function clearFallen(){
+    for (let i = 0; i < PIN_TOTAL; i++){
+      if (pState[i] === 0) continue;
+      pState[i] = 4;
+      pointInfo[i * 2] = NEVER; pointInfo[i * 2 + 1] = HIDE;
+    }
+    uploadAllInfo();
+    flyers.length = 0;
+  }
+  function uploadAllInfo(){
+    infoAttr.updateRange.offset = 0; infoAttr.updateRange.count = -1;
+    infoAttr.needsUpdate = true; infoMin = Infinity; infoMax = -1;
+  }
+  // 1投ぶんの準備（球・ゲート・構え・カメラ）。jumpCam なら最初の位置へカメラを一気に戻す
+  function startThrow(jumpCam){
+    falling.length = 0;
+    for (const i of boosted) pBoost[i] = 0;
+    boosted.length = 0;
+    waveZ = -Infinity; simT = 0;
+    balls = [makeBall(0, START_Z, 0, 0)];
+    gates.forEach(g => { g.used = false; g.flash = 0; g.popT = 0; });
+    mode = 'aim';
+    document.documentElement.removeAttribute('data-howto-hidden');
+    aimAngle = 0;
+    power = 0;
+    gateT = 0;
+    updateGates();
+    shake = 0; slowT = 0; slowUsed = false;
+    for (const p of pops) p.el.remove();
+    pops.length = 0;
+    updateEffects(0);
+    drawPower(0);
+    setPhase('pos');
+    elapsed = 0; settle = 0; acc = 0; lastKnockAt = 0; firstKnockAt = -1; busyAt = 0;
+    camLead = START_Z;
+    spanS = 0;
+    if (jumpCam){ camLeadS = START_Z; camX = 0; }
+    scoreAnim++;
+    stopOverConfetti();
+    $('over').classList.add('hidden');
+    $('share-view').classList.add('hidden');
+    stopCelebrate();
+    hudPins = '';
+    updateHud();
+  }
+  // 1投が終わったとき：1投目で倒しきれなければ2投目へ、そうでなければ結果
+  function endThrow(){
+    if (throwNo === 1 && knocked < PIN_TOTAL){
+      firstKnocked = knocked;
+      throwNo = 2;
+      clearFallen();
+      startThrow(false);
+    } else {
+      finish();
+    }
+  }
+
+  // ---------- 物理 ----------
+  // 物理で動くピンの位置は、床にあるときは足元、宙にあるときは真ん中で持つ
+  function toAir(p, vy, spin){
+    const s = Math.sin(p.tilt), c = Math.cos(p.tilt);
+    p.x += p.ax * PIN_H / 2 * s; p.z += p.az * PIN_H / 2 * s;
+    p.y = PIN_H / 2 * c + PIN_R * Math.abs(s);
+    p.vy = vy; p.spin = spin; p.air = true; p.r = PIN_R_DOWN;
+  }
+  function land(p){
+    p.air = false; p.vy = 0;
+    // 寝た向きにそろえる（回転の途中から一番近い寝姿勢へ）
+    p.tilt = Math.round((p.tilt - Math.PI / 2) / Math.PI) * Math.PI + Math.PI / 2;
+    const s = Math.sin(p.tilt);
+    p.x -= p.ax * PIN_H / 2 * s; p.z -= p.az * PIN_H / 2 * s;
+  }
+  // 物理で動くピンの横向きの速さを FLY_MAX までにする
+  function capPin(p){
+    if (!p.pin) return;
+    const sp = Math.hypot(p.vx, p.vz);
+    if (sp > FLY_MAX){ p.vx *= FLY_MAX / sp; p.vz *= FLY_MAX / sp; }
+  }
+  // 物理で動いているピンが強くぶつかったら宙に飛ばす
+  function knock(p, impact){
+    if (!p.pin || p.air || impact <= FLY_SPEED) return;
+    toAir(p, Math.min(impact, FLY_MAX) * FLY_UP * (0.6 + Math.random() * 0.4), SPIN_MIN + Math.random() * (SPIN_MAX - SPIN_MIN));
+  }
+
+  // 立っているピンを物理で飛ばす
+  function activate(i, vx, vz){
+    pState[i] = 3; knocked++; lastKnockAt = elapsed;
+    setInfo(i, NEVER, HIDE);
+    const sp0 = Math.hypot(vx, vz) || 1;
+    if (sp0 > FLY_MAX){ vx *= FLY_MAX / sp0; vz *= FLY_MAX / sp0; }
+    const sp = Math.min(sp0, FLY_MAX);
+    const p = { i, x: px[i], z: pz[i], vx, vz, r: PIN_R, m: PIN_MASS, pin: true, tilt: 0, ax: vx / sp, az: vz / sp,
+      air: false, y: 0, vy: 0, spin: 0, done: false, gone: false };
+    toAir(p, sp * FLY_UP * (0.6 + Math.random() * 0.4), SPIN_MIN + Math.random() * (SPIN_MAX - SPIN_MIN));
+    flyers.push(p);
+  }
+  // 立っているピンを、その場で (ax, az) の向きに倒す
+  // 隣のピンへは伝えない（倒れるのは球や飛んだピンが通った所だけ＝球が進んだ距離だけ倒れる）
+  function domino(i, ax, az, e){
+    pState[i] = 1; knocked++; lastKnockAt = elapsed;
+    const a = Math.atan2(ax, az) + (Math.random() * 2 - 1) * FALL_JITTER;
+    pAng[i] = a; pDir[i] = a; pStart[i] = simT; pTrig[i] = 0; pEnergy[i] = e;
+    setInfo(i, simT, a);
+    falling.push(i);
+    if (pz[i] > waveZ) waveZ = pz[i];
+  }
+  // 球や物理で動くピンが、立っているピンに当たったとき
+  function hitStanding(o){
+    const rr = o.r + PIN_R;
+    const n = nearPins(o.x, o.z, rr);
+    for (let k = 0; k < n; k++){
+      const j = nearBuf[k];
+      if (pState[j] !== 0) continue;
+      const dx = px[j] - o.x, dz = pz[j] - o.z;
+      const d2 = dx * dx + dz * dz;
+      if (d2 >= rr * rr) continue;
+      const d = Math.sqrt(d2) || 1e-4, nx = dx / d, nz = dz / d;
+      // 立っているピンは動かないので、ぶつかった側だけ押し戻す
+      o.x -= nx * (rr - d); o.z -= nz * (rr - d);
+      const vn = o.vx * nx + o.vz * nz;
+      if (vn <= 0) continue;
+      const jimp = (1 + RESTITUTION) * vn / (1 / o.m + 1 / PIN_MASS);
+      // 球はピンに当たってもあまり減速しない（減速はピンの中を進む距離で決める＝BALL_FIELD_DRAG）
+      const slow = o.pin ? 1 : BALL_HIT_SLOW;
+      o.vx -= jimp / o.m * nx * slow; o.vz -= jimp / o.m * nz * slow;
+      const pv = jimp / PIN_MASS;
+      if (!o.pin && vn > FLY_SPEED) onHit(vn);
+      // 球に直接当たったピンの一部だけ宙に飛ばす（見た目の派手さ用）。残りと、飛んだピンが当てたピンはその場で倒す
+      // （飛ぶピンばかりにすると連鎖が起きず、ほとんど倒れないため）
+      if (pv > KNOCK_SPEED) o.hitAt = elapsed;   // 最後にピンを倒した時刻（まだ倒し進んでいる球かどうかの判定に使う）
+      if (!o.pin && pv > FLY_SPEED && flyers.length < MAX_ACTIVE && Math.random() < FLY_CHANCE) activate(j, nx * pv, nz * pv);
+      else if (pv > KNOCK_SPEED){
+        // 倒れる向きは、当たった向きと球の進む向きの間（横向きに倒れ続けて奥へ伝わらない、を防ぐ）
+        const sp = Math.hypot(o.vx, o.vz) || 1;
+        domino(j, nx + o.vx / sp, nz + o.vz / sp, pv);
+      }
+    }
+  }
+
+  function applyGate(g, b){
+    let n;
+    if (g.op === '×') n = g.val - 1;
+    else { if (g.used) return; g.used = true; n = g.val; }
+    gateHit(g);
+    n = Math.min(n, MAX_BALLS - balls.length);
+    if (n <= 0) return;
+    const sp = Math.hypot(b.vx, b.vz);
+    const base = Math.atan2(b.vx, b.vz);
+    // 一度にたくさん増えるときは、重ならないよう広くばらまく
+    const xMax = gateHalf(g.z) - BALL_R;
+    const xs = Math.min(xMax, SPAWN_SPREAD / 2 + Math.sqrt(n) * SPAWN_SPREAD_K);
+    const zs = Math.max(SPAWN_AHEAD, n * 0.6 / (xs * 2));
+    const cx = clamp(b.x, -xMax + xs, xMax - xs);
+    // 「×」は球ごとに効くので、同じゲートをくぐり直さないよう必ず先に置く。「+」は1回きりなので前後にばらまける
+    const z0 = g.op === '×' ? g.z + 0.05 : g.z - zs / 2;
+    for (let k = 0; k < n; k++){
+      const a = base + (Math.random() * 2 - 1) * SPAWN_ANGLE;
+      const x = clamp(cx + (Math.random() * 2 - 1) * xs, -xMax, xMax);
+      const z = z0 + Math.random() * zs;
+      const nb = makeBall(x, z, Math.sin(a) * sp, Math.cos(a) * sp);
+      // 見た目だけ、くぐった球の位置から飛び出して自分の位置へ着地させる（当たり判定は最初から本来の位置）
+      nb.born = simT; nb.fx = b.x; nb.fz = b.z;
+      balls.push(nb);
+    }
+  }
+
+  function collide(a, b){
+    if (!BALL_BALL_HIT && !a.pin && !b.pin) return;
+    let dx = b.x - a.x, dz = b.z - a.z;
+    const rr = a.r + b.r;
+    let d2 = dx * dx + dz * dz;
+    if (d2 >= rr * rr) return;
+    if (d2 < 1e-10){ dx = (Math.random() - 0.5) * 1e-3; dz = 1e-3; d2 = dx * dx + dz * dz; }
+    const d = Math.sqrt(d2), nx = dx / d, nz = dz / d;
+    const im = 1 / a.m + 1 / b.m;
+    // めり込みを重さに応じて押し戻す
+    const c = (rr - d) / im;
+    a.x -= nx * c / a.m; a.z -= nz * c / a.m;
+    b.x += nx * c / b.m; b.z += nz * c / b.m;
+    const vn = (b.vx - a.vx) * nx + (b.vz - a.vz) * nz;
+    if (vn >= 0) return;
+    const j = -(1 + RESTITUTION) * vn / im;
+    // 球が飛んだピンにぶつかったときも、立っているピンと同じく球はあまり減速しない
+    // （飛んだピンは速さの上限で止められるので、そのままだと球の勢いがここで吸われて先へ進めない）
+    const sa = !a.pin && b.pin ? BALL_HIT_SLOW : 1, sb = !b.pin && a.pin ? BALL_HIT_SLOW : 1;
+    a.vx -= j * nx / a.m * sa; a.vz -= j * nz / a.m * sa;
+    b.vx += j * nx / b.m * sb; b.vz += j * nz / b.m * sb;
+    capPin(a); capPin(b);
+    knock(a, -vn); knock(b, -vn);
+    if (a.pin !== b.pin && -vn > FLY_SPEED) onHit(-vn);
+  }
+
+  // ---------- 演出 ----------
+  // 球がピンに強く当たったら画面を揺らし、最初の1回だけスローにする
+  function onHit(impact){
+    shake = Math.min(SHAKE_MAX, shake + impact * SHAKE_PER);
+    if (!slowUsed){ slowUsed = true; slowT = SLOW_TIME; }
+  }
+  // ゲートを通ったらゲートを光らせ、「×5」などを浮かばせる
+  function gateHit(g){
+    g.flash = 1;
+    if (g.popT > 0) return;
+    g.popT = POP_COOLDOWN;
+    // 通ったゲートの中身（「×3」「+50」など）を画面の文字で出す。位置はゲートの画面上の位置に合わせ、毎フレーム追う
+    const el = document.createElement('div');
+    el.className = 'gatePop';
+    el.textContent = g.op + g.val;
+    $('pops').appendChild(el);
+    pops.push({ el, x: (g.x0 + g.x1) / 2, z: g.z, t: 0 });
+  }
+  function updateEffects(dt){
+    for (const g of gates){
+      g.flash = Math.max(0, g.flash - dt * 3);
+      g.popT -= dt;
+      const spent = g.op === '+' && g.used;
+      g.mat.opacity = (spent ? GATE_SPENT : GATE_OPACITY) + GATE_FLASH * g.flash;
+      g.label.material.opacity = spent ? 0.35 : 1;
+    }
+    for (let i = pops.length - 1; i >= 0; i--){
+      const p = pops[i];
+      p.t += dt;
+      if (p.t >= POP_TIME){ p.el.remove(); pops.splice(i, 1); }
+    }
+    shake *= Math.exp(-SHAKE_DECAY * dt);
+  }
+
+  const grid = new Map();
+  const cellKey = (x, z) => (x + 4000) * 16384 + (z + 4000);
+  const bodies = [];
+  const onFloor = (x, z) => z <= FIELD_END && Math.abs(x) <= FIELD_HALF;
+
+  function moveBall(b, h){
+    b.prevZ = b.z;
+    b.x += b.vx * h; b.z += b.vz * h;
+    // ガターはなし：床の左右の縁で跳ね返る（落ちるのは奥の端から出たときだけ）
+    const xMax = FIELD_HALF - BALL_R;
+    if (b.x > xMax){ b.x = xMax; if (b.vx > 0) b.vx = -b.vx * WALL_BOUNCE; }
+    else if (b.x < -xMax){ b.x = -xMax; if (b.vx < 0) b.vx = -b.vx * WALL_BOUNCE; }
+    if (!onFloor(b.x, b.z)){
+      b.gone = true;   // 奥の端から出た球は落ちる
+    } else if (b.z < FIELD_START){
+      // ゲートはレーン幅の中だけにあるので、端を狙った球は通らない
+      for (const g of gates){
+        if (b.prevZ < g.z && b.z >= g.z && b.x >= g.x0 && b.x < g.x1) applyGate(g, b);
+      }
+    } else {
+      // ピンの所では、速さに比例する減速に加えて一定の減速もかける（遅くなった球がいつまでも転がって、
+      // たまにピンを1本ずつ倒し続けるのを止める。終わりが長引く原因だった）
+      const sp = Math.hypot(b.vx, b.vz);
+      const k = sp > 0 ? Math.exp(-BALL_FIELD_DRAG * h) * Math.max(0, sp - FIELD_FRICTION * h) / sp : 0;
+      b.vx *= k; b.vz *= k;
+      hitStanding(b);
+    }
+    if (b.z < LANE_START) b.gone = true;
+  }
+  // 物理で動くピンを h 秒ぶん動かす
+  function moveFlyer(p, h){
+    const floor = onFloor(p.x, p.z);
+    if (p.air){
+      // 宙にいる間は床の摩擦が効かない。床の外ではそのまま落ちていく
+      p.vy -= GRAVITY * h;
+      p.x += p.vx * h; p.z += p.vz * h; p.y += p.vy * h;
+      p.tilt += p.spin * h;
+      if (floor && p.y <= PIN_R && p.vy < 0){
+        p.y = PIN_R;
+        if (-p.vy > LAND_MIN){ p.vy *= -LAND_BOUNCE; p.spin *= 0.6; }
+        else land(p);
+      }
+      if (floor && p.y < PIN_H) hitStanding(p);
+      if (p.y < -3) p.gone = true;
+      return;
+    }
+    p.x += p.vx * h; p.z += p.vz * h;
+    if (p.tilt < Math.PI / 2) p.tilt = Math.min(Math.PI / 2, p.tilt + h * (Math.PI / 2) / FALL_TIME);
+    p.r = PIN_R + (PIN_R_DOWN - PIN_R) * Math.min(1, p.tilt / (Math.PI / 2));
+    if (!floor){ toAir(p, 0, 3); return; }
+    hitStanding(p);
+  }
+
+  function step(h){
+    simT += h;
+    gateT += h;
+    updateGates();
+    // 球
+    const n0 = balls.length;  // このステップで増えた球は次のステップから動かす
+    for (let i = 0; i < n0; i++){
+      const b = balls[i];
+      if (b.gone) continue;
+      const sp = Math.hypot(b.vx, b.vz);
+      if (sp > 0){ const k = Math.max(0, sp - BALL_FRICTION * h) / sp; b.vx *= k; b.vz *= k; }
+      // 速い球はピンをすり抜けないよう、1回の移動を細かく分ける
+      const sub = Math.max(1, Math.ceil(sp * h / MAX_MOVE));
+      for (let s = 0; s < sub && !b.gone; s++) moveBall(b, h / sub);
+    }
+    // その場で倒れていくピン（倒れきったら一覧から外す。隣へは伝えない）
+    for (let k = falling.length - 1; k >= 0; k--){
+      const i = falling[k];
+      const t = simT - pStart[i];
+      if (t >= DOMINO_FALL){
+        pState[i] = 2;
+        falling[k] = falling[falling.length - 1]; falling.pop();
+      }
+    }
+    // 物理で動くピン
+    for (const p of flyers){
+      if (p.done || p.gone) continue;
+      const sp = Math.hypot(p.vx, p.vz);
+      if (!p.air && sp > 0){ const k = Math.max(0, sp * Math.exp(-PIN_DAMP * h) - PIN_FRICTION * h) / sp; p.vx *= k; p.vz *= k; }
+      // 速く飛ぶピンも、立っているピンをすり抜けないよう細かく分けて動かす
+      const sub = Math.max(1, Math.ceil(sp * h / MAX_MOVE));
+      for (let s = 0; s < sub && !p.gone; s++) moveFlyer(p, h / sub);
+      // 寝て止まったピンは、もう物理で動かさない
+      if (!p.air && !p.gone && p.tilt >= Math.PI / 2 && Math.hypot(p.vx, p.vz) < 0.05) p.done = true;
+    }
+    // 動くもの同士の衝突（近い区画どうしだけ調べる）
+    grid.clear();
+    bodies.length = 0;
+    for (const b of balls) if (!b.gone) bodies.push(b);
+    for (const p of flyers) if (!p.done && !p.gone) bodies.push(p);
+    for (let i = 0; i < bodies.length; i++){
+      const o = bodies[i];
+      const key = cellKey(Math.floor(o.x / CELL), Math.floor(o.z / CELL));
+      let c = grid.get(key);
+      if (!c){ c = []; grid.set(key, c); }
+      c.push(i);
+    }
+    for (let i = 0; i < bodies.length; i++){
+      const a = bodies[i];
+      const cx = Math.floor(a.x / CELL), cz = Math.floor(a.z / CELL);
+      for (let dx = -1; dx <= 1; dx++){
+        for (let dz = -1; dz <= 1; dz++){
+          const c = grid.get(cellKey(cx + dx, cz + dz));
+          if (!c) continue;
+          for (const j of c) if (j > i) collide(a, bodies[j]);
+        }
+      }
+    }
+  }
+
+  // ---------- 表示 ----------
+  let hudPins = '';
+  let topView = false;         // カメラが上から見下ろしているか
+  function updateHud(){
+    const key = knocked + mode;
+    if (key !== hudPins){
+      hudPins = key;
+      // 2投目は2投目で倒した本数だけを出す（分母は1投目の後に残っていた本数）
+      const base = throwNo === 2 ? firstKnocked : 0;
+      // 左上は常に出す：何投目か（2投目は残りの本数も）
+      $('pinCount').textContent = throwNo === 1 ? '1投目' : `2投目　残り ${fmt(PIN_TOTAL - base)}本`;
+      $('centerCount').textContent = `${fmt(knocked - base)}本`;
+    }
+    // 上からの画面になったら、倒した数を左上から画面中央へ移す
+    const center = topView && mode === 'rolling' && celebT < 0 && knocked > (throwNo === 2 ? firstKnocked : 0);   // 0本の間は出さない
+    $('centerCount').classList.toggle('hidden', !center);
+  }
+
+  function throwDetail(){
+    return throwNo === 1
+      ? `1投目で${fmt(PIN_TOTAL)}本`
+      : `1投目 ${fmt(firstKnocked)}本 / 2投目 ${fmt(knocked - firstKnocked)}本`;
+  }
+  // ---------- ストライク・スペアの演出 ----------
+  // 光の輪の画像：濃さを1画素ずつ計算して書く（CSS や canvas のグラデーションは、6倍に広げたときにざらつきが見えるため）
+  (() => {
+    const S = 128, c = document.createElement('canvas'); c.width = c.height = S;
+    const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++){
+      const r = Math.hypot((x + 0.5) / S * 2 - 1, (y + 0.5) / S * 2 - 1);   // 中心0、縁1
+      const q = Math.max(0, 1 - Math.abs(r - 0.62) / 0.12);                  // 半径0.62の所が一番濃い輪
+      const k = (y * S + x) * 4;
+      d[k] = d[k + 1] = d[k + 2] = 255;
+      d[k + 3] = Math.round(255 * 0.75 * q * q * (3 - 2 * q));
+    }
+    g.putImageData(img, 0, 0);
+    const url = c.toDataURL('image/png');
+    document.querySelectorAll('.celebRing').forEach(el => { el.style.backgroundImage = `url(${url})`; });
+  })();
+  let celebT = -1;             // 演出が始まってからの時間（-1 なら演出していない）
+  const confCv = $('confetti'), confCtx = confCv.getContext('2d');
+  let confetti = [];
+  function startCelebrate(){
+    celebT = 0;
+    const strike = throwNo === 1;
+    const el = $('celebText');
+    el.textContent = strike ? 'ストライク！' : 'スペア！';
+    const box = $('celebrate');
+    box.classList.remove('hidden', 'on');
+    box.classList.toggle('spare', !strike);
+    box.classList.toggle('strike', strike);
+    textBursts = (strike ? STRIKE_BURST_AT : SPARE_BURST_AT).slice();
+    void box.offsetWidth;      // アニメーションを最初から流し直す
+    box.classList.add('on');
+    shake = Math.max(shake, SHAKE_MAX);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = wrap.clientWidth, H = wrap.clientHeight;
+    confCv.width = Math.round(W * dpr); confCv.height = Math.round(H * dpr);
+    confCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    confetti = [];
+    burstConfetti(W, H);
+  }
+  // 画面の左下と右下から、上に向かって紙吹雪を打ち上げる
+  function burstConfetti(W, H){
+    for (let i = 0; i < CONFETTI_N; i++){
+      const side = i % 2 ? 1 : -1;
+      const a = -Math.PI / 2 - side * (0.25 + Math.random() * 0.45);   // 内側の上向き
+      const sp = H * (1.6 + Math.random() * 1.2);
+      confetti.push({ x: side < 0 ? 0 : W, y: H, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        rot: Math.random() * 6.3, vr: (Math.random() * 2 - 1) * 12, w: 6 + Math.random() * 6, h: 3 + Math.random() * 4,
+        c: CONFETTI_COLORS[i % CONFETTI_COLORS.length], ph: Math.random() * 6.3 });
+    }
+  }
+  // 文字の所から四方へ紙吹雪をはじけさせる（2回目・3回目の盛り上がり）
+  let textBursts = [];          // まだはじけさせていない時刻（秒）
+  function burstFromText(W, H){
+    const cx = W / 2, cy = H * 0.38 + 36;
+    for (let i = 0; i < SPARE_BURST_N; i++){
+      const a = Math.random() * Math.PI * 2, sp = H * (0.6 + Math.random() * 0.9);
+      confetti.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - H * 0.3,
+        rot: Math.random() * 6.3, vr: (Math.random() * 2 - 1) * 12, w: 6 + Math.random() * 6, h: 3 + Math.random() * 4,
+        c: CONFETTI_COLORS[i % CONFETTI_COLORS.length], ph: Math.random() * 6.3 });
+    }
+  }
+  function updateCelebrate(dt){
+    if (celebT < 0) return;
+    celebT += dt;
+    const W = wrap.clientWidth, H = wrap.clientHeight;
+    if (textBursts.length && celebT > textBursts[0]){ textBursts.shift(); burstFromText(W, H); shake = Math.max(shake, SHAKE_MAX); }
+    confCtx.clearRect(0, 0, W, H);
+    for (const p of confetti){
+      p.vy += H * 0.9 * dt;                  // 重力
+      p.vx *= Math.pow(0.2, dt); p.vy *= Math.pow(0.15, dt);   // 空気でふわっと遅くする（演出の間じゅう舞うように）
+      p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      confCtx.save();
+      confCtx.translate(p.x, p.y); confCtx.rotate(p.rot);
+      confCtx.scale(1, Math.abs(Math.cos(p.rot * 1.3 + p.ph)) * 0.8 + 0.2);   // ひらひら裏返る
+      confCtx.fillStyle = p.c;
+      confCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      confCtx.restore();
+    }
+  }
+  function stopCelebrate(){
+    celebT = -1;
+    confetti = [];
+    $('celebrate').classList.add('hidden');
+    $('celebrate').classList.remove('on', 'spare', 'strike');
+    textBursts = [];
+  }
+
+  function finish(){
+    mode = 'over';
+    document.documentElement.removeAttribute('data-howto-hidden');
+    if (throwNo === 1) firstKnocked = knocked;
+    // 日本のボウリング場のスコア表と同じ書き方：ストライクは1投目の枠に、左右を黒く塗った三角2つ（砂時計を横にした形）、
+    // スペアは枠の右下半分を黒く塗った三角、0本は「-」
+    const mark = n => n === 0 ? '-' : fmt(n);
+    const SVG = p => `<svg class="mark" viewBox="0 0 10 10" preserveAspectRatio="none" aria-hidden="true">${p}</svg>`;
+    const STRIKE = SVG('<polygon points="0,0 5,5 0,10"/><polygon points="10,0 5,5 10,10"/>');
+    const SPARE = SVG('<polygon points="10,0 10,10 0,10"/>');
+    // 中身は演出で1つずつ入れるため、枠の中に包んで置く
+    const V = h => `<span class="v">${h}</span>`;
+    if (throwNo === 1){
+      // ストライクは1投目の枠（左）に記号を入れ、2投目の枠は空ける
+      $('throw1').innerHTML = V(STRIKE);
+      $('throw1').setAttribute('aria-label', 'ストライク');
+      $('throw2').textContent = '';
+      $('throw2').removeAttribute('aria-label');
+    } else {
+      $('throw1').innerHTML = V(mark(firstKnocked));
+      $('throw1').removeAttribute('aria-label');
+      if (knocked === PIN_TOTAL){ $('throw2').innerHTML = V(SPARE); $('throw2').setAttribute('aria-label', 'スペア'); }
+      else { $('throw2').innerHTML = V(mark(knocked - firstKnocked)); $('throw2').removeAttribute('aria-label'); }
+    }
+    // 本数は1か所だけに出す（1フレームしかないので、上の見出しや合計の列は同じ数の繰り返しになるため置かない）
+    $('sheet').setAttribute('aria-label', `スコア ${fmt(knocked)}本`);
+    const all = knocked === PIN_TOTAL, strike = all && throwNo === 1;
+    const band = $('allBand');
+    band.textContent = strike ? 'ストライク！' : 'スペア！';
+    band.classList.toggle('strike', strike);
+    band.classList.toggle('hidden', !all);
+    band.classList.remove('in');
+    stopCelebrate();
+    $('over').classList.remove('hidden');
+    playScore(knocked, all);
+    updateHud();
+  }
+
+  // スコア表の表示演出（時間はミリ秒、カードが出始めてから）
+  const SCORE_T1 = 350;       // 1投目の枠に入る
+  const SCORE_GAP = 300;      // 2投目の枠に入るまでの間
+  const SCORE_COUNT_AT = 300; // 最後の枠が入ってから数え上げを始めるまで
+  const SCORE_COUNT = 1000;   // 合計を0から数え上げる時間
+  const SCORE_BTNS = 150;     // 数え終わってからボタンが出るまで
+  const SCORE_ALL_AT = 150;   // 全部倒したとき：数え終わってから帯を押して紙吹雪を出すまで
+  const SCORE_ALL_BTNS = 700; // 全部倒したとき：帯を押してからボタンが出るまで
+  const OVER_CONFETTI_N = 160; // 結果の紙吹雪の枚数
+  let scoreAnim = 0;
+  function playScore(final, all){
+    const id = ++scoreAnim;
+    const tot = $('frameTotal'), btns = $('overBtns');
+    const vs = [...document.querySelectorAll('#sheet .v')];
+    tot.classList.remove('done');
+    btns.classList.remove('in');
+    tot.textContent = '0';
+    const after = (ms, f) => setTimeout(() => { if (id === scoreAnim) f(); }, ms);
+    vs.forEach((v, i) => after(SCORE_T1 + i * SCORE_GAP, () => v.classList.add('in')));
+    const start = SCORE_T1 + (vs.length - 1) * SCORE_GAP + SCORE_COUNT_AT;
+    after(start, () => {
+      const t0 = performance.now();
+      const step = () => {
+        if (id !== scoreAnim) return;
+        const k = Math.min(1, (performance.now() - t0) / SCORE_COUNT);   // 始まりと同じ時計で測る
+        tot.textContent = fmt(Math.round(final * (1 - Math.pow(1 - k, 3))));
+        if (k < 1) return requestAnimationFrame(step);
+        tot.classList.add('done');
+        if (!all){ after(SCORE_BTNS, () => btns.classList.add('in')); return; }
+        after(SCORE_ALL_AT, () => {
+          $('allBand').classList.add('in');
+          burstOverConfetti();
+          after(SCORE_ALL_BTNS, () => btns.classList.add('in'));
+        });
+      };
+      requestAnimationFrame(step);
+    });
+  }
+
+  // 結果の紙吹雪：帯の所から四方へはじけて落ちる（1回だけ。画面の下へ出きったら止める）
+  const ovCv = $('overConfetti'), ovCtx = ovCv.getContext('2d');
+  let ovConf = [];
+  function burstOverConfetti(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = ovCv.clientWidth, H = ovCv.clientHeight;
+    ovCv.width = Math.round(W * dpr); ovCv.height = Math.round(H * dpr);
+    ovCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const cr = ovCv.getBoundingClientRect(), br = $('allBand').getBoundingClientRect();
+    const cx = br.left + br.width / 2 - cr.left, cy = br.top + br.height / 2 - cr.top;
+    ovConf = [];
+    for (let i = 0; i < OVER_CONFETTI_N; i++){
+      const a = Math.random() * Math.PI * 2, sp = H * (0.6 + Math.random() * 0.9);
+      ovConf.push({ x: cx + (Math.random() * 2 - 1) * br.width * 0.4, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - H * 0.3,
+        rot: Math.random() * 6.3, vr: (Math.random() * 2 - 1) * 12, w: 6 + Math.random() * 6, h: 3 + Math.random() * 4,
+        c: CONFETTI_COLORS[i % CONFETTI_COLORS.length], ph: Math.random() * 6.3 });
+    }
+  }
+  function updateOverConfetti(dt){
+    if (!ovConf.length) return;
+    const W = ovCv.clientWidth, H = ovCv.clientHeight;
+    ovCtx.clearRect(0, 0, W, H);
+    for (const p of ovConf){
+      p.vy += H * 0.9 * dt;
+      p.vx *= Math.pow(0.2, dt); p.vy *= Math.pow(0.15, dt);
+      p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      ovCtx.save();
+      ovCtx.translate(p.x, p.y); ovCtx.rotate(p.rot);
+      ovCtx.scale(1, Math.abs(Math.cos(p.rot * 1.3 + p.ph)) * 0.8 + 0.2);
+      ovCtx.fillStyle = p.c;
+      ovCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ovCtx.restore();
+    }
+    ovConf = ovConf.filter(p => p.y < H + 20);
+    if (!ovConf.length) ovCtx.clearRect(0, 0, W, H);
+  }
+  function stopOverConfetti(){
+    ovConf = [];
+    ovCtx.clearRect(0, 0, ovCv.width, ovCv.height);
+  }
+
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v3 = new THREE.Vector3();
+  const rollAxis = new THREE.Vector3(), rollQ = new THREE.Quaternion(), rollPos = new THREE.Vector3(), rollScale = new THREE.Vector3(1, 1, 1);
+  const one = new THREE.Vector3(1, 1, 1), axis = new THREE.Vector3();
+  const pinCenterOff = new THREE.Matrix4().makeTranslation(0, -PIN_H / 2, 0);
+  // 足元を支点に、向き ang へ t だけ傾けたピン
+  function composePin(x, z, ang, t){
+    const ax = Math.sin(ang), az = Math.cos(ang);
+    axis.set(az, 0, -ax);
+    q.setFromAxisAngle(axis, t);
+    v3.set(x, PIN_R * Math.abs(Math.sin(t)), z);   // 寝たときに床へめり込まないよう少し持ち上げる
+    m4.compose(v3, q, one);
+  }
+  // 連鎖で倒れるピンの傾き（点のシェーダーと同じ式）
+  function tiltOf(i){
+    if (pState[i] === 0) return 0;
+    const u = Math.min(1, (simT - pStart[i]) / DOMINO_FALL);
+    return Math.PI / 2 * u * u;
+  }
+
+  // 見ている所の近くのピンを形で描く。範囲は点のシェーダーにも渡し、同じピンを二重に描かない
+  const focusV = new THREE.Vector3();
+  function drawNearPins(focusX, focusZ){
+    focusV.set(focusX, 0, focusZ);
+    if (POINT_SIZE * pointMat.uniforms.uScale.value / camera.position.distanceTo(focusV) < NEAR_MIN_PX){
+      pointMat.uniforms.uNear.value.set(0, 0, 0, 0);   // 範囲なし＝全部点で描く
+      nearMesh.count = 0;
+      return;
+    }
+    const x0 = focusX - NEAR_X, x1 = focusX + NEAR_X, z0 = focusZ - NEAR_BACK, z1 = focusZ + NEAR_FWD;
+    pointMat.uniforms.uNear.value.set(x0, x1, z0, z1);
+    let n = 0;
+    const cx0 = Math.max(0, Math.floor(x0 - GX0)), cx1 = Math.min(GW - 1, Math.floor(x1 - GX0));
+    const cz0 = Math.max(0, Math.floor(z0 - GZ0)), cz1 = Math.min(GH - 1, Math.floor(z1 - GZ0));
+    for (let cz = cz0; cz <= cz1 && n < NEAR_MAX; cz++){
+      for (let cx = cx0; cx <= cx1 && n < NEAR_MAX; cx++){
+        const c = cz * GW + cx;
+        for (let k = cellStart[c]; k < cellStart[c + 1] && n < NEAR_MAX; k++){
+          const i = cellItems[k];
+          const x = px[i], z = pz[i];
+          if (x < x0 || x >= x1 || z < z0 || z >= z1 || pState[i] >= 3) continue;
+          composePin(x, z, pAng[i], tiltOf(i));
+          nearMesh.setMatrixAt(n++, m4);
+        }
+      }
+    }
+    nearMesh.count = n;
+    nearMesh.instanceMatrix.needsUpdate = true;
+  }
+  function drawFlyers(){
+    let n = 0;
+    for (const p of flyers){
+      if (p.gone) continue;
+      axis.set(p.az, 0, -p.ax);
+      q.setFromAxisAngle(axis, p.tilt);
+      if (p.air){
+        // 宙では真ん中を中心に回す
+        v3.set(p.x, p.y, p.z);
+        m4.compose(v3, q, one).multiply(pinCenterOff);
+      } else {
+        v3.set(p.x, PIN_R * Math.abs(Math.sin(p.tilt)), p.z);
+        m4.compose(v3, q, one);
+      }
+      flyMesh.setMatrixAt(n++, m4);
+    }
+    flyMesh.count = n;
+    flyMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  let lookZ = START_Z + CAM_AHEAD;
+  function draw(){
+    drawNearPins(camX, clamp(lookZ, PIN_FRONT_Z, FIELD_END));
+    drawFlyers();
+    // 倒れ始めたピンの分だけ、点の情報を GPU へ送る
+    if (infoMax >= 0){
+      infoAttr.updateRange.offset = infoMin * 2;
+      infoAttr.updateRange.count = (infoMax - infoMin + 1) * 2;
+      infoAttr.needsUpdate = true;
+      infoMin = Infinity; infoMax = -1;
+    }
+    pointMat.uniforms.uTime.value = simT;
+    let k = 0;
+    for (const b of balls){
+      if (b.gone) continue;
+      const age = b.born < 0 ? SPAWN_ANIM : simT - b.born;
+      if (age < SPAWN_ANIM){
+        // 増えたばかりの球：小さく飛び出して山なりに広がり、着地で元の大きさになる
+        const t = age / SPAWN_ANIM, e = 1 - (1 - t) * (1 - t) * (1 - t);
+        const sc = 0.35 + 0.65 * e;
+        m4.makeScale(sc, sc, sc);
+        m4.setPosition(b.fx + (b.x - b.fx) * e, BALL_R * sc + SPAWN_HOP * Math.sin(Math.PI * t), b.fz + (b.z - b.fz) * e);
+      } else {
+        // 前に描いた所から進んだ分だけ転がす（回す軸は進む向きに直角で床と平行）
+        const dx = b.x - b.rx, dz = b.z - b.rz, dist = Math.hypot(dx, dz);
+        if (dist > 1e-5){
+          rollAxis.set(dz / dist, 0, -dx / dist);
+          rollQ.setFromAxisAngle(rollAxis, dist / BALL_R);
+          b.q.premultiply(rollQ);
+        }
+        m4.compose(rollPos.set(b.x, BALL_R, b.z), b.q, rollScale);
+      }
+      b.rx = b.x; b.rz = b.z;
+      ballMesh.setMatrixAt(k++, m4);
+    }
+    ballMesh.count = k;
+    drawTrails();
+    ballMesh.instanceMatrix.needsUpdate = true;
+    aimLine.visible = mode === 'aim';
+    if (aimLine.visible){
+      // 画面の右は -x 側。球はまっすぐ進むので、ピンの手前（床の端に出るならそこ）までを帯で示す
+      const bx = balls[0].x;
+      const dx = -Math.sin(aimAngle), dz = Math.cos(aimAngle);
+      let len = (PIN_FRONT_Z - START_Z) / dz;
+      if (Math.abs(dx) > 1e-6) len = Math.min(len, (Math.sign(dx) * FIELD_HALF - bx) / dx);
+      aimLine.position.set(bx, 0.02, START_Z);
+      aimLine.rotation.y = Math.atan2(dx, dz);
+      aimLine.scale.set(BALL_R * 2, 1, Math.max(0.01, len * AIM_LEN));
+    }
+    placePosRow();
+    placePops();
+    renderer.render(scene, camera);
+  }
+
+  function updateCamera(dt){
+    // 構えている間は、球の左右の位置に合わせてカメラも動かす
+    let leadX = mode === 'aim' ? balls[0].x : 0;
+    let span = 0;
+    if (mode !== 'aim'){
+      // 球の広がり（増えた球が画面からはみ出さないよう、全部が収まるまで引いて真ん中を見る）
+      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+      for (const b of balls){
+        if (b.gone) continue;
+        if (b.x < x0) x0 = b.x;
+        if (b.x > x1) x1 = b.x;
+        if (b.z < z0) z0 = b.z;
+        if (b.z > z1) z1 = b.z;
+      }
+      if (x1 >= x0 && balls.length > 1){
+        span = Math.max(x1 - x0, (z1 - z0) * CAM_FIT_Z) + CAM_FIT_MARGIN;
+      }
+      let lead = waveZ, leadBallZ = -Infinity;
+      for (const b of balls){
+        if (b.gone) continue;
+        if (b.z > lead) lead = b.z;
+        if (b.z > leadBallZ){ leadBallZ = b.z; leadX = b.x; }
+      }
+      // 後戻りはしない（球が全部落ちても見ている場所はそのまま）
+      camLead = Math.max(camLead, Math.min(lead, FIELD_END));
+      if (span > 0) leadX = (x0 + x1) / 2;
+    }
+    spanS += (span - spanS) * Math.min(1, dt * CAM_ZOOM_FOLLOW);
+    camLeadS += (camLead - camLeadS) * Math.min(1, dt * CAM_FOLLOW);
+    const w = camLeadS < PIN_FRONT_Z ? 0 : widthAt(camLeadS);
+    // 斜めに投げた球を横にも追う。高く引いて全体を見るほど中央へ戻す
+    camX += (leadX * clamp(1 - w / CAM_X_FADE_W, 0, 1) - camX) * Math.min(1, dt * CAM_FOLLOW);
+    // 引く量はピンの列の幅と球の広がりの大きいほうで決める
+    const fw = Math.max(w, spanS);
+    const h = CAM_H + fw * CAM_H_PER_W;
+    const back = CAM_BACK + fw * CAM_BACK_PER_W;
+    // 見る所はピンの所の真ん中より奥へは行かせない（奥の端まで追うと、ピンが画面の下半分に寄って上が空く）
+    lookZ = Math.min(camLeadS + CAM_AHEAD, LOOK_MAX_Z);
+    camera.position.set(camX, h, lookZ - CAM_AHEAD - back);
+    // 上からの画面（倒した数を中央に出す）はピンの所に来てからだけ
+    topView = Math.atan2(CAM_H + w * CAM_H_PER_W, CAM_BACK + w * CAM_BACK_PER_W + CAM_AHEAD) > TOP_VIEW_PITCH;
+    camera.lookAt(camX, 0, lookZ);
+    // 画面上の位置合わせ（決定ボタン・ゲートの数字）は描く前に計算するので、ここでカメラの行列を今の位置に更新しておく
+    // （しないと1コマ前のカメラで計算され、もう一回でカメラが一気に戻ったときにボタンが前の位置に一瞬出る）
+    camera.updateMatrixWorld();
+    // 高く引くほど見える範囲が広がるので、描く距離もそれに合わせる（近すぎる面を切ると奥の精度が上がる）
+    camera.near = Math.max(0.1, h * 0.01);
+    camera.far = h * 6 + 600;
+    camera.updateProjectionMatrix();
+    if (shake > 0.001){
+      camera.position.x += (Math.random() * 2 - 1) * shake;
+      camera.position.y += (Math.random() * 2 - 1) * shake;
+    }
+    // 光はカメラ側の斜め上から当てる（影が奥へ落ちる）。低めにして、影がゲートの裏に隠れず奥へ伸びて見えるように
+    sun.position.set(camX + 12, 30, camLeadS - 40);
+    sun.target.position.set(camX, 0, camLeadS + 30);
+  }
+
+  // ---------- 入力 ----------
+  // 構えは「位置 → 向き → 強さ」の順に決める
+  function setPhase(ph){
+    phase = ph; phaseT = 0;
+    $('power').classList.toggle('hidden', ph !== 'pow');
+    $('posCtrl').classList.toggle('hidden', ph !== 'pos');
+    $('posHint').classList.toggle('hidden', ph !== 'pos');
+    $('backPos').classList.toggle('hidden', ph !== 'dir');   // 戻れるのは向きを決めている間だけ
+    drag = null; keyDir = 0;
+  }
+  // 向きを決めている途中から、位置を決める所へ戻る（向きは決め直し）
+  function backToPos(){
+    if (mode !== 'aim' || phase !== 'dir') return;
+    aimAngle = 0; power = 0; drawPower(0);
+    setPhase('pos');
+  }
+  function advance(){
+    if (mode !== 'aim') return;
+    if (phase === 'pos') setPhase('dir');
+    else if (phase === 'dir') setPhase('pow');
+    else throwBall();
+  }
+  // 決めた向きと強さで投げる。カメラの向きの都合で画面の右は -x 側
+  function throwBall(){
+    const b = balls[0];
+    const sp = BALL_SPEED_MIN + (BALL_SPEED_MAX - BALL_SPEED_MIN) * power;
+    b.vx = -Math.sin(aimAngle) * sp;
+    b.vz = Math.cos(aimAngle) * sp;
+    mode = 'rolling';
+    document.documentElement.setAttribute('data-howto-hidden', '');
+    $('backPos').classList.add('hidden');
+    $('power').classList.add('hidden');
+  }
+  // パワーゲージのコマ（強さに応じて左から点ける）
+  const segs = [];
+  for (let i = 0; i < POWER_SEGS; i++){
+    const d = document.createElement('div');
+    d.className = 'seg' + (i < POWER_SEGS * POWER_LOW ? ' low' : i >= POWER_SEGS * POWER_HOT ? ' hot' : '');
+    $('powerSegs').appendChild(d);
+    segs.push(d);
+  }
+  function drawPower(v){
+    const n = Math.round(v * POWER_SEGS);
+    segs.forEach((d, i) => d.classList.toggle('on', i < n));
+  }
+  // 予測線とゲージを往復させる（向き・強さの段階のときだけ）
+  function updateAim(dt){
+    if (mode !== 'aim') return;
+    phaseT += dt;
+    if (phase === 'dir'){
+      aimAngle = MAX_AIM * Math.sin(2 * Math.PI * phaseT / AIM_PERIOD);
+    } else if (phase === 'pow'){
+      const f = (phaseT / POWER_PERIOD) % 1;
+      power = f < 0.5 ? f * 2 : 2 - f * 2;
+      drawPower(power);
+    }
+  }
+
+  // 位置は床の端まで自由に動かせる（床の外に出ると球が落ちるので、そこだけ止める）
+  const setPos = x => { balls[0].x = clamp(x, -FIELD_HALF + BALL_R, FIELD_HALF - BALL_R); };
+
+  // 位置：◀▶ボタンを押している間だけ動き、決定ボタンを押すまで何度でも動かせる
+  // 画面の左は +x 側なので、◀ は +1、▶ は -1
+  let keyDir = 0;
+  let drag = null;              // 位置を決めるドラッグ中の指（pointerId と、前の指の位置）
+  // ゲートの中身の表示：ゲートの上の所を画面に写した位置に置き、上へ浮かせながら消す
+  const popV = new THREE.Vector3();
+  function placePops(){
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    for (const p of pops){
+      const k = Math.min(1, p.t / POP_TIME);
+      popV.set(p.x, GATE_H + 0.5 + POP_RISE * k, p.z).project(camera);
+      const behind = popV.z > 1;   // カメラの後ろに回ったら出さない
+      const sx = (popV.x + 1) / 2 * w, sy = (1 - popV.y) / 2 * h;
+      const sc = (k < 0.15 ? 0.6 + 0.4 * k / 0.15 : 1) * (1 + 0.15 * k);   // ぽんと出てから少しずつ大きく
+      p.el.style.transform = `translate(${sx}px, ${sy}px) translate(-50%, -50%) scale(${sc})`;
+      p.el.style.opacity = behind ? 0 : 1 - k * k;
+    }
+  }
+  // 位置を決める間の表示（決定ボタンの出し入れと、球の左右の矢印の位置）
+  const rowV = new THREE.Vector3(), hintV = new THREE.Vector3();
+  function placePosRow(){
+    if (mode !== 'aim' || phase !== 'pos') return;
+    rowV.set(balls[0].x, BALL_R, balls[0].z).project(camera);
+    const h = wrap.clientHeight, sy = (1 - rowV.y) / 2 * h;
+    // 2投目の始めはカメラがピンの所から戻ってくる途中なので、戻りきるまでボタンと矢印を隠す
+    const settled = Math.abs(camLeadS - camLead) < CAM_SETTLED && spanS < CAM_SETTLED;
+    $('posCtrl').style.visibility = settled ? '' : 'hidden';
+    // 球の左右の矢印：球の中心を画面に写した所に置き、球の見かけの半径ぶん外側に離す
+    const w = wrap.clientWidth, sx = (rowV.x + 1) / 2 * w;
+    hintV.set(balls[0].x - BALL_R, BALL_R, balls[0].z).project(camera);
+    const rPx = Math.abs(hintV.x - rowV.x) / 2 * w;
+    const hint = $('posHint');
+    hint.style.transform = `translate(${sx}px, ${sy}px)`;
+    hint.style.setProperty('--hintGap', `${rPx + HINT_GAP}px`);
+    hint.style.setProperty('--hintSize', `${HINT_SIZE}px`);
+    hint.style.visibility = settled ? '' : 'hidden';
+  }
+  $('posOk').addEventListener('click', () => { if (phase === 'pos') advance(); });
+  $('backPos').addEventListener('click', backToPos);
+  // 押し続けるほど速くなる（最初はゆっくりで細かく合わせられる）
+  let holdT = 0;
+  function updatePos(dt){
+    if (mode !== 'aim' || phase !== 'pos') return;
+    const d = keyDir;   // PC の←→キー（画面ではドラッグで動かす）
+    if (!d){ holdT = 0; return; }
+    holdT += dt;
+    const speed = Math.min(POS_SPEED_MAX, POS_SPEED * (1 + holdT * POS_ACCEL));
+    setPos(balls[0].x + d * speed * dt);
+  }
+
+  // 向き・強さ：画面をタップした瞬間に止める（離すときより狙ったタイミングに合いやすい）
+  cv.addEventListener('pointerdown', e => {
+    if (mode !== 'aim') return;
+    e.preventDefault();
+    if (phase !== 'pos'){ advance(); return; }
+    // 位置の段階：画面を横にドラッグした分だけ、球を同じ向きに動かす（指を右へ動かすと球も右へ）
+    cv.setPointerCapture(e.pointerId);
+    drag = { id: e.pointerId, x: e.clientX };
+  });
+  const dragV0 = new THREE.Vector3(), dragV1 = new THREE.Vector3();
+  cv.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id || mode !== 'aim' || phase !== 'pos') return;
+    const dx = e.clientX - drag.x;
+    drag.x = e.clientX;
+    // 球の所で床の1が画面の何ピクセルかを求めて、指の動きを床の上の距離に直す（画面の右は -x 側）
+    const b = balls[0];
+    dragV0.set(b.x, 0, b.z).project(camera);
+    dragV1.set(b.x - 1, 0, b.z).project(camera);
+    const pxPerUnit = Math.abs(dragV1.x - dragV0.x) / 2 * wrap.clientWidth || 1;
+    setPos(b.x - dx / pxPerUnit * DRAG_GAIN);
+  });
+  const dragEnd = e => { if (drag && e.pointerId === drag.id) drag = null; };
+  cv.addEventListener('pointerup', dragEnd);
+  cv.addEventListener('pointercancel', dragEnd);
+
+  // PC：←→を押している間は位置が動く、スペース/↑/Enterで決定（位置→向き→強さ）、向きの途中は Esc/Backspace で位置に戻る、結果画面ではスペース/Enterでもう一回
+  addEventListener('keydown', e => {
+    if (mode === 'aim'){
+      if (phase === 'dir' && (e.key === 'Escape' || e.key === 'Backspace')){ backToPos(); e.preventDefault(); }
+      else if (phase === 'pos' && e.key === 'ArrowLeft'){ keyDir = 1; e.preventDefault(); }
+      else if (phase === 'pos' && e.key === 'ArrowRight'){ keyDir = -1; e.preventDefault(); }
+      else if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'Enter'){
+        // 決定ボタンにフォーカスがあるときのスペース/Enterは、ボタン側の click で決定する（二重に進まないように）
+        if (!e.repeat && document.activeElement !== $('posOk')) advance();
+        if (document.activeElement !== $('posOk')) e.preventDefault();
+      }
+    } else if (mode === 'over' && shareViewOpen()){
+      if (e.key === 'Escape'){ closeShareView(); e.preventDefault(); }
+    } else if (mode === 'over' && (e.key === ' ' || e.key === 'Enter') && document.activeElement?.tagName !== 'BUTTON'){
+      reset(); e.preventDefault();
+    }
+  });
+  addEventListener('keyup', e => {
+    if ((e.key === 'ArrowLeft' && keyDir === 1) || (e.key === 'ArrowRight' && keyDir === -1)) keyDir = 0;
+  });
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  const isHeld = t => t === cv;
+  document.addEventListener('touchstart', e => { if (isHeld(e.target)) e.preventDefault(); }, { passive: false });
+  // 位置をドラッグしている間は、指が動いてもブラウザに操作を取られないようにする（ポリシー第4章）
+  document.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive: false });
+  // 共有の文面は選んでコピーできるように除く
+  document.addEventListener('selectstart', e => { if (!(e.target instanceof Element && e.target.closest('#share-text'))) e.preventDefault(); });
+  // 長押しメニューはゲーム画面のどこでも出さない（共有の文面だけは選んでコピーできるように除く）
+  document.addEventListener('contextmenu', e => { if (!(e.target instanceof Element && e.target.closest('#share-text'))) e.preventDefault(); });
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    // 決定ボタンは素早く押すことがあるので除く（ボタンには touch-action:none を付けて拡大されないようにしている）
+    if (now - lastTouchEnd < 350 && !e.target.closest?.('#posCtrl')) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  // ---------- 結果画面 ----------
+  $('retry').addEventListener('click', reset);
+
+  function shareText(){
+    return `${fmt(PIN_TOTAL)}本中${fmt(knocked)}本倒した！\n${throwDetail()}\n${location.href.split(/[?#]/)[0]}\n#1万ボーリング`;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 共有画像：ゲーム画面の上に、結果画面と同じ形のスコア表を重ねる。ストライク・スペアなら演出と同じ帯付きの文字も入れる
+  function resultDataUrl(){
+    renderer.render(scene, camera);   // 直前に描けば preserveDrawingBuffer なしでも読み出せる
+    const c = document.createElement('canvas');
+    c.width = cv.width; c.height = cv.height;
+    const g = c.getContext('2d');
+    g.drawImage(cv, 0, 0);
+    const k = c.width / wrap.clientWidth;          // CSS ピクセル → 画像のピクセル
+    const W = wrap.clientWidth, H = wrap.clientHeight;
+    g.scale(k, k);
+    // 後ろを少し暗くして、表と文字を読みやすくする
+    g.fillStyle = 'rgba(10,13,20,.35)'; g.fillRect(0, 0, W, H);
+    const font = css('--font'), ink = css('--ink'), line = '#c9cfdc';
+    // スコア表（結果画面と同じ：上に1投目・2投目の小枠、下に合計）
+    const bw = 200, boxH = 56, totH = 70, pad = 16;
+    const bx = (W - bw) / 2, by = H * 0.52;
+    g.fillStyle = '#fff';
+    g.beginPath(); g.roundRect(bx - pad, by - pad, bw + pad * 2, boxH + totH + pad * 2, 20); g.fill();
+    g.strokeStyle = line; g.lineWidth = 1.5;
+    g.strokeRect(bx, by, bw, boxH + totH);
+    g.beginPath(); g.moveTo(bx, by + boxH); g.lineTo(bx + bw, by + boxH); g.moveTo(bx + bw / 2, by); g.lineTo(bx + bw / 2, by + boxH); g.stroke();
+    g.fillStyle = ink; g.textAlign = 'center'; g.textBaseline = 'middle';
+    const tri = (x, y, pts) => { g.beginPath(); pts.forEach(([u, v], i) => (i ? g.lineTo : g.moveTo).call(g, x + u * bw / 2 / 10, y + v * boxH / 10)); g.closePath(); g.fill(); };
+    const num = (x, t) => { g.font = `bold 18px ${font}`; g.fillText(t, x + bw / 4, by + boxH / 2 + 1); };
+    const mark = n => n === 0 ? '-' : fmt(n);
+    const all = knocked === PIN_TOTAL, strike = all && throwNo === 1, spare = all && throwNo === 2;
+    if (strike){
+      tri(bx, by, [[0, 0], [5, 5], [0, 10]]); tri(bx, by, [[10, 0], [5, 5], [10, 10]]);
+    } else {
+      num(bx, mark(throwNo === 1 ? knocked : firstKnocked));
+      if (spare) tri(bx + bw / 2, by, [[10, 0], [10, 10], [0, 10]]);
+      else if (throwNo === 2) num(bx + bw / 2, mark(knocked - firstKnocked));
+    }
+    g.font = `900 40px ${font}`;
+    g.fillText(fmt(knocked), W / 2, by + boxH + totH / 2 + 2);
+    // ストライク・スペアの文字（帯の上に白い字）
+    if (all){
+      const fs = Math.min(W * 0.13, 60);
+      g.save();
+      g.translate(W / 2, H * 0.38);
+      g.rotate(-4 * Math.PI / 180);
+      g.fillStyle = css(strike ? '--strikeBand' : '--spareBand');
+      g.fillRect(-W, -fs * 0.8, W * 2, fs * 1.6);
+      g.fillStyle = '#fff'; g.font = `900 ${fs}px ${font}`;
+      // 字の実際の上端・下端を測り、その真ん中を帯の真ん中に合わせる（フォントごとの上下の余白の差でずれないように）
+      const label = strike ? 'ストライク！' : 'スペア！';
+      g.textBaseline = 'alphabetic';
+      const m = g.measureText(label);
+      g.fillText(label, 0, (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
+      g.restore();
+    }
+    return c.toDataURL('image/png');
+  }
+  function resultImageFile(url){
+    const bin = atob(url.split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+  const SHARE_INSTANT = 0.5;   // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const text = shareText();
+    const url = resultDataUrl();
+    const file = resultImageFile(url);
+    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    const fallback = () => {
+      navigator.clipboard?.writeText(text).catch(() => {});
+      $('share-img').src = url;
+      $('share-text').textContent = text;
+      $('share-view').classList.remove('hidden');
+      $('share-close').focus({ preventScroll: true });
+    };
+    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
+    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    const shareStart = performance.now();
+    const failed = err => {
+      const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
+      if (!err || err.name !== 'AbortError' || instant) fallback();
+    };
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      navigator.share({ text, files: [file] }).catch(failed);
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share){
+      navigator.share({ text }).catch(failed);
+      return;
+    }
+    fallback();
+  });
+  const shareViewOpen = () => !$('share-view').classList.contains('hidden');
+  const closeShareView = () => {
+    $('share-view').classList.add('hidden');
+    $('share').focus({ preventScroll: true });
+  };
+  $('share-close').addEventListener('click', closeShareView);
+  $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
+
+  // ---------- ループ ----------
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    if (mode === 'rolling'){
+      // 最初にピンへ当たった直後だけ、物理をゆっくり進める
+      const ts = slowT > 0 ? SLOW_SCALE : 1;
+      slowT -= dt;
+      acc += dt * ts;
+      while (acc >= STEP){ step(STEP); acc -= STEP; }
+      elapsed += dt;
+      const moving = falling.length > 0 || boosted.length > 0 || flyers.some(p => !p.done && !p.gone)
+        || balls.some(b => !b.gone && Math.hypot(b.vx, b.vz) > 0.3);
+      settle = moving ? 0 : settle + dt;
+      // 直近 IDLE_END 秒に倒れた数
+      // 終わりの判定。次のものが無くなってから IDLE_END 秒たったら終わる（最初の1本が倒れてからも IDLE_END 秒は待つ）：
+      // ・倒れている途中のピン、宙を飛んでいるピン
+      // ・まだピンを倒しながら進んでいる球や飛んだピン（直近 ACTIVE_T 秒に倒していて、まだ速い）
+      // ・まだ1本も倒れていない間に速く転がっている球（2投目で、片付けた後の空いた所を進んでいる球など）
+      // ・レーンをピンへ向かって速く転がっている球（後ろから遅れて来る球。壁で跳ね返って戻っていく球は待たない）
+      // 倒し終わった所を惰性で転がっているだけの球は待たない（終わりが長引いていたため）
+      if (firstKnockAt < 0 && lastKnockAt > 0) firstKnockAt = elapsed;
+      const fast = o => Math.hypot(o.vx, o.vz) > IDLE_BALL_SPEED;
+      const knocking = o => o.hitAt > elapsed - ACTIVE_T && fast(o);
+      const busy = falling.length > 0
+        || balls.some(b => !b.gone && (knocking(b) || ((firstKnockAt < 0 || (b.z < FIELD_START && b.vz > 0)) && fast(b))))
+        || flyers.some(p => !p.gone && (p.air || knocking(p)));
+      if (busy) busyAt = elapsed;
+      const idle = elapsed - busyAt > IDLE_END && (firstKnockAt < 0 || elapsed - firstKnockAt > IDLE_END);
+      updateHud();
+      if (knocked >= PIN_TOTAL && celebT < 0) startCelebrate();
+      if (celebT >= 0){
+        // 全部倒したら、演出を見せきってから結果へ（途中で終わりの判定が来ても待つ）
+        if (celebT > CELEB_TIME) endThrow();
+      } else if (settle > END_WAIT || idle || elapsed > TIMEOUT) endThrow();
+    }
+    updateCelebrate(dt);
+    updateOverConfetti(dt);
+    // 構えている間もゲートは動かしておく（投げるタイミングを計れるように）
+    if (mode === 'aim'){ gateT += dt; updateGates(); }
+    updatePos(dt);
+    updateAim(dt);
+    updateEffects(dt);
+    updateCamera(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

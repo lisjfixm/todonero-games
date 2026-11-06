@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/lens-warp/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ゆがみレンズ</title>
+<meta name="description" content="レンズを置いて写真をゆがませるおもちゃ">
+<style>
+  :root{
+    --bg:#1a1a1a; --fg:#eee; --sub:#aaa; --line:#444; --panel:#262626;
+    --howto-bg:#262626; --howto-fg:#eee;
+    --ring:rgba(255,255,255,.9); --ring-sub:rgba(255,255,255,.45); --ring-shadow:rgba(0,0,0,.5);
+    --ring-delete:#ff3b30; --ring-delete-sub:rgba(255,59,48,.6);
+    --face-bg:#f3ecdc; --face-skin:#f8d6b6; --face-nose:#f2b597; --face-hair:#5a5450; --face-line:#2a1d16;
+    --face-eye:#fff; --face-cheek:rgba(255,130,130,.35); --face-mouth:#d0524c;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  .hidden{display:none !important}
+  #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
+  #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;padding:12px;background:var(--panel);border-radius:8px}
+  #share-img{display:block;width:100%;height:auto}
+  #share-view .actions{display:flex;gap:8px;margin:12px 0 8px}
+  #share-view .actions .btn{font-size:14px}
+  #layout-code{display:block;width:100%;height:44px;margin:0 0 8px;padding:0 10px;font-size:14px;font-family:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  #load-area{display:flex;gap:8px;margin:0 0 8px}
+  #load-area input{flex:1;min-width:0;height:44px;padding:0 10px;font-size:16px;font-family:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px}
+  #load-area .btn{flex:0 0 auto;padding:0 14px;font-size:14px}
+  #share-status{min-height:1.5em;margin:0 0 8px;font-size:13px;color:var(--sub)}
+  /* 入力欄はbodyの文字選択禁止を打ち消す（iPhoneのSafariで入力できなくなるため） */
+  #share-view input{-webkit-user-select:text;user-select:text}
+  #app{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+  #stage{flex:1;min-height:0;position:relative}
+  #cv{display:block;width:100%;height:100%;touch-action:none}
+  #controls{display:flex;flex-direction:column;gap:6px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:var(--panel)}
+  /* 選んでいるレンズの横に出すスライダーの箱（位置はJSで決める） */
+  /* 消えるときだけフェードアウトする（出るときはすぐ出す）。時間は JS の PANEL_FADE */
+  #lensPanel.faded{opacity:0;pointer-events:none;transition:opacity var(--panel-fade,.4s)}
+  /* 下の画像が少し透けて見えるように、箱全体を少しだけ透明にする */
+  #lensPanel{opacity:.85;position:absolute;left:0;top:0;width:min(280px,calc(100% - 16px));padding:0 10px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+  .row{display:flex;align-items:center;gap:8px;min-height:44px}
+  .row label{flex:0 0 auto;white-space:nowrap;font-size:13px;color:var(--sub)}
+  .row input[type=range]{flex:1;min-width:0;height:44px;margin:0}
+  .val{width:5em;text-align:right;font-size:13px;font-variant-numeric:tabular-nums}
+  .btns{display:flex;gap:8px}
+  .btn{position:relative;flex:1;display:flex;align-items:center;justify-content:center;height:48px;font-size:16px;font-family:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;cursor:pointer}
+  /* inputは消さずに見えなくするだけ（display:noneにすると環境によってファイル選択が効かない） */
+  #file{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  .btn.icon{flex:0 0 48px}  .btn svg{width:24px;height:24px}
+  /* ONのときは色を反転して、消すモード中だと分かるようにする */
+  #trash[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+  #pick:focus-within,.btn:focus-visible,input[type=range]:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+  input[type=range]:disabled,.btn:disabled{opacity:.4;cursor:default}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv" role="img" aria-label="レンズで歪ませた画像。レンズをドラッグで動かせます"></canvas>
+    <div id="lensPanel" hidden>
+      <div class="row">
+        <label for="strength">ゆがみ</label>
+        <input id="strength" type="range" min="-100" max="100" step="1">
+        <span class="val" id="strengthVal"></span>
+      </div>
+      <div class="row">
+        <label for="size">大きさ</label>
+        <input id="size" type="range" step="1">
+        <span class="val" id="sizeVal"></span>
+      </div>
+    </div>
+    <section class="howto" data-pos="top-left" hidden>
+      <h2>遊び方</h2>
+      <p>丸いレンズを画像に重ねて、絵をゆがませるおもちゃです。勝ち負けはありません。最初は顔のイラストにレンズが1枚置かれていて、「画像を選ぶ」で手持ちの写真に替えられます。できた絵は共有でき、レンズの配置はコードにして渡せます。</p>
+      <h2>操作</h2>
+      <p>レンズをドラッグすると動きます。触った直後はスライダーが出て、ゆがみと大きさを変えられます。＋のボタンで追加し、ゴミ箱をオンにして触ると消せます。目のボタンは枠を隠します。PC では矢印キーでも動かせます。</p>
+      <h2>楽しみ方</h2>
+      <p>プラスは膨らみ、マイナスは縮みます。プラスは50ほど、マイナスは25ほどを超えると絵が裏返り始めます。レンズを重ねると、ゆがみも重なります。</p>
+      <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    </section>
+  </div>
+  <div id="controls">
+    <div class="btns">
+      <label id="pick" class="btn"><span id="pickText">画像を選ぶ</span><input id="file" type="file" accept="image/*"></label>
+      <button id="add" class="btn icon" type="button" aria-label="レンズを追加">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+      </button>
+      <button id="trash" class="btn icon" type="button" aria-label="レンズを消す" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3"/></svg>
+      </button>
+      <button id="rings" class="btn icon" type="button" aria-label="レンズの枠を表示" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path id="ringsOff" d="M4 4l16 16" style="display:none"/></svg>
+      </button>
+      <button id="share" class="btn icon" type="button" aria-label="共有">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg>
+      </button>
+    </div>
+  </div>
+  <!-- 共有ボタンで出す画面：画像の共有・配置の共有・配置の読み込み -->
+  <div id="share-view" class="hidden" role="dialog" aria-label="共有">
+    <div class="panel">
+      <img id="share-img" alt="共有される画像">
+      <div class="actions">
+        <button id="share-send" class="btn icon" type="button" aria-label="画像を共有">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg>
+        </button>
+        <button id="layout-share" class="btn" type="button">配置を共有</button>
+        <button id="layout-load" class="btn" type="button">配置を読み込み</button>
+      </div>
+      <input id="layout-code" class="hidden" type="text" readonly aria-label="配置のコード">
+      <div id="load-area" class="hidden">
+        <input id="load-code" type="text" placeholder="配置のコードを貼り付け" aria-label="読み込む配置のコード" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button id="load-go" class="btn" type="button">読み込む</button>
+      </div>
+      <p id="share-status" aria-live="polite"></p>
+      <button id="share-close" class="btn" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  const MAX_DPR = 2;            // DPRの上限（モバイルで重くなりすぎないように）
+  const STRENGTH_DEFAULT = 60;  // 新しいレンズのゆがみ（-100〜100。正で膨らむ、負で縮む）
+  // あえて裏返る範囲まで使う（膨らむ側は約+50、縮む側は約-25を超えると裏返り始める）
+  const K_PLUS = 2;             // ゆがみ+100のときの係数（1を超えると中心が上下左右反転する）
+  const K_MINUS = 2;            // ゆがみ-100のときの係数（0.5を超えると縁の近くで絵が折り返す）
+  const SIZE_MIN = 30;          // レンズ半径の下限（CSSピクセル）
+  const SIZE_DEFAULT = 90;      // 新しいレンズの半径（CSSピクセル）
+  const KEY_STEP = 8;           // 矢印キー1回でレンズが動く量（CSSピクセル）
+  const FACE_SIZE = 0.8;        // 最初に出す顔の幅（画面の短い辺に対する割合）
+  const RING_WIDTH = 2;         // 選んでいるレンズの縁の線の太さ（CSSピクセル）
+  const RING_WIDTH_SUB = 1;     // 選んでいないレンズの縁の線の太さ（CSSピクセル）
+  const PANEL_GAP = 8;          // レンズの縁とスライダーの箱の間隔（CSSピクセル）
+  const PANEL_MARGIN = 8;       // スライダーの箱を画面の端から離す量（CSSピクセル）
+  const PANEL_HIDE = 2;         // 操作をやめてからスライダーの箱が消え始めるまでの時間（秒）
+  const PANEL_FADE = 0.4;       // スライダーの箱がフェードアウトにかける時間（秒）
+  const STATUS_TIME = 2.5;      // 共有の画面に出すお知らせ（コピーしました等）を出しておく時間（秒）
+  const MAX_LOAD_LENSES = 50;   // 配置のコードから読み込むレンズの上限（変なコードで重くならないように）
+  const SHARE_INSTANT = 0.5;    // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const ANIM_IN = 0.3;          // レンズを追加したとき、0から元の大きさに広がるまでの時間（秒）
+  const ANIM_OUT = 0.2;         // レンズを消したとき、0まで縮んで消えるまでの時間（秒）
+
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  const cv = $('cv');
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  // 歪ませる前の画像（歪みは毎回ここから読む）
+  const srcCv = document.createElement('canvas');
+  const sctx = srcCv.getContext('2d', { willReadFrequently: true });
+
+  let W = 0, H = 0, dpr = 1;
+  let src = null;     // 元画像の画素（srcCv と同じサイズ）
+  let img = null;     // 読み込んだ画像（未選択なら null）
+  // レンズの一覧（後ろにあるものほど上に重なる）。位置と大きさはCSSピクセル
+  const lenses = [];
+  let selected = -1;  // スライダーで調整しているレンズの番号（レンズが無ければ -1）
+  let deleting = false;  // ゴミ箱がONのとき、触ったレンズを消す
+  let showRings = true;  // レンズの枠を描くかどうか
+
+  // 画像（または顔）が画面のどこに描かれているか（CSSピクセル）
+  // 配置のコードは、画面ではなくこの範囲を基準に記録する（画面の大きさが違っても同じ所に再現できるように）
+  let contentRect = { x: 0, y: 0, w: 1, h: 1 };
+
+  // ---------- 元画像の用意 ----------
+  function buildSource(){
+    const cw = srcCv.width = cv.width;
+    const ch = srcCv.height = cv.height;
+    sctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (img) {
+      sctx.fillStyle = css('--bg');
+      sctx.fillRect(0, 0, cw, ch);
+      // 画面に収まるように縮小して中央に置く
+      const s = Math.min(cw / img.width, ch / img.height);
+      const w = img.width * s, h = img.height * s;
+      sctx.imageSmoothingQuality = 'high';
+      sctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+      contentRect = { x: (cw - w) / 2 / dpr, y: (ch - h) / 2 / dpr, w: w / dpr, h: h / dpr };
+    } else {
+      const S = Math.min(W, H * 0.8);   // 顔の大きさの基準（drawFace と同じ）
+      contentRect = { x: (W - S) / 2, y: (H - S) / 2, w: S, h: S };
+      // 画像を選ぶまでは顔のイラストを出しておく（目や口をレンズで歪ませて遊べるように）
+      drawFace(sctx, cw, ch);
+    }
+    src = sctx.getImageData(0, 0, cw, ch).data;
+  }
+
+  // 最初に出す顔のイラスト（画像ファイルを使わずコードで描く）。大きさは画面の短い辺に合わせる
+  function drawFace(c, cw, ch){
+    const u = Math.min(cw, ch * 0.8) * FACE_SIZE / 2;   // 顔の半径
+    const cx = cw / 2, cy = ch / 2;
+    const line = Math.max(2, u * 0.035);
+    const circle = (x, y, r) => { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); };
+    c.lineCap = c.lineJoin = 'round';
+
+    c.fillStyle = css('--face-bg');
+    c.fillRect(0, 0, cw, ch);
+
+    const hair = css('--face-hair'), ink = css('--face-line');
+    // 耳
+    c.fillStyle = css('--face-skin');
+    c.strokeStyle = ink;
+    c.lineWidth = line;
+    for (const s of [-1, 1]) { circle(cx + s * u * 0.98, cy + u * 0.05, u * 0.18); c.fill(); c.stroke(); }
+    // 顔の輪郭（まるい）
+    c.beginPath();
+    c.ellipse(cx, cy, u, u * 1.06, 0, 0, Math.PI * 2);
+    c.fill(); c.stroke();
+    // 耳の上にだけ残った髪
+    c.fillStyle = hair;
+    for (const s of [-1, 1]) {
+      c.beginPath();
+      c.ellipse(cx + s * u * 0.9, cy - u * 0.25, u * 0.12, u * 0.26, s * 0.2, 0, Math.PI * 2);
+      c.fill();
+    }
+    // てっぺんの1本毛
+    c.strokeStyle = hair;
+    c.lineWidth = line * 1.2;
+    c.beginPath();
+    c.moveTo(cx, cy - u * 1.05);
+    c.quadraticCurveTo(cx + u * 0.05, cy - u * 1.25, cx + u * 0.16, cy - u * 1.2);
+    c.stroke();
+    // ほっぺ
+    c.fillStyle = css('--face-cheek');
+    for (const s of [-1, 1]) { circle(cx + s * u * 0.58, cy + u * 0.3, u * 0.13); c.fill(); }
+    // 眉（なだらかな山なり）
+    c.strokeStyle = hair;
+    c.lineWidth = line * 2;
+    for (const s of [-1, 1]) {
+      c.beginPath();
+      c.moveTo(cx + s * u * 0.22, cy - u * 0.36);
+      c.quadraticCurveTo(cx + s * u * 0.36, cy - u * 0.44, cx + s * u * 0.5, cy - u * 0.36);
+      c.stroke();
+    }
+    // 目（黒い楕円＋光）
+    for (const s of [-1, 1]) {
+      const ex = cx + s * u * 0.36, ey = cy - u * 0.1;
+      c.fillStyle = ink;
+      c.beginPath(); c.ellipse(ex, ey, u * 0.055, u * 0.075, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = css('--face-eye');
+      circle(ex + u * 0.018, ey - u * 0.025, u * 0.018); c.fill();
+    }
+    // まるメガネ
+    c.strokeStyle = ink;
+    c.lineWidth = line * 1.3;
+    for (const s of [-1, 1]) { circle(cx + s * u * 0.36, cy - u * 0.1, u * 0.19); c.stroke(); }
+    c.beginPath();
+    c.moveTo(cx - u * 0.17, cy - u * 0.12);
+    c.quadraticCurveTo(cx, cy - u * 0.18, cx + u * 0.17, cy - u * 0.12);
+    c.stroke();
+    // まるい鼻
+    c.lineWidth = line;
+    c.fillStyle = css('--face-nose');
+    circle(cx, cy + u * 0.16, u * 0.09); c.fill(); c.stroke();
+    // 口ひげ（小さめ）
+    c.fillStyle = hair;
+    c.beginPath();
+    c.moveTo(cx, cy + u * 0.3);
+    c.quadraticCurveTo(cx - u * 0.13, cy + u * 0.25, cx - u * 0.26, cy + u * 0.38);
+    c.quadraticCurveTo(cx - u * 0.13, cy + u * 0.36, cx, cy + u * 0.38);
+    c.quadraticCurveTo(cx + u * 0.13, cy + u * 0.36, cx + u * 0.26, cy + u * 0.38);
+    c.quadraticCurveTo(cx + u * 0.13, cy + u * 0.25, cx, cy + u * 0.3);
+    c.fill();
+    // にっこりした口
+    c.fillStyle = css('--face-mouth');
+    c.strokeStyle = ink;
+    c.lineWidth = line;
+    c.beginPath();
+    c.moveTo(cx - u * 0.2, cy + u * 0.5);
+    c.quadraticCurveTo(cx, cy + u * 0.72, cx + u * 0.2, cy + u * 0.5);
+    c.closePath();
+    c.fill(); c.stroke();
+  }
+
+  // ---------- 描画 ----------
+  const colors = {};
+
+  // forImage が true のときは、共有用に歪ませた画像だけを描く（枠を描かない）
+  function render(forImage){
+    const cw = cv.width, ch = cv.height;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(srcCv, 0, 0);
+
+    // レンズを画素単位の値にしておく（消えかけのレンズは今のレンズの下に重ねる）
+    // 追加・削除のアニメーション中は、半径を shownRadius で縮めて描く
+    const all = fading.concat(lenses).filter(l => shownRadius(l) > 0.5);
+    const L = all.map(l => ({
+      cx: l.x * dpr, cy: l.y * dpr, R2: (shownRadius(l) * dpr) ** 2,
+      k: l.strength >= 0 ? l.strength / 100 * K_PLUS : l.strength / 100 * K_MINUS,
+    }));
+
+    // 全レンズを囲む範囲だけ書き換える
+    let x0 = cw, y0 = ch, x1 = 0, y1 = 0;
+    for (const l of all) {
+      const R = shownRadius(l) * dpr, cx = l.x * dpr, cy = l.y * dpr;
+      x0 = Math.min(x0, Math.floor(cx - R)); y0 = Math.min(y0, Math.floor(cy - R));
+      x1 = Math.max(x1, Math.ceil(cx + R));  y1 = Math.max(y1, Math.ceil(cy + R));
+    }
+    x0 = Math.max(0, x0); y0 = Math.max(0, y0);
+    x1 = Math.min(cw, x1); y1 = Math.min(ch, y1);
+    const bw = x1 - x0, bh = y1 - y0;
+
+    if (bw > 0 && bh > 0) {
+      const out = ctx.getImageData(x0, y0, bw, bh);
+      const d = out.data;
+      const sw = srcCv.width, sh = srcCv.height;
+      for (let y = 0; y < bh; y++) {
+        const py = y0 + y + 0.5;
+        for (let x = 0; x < bw; x++) {
+          let sx = x0 + x + 0.5, sy = py, hit = false;
+          // 上に重なっているレンズから順にたどる（重なった所は歪みが重なる）
+          for (let i = L.length - 1; i >= 0; i--) {
+            const l = L[i];
+            const dx = sx - l.cx, dy = sy - l.cy;
+            const r2 = dx * dx + dy * dy;
+            if (r2 >= l.R2) continue;
+            // 中心ほど強く拡大（k>0）／縮小（k<0）し、縁でちょうど元の位置に戻る
+            const f = 1 + l.k * (r2 / l.R2 - 1);
+            sx = l.cx + dx * f; sy = l.cy + dy * f;
+            hit = true;
+          }
+          if (!hit) continue;
+          // 周囲4画素から補間して読む（ガタガタにならないように）
+          sx -= 0.5; sy -= 0.5;
+          const ix = Math.floor(sx), iy = Math.floor(sy);
+          const fx = sx - ix, fy = sy - iy;
+          const ax = clamp(ix, 0, sw - 1), bx = clamp(ix + 1, 0, sw - 1);
+          const ay = clamp(iy, 0, sh - 1), by = clamp(iy + 1, 0, sh - 1);
+          const i00 = (ay * sw + ax) * 4, i10 = (ay * sw + bx) * 4;
+          const i01 = (by * sw + ax) * 4, i11 = (by * sw + bx) * 4;
+          const o = (y * bw + x) * 4;
+          for (let c = 0; c < 4; c++) {
+            const top = src[i00 + c] + (src[i10 + c] - src[i00 + c]) * fx;
+            const bot = src[i01 + c] + (src[i11 + c] - src[i01 + c]) * fx;
+            d[o + c] = top + (bot - top) * fy;
+          }
+        }
+      }
+      ctx.putImageData(out, x0, y0);
+    }
+
+    // レンズの範囲が分かるように縁だけ線を引く（選んでいるレンズは太く濃く）
+    // 白い画像の上でも見えるように、暗い線を下に敷く
+    if (forImage) return;
+    placePanel();
+    if (!showRings) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const ring = (l, w, color) => {
+      const r = shownRadius(l);
+      if (r <= 0.5) return;
+      ctx.beginPath();
+      ctx.arc(l.x, l.y, r, 0, Math.PI * 2);
+      ctx.strokeStyle = colors.shadow;
+      ctx.lineWidth = w + 2;
+      ctx.stroke();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = w;
+      ctx.stroke();
+    };
+    // 消えかけのレンズは、消したときの色のまま縮める
+    fading.forEach(l => ring(l, RING_WIDTH_SUB, deleting ? colors.ringDeleteSub : colors.ringSub));
+    lenses.forEach((l, i) => {
+      const w = i === selected ? RING_WIDTH : RING_WIDTH_SUB;
+      // ゴミ箱ONの間は、触ると消えることが分かるように赤くする
+      if (deleting) ring(l, w, i === selected ? colors.ringDelete : colors.ringDeleteSub);
+      else ring(l, w, i === selected ? colors.ring : colors.ringSub);
+    });
+  }
+
+  // スライダーの箱を選んでいるレンズの横に置く
+  // まずレンズの下、入らなければ上、どちらも入らなければ画面内に収まる位置にずらす
+  // 枠を非表示にしている間は、画像だけを見られるように箱も隠す
+  // 操作をやめて PANEL_HIDE 秒たったら箱を隠す（何か操作するとまた出る）
+  function placePanel(){
+    const p = $('lensPanel');
+    const l = lenses[selected];
+    p.hidden = !l || !showRings;
+    p.classList.toggle('faded', !panelShown);
+    if (p.hidden) return;
+    const pw = p.offsetWidth, ph = p.offsetHeight;
+    const maxY = H - PANEL_MARGIN - ph;
+    let y = l.y + l.radius + PANEL_GAP;
+    if (y > maxY) {
+      y = l.y - l.radius - PANEL_GAP - ph;
+      if (y < PANEL_MARGIN) y = clamp(l.y + l.radius + PANEL_GAP, PANEL_MARGIN, maxY);
+    }
+    p.style.left = clamp(l.x - pw / 2, PANEL_MARGIN, W - PANEL_MARGIN - pw) + 'px';
+    p.style.top = y + 'px';
+  }
+
+  // 操作のたびに呼ぶ：箱を出し、指やマウスを離してから PANEL_HIDE 秒後に隠す
+  // （レンズをドラッグ中・スライダーを押さえている間は隠さない）
+  let panelShown = false, panelTimer = 0, panelHeld = false;
+  function poke(){
+    panelShown = true;
+    clearTimeout(panelTimer);
+    if (!drags.size && !panelHeld) {
+      panelTimer = setTimeout(() => { panelShown = false; requestRender(); }, PANEL_HIDE * 1000);
+    }
+    requestRender();
+  }
+
+  // 動かしたときだけ描き直す（連続したアニメーションはしない）
+  let queued = false;
+  function requestRender(){
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; render(); });
+  }
+
+  // ---------- レンズ ----------
+  function sizeMax(){ return Math.max(SIZE_MIN, Math.floor(Math.min(W, H) / 2)); }
+
+  // grow: 0→1 で広がりきる（追加時）。消したレンズは fading に移して 1→0 で縮める
+  function addLens(){
+    lenses.push({ x: W / 2, y: H / 2, strength: STRENGTH_DEFAULT, radius: clamp(SIZE_DEFAULT, SIZE_MIN, sizeMax()), grow: 0 });
+    select(lenses.length - 1);
+    startAnim();
+    poke();
+  }
+
+  // ---------- 追加・削除のアニメーション ----------
+  const fading = [];   // 消している途中のレンズ（触れない・選べない）
+  const easeOut = t => 1 - (1 - t) ** 3;
+  // アニメーション込みで今描く半径
+  function shownRadius(l){
+    return l.radius * easeOut(clamp(l.grow ?? 1, 0, 1));
+  }
+  let animating = false, lastT = 0;
+  function startAnim(){
+    if (animating) return;
+    animating = true;
+    lastT = performance.now();
+    requestAnimationFrame(tick);
+  }
+  function tick(now){
+    const dt = Math.min((now - lastT) / 1000, 1 / 30);
+    lastT = now;
+    let busy = false;
+    for (const l of lenses) {
+      if (l.grow < 1) { l.grow = Math.min(1, l.grow + dt / ANIM_IN); busy = true; }
+    }
+    for (let i = fading.length - 1; i >= 0; i--) {
+      fading[i].grow -= dt / ANIM_OUT;
+      if (fading[i].grow <= 0) fading.splice(i, 1);
+      else busy = true;
+    }
+    render();
+    if (busy) requestAnimationFrame(tick);
+    else animating = false;
+  }
+
+  // スライダーを選んだレンズの値に合わせる（レンズが無いときはスライダーを使えなくする）
+  function select(i){
+    selected = i;
+    const l = lenses[i];
+    $('strength').disabled = $('size').disabled = !l;
+    // レンズが0のときはゴミ箱を押せなくする（ONのまま0になったらOFFに戻す）
+    $('trash').disabled = !lenses.length;
+    if (!lenses.length && deleting) setDeleting(false);
+    if (l) {
+      $('strength').value = l.strength;
+      $('strengthVal').textContent = strengthText(l.strength);
+      $('size').value = l.radius;
+      $('sizeVal').textContent = l.radius;
+    } else {
+      $('strengthVal').textContent = $('sizeVal').textContent = '';
+    }
+    requestRender();
+  }
+
+  // 消したら、一番上に重なっているレンズを選び直す
+  function removeLens(i){
+    const [l] = lenses.splice(i, 1);
+    l.grow = Math.min(l.grow, 1);
+    fading.push(l);
+    select(lenses.length - 1);
+    startAnim();
+  }
+
+  // 指の位置にあるレンズ（重なっていたら上のもの）。無ければ -1
+  function lensAt(x, y){
+    for (let i = lenses.length - 1; i >= 0; i--) {
+      const l = lenses[i];
+      if ((x - l.x) ** 2 + (y - l.y) ** 2 < l.radius ** 2) return i;
+    }
+    return -1;
+  }
+
+  // ---------- リサイズ ----------
+  function resize(){
+    const oldW = W, oldH = H;
+    dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    const max = sizeMax();
+    $('size').min = SIZE_MIN;
+    $('size').max = max;
+    for (const l of lenses) {
+      if (oldW && oldH) { l.x *= W / oldW; l.y *= H / oldH; }
+      l.radius = clamp(l.radius, SIZE_MIN, max);
+    }
+    select(selected);
+    buildSource();
+    render();
+  }
+
+  // ---------- 操作 ----------
+  function moveLens(l, dx, dy){
+    l.x = clamp(l.x + dx, 0, W);
+    l.y = clamp(l.y + dy, 0, H);
+    requestRender();
+  }
+
+  // レンズの上を触るとそのレンズを選んで動かす。レンズの外を触ると選んでいるレンズを動かす
+  // 指の真下にレンズが来ると見えなくなるので、触った位置へ飛ばさず指の移動量だけ動かす
+  const drags = new Map();
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    const r = cv.getBoundingClientRect();
+    const i = lensAt(e.clientX - r.left, e.clientY - r.top);
+    // ゴミ箱ONのときは、触ったレンズを消すだけで動かさない
+    if (deleting) {
+      if (i >= 0) removeLens(i);
+      poke();
+      return;
+    }
+    if (i >= 0 && i !== selected) select(i);
+    const lens = lenses[i >= 0 ? i : selected];
+    if (lens) drags.set(e.pointerId, { x: e.clientX, y: e.clientY, lens });
+    poke();
+  });
+  cv.addEventListener('pointermove', e => {
+    const p = drags.get(e.pointerId);
+    if (!p) return;
+    moveLens(p.lens, e.clientX - p.x, e.clientY - p.y);
+    p.x = e.clientX; p.y = e.clientY;
+    poke();
+  });
+  const endDrag = e => {
+    if (!drags.delete(e.pointerId)) return;
+    poke();  // 離したところから PANEL_HIDE 秒数える
+  };
+
+  // スライダーの箱を押さえている間は隠さず、離してから数える
+  $('lensPanel').addEventListener('pointerdown', () => { panelHeld = true; poke(); });
+  const releasePanel = () => { if (!panelHeld) return; panelHeld = false; poke(); };
+  document.addEventListener('pointerup', releasePanel);
+  document.addEventListener('pointercancel', releasePanel);
+  cv.addEventListener('pointerup', endDrag);
+  cv.addEventListener('pointercancel', endDrag);
+
+  // PC：矢印キーで選んでいるレンズを動かす（スライダー操作中はスライダーに任せる）
+  document.addEventListener('keydown', e => {
+    if (e.target instanceof HTMLInputElement) return;
+    if (!$('share-view').classList.contains('hidden')) return;  // 共有内容の画面を出している間は動かさない
+    const step = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (!step || !lenses[selected]) return;
+    e.preventDefault();
+    moveLens(lenses[selected], step[0] * KEY_STEP, step[1] * KEY_STEP);
+    poke();
+  });
+
+  // レンズを追加
+  $('add').addEventListener('click', addLens);
+
+  // ゴミ箱（ON/OFFの切り替え）
+  function setDeleting(on){
+    deleting = on;
+    $('trash').setAttribute('aria-pressed', String(on));
+    requestRender();  // 枠の色を切り替える
+  }
+  $('trash').addEventListener('click', () => {
+    if (lenses.length) setDeleting(!deleting);
+  });
+
+  // ---------- 共有 ----------
+  function shareText(){
+    return location.href.split(/[?#]/)[0] + '\n#ゆがみレンズ';
+  }
+
+  // 歪ませた画像（枠なし）をPNGのdata URLにする（共有シートの制約があるため同期処理で作る）
+  function resultDataUrl(){
+    render(true);
+    const url = cv.toDataURL('image/png');
+    render();  // 枠を描き戻す
+    return url;
+  }
+  function resultImageFile(url){
+    const bin = atob(url.split(',')[1]);   // toBlob の非同期コールバックは避ける
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+
+  let statusTimer = 0;
+  function setStatus(msg){
+    $('share-status').textContent = msg;
+    clearTimeout(statusTimer);
+    if (msg) statusTimer = setTimeout(() => { $('share-status').textContent = ''; }, STATUS_TIME * 1000);
+  }
+
+  // 共有ボタン：どの端末でも共有の画面を出す。共有する画像はここで作っておく
+  let shareFile = null;
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const url = resultDataUrl();
+    shareFile = resultImageFile(url);
+    $('share-img').src = url;
+    $('layout-code').classList.add('hidden');
+    $('load-area').classList.add('hidden');
+    setStatus('');
+    $('share-view').classList.remove('hidden');
+    $('share-close').focus({ preventScroll: true });
+  });
+
+  // 画像を共有（共有シートで文面＋画像を渡す）
+  $('share-send').addEventListener('click', () => {
+    const text = shareText();
+    const file = shareFile;
+    // 共有シートが無い・使えない環境では、文面をコピーして知らせる
+    const fallback = () => {
+      navigator.clipboard?.writeText(text)
+        .then(() => setStatus('共有できないため、文面をコピーしました'))
+        .catch(() => setStatus('この環境では共有できません'));
+    };
+    // 共有シートが出なかったときは fallback へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
+    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    const shareStart = performance.now();
+    const failed = err => {
+      const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
+      if (!err || err.name !== 'AbortError' || instant) fallback();
+    };
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋画像
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ text, files: [file] }).catch(failed);
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share) {
+      navigator.share({ text }).catch(failed);
+      return;
+    }
+    fallback();
+  });
+
+  // ---------- 配置のコード ----------
+  // 形式: LW1:x,y,ゆがみ,大きさ;x,y,ゆがみ,大きさ;...
+  // x・y・大きさは画像（または顔）の範囲を1000としたときの値。ゆがみは -100〜100
+  const CODE_HEAD = 'LW1:';
+  function layoutCode(){
+    const r = contentRect;
+    return CODE_HEAD + lenses.map(l => [
+      Math.round((l.x - r.x) / r.w * 1000),
+      Math.round((l.y - r.y) / r.h * 1000),
+      l.strength,
+      Math.round(l.radius / r.w * 1000),
+    ].join(',')).join(';');
+  }
+  // 読めないコードなら null を返す
+  function parseLayout(code){
+    code = code.trim();
+    const at = code.indexOf(CODE_HEAD);   // 前後に余計な文字が付いていても読めるように
+    if (at < 0) return null;
+    const body = code.slice(at + CODE_HEAD.length).split(/\s/)[0];
+    if (!body) return [];
+    const r = contentRect, out = [];
+    for (const part of body.split(';')) {
+      const n = part.split(',').map(Number);
+      if (n.length !== 4 || n.some(v => !Number.isFinite(v))) return null;
+      out.push({
+        x: clamp(r.x + n[0] / 1000 * r.w, 0, W),
+        y: clamp(r.y + n[1] / 1000 * r.h, 0, H),
+        strength: clamp(Math.round(n[2]), -100, 100),
+        radius: clamp(Math.round(n[3] / 1000 * r.w), SIZE_MIN, sizeMax()),
+        grow: 0,
+      });
+      if (out.length >= MAX_LOAD_LENSES) break;
+    }
+    return out;
+  }
+
+  // 配置を共有：コードを出してコピーする（コピーできない環境でも選んでコピーできるよう欄に出す）
+  $('layout-share').addEventListener('click', () => {
+    const code = layoutCode();
+    const box = $('layout-code');
+    box.value = code;
+    box.classList.remove('hidden');
+    $('load-area').classList.add('hidden');
+    navigator.clipboard?.writeText(code)
+      .then(() => setStatus('配置のコードをコピーしました'))
+      .catch(() => setStatus('コードを選んでコピーしてください'));
+  });
+  $('layout-code').addEventListener('focus', e => e.target.select());
+
+  // 配置を読み込み：コードを貼る欄を出す
+  $('layout-load').addEventListener('click', () => {
+    $('layout-code').classList.add('hidden');
+    $('load-area').classList.remove('hidden');
+    $('load-code').value = '';
+    setStatus('');
+    $('load-code').focus();
+  });
+  function loadLayout(){
+    const list = parseLayout($('load-code').value);
+    if (!list) { setStatus('コードが正しくありません'); return; }
+    // 今のレンズは置き換える
+    fading.length = 0;
+    lenses.length = 0;
+    lenses.push(...list);
+    if (deleting) setDeleting(false);
+    select(lenses.length - 1);
+    startAnim();
+    closeShareView();
+    poke();
+  }
+  $('load-go').addEventListener('click', loadLayout);
+  $('load-code').addEventListener('keydown', e => { if (e.key === 'Enter') loadLayout(); });
+
+  const closeShareView = () => {
+    $('share-view').classList.add('hidden');
+    $('share').focus({ preventScroll: true });
+  };
+  $('share-close').addEventListener('click', closeShareView);
+  $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('share-view').classList.contains('hidden')) closeShareView();
+  });
+
+  // レンズの枠の表示/非表示（目のマークに斜線が入っているときが非表示）
+  $('rings').addEventListener('click', () => {
+    showRings = !showRings;
+    $('rings').setAttribute('aria-pressed', String(showRings));
+    $('ringsOff').style.display = showRings ? 'none' : '';
+    requestRender();
+  });
+
+  // ゆがみ
+  function strengthText(v){
+    if (v > 0) return '膨らむ ' + v;
+    if (v < 0) return '縮む ' + (-v);
+    return 'なし';
+  }
+  $('strength').addEventListener('input', e => {
+    const l = lenses[selected];
+    if (!l) return;
+    l.strength = parseInt(e.target.value, 10) || 0;
+    $('strengthVal').textContent = strengthText(l.strength);
+    poke();
+  });
+
+  // 大きさ
+  $('size').addEventListener('input', e => {
+    const l = lenses[selected];
+    if (!l) return;
+    l.radius = parseInt(e.target.value, 10) || SIZE_MIN;
+    $('sizeVal').textContent = l.radius;
+    poke();
+  });
+
+  // ---------- 画像の読み込み ----------
+  // blob: のURLを<img>に渡す方式は、表示する環境（プレビュー画面など）によっては
+  // 読み込みが禁止されていて全部失敗するので使わない。
+  // まず createImageBitmap でファイルから直接作り、使えなければ data: URL で読む
+  function loadImage(file){
+    const viaDataUrl = () => new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => {
+        const im = new Image();
+        im.onload = () => resolve(im);
+        im.onerror = reject;
+        im.src = fr.result;
+      };
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+    if (window.createImageBitmap) return createImageBitmap(file).catch(viaDataUrl);
+    return viaDataUrl();
+  }
+
+  // ラベルで包んだinputを直接タップさせる（JSからclick()で開くより環境差が出にくい）
+  $('file').addEventListener('change', e => {
+    const input = e.target;
+    const f = input.files && input.files[0];
+    if (!f) return;
+    // inputを空にするのは読み込みが終わってから（先に空にするとiPhoneのSafariでファイルが読めなくなる）
+    // 空にしておくのは、同じ画像を選び直しても反応させるため
+    loadImage(f).then(im => {
+      img = im;
+      buildSource();
+      render();
+    }).catch(() => {
+      // 読めない形式（PCのブラウザでのHEICなど）のとき、何も起きないように見えないよう知らせる
+      $('pickText').textContent = 'この画像は読み込めません';
+      setTimeout(() => { $('pickText').textContent = '画像を選ぶ'; }, 1500);
+    }).finally(() => { input.value = ''; });
+  });
+
+  // ---------- iOS対策 ----------
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive: false });
+  // 共有の画面の入力欄だけは文字を選べるようにする（コードのコピー・貼り付けのため）
+  document.addEventListener('selectstart', e => {
+    if (e.target instanceof Node && $('share-view').contains(e.target)) return;
+    e.preventDefault();
+  });
+  document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
+
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    // 画像選択のボタンは止めない（止めるとタップが届かずファイル選択が開かない）
+    if (e.target instanceof Element && e.target.closest('#pick')) return;
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  // ---------- 開始 ----------
+  colors.ring = css('--ring');
+  colors.ringSub = css('--ring-sub');
+  colors.shadow = css('--ring-shadow');
+  colors.ringDelete = css('--ring-delete');
+  colors.ringDeleteSub = css('--ring-delete-sub');
+  document.documentElement.style.setProperty('--panel-fade', PANEL_FADE + 's');
+  resize();
+  addLens();  // 最初にレンズを1つ置いておく
+  addEventListener('resize', resize);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/homerun-derby/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ぼくらのホームランダービー</title>
+<meta name="description" content="変化球を打ってホームランの数を競う">
+<style>
+:root{
+  --bg:#222; --fg:#fff; --sub:#ccc;
+  --back:#155a1f; --grass:#1d7a2c; --wall:#064d49; --wall-top:#e0b020; --track:#8f4e1f; --line:#fff; --dirt:#a05c28;
+  --stands:#27407a; --concourse:#77819a;
+  --ball:#fff; --shadow:rgba(0,0,0,.25); --pitcher:#444; --batter:#333; --pitcher-skin:#f2c9a0; --pitcher-hair:#7a4a1e; --pitcher-shirt:#ffd400; --pitcher-pants:#1e5bd6; --batter-shirt:#e02020; --batter-tights:#ffd400; --bat:#e6c48e;
+  --path:rgba(255,255,255,.55); --zone:#00e5ff; --hitfx:#fff6c8; --meet:rgba(0,240,255,.55); --zone-ng:#ff1a1a;
+  --hr:#ffd23f; --low:#e53935; --panel:rgba(0,0,0,.72);
+  --cf1:#ffd23f; --cf2:#ff3b3b; --cf3:#3fa9ff; --cf4:#4be07a; --cf5:#ffffff; --cf6:#ff7ad9;
+  --btn:#fff; --btn-fg:#1a1a1a; --btn-sub:rgba(0,0,0,.5); --btn-line:rgba(255,255,255,.75); --pill:rgba(0,0,0,.45); --card:rgba(255,255,255,.08);
+  --howto-bg:#155a1f; --howto-fg:#fff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+#game{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 8px;font-size:15px;font-weight:bold;pointer-events:none}
+#hud span{background:var(--pill);border-radius:999px;padding:6px 14px}
+#slots{position:absolute;left:0;right:0;bottom:calc(68px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:8px;padding:0 12px}
+/* まだ描いていない球は点線の枠、描いた球は白、編集中の球は黄色の枠 */
+#slots button{min-width:0;width:48px;min-height:44px;font-size:17px;border-radius:10px;background:var(--btn-sub);color:var(--fg);border:2px dashed var(--btn-line);box-shadow:none}
+#slots button.filled{background:var(--btn);color:var(--btn-fg);border:2px solid var(--btn)}
+#slots button[aria-pressed="true"]{outline:3px solid var(--hr);outline-offset:2px}
+#hint{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 64px);text-align:center;font-size:14px;font-weight:bold;pointer-events:none}
+#hint span{background:var(--pill);border-radius:999px;padding:6px 14px}
+#back{position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 8px);min-width:64px;min-height:44px;font-size:15px}
+#gauge{position:absolute;left:88px;right:12px;top:calc(env(safe-area-inset-top,0px) + 26px);height:8px;border-radius:4px;background:var(--pill);overflow:hidden;pointer-events:none}
+#gaugeFill{height:100%;width:100%;background:#fff}
+#gaugeFill.low{background:var(--low)}
+#msg{position:absolute;left:0;right:0;top:38%;text-align:center;font-size:34px;font-weight:bold;text-shadow:0 2px 4px rgba(0,0,0,.7);pointer-events:none}
+#msg.hr{color:var(--hr)}
+/* ホームラン：大きな文字がはじけるように出て、飛距離をその下に */
+#msg .hrBig{display:block;font-size:clamp(40px,13.5vw,56px);letter-spacing:.04em;color:var(--hr);
+  text-shadow:0 0 18px rgba(255,210,63,.8),0 3px 0 #b3471b,0 5px 8px rgba(0,0,0,.6);animation:hrPop .6s cubic-bezier(.2,1.6,.4,1) both, hrPulse .5s ease-in-out .6s infinite alternate}
+#msg .hrDist{display:block;margin-top:4px;font-size:30px;color:var(--fg);animation:hrPop .5s cubic-bezier(.2,1.6,.4,1) .2s both}
+@keyframes hrPop{0%{transform:scale(.2) rotate(-12deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes hrPulse{0%{transform:scale(1)}100%{transform:scale(1.08)}}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#flash.on{animation:flash .5s ease-out}
+@keyframes flash{0%{opacity:.85}100%{opacity:0}}
+#msg.warn{font-size:22px}
+.panel{position:absolute;inset:0;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px 24px calc(24px + env(safe-area-inset-bottom));text-align:center}
+.panel h2{margin:0 0 4px;font-size:26px}
+.panel p{margin:0;font-size:15px;color:var(--sub)}
+#ovList{margin:0 0 8px;padding:10px 18px;list-style:none;font-size:17px;line-height:1.8;background:var(--card);border-radius:12px;min-width:260px}
+#ovList li{display:flex;gap:14px;justify-content:space-between}
+#ovList .hr{color:var(--hr);font-weight:bold}
+button{min-width:220px;min-height:48px;font-size:18px;font-weight:bold;border:0;border-radius:12px;background:var(--btn);color:var(--btn-fg);font-family:inherit;touch-action:manipulation;box-shadow:0 2px 0 rgba(0,0,0,.3)}
+/* 控えめなボタン（やめる・戻るなど） */
+button.sub{background:var(--btn-sub);color:var(--fg);box-shadow:inset 0 0 0 2px var(--btn-line)}
+button small{display:block;font-size:12px;font-weight:normal;opacity:.75}
+#menu button{min-width:260px;min-height:64px}
+button:disabled{opacity:.45}
+button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
+#bar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:8px;padding:8px 12px calc(10px + env(safe-area-inset-bottom))}
+#bar button{min-width:0;flex:1;max-width:150px;min-height:44px;font-size:14px;white-space:nowrap;padding:0 4px}
+#bar button small{font-size:10px}
+#codeIn,#codeOut{width:100%;max-width:340px;min-height:44px;font-size:16px;padding:8px 10px;border:0;border-radius:8px;font-family:monospace;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+#codeErr{min-height:1.4em;color:var(--hr)}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="cv"></canvas>
+  <div id="hud" class="hidden" aria-live="polite"><span id="hA"></span><span id="hB"></span></div>
+  <div id="hint" class="hidden"><span>ピッチャーの手元から線を引いて球を作る</span></div>
+  <div id="slots" class="hidden" role="group" aria-label="編集する球"></div>
+  <button id="back" type="button" class="sub hidden">戻る</button>
+  <div id="gauge" class="hidden" role="progressbar" aria-label="描ける線の残り" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="gaugeFill"></div></div>
+  <div id="flash"></div>
+  <div id="msg" aria-live="assertive"></div>
+  <div id="bar" class="hidden">
+    <button id="loadCode" type="button" class="sub">コード読み込み</button>
+    <button id="preview" type="button" class="sub">プレビュー</button>
+    <button id="export" type="button">書き出す</button>
+  </div>
+  <div id="menu" class="panel" role="dialog" aria-modal="true" aria-label="モードを選ぶ">
+    <button id="goPlay" type="button">プレイモード<small>用意した5球を打つ</small></button>
+    <button id="goEndless" type="button">エンドレスモード<small>ホームランが何球続くかに挑む</small></button>
+    <button id="goCode" type="button">コード入力<small>コードの5球を打つ</small></button>
+    <button id="goEdit" type="button">Editモード<small>5球の魔球を描いて作る</small></button>
+    <button type="button" data-howto-open>遊び方<small>ルールと操作を読む</small></button>
+  </div>
+  <div id="codeDlg" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="codeTitle">
+    <h2 id="codeTitle">コードを入力</h2>
+    <input id="codeIn" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="球のコード">
+    <p id="codeErr" aria-live="polite"></p>
+    <button id="codeGo" type="button">OK</button>
+    <button id="codeCancel" type="button" class="sub">やめる</button>
+  </div>
+  <div id="showDlg" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="showTitle">
+    <h2 id="showTitle">書き出したコード</h2>
+    <input id="codeOut" type="text" readonly aria-label="書き出したコード">
+    <p>自動でコピーできなかったので、長押し（PCは右クリック）でコピーしてください</p>
+    <button id="showClose" type="button">閉じる</button>
+  </div>
+  <div id="ov" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
+    <h2 id="ovTitle"></h2>
+    <ul id="ovList"></ul>
+    <button id="retry" type="button">もう一回</button>
+    <button id="share" type="button" class="sub">共有</button>
+    <button id="toMenu" type="button" class="sub">やめる</button>
+  </div>
+  <section class="howto" hidden data-pos="none">
+    <h2>遊び方</h2>
+    <p>変化する球をバットの芯でとらえ、ホームランを狙う野球ゲームです。プレイモードは用意された5球を打ち、ホームランの本数が結果になります。エンドレスモードはホームラン以外になると終わり、連続本数に挑みます。Editモードでは線を引いて5球の魔球を作ってコードに書き出せ、コード入力からその5球を打てます。</p>
+    <h2>操作</h2>
+    <p>指でなぞるとバットの芯が動き、指を離すとスイングします。PC ではマウスで芯を動かしてクリックで振るか、矢印キーとスペースキーで操作します。</p>
+    <h2>コツ</h2>
+    <p>芯の中心に近いほど打球は速く、高く上がります。フェンスはセンターが100m、両翼が88mです。打つのが早いと左へ、遅いと右へ飛び、左右に45度より外へ飛ぶとファウルです。球は線の上を一定の速さで進むので、指を置いたまま通り道に芯を合わせ、離す瞬間だけに集中してください。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+
+  // ---------- 画面配置（画面の高さに対する割合） ----------
+  const PLATE_Y = 0.84;      // ホームベースの位置
+  const MOUND_Y = 0.50;      // マウンドの位置
+
+  // ---------- 投球（px・秒） ----------
+  const ZONE_X = 40;         // ストライクゾーンの横幅の半分
+  const ZONE_Y = 22;         // ストライクゾーンの高さの半分
+  const ZONE_OFFSET = 40;    // ストライクゾーンの中心（ホームベースからこの分だけ上）
+  const PITCH_SPEED = 450;   // 球速（px/秒）。描いた速さに関係なく、線の上を一定の速さで進む
+  const MIN_PATH = 60;       // これより短い線は球にしない
+  const RESAMPLE = 4;        // 線を等間隔に打ち直す間隔（px）
+  const SMOOTH = 3;          // 手ぶれをならす強さ（前後この点数で平均する）
+  const ZONE_NG_TIME = 1.2;  // ストライクにならない線を描いたとき、ゾーンの枠を赤く点滅させる時間（秒）
+  const ZONE_NG_BLINK = 0.2; // 点滅の間隔（秒）
+  const OUT_MARGIN = 20;     // 線の終わりからはまっすぐ進み、画面の外へこの分だけ出たら1球おしまい（px）
+
+  // ---------- バッター（px・秒） ----------
+  const MEET = 30;           // バットの芯からこの距離以内でボールに当たる
+  const SWING_DELAY = 0.06;  // 振ってからバットがボールの位置に来るまで
+  const BAT_REST = -2.6;     // 構えたときのバットの角度（ラジアン。0で真横＝前、マイナスで上向き）。肩にかついで後ろへ寝かせる
+  const GRIP_X = 6;          // 構えたときの手の位置（バッターの体の中心から。px。胸の前）
+  const GRIP_Y = -24;
+  const SWING_HOLD = 0.08;   // 当たる瞬間のあと「振っている」絵を出しておく時間（秒）。そのあと「振り抜いた」絵になる
+  const BAT_FOLLOW = -2.0;   // 振り抜いたときのバットの角度（反対の肩の上へ回す）
+  const FOLLOW_X = -16;      // 振り抜いたときの手の位置（バッターの体の中心から。px）
+  const FOLLOW_Y = -36;
+  const BAT_LEN = 64;        // バットの長さ
+  const BAT_SWEET = 54;      // 手元から芯の中心まで
+  const PITCHER_SCALE = 1.7; // ピッチャーを描く大きさ（倍）
+  const BATTER_LEG = 28;     // バッターの足の長さ（px）
+  const SLEEVE = 0.4;        // バッターの半袖の長さ（肩から手までのうちの割合）
+  const MOVE_UP = 40;        // バッターが前（ピッチャー側）に出られる範囲（px）。左右は画面の端まで動ける
+  const MOVE_DOWN = 40;      // バッターが下に動ける範囲
+  const KEY_STEP = 6;        // 矢印キー1回で動く量
+
+  // ---------- 打球 ----------
+  const EXIT_MIN = 26;       // 打球速度の最小（m/s、芯のふちで当たったとき）
+  const EXIT_MAX = 56;       // 打球速度の最大（m/s、芯の真ん中で当たったとき）
+  const BEST_ANGLE = 30;     // 芯の真ん中で打ったときの打球角度（度）
+  const ANGLE_DROP = 34;     // 芯を外したときに打球角度が下がる量（度）
+  const SPRAY_MAX = 50;      // 早い/遅いで打球が左右に散る最大角度（度）
+  const FOUL_ANGLE = 45;     // これより外はファウル（度）
+  const FENCE_CENTER = 100;  // センターのフェンスまでの距離（m）
+  const FENCE_LINE = 88;     // 両翼のフェンスまでの距離（m）
+  const WALL_H = 3;          // フェンスの高さ（m）
+  const GRAV = 9.8;
+  const HIT_Y = 0.9;         // バットに当たったときのボールの高さ（m）
+  const DRAG = 0.0055;       // 空気抵抗の強さ
+  const SIM_DT = 1 / 120;    // 打球計算の刻み（秒）
+  const FLIGHT_SPEED = 2.0;  // 打球を見せる速さの倍率
+  const HEIGHT_K = 1.0;      // 打球の高さの見せ方の強さ（大きいほど高く上がって見える）
+  const SHADOW_FADE_H = 30;  // この高さ（m）で影がいちばん小さく薄くなる
+  const BALL_R = 5;          // ボールの半径（px。投げた球はずっとこの大きさ、打球は地面にあるときこの大きさ）
+  const BALL_GROW = 0.1;     // 高さ1mごとに大きく見せる量（px。高く上がるほどカメラに近づくので大きく）
+  const BOUNCE = 0.35;       // 着地したときに跳ね返る強さ（縦）
+  const BOUNCE_KEEP = 0.8;   // 着地したときに残る前へ進む勢い
+  const WALL_BOUNCE = 0.35;  // フェンス・スタンドに当たって跳ね返る強さ
+  const WALL_KEEP = 0.7;     // フェンス・スタンドに当たったあとに残る勢い
+  const ROLL_DECEL = 5;      // 転がるときの減速（m/s²。一定の強さでブレーキがかかり、じわじわ止まらない）
+  const HR_FADE = 0.3;       // ホームランがスタンドに入ってから消えるまで（秒、打球の時間で）
+  const FLIGHT_EVEN = 0.7;   // 画面上の打球の速さをどれだけならすか（0：計算どおり 1：画面上で一定の速さ）
+                             // 奥へ飛ぶほど画面上の動きが小さくなり、急に止まったように見えるのを防ぐ
+  const LAND_EASE = 0.25;    // 着地した後、見せる速さを計算どおりへ戻していく時間の目安（秒）
+  const AIR_MAX = 2.6;       // 着地までを見せる時間の上限（秒）
+  const CAM_ANCHOR_Y = 0.45; // 打球を追いかけるとき、ボールを画面のどの高さに置くか（上からの割合）
+  const CAM_ZOOM_FAR = 0.6;  // 打球が遠くへ行ったときのカメラの倍率（1より小さいと引いて広く映す）
+  const CAM_ZOOM_DIST = 80;  // この距離（m）で倍率がいちばん変わる
+  const CAM_EASE = 6;        // カメラが追いつく速さ（大きいほどすぐ追いつく）
+
+  const RESULT_TIME = 1.0;   // 結果を表示しておく時間（秒）
+  const TRAIL_N = 8;         // 投げた球の残像の数
+  const TRAIL_GAP = 0.015;   // 残像の間隔（秒）
+  const TRAIL_ALPHA = 0.5;   // いちばん濃い残像の濃さ
+  const HITFX_TIME = 0.35;   // 打った瞬間のエフェクトを見せる時間（秒）
+  const HITFX_RAYS = 12;     // 打った瞬間に飛び散る光の線の数
+  const HITFX_SIZE = 70;     // 打った瞬間のエフェクトの広がり（px。芯の真ん中で打ったとき）
+  const HIT_SHAKE = 16;      // 打った瞬間の画面の揺れ（px。芯の真ん中で打ったとき。芯のふちでも4割は揺れる）
+  const HR_RESULT_TIME = 2.6;// ホームランのときに結果を表示しておく時間（秒。お祝いを見せるため長め）
+  const CONFETTI_POP = 70;   // ホームランのとき、画面の左右の下からはじき出す紙吹雪の数（片側）
+  const CONFETTI_RAIN = 90;  // ホームランのとき、画面の上から降らせる紙吹雪の数
+  const CONFETTI_GRAV = 900; // 紙吹雪にかかる重力（px/s²）
+  const CONFETTI_DRAG = 1.6; // 紙吹雪の空気抵抗（ひらひら落ちるように）
+  const FIREWORKS = 4;       // ホームランのときに打ち上げる花火の数
+  const FIREWORK_SPARKS = 36;// 花火1つの火花の数
+  const BAT_WAIT = 0.8;      // 次の球が来るまでの間（秒）
+
+  // ---------- 球のコード ----------
+  // 線を等間隔の歩幅で区切り、1歩ごとに「どの向きに進むか」を64方向の1文字で表す。
+  // 歩幅はピッチャーの手からゾーンまでの距離に対する割合なので、画面の大きさが違う端末でも同じ形の球になる。
+  // 形式：[形式の番号][1球目の歩数][1球目の向き…][2球目の歩数][2球目の向き…]…[検査用の1文字]
+  const CODE_VER = 2;        // コードの形式の番号（形式を変えたら上げる）
+  const CODE_STEP = 0.08;    // 1歩の長さ（ピッチャーの手からゾーンまでの距離に対する割合。約20px）
+  const CODE_MAX_STEPS = 30; // 1球の最大の歩数＝描ける線の長さの上限（約600px）
+  const BALLS = 5;           // 1つのコードに入れる球数
+  // プレイモードでコードを入れずに始めたときの5球（まっすぐ／大きなカーブ／途中で折れる／ジグザグ／一回転）
+  const DEFAULT_CODE = 'CNQRQQRQQRQQRQQRaZaZZXXUROLJIIHGHPTUTTTUTTUTRHFEFUEGOabbbWKFFGLYabZSIGaQQQQQJFKOTYcgmpvy48MRRQRRQl';
+  const GAUGE_LOW = 20;      // 描ける線の残りがこの割合（%）以下になったらゲージを赤くする
+
+  // ---------- 球場の描き方（真上から見た図。単位はm） ----------
+  const MOUND_DIST = 18.4;   // ホームからマウンドまで（m）。画面の PLATE_Y〜MOUND_Y がこの長さになる縮尺で描く
+  const BASE_DIST = 27.4;    // 塁間（m）
+  const INFIELD_ARC = 29;    // 内野の土の外周（マウンドからの半径、m）
+  const FOUL_ROOM = 9;       // ファウルラインからスタンドまでの幅（m）
+  const BACKSTOP = 18;       // ホームからバックネット（スタンド）までの距離（m）
+  const STANDS_W = 14;       // スタンドの幅（m）
+  const TRACK_W = 4;         // フェンス沿いの土（m）
+  const WALL_W = 2;          // フェンスの厚さ（m）
+  const OUTSIDE = 20000;     // 球場の外を塗る広さ（画面のpx。打球がどこまで飛んでも切れないように）
+  const BOX_SCALE = 3;       // ホームベースとバッターボックスの大きさ（実物の何倍で描くか）
+  const PLATE_W = 0.432;     // ホームベースの幅（m、実物）
+  const BOX_W = 1.22;        // バッターボックスの幅（m、実物）
+  const BOX_L = 1.83;        // バッターボックスの長さ（m、実物。ホームベースの前後の真ん中から前後に半分ずつ）
+  const BOX_GAP = 0.152;     // ホームベースとバッターボックスの間（m、実物）
+  const HOME_DIRT = 6.5;     // ホームまわりの土の半径（m。大きくしたバッターボックスが収まるように）
+
+
+  // ---------- 画面 ----------
+  const cv = $('cv'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, cx = 0, plateY = 0, moundY = 0, zoneY = 0, handX = 0, handY = 0;
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx = W / 2; plateY = H * PLATE_Y; moundY = H * MOUND_Y;
+    zoneY = plateY - ZONE_OFFSET;
+    handX = cx + 8; handY = moundY - 28;
+    if (!sweet) sweet = { x: cx, y: zoneY };
+    if (!flight) cam = camHome();
+    clampSweet();
+  }
+
+  // 1mが画面で何pxか（ホームからマウンドまでが画面の配置と同じ長さになる縮尺）
+  const pxPerM = () => (plateY - moundY) / MOUND_DIST;
+
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const COL = {};
+  ['--back','--grass','--wall','--wall-top','--track','--stands','--concourse','--line','--dirt','--ball','--shadow','--pitcher','--batter','--pitcher-skin','--pitcher-hair','--pitcher-shirt','--pitcher-pants','--batter-shirt','--batter-tights','--bat','--path','--zone','--hitfx','--meet','--zone-ng','--fg','--cf1','--cf2','--cf3','--cf4','--cf5','--cf6']
+    .forEach(k => { COL[k] = css(k); });
+
+  // 球場の位置（ホームからの距離m・角度）→ 画面の位置（真上から見た図なので、縮尺はどこでも同じ）
+  function fieldToScreen(r, deg){
+    const R = r * pxPerM(), a = deg * Math.PI / 180;
+    return { x: cx + Math.sin(a) * R, y: plateY - Math.cos(a) * R };
+  }
+  const fieldXZ = (x, z) => fieldToScreen(Math.hypot(x, z), Math.atan2(x, z) * 180 / Math.PI);
+
+  // ---------- 状態 ----------
+  // mode:
+  //   menu（モード選択）
+  //   Editモード： eaim（線を引く前）/ edraw（線を引いている）/ epreview（プレビュー中）
+  //   プレイモード：bwait（次の球待ち）/ pitch（投球中）/ flight（打球）/ result（結果表示）/ over（5球終わった）
+  let mode = 'menu', timer = 0;
+  let zoneNgAt = -1e9;
+  let hitFx = null;      // 打った瞬間のエフェクト { x, y, t, q, rays }
+  let confetti = [];     // ホームランのお祝いの紙吹雪・花火の火花（画面の座標）
+  let fireworkQueue = []; // これから打ち上げる花火 { at: 残り秒, x, y }   // ゾーンの枠を赤く点滅させ始めた時刻
+  let sweet = null;          // バッターのバットの芯の位置
+  let stroke = null;         // 描いている線 [{x,y}]
+  let strokeLen = 0;         // 描いている線の長さ（ピッチャーの手から）
+  let pitch = null;          // 投げている球 { pts:[{x,y,t}], T, vx, vy, t }
+  let swingAt = null, swingElapsed = 0, resolved = false;
+  let flight = null;
+  // カメラ（打球を追いかけるときだけ動く）：画面上のこの点を、画面の (W/2, H*CAM_ANCHOR_Y) に zoom 倍で映す
+  let cam = { x: 0, y: 0, zoom: 1 };
+  const camHome = () => ({ x: W / 2, y: H * CAM_ANCHOR_Y, zoom: 1 });
+
+  // Editモード
+  let slots = new Array(BALLS).fill(null);   // 球ごとの向きの文字列（空は null）
+  let cur = 0;                               // 編集中の球
+
+  // プレイモード
+  let play = null;           // { balls, order, k, hr }
+  let lastPlayCode = '';     // 「もう一回」で同じコードを使うため
+  let lastEndless = false;   // 「もう一回」で同じモードにするため
+
+  function clampSweet(){
+    sweet.x = Math.max(0, Math.min(W, sweet.x));
+    sweet.y = Math.max(zoneY - MOVE_UP, Math.min(zoneY + MOVE_DOWN, sweet.y));
+  }
+
+  // フェンスまでの距離（m）。ホームランの判定と、フェンスの描画の両方に使う
+  const fenceAt = deg => FENCE_CENTER - (FENCE_CENTER - FENCE_LINE) * Math.min(Math.abs(deg), FOUL_ANGLE) / FOUL_ANGLE;
+
+  // ---------- 投球の軌道 ----------
+  // ピッチャーの手から線の形をなぞって、一定の速さで進む。終わりに着いた後は、最後の向きのまま抜けていく
+  function makePitch(s){
+    const raw = [{ x: handX, y: handY }].concat(s);
+    // 等間隔に打ち直す
+    let pts = [{ x: raw[0].x, y: raw[0].y }];
+    let carry = 0;
+    for (let i = 1; i < raw.length; i++){
+      const a = raw[i - 1], b = raw[i];
+      const seg = Math.hypot(b.x - a.x, b.y - a.y);
+      let d = RESAMPLE - carry;
+      while (d <= seg){
+        pts.push({ x: a.x + (b.x - a.x) * d / seg, y: a.y + (b.y - a.y) * d / seg });
+        d += RESAMPLE;
+      }
+      carry = seg - (d - RESAMPLE);
+    }
+    pts.push({ x: raw[raw.length - 1].x, y: raw[raw.length - 1].y });
+    // 手ぶれをならす（始点と終点は動かさない）
+    pts = pts.map((p, i) => {
+      if (i === 0 || i === pts.length - 1) return p;
+      let sx = 0, sy = 0, n = 0;
+      for (let j = Math.max(0, i - SMOOTH); j <= Math.min(pts.length - 1, i + SMOOTH); j++){ sx += pts[j].x; sy += pts[j].y; n++; }
+      return { x: sx / n, y: sy / n };
+    });
+    // 進んだ距離から時刻を決める
+    let len = 0;
+    pts[0].t = 0;
+    for (let i = 1; i < pts.length; i++){
+      len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+      pts[i].t = len / PITCH_SPEED;
+    }
+    const T = pts[pts.length - 1].t;
+    const e = pts[pts.length - 1], back = posOn(pts, T - 0.05, T);
+    // 線が途切れた後は、最後の向きのまま同じ速さでまっすぐ進む（向きが取れないときは下へ）
+    const dl = Math.hypot(e.x - back.x, e.y - back.y);
+    const ux = dl ? (e.x - back.x) / dl : 0, uy = dl ? (e.y - back.y) / dl : 1;
+    return { pts, T, vx: ux * PITCH_SPEED, vy: uy * PITCH_SPEED, t: 0 };
+  }
+  function posOn(pts, t, T){
+    if (t <= 0) return { x: pts[0].x, y: pts[0].y };
+    if (t >= T){ const e = pts[pts.length - 1]; return { x: e.x, y: e.y }; }
+    let lo = 0, hi = pts.length - 1;
+    while (hi - lo > 1){ const m = (lo + hi) >> 1; if (pts[m].t <= t) lo = m; else hi = m; }
+    const a = pts[lo], b = pts[hi];
+    const k = b.t > a.t ? (t - a.t) / (b.t - a.t) : 1;
+    return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+  }
+  function ballPos(p, t){
+    if (t <= p.T) return posOn(p.pts, t, p.T);
+    const e = p.pts[p.pts.length - 1];
+    return { x: e.x + p.vx * (t - p.T), y: e.y + p.vy * (t - p.T) };
+  }
+  // 線を通り過ぎた後、画面の外まで出たか
+  function ballGone(p){
+    if (p.t <= p.T) return false;
+    const b = ballPos(p, p.t);
+    return b.x < -OUT_MARGIN || b.x > W + OUT_MARGIN || b.y < -OUT_MARGIN || b.y > H + OUT_MARGIN;
+  }
+  // 球（線＋その後のまっすぐ）が、画面の外へ出るまでにストライクゾーンを通るか
+  function passesZone(p){
+    const x0 = cx - ZONE_X, x1 = cx + ZONE_X, y0 = zoneY - ZONE_Y, y1 = zoneY + ZONE_Y;
+    const dt = 1 / 900;   // 1回に進むのは0.5px程度なので、ゾーンの角をかすめても取りこぼさない
+    const tEnd = p.T + (W + H) * 2 / PITCH_SPEED;   // まっすぐ進んで画面の外に出るまでに十分な時間
+    for (let t = 0; t <= tEnd; t += dt){
+      const b = ballPos(p, t);
+      if (b.x >= x0 && b.x <= x1 && b.y >= y0 && b.y <= y1) return true;
+      if (t > p.T && (b.x < -OUT_MARGIN || b.x > W + OUT_MARGIN || b.y < -OUT_MARGIN || b.y > H + OUT_MARGIN)) return false;
+    }
+    return false;
+  }
+  const ballInZone = dirs => passesZone(makePitch(decodeBall(dirs)));
+
+  // ---------- 球のコード ----------
+  const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  const stepPx = () => CODE_STEP * (zoneY - handY);
+  // 描ける線の長さの上限（ピッチャーの手から）
+  const maxPath = () => CODE_MAX_STEPS * stepPx();
+
+  // 1球の線 → 向きの文字列。丸めたズレが積み重ならないよう、毎回いまの位置から本当の線の上の点へ向け直す
+  function encodeBall(pts){
+    const step = stepPx();
+    let len = 0;
+    const acc = [0];
+    for (let i = 1; i < pts.length; i++){ len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); acc.push(len); }
+    const n = Math.max(1, Math.min(CODE_MAX_STEPS, Math.round(len / step)));
+    const at = d => {   // 線の始点から d だけ進んだ点
+      let i = 1;
+      while (i < acc.length - 1 && acc[i] < d) i++;
+      const k = acc[i] > acc[i - 1] ? Math.min(1, Math.max(0, (d - acc[i - 1]) / (acc[i] - acc[i - 1]))) : 1;
+      return { x: pts[i - 1].x + (pts[i].x - pts[i - 1].x) * k, y: pts[i - 1].y + (pts[i].y - pts[i - 1].y) * k };
+    };
+    let x = pts[0].x, y = pts[0].y, out = '';
+    for (let k = 1; k <= n; k++){
+      const t = at(len * k / n);
+      const dir = ((Math.round(Math.atan2(t.y - y, t.x - x) / (Math.PI * 2) * 64) % 64) + 64) % 64;
+      out += B64[dir];
+      x += Math.cos(dir / 64 * Math.PI * 2) * step;
+      y += Math.sin(dir / 64 * Math.PI * 2) * step;
+    }
+    return out;
+  }
+  function decodeBall(dirs){
+    const step = stepPx();
+    let x = handX, y = handY;
+    const pts = [];
+    for (const ch of dirs){
+      const a = B64.indexOf(ch) / 64 * Math.PI * 2;
+      x += Math.cos(a) * step; y += Math.sin(a) * step;
+      pts.push({ x, y });
+    }
+    return pts;   // 始点（ピッチャーの手）は含まない
+  }
+  const checkChar = body => B64[[...body].reduce((a, c) => a + B64.indexOf(c), 0) % 64];
+  function encodeBundle(balls){
+    const body = B64[CODE_VER] + balls.map(d => B64[d.length] + d).join('');
+    return body + checkChar(body);
+  }
+  // 読めないコードなら null。読めたら球ごとの向きの文字列の配列
+  function decodeBundle(code){
+    code = code.replace(/\s+/g, '');
+    if (code.length < 4 || /[^A-Za-z0-9_-]/.test(code)) return null;
+    const body = code.slice(0, -1);
+    if (checkChar(body) !== code[code.length - 1] || body[0] !== B64[CODE_VER]) return null;
+    const balls = [];
+    let i = 1;
+    while (i < body.length){
+      const n = B64.indexOf(body[i]);
+      if (n < 1 || n > CODE_MAX_STEPS || i + 1 + n > body.length) return null;
+      balls.push(body.slice(i + 1, i + 1 + n));
+      i += 1 + n;
+    }
+    return balls.length && balls.length <= BALLS ? balls : null;
+  }
+
+  // ---------- 画面の切り替え ----------
+  function clearBall(){
+    stroke = null; pitch = null; flight = null; hitFx = null;
+    swingAt = null; resolved = false;
+    $('msg').textContent = ''; $('msg').className = '';
+  }
+  function showMenu(){
+    clearBall();
+    play = null;
+    confetti = []; fireworkQueue = [];
+    mode = 'menu';
+    ['hud', 'slots', 'hint', 'bar', 'back', 'gauge', 'ov', 'codeDlg', 'showDlg'].forEach(id => $(id).classList.add('hidden'));
+    $('menu').classList.remove('hidden');
+    if (usingKeyboard) $('goPlay').focus();
+  }
+
+  // ---------- Editモード ----------
+  // 5球を1つずつ描いて作る。コードを読み込んで直すこともできる。できたらコードに書き出す
+  for (let i = 0; i < BALLS; i++){
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = String(i + 1);
+    b.addEventListener('click', () => {
+      if (mode !== 'eaim') return;
+      cur = i; clearBall(); refreshEdit();
+    });
+    $('slots').appendChild(b);
+  }
+  function startEdit(){
+    $('menu').classList.add('hidden');
+    clearBall();
+    mode = 'eaim';
+    refreshEdit();
+  }
+  // 編集中の画面の表示をそろえる
+  function refreshEdit(){
+    const inEdit = mode === 'eaim' || mode === 'edraw' || mode === 'epreview';
+    $('slots').classList.toggle('hidden', !inEdit);
+    $('back').classList.toggle('hidden', !inEdit);
+    $('bar').classList.toggle('hidden', !inEdit);
+    ['loadCode', 'preview', 'export'].forEach(id => $(id).classList.toggle('hidden', !inEdit));
+    // まだ描いていない球を選んでいるときは、作り方を出す
+    $('hint').classList.toggle('hidden', !(mode === 'eaim' && !slots[cur]));
+    if (!inEdit) return;
+    [...$('slots').children].forEach((b, i) => {
+      b.classList.toggle('filled', !!slots[i]);
+      b.setAttribute('aria-pressed', i === cur ? 'true' : 'false');
+      b.setAttribute('aria-label', `${i + 1}球目${slots[i] ? '' : '（まだ描いていない）'}`);
+      b.disabled = mode !== 'eaim';
+    });
+    $('loadCode').disabled = mode !== 'eaim';
+    $('back').disabled = mode !== 'eaim';
+    $('preview').disabled = mode !== 'eaim' || !slots[cur];
+    $('export').disabled = mode !== 'eaim' || slots.some(s => !s);   // 5球そろったら書き出せる
+    // まだ書き出せないときは、何球描けたかと理由をボタンに出す
+    const filled = slots.filter(Boolean).length;
+    if (filled < BALLS) $('export').innerHTML = `書き出す ${filled}/${BALLS}<small>${BALLS}球描くと書き出せます</small>`;
+    else if ($('export').textContent !== 'コピーしました') $('export').textContent = '書き出す';
+  }
+  function finishStroke(){
+    // 描いた線をいったんコードにしてから戻したものを保存する（共有したときと同じ形で見えるように）
+    const dirs = encodeBall(makePitch(stroke).pts);
+    stroke = null;
+    // ストライクゾーンを通らない球は保存しない（前に描いた球はそのまま残す）
+    if (ballInZone(dirs)) slots[cur] = dirs;
+    else { $('msg').textContent = 'ストライクになりません'; $('msg').className = 'warn'; zoneNgAt = performance.now(); }
+    mode = 'eaim';
+    refreshEdit();
+  }
+  $('preview').addEventListener('click', () => {
+    if (mode !== 'eaim' || !slots[cur]) return;
+    pitch = makePitch(decodeBall(slots[cur]));
+    mode = 'epreview';
+    refreshEdit();
+  });
+  // モード選択に戻る（作りかけの球は、ページを開いている間は残る）
+  $('back').addEventListener('click', () => { if (mode === 'eaim') showMenu(); });
+  $('loadCode').addEventListener('click', () => { if (mode === 'eaim') openCodeDlg('load'); });
+  $('export').addEventListener('click', () => {
+    if (mode !== 'eaim' || slots.some(s => !s)) return;
+    copyText(encodeBundle(slots), $('export'), '書き出す');
+  });
+
+  // ---------- コードのコピー ----------
+  // 使える方法を順に試す。ファイルを直接開いたとき（file://）やアプリ内のプレビューでは
+  // クリップボードAPIが使えないことがあるため、最後はコードを表示して手でコピーしてもらう
+  function copyByTextarea(text){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;-webkit-user-select:text;user-select:text';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+    return ok;
+  }
+  function showCode(text){
+    $('codeOut').value = text;
+    $('showDlg').classList.remove('hidden');
+    $('codeOut').focus();
+    $('codeOut').select();
+  }
+  $('showClose').addEventListener('click', () => $('showDlg').classList.add('hidden'));
+  function copyText(text, btn, label){
+    const done = () => { btn.textContent = 'コピーしました'; setTimeout(() => { btn.textContent = label; }, 1500); };
+    // 1) 選択してコピー（ボタンを押した処理の中でそのまま行うので、多くの環境で通る）
+    if (copyByTextarea(text)){ done(); return; }
+    // 2) クリップボードAPI
+    if (navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(text).then(done).catch(() => showCode(text));
+      return;
+    }
+    // 3) どちらも使えない：コードを表示する
+    showCode(text);
+  }
+
+  // ---------- コードの入力 ----------
+  // purpose: load（Editモードで読み込む）/ play（プレイモードで打つ）
+  let codePurpose = '';
+  function openCodeDlg(purpose){
+    codePurpose = purpose;
+    $('codeGo').textContent = purpose === 'load' ? '読み込む' : '打つ';
+    $('codeIn').value = ''; $('codeErr').textContent = '';
+    $('codeDlg').classList.remove('hidden');
+    $('codeIn').focus();
+  }
+  function submitCode(){
+    const code = $('codeIn').value;
+    if (!code.trim()){ $('codeErr').textContent = 'コードを入力してください'; return; }
+    const balls = decodeBundle(code);
+    if (!balls){ $('codeErr').textContent = 'コードが正しくありません'; return; }
+    if (codePurpose === 'load' && !balls.every(ballInZone)){ $('codeErr').textContent = 'ストライクゾーンを通らない球があります'; return; }
+    $('codeDlg').classList.add('hidden');
+    $('codeIn').blur();
+    if (codePurpose === 'load'){
+      slots = new Array(BALLS).fill(null).map((_, i) => balls[i] || null);
+      cur = 0;
+      clearBall();
+      refreshEdit();
+    } else {
+      lastPlayCode = code;
+      startPlay(balls);
+    }
+  }
+  $('codeGo').addEventListener('click', submitCode);
+  $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') submitCode(); });
+  $('codeCancel').addEventListener('click', () => {
+    $('codeDlg').classList.add('hidden');
+    if (codePurpose === 'play') showMenu();   // プレイモードで入力をやめたらモード選択に戻る
+  });
+
+  // ---------- プレイモード ----------
+  // コードの球が順番をばらばらにして1球ずつ来るので打つ
+  function shuffle(a){
+    for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  // endless：エンドレスモード（ホームランが続く限り、用意した球から1球ずつ選んで投げ続ける）
+  function startPlay(balls, endless = false){
+    $('menu').classList.add('hidden');
+    $('ov').classList.add('hidden');
+    lastEndless = endless;
+    play = { balls, order: endless ? [nextEndlessBall(balls, -1)] : shuffle(balls.map((_, i) => i)), k: 0, hr: 0, results: [], endless };
+    sweet = { x: cx, y: zoneY };
+    clearBall();
+    mode = 'bwait'; timer = 0;
+    $('hud').classList.remove('hidden');
+    $('bar').classList.add('hidden');   // プレイ中は下のボタンを出さない
+    updateHud();
+  }
+  // エンドレスモードの次の球（同じ球が2回続かないように選ぶ）
+  function nextEndlessBall(balls, prev){
+    if (balls.length < 2) return 0;
+    let i;
+    do { i = Math.floor(Math.random() * balls.length); } while (i === prev);
+    return i;
+  }
+  function updateHud(){
+    if (!play) return;
+    if (play.endless){
+      $('hA').textContent = `${play.k + 1}球目`;
+      $('hB').textContent = `連続ホームラン ${play.hr}`;
+      return;
+    }
+    $('hA').textContent = `${Math.min(play.k + 1, play.balls.length)}/${play.balls.length}球目`;
+    $('hB').textContent = `ホームラン ${play.hr}`;
+  }
+  $('toMenu').addEventListener('click', showMenu);
+  $('retry').addEventListener('click', () => startPlay(decodeBundle(lastPlayCode), lastEndless));
+
+  function batSwing(){
+    if (mode !== 'pitch' || swingAt !== null) return;
+    swingAt = pitch.t;
+    swingElapsed = 0;
+  }
+
+  // バットが真横に来た瞬間に、ボールが芯の円の中にあれば当たり
+  function resolveSwing(){
+    resolved = true;
+    const tc = swingAt + SWING_DELAY;
+    const b = ballPos(pitch, tc);
+    const dx = b.x - sweet.x, dy = b.y - sweet.y;
+    const d = Math.hypot(dx, dy);
+    if (d > MEET) return;
+    const q = 1 - d / MEET;
+    const v = EXIT_MIN + (EXIT_MAX - EXIT_MIN) * Math.pow(q, 0.7);
+    const la = BEST_ANGLE - ANGLE_DROP * Math.pow(1 - q, 2);
+    const th = dy / MEET * SPRAY_MAX;   // ボールがまだ芯より上（手前に来ていない）＝打つのが早い → 左へ
+    // バットに当たった位置（画面）→ 球場の位置（m）。そこから打球を計算する
+    const ppm = pxPerM();
+    const x0 = (b.x - cx) / ppm, z0 = (plateY - b.y) / ppm - HIT_Y * HEIGHT_K;
+    flight = simulate(v, la, th, x0, z0);
+    // 打った瞬間のエフェクト（芯の真ん中に近いほど大きく）
+    hitFx = { x: b.x, y: b.y, t: 0, q, rays: Array.from({ length: HITFX_RAYS }, (_, i) =>
+      ({ a: (i + Math.random() * 0.6) / HITFX_RAYS * Math.PI * 2, len: 0.6 + Math.random() * 0.4 })) };
+    prepareFlightTimeline(flight);
+    mode = 'flight';
+  }
+
+  // 打球の軌道を先にすべて計算しておく
+  // x0, z0：打った位置（m、ホームが原点）
+  function simulate(v, laDeg, thDeg, x0, z0){
+    const la = laDeg * Math.PI / 180, th = thDeg * Math.PI / 180;
+    let x = x0, y = HIT_Y, z = z0;
+    let vx = v * Math.cos(la) * Math.sin(th), vy = v * Math.sin(la), vz = v * Math.cos(la) * Math.cos(th);
+    const pts = [{ x, y, z }];
+    let crossed = false, wall = false;
+    for (let i = 0; i < 6000; i++){
+      const s = Math.hypot(vx, vy, vz);
+      vx -= DRAG * s * vx * SIM_DT;
+      vz -= DRAG * s * vz * SIM_DT;
+      vy -= (GRAV + DRAG * s * vy) * SIM_DT;
+      x += vx * SIM_DT; y += vy * SIM_DT; z += vz * SIM_DT;
+      const r = Math.hypot(x, z), ang = Math.atan2(x, z) * 180 / Math.PI;
+      if (!crossed && Math.abs(ang) <= FOUL_ANGLE && r >= fenceAt(ang)){
+        crossed = true;
+        if (y < WALL_H){
+          // フェンスに当たったら、その場で真下に落とす
+          wall = true;
+          for (let yy = y; yy > 0; yy -= 0.15) pts.push({ x, y: yy, z });
+          y = 0;
+        }
+      }
+      if (y <= 0){ y = 0; pts.push({ x, y, z }); break; }
+      pts.push({ x, y, z });
+    }
+    const landIdx = pts.length - 1;              // 最初に地面に落ちた点（ここで飛距離と結果が決まる）
+    const end = pts[landIdx];
+    const ang = Math.atan2(end.x, end.z) * 180 / Math.PI;
+    const foul = end.z <= 0 || Math.abs(ang) > FOUL_ANGLE;
+    const hr = crossed && !wall && !foul;
+    // スタンドに落ちたファウルは、そこで止める（弾ませるとスタンドからグラウンドへ戻ってしまうため）
+    const inStands = !wall && ((Math.abs(ang) <= FOUL_ANGLE && Math.hypot(end.x, end.z) > fenceAt(ang))
+      || [-1, 1].some(sgn => (sgn * end.x - end.z) * Math.SQRT1_2 > FOUL_ROOM));
+    if (!hr && !inStands){
+      // 着地した後の弾みと転がり（見た目だけ。空中でピタッと止まって見えないように）
+      if (wall){ vx *= -0.2; vz *= -0.2; }
+      vy = Math.abs(vy) * BOUNCE;
+      vx *= BOUNCE_KEEP; vz *= BOUNCE_KEEP;
+      for (let i = 0; i < 1200; i++){
+        if (y > 0 || vy > 0){
+          vy -= GRAV * SIM_DT; y += vy * SIM_DT;
+          if (y <= 0){
+            y = 0; vy = -vy * BOUNCE;
+            if (vy < 1) vy = 0;
+            vx *= BOUNCE_KEEP; vz *= BOUNCE_KEEP;
+          }
+        } else {
+          const sp = Math.hypot(vx, vz);
+          const k = sp > 0 ? Math.max(0, sp - ROLL_DECEL * SIM_DT) / sp : 0;
+          vx *= k; vz *= k;
+        }
+        x += vx * SIM_DT; z += vz * SIM_DT;
+        // 弾んだり転がったりしてフェンスやスタンドに当たったら、跳ね返ってグラウンドの中に残る
+        const hitWall = (nx, nz, over) => {
+          x -= nx * over; z -= nz * over;               // 壁の内側へ戻す
+          const vn = vx * nx + vz * nz;
+          if (vn > 0){
+            vx -= (1 + WALL_BOUNCE) * vn * nx; vz -= (1 + WALL_BOUNCE) * vn * nz;
+            vx *= WALL_KEEP; vz *= WALL_KEEP;
+          }
+        };
+        const r = Math.hypot(x, z), ang = Math.atan2(x, z) * 180 / Math.PI;
+        if (Math.abs(ang) <= FOUL_ANGLE && r > fenceAt(ang)) hitWall(x / r, z / r, r - fenceAt(ang));
+        for (const sgn of [-1, 1]){
+          const out = (sgn * x - z) * Math.SQRT1_2;    // ファウルラインから外側への距離
+          if (out > FOUL_ROOM) hitWall(sgn * Math.SQRT1_2, -Math.SQRT1_2, out - FOUL_ROOM);
+        }
+        pts.push({ x, y, z });
+        if (y === 0 && vy === 0 && Math.hypot(vx, vz) < 0.05) break;
+      }
+    }
+    return { pts, landIdx, dist: Math.round(Math.hypot(end.x, end.z)), hr, foul };
+  }
+
+  // label: 打った結果（ホームラン・ヒット・ファウル・空振り・見逃し） / dist: 飛距離（m、打てなかったら null）
+  function showResult(label, dist, isHr){
+    if (isHr){
+      $('msg').innerHTML = `<span class="hrBig">${label}！</span><span class="hrDist">${dist}m</span>`;
+      celebrate();
+    } else {
+      // 打てなかった（見逃し・空振り）ときは何も出さない。最後の結果一覧には残す
+      $('msg').textContent = dist !== null ? `${label} ${dist}m` : '';
+    }
+    $('msg').className = isHr ? 'hr' : '';
+    if (isHr) play.hr++;
+    play.results.push({ label, dist, isHr });
+    updateHud();
+    mode = 'result'; timer = 0;
+  }
+  // ---------- ホームランのお祝い ----------
+  const CF_COLORS = ['--cf1', '--cf2', '--cf3', '--cf4', '--cf5', '--cf6'];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const cfColor = () => COL[CF_COLORS[Math.floor(Math.random() * CF_COLORS.length)]];
+  function addPiece(x, y, vx, vy, spark){
+    confetti.push({ x, y, vx, vy, rot: rnd(0, Math.PI * 2), vr: rnd(-12, 12), w: rnd(6, 10), h: rnd(3, 6),
+      col: cfColor(), life: spark ? rnd(0.7, 1.1) : rnd(2.2, 3.2), age: 0, spark });
+  }
+  function celebrate(){
+    // 画面が白く光る
+    const fl = $('flash');
+    fl.classList.remove('on'); void fl.offsetWidth; fl.classList.add('on');
+    // 左右の下からクラッカーのようにはじき出す
+    for (let i = 0; i < CONFETTI_POP; i++){
+      const sp = rnd(700, 1250);
+      const a1 = rnd(-1.35, -0.95), a2 = Math.PI - a1;
+      addPiece(0, H, Math.cos(a1) * sp, Math.sin(a1) * sp, false);
+      addPiece(W, H, Math.cos(a2) * sp, Math.sin(a2) * sp, false);
+    }
+    // 上から降らせる
+    for (let i = 0; i < CONFETTI_RAIN; i++) addPiece(rnd(0, W), rnd(-H * 0.6, -10), rnd(-40, 40), rnd(0, 120), false);
+    // 花火を少しずつずらして打ち上げる
+    for (let i = 0; i < FIREWORKS; i++) fireworkQueue.push({ at: 0.15 + i * 0.35, x: rnd(W * 0.15, W * 0.85), y: rnd(H * 0.12, H * 0.35) });
+  }
+  function updateConfetti(dt){
+    fireworkQueue = fireworkQueue.filter(f => {
+      f.at -= dt;
+      if (f.at > 0) return true;
+      const col = cfColor();
+      for (let i = 0; i < FIREWORK_SPARKS; i++){
+        const a = i / FIREWORK_SPARKS * Math.PI * 2, sp = rnd(180, 300);
+        addPiece(f.x, f.y, Math.cos(a) * sp, Math.sin(a) * sp, true);
+        confetti[confetti.length - 1].col = col;
+      }
+      return false;
+    });
+    for (const c of confetti){
+      c.age += dt;
+      const drag = c.spark ? 2.5 : CONFETTI_DRAG;
+      c.vx -= c.vx * drag * dt;
+      c.vy += (c.spark ? CONFETTI_GRAV * 0.25 : CONFETTI_GRAV) * dt - c.vy * drag * dt;
+      c.x += c.vx * dt; c.y += c.vy * dt; c.rot += c.vr * dt;
+    }
+    confetti = confetti.filter(c => c.age < c.life && c.y < H + 20);
+  }
+  function drawConfetti(){
+    for (const c of confetti){
+      ctx.globalAlpha = Math.max(0, Math.min(1, (c.life - c.age) / 0.4));
+      ctx.fillStyle = c.col;
+      if (c.spark){
+        ctx.beginPath(); ctx.arc(c.x, c.y, 2.5, 0, Math.PI * 2); ctx.fill();
+      } else {
+        // くるくる回って、裏返るように幅を変える
+        ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rot);
+        ctx.fillRect(-c.w / 2, -c.h / 2 * Math.abs(Math.cos(c.age * 8 + c.rot)), c.w, c.h * Math.abs(Math.cos(c.age * 8 + c.rot)));
+        ctx.restore();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function afterResult(){
+    play.k++;
+    clearBall();
+    if (play.endless){
+      // エンドレスモード：ホームラン以外になったら終わり
+      if (!play.results[play.results.length - 1].isHr){ showOver(); return; }
+      play.order.push(nextEndlessBall(play.balls, play.order[play.order.length - 1]));
+    } else if (play.k >= play.balls.length){ showOver(); return; }
+    mode = 'bwait'; timer = 0;
+    updateHud();
+  }
+  function showOver(){
+    mode = 'over';
+    $('bar').classList.add('hidden');
+    $('ovTitle').textContent = play.endless ? `連続ホームラン ${play.hr}本` : `ホームラン ${play.hr}/${play.balls.length}`;
+    // 1球ずつの結果と飛距離（投げられた順）。エンドレスモードは長くなるので、終わった1球だけ
+    $('ovList').innerHTML = '';
+    const shown = play.endless ? play.results.slice(-1) : play.results;
+    const first = play.results.length - shown.length;
+    shown.forEach((r, j) => {
+      const i = first + j;
+      const li = document.createElement('li');
+      if (r.isHr) li.className = 'hr';
+      const a = document.createElement('span'), b = document.createElement('span');
+      a.textContent = `${i + 1}球目 ${r.label}`;
+      b.textContent = r.dist !== null ? `${r.dist}m` : '－';
+      li.append(a, b);
+      $('ovList').appendChild(li);
+    });
+    $('ov').classList.remove('hidden');
+    if (usingKeyboard) $('retry').focus();
+  }
+
+  // ---------- 共有 ----------
+  function shareText(){
+    const url = location.href.split(/[?#]/)[0];
+    const head = play.endless ? `エンドレスモードで連続ホームラン${play.hr}本！` : `ホームラン${play.hr}本！`;
+    return `${head}\n${url}\n#ぼくらのホームランダービー`;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）。
+  // 結果画面に出ている部分（ホームランの数と1球ずつの結果）を、画面の見た目のまま切り出す
+  function resultImageFile(){
+    const S = 2;                                   // 画像を画面の何倍の細かさで作るか
+    const base = cv.getBoundingClientRect();
+    const rel = el => { const r = el.getBoundingClientRect(); return { x: r.left - base.left, y: r.top - base.top, w: r.width, h: r.height }; };
+    const t = rel($('ovTitle')), l = rel($('ovList'));
+    const pad = 24;
+    const x0 = Math.max(0, Math.min(t.x, l.x) - pad), y0 = Math.max(0, t.y - pad);
+    const x1 = Math.min(W, Math.max(t.x + t.w, l.x + l.w) + pad), y1 = Math.min(H, l.y + l.h + pad);
+    const c = document.createElement('canvas');
+    c.width = Math.round((x1 - x0) * S); c.height = Math.round((y1 - y0) * S);
+    const g = c.getContext('2d');
+    // 背景：いまのゲーム画面の同じ場所を、結果画面と同じように暗くして敷く
+    const dpr = cv.width / W;
+    g.drawImage(cv, x0 * dpr, y0 * dpr, (x1 - x0) * dpr, (y1 - y0) * dpr, 0, 0, c.width, c.height);
+    g.fillStyle = css('--panel'); g.fillRect(0, 0, c.width, c.height);
+    g.scale(S, S); g.translate(-x0, -y0);
+    // 結果一覧の下地
+    g.fillStyle = css('--card');
+    g.beginPath();
+    if (g.roundRect) g.roundRect(l.x, l.y, l.w, l.h, 12); else g.rect(l.x, l.y, l.w, l.h);   // 古いブラウザは角を丸めない
+    g.fill();
+    // 文字：画面に出ている位置・大きさ・色のまま描く
+    const text = (el, align) => {
+      const st = getComputedStyle(el), r = rel(el);
+      g.font = `${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;
+      g.fillStyle = st.color; g.textBaseline = 'middle'; g.textAlign = align;
+      g.fillText(el.textContent, align === 'center' ? r.x + r.w / 2 : align === 'right' ? r.x + r.w : r.x, r.y + r.h / 2);
+    };
+    text($('ovTitle'), 'center');
+    [...$('ovList').children].forEach(li => { text(li.children[0], 'left'); text(li.children[1], 'right'); });
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);   // toBlob の非同期コールバックは避ける
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    const file = resultImageFile();
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ text, files: [file] }).catch(() => {});
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    navigator.clipboard?.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+
+  $('goEdit').addEventListener('click', startEdit);
+  // プレイモードは用意した5球ですぐ始める。コード入力はコードを入れてから始める
+  $('goPlay').addEventListener('click', () => { lastPlayCode = DEFAULT_CODE; startPlay(decodeBundle(DEFAULT_CODE)); });
+  $('goEndless').addEventListener('click', () => { lastPlayCode = DEFAULT_CODE; startPlay(decodeBundle(DEFAULT_CODE), true); });
+  $('goCode').addEventListener('click', () => { $('menu').classList.add('hidden'); openCodeDlg('play'); });
+
+  // ---------- 入力 ----------
+  // Editモード：指（マウス）で線を引くと、ピッチャーの手からその線の形の球になる
+  // プレイモード：PCはバットの芯がマウスカーソルに重なるように動いてクリックでスイング、
+  //              スマホは指でなぞった分だけ動いて、指を離すとスイング
+  const drags = new Map();
+  let usingKeyboard = false;
+  const localPos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const playing = () => !!play && mode !== 'over';
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    usingKeyboard = false;
+    if (playing()){
+      if (e.pointerType === 'mouse'){
+        const p = localPos(e);
+        sweet.x = p.x; sweet.y = p.y; clampSweet();
+        batSwing();
+        return;
+      }
+      cv.setPointerCapture(e.pointerId);
+      drags.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      return;
+    }
+    if (mode !== 'eaim' || drags.size) return;
+    cv.setPointerCapture(e.pointerId);
+    drags.set(e.pointerId, true);
+    const p = localPos(e);
+    stroke = [{ x: p.x, y: p.y }];
+    $('msg').textContent = ''; $('msg').className = '';
+    strokeLen = Math.hypot(p.x - handX, p.y - handY);
+    mode = 'edraw';
+    refreshEdit();
+  });
+  cv.addEventListener('pointermove', e => {
+    if (playing()){
+      if (swingAt !== null) return;   // 振っている最中は動かない
+      if (e.pointerType === 'mouse'){
+        const p = localPos(e);
+        sweet.x = p.x; sweet.y = p.y; clampSweet();
+        return;
+      }
+      const d = drags.get(e.pointerId);
+      if (!d) return;
+      sweet.x += e.clientX - d.x; sweet.y += e.clientY - d.y; clampSweet();
+      d.x = e.clientX; d.y = e.clientY;
+      return;
+    }
+    if (!drags.has(e.pointerId) || mode !== 'edraw') return;
+    const p = localPos(e);
+    const q = stroke[stroke.length - 1];
+    const seg = Math.hypot(p.x - q.x, p.y - q.y);
+    if (strokeLen + seg > maxPath()) return;
+    strokeLen += seg;
+    stroke.push({ x: p.x, y: p.y });
+  });
+  const endDrag = e => {
+    if (!drags.has(e.pointerId)) return;
+    drags.delete(e.pointerId);
+    if (playing()){ if (e.type === 'pointerup') batSwing(); return; }
+    if (mode !== 'edraw') return;
+    if (e.type === 'pointerup' && strokeLen >= MIN_PATH && stroke.length >= 2) finishStroke();
+    else { stroke = null; mode = 'eaim'; refreshEdit(); }
+  };
+  cv.addEventListener('pointerup', endDrag);
+  cv.addEventListener('pointercancel', endDrag);
+  document.addEventListener('keydown', e => {
+    usingKeyboard = true;
+    if (!playing() || isTextField(e.target)) return;
+    const mv = { ArrowLeft:[-1, 0], ArrowRight:[1, 0], ArrowUp:[0, -1], ArrowDown:[0, 1] }[e.key];
+    if (mv){
+      if (swingAt === null){ sweet.x += mv[0] * KEY_STEP; sweet.y += mv[1] * KEY_STEP; clampSweet(); }
+      e.preventDefault();
+    } else if (e.key === ' ' || e.code === 'Space'){
+      batSwing();
+      e.preventDefault();
+    }
+  });
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // （コードの入力欄・表示欄だけは、コピー・貼り付けのために選択・長押しメニューを使えるようにする）
+  const isTextField = t => t instanceof Element && !!t.closest('input,textarea');
+  cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
+  document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => { if (!isTextField(e.target)) e.preventDefault(); });
+  document.addEventListener('contextmenu', e => { if (!isTextField(e.target)) e.preventDefault(); });
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+
+  // ---------- 更新 ----------
+  function update(dt){
+    updateConfetti(dt);
+    swingElapsed += dt;
+    if (hitFx && (hitFx.t += dt) > HITFX_TIME) hitFx = null;
+    timer += dt;
+    if (mode === 'epreview'){
+      pitch.t += dt;
+      if (ballGone(pitch)){ pitch = null; mode = 'eaim'; refreshEdit(); }
+    } else if (mode === 'bwait'){
+      if (timer >= BAT_WAIT){
+        pitch = makePitch(decodeBall(play.balls[play.order[play.k]]));
+        swingAt = null; resolved = false;
+        cam = camHome();   // 投球中はカメラを元の位置に（打つ位置の操作がずれないように）
+        mode = 'pitch'; timer = 0;
+      }
+    } else if (mode === 'pitch'){
+      pitch.t += dt;
+      if (swingAt !== null && !resolved && pitch.t >= swingAt + SWING_DELAY) resolveSwing();
+      if (mode === 'pitch' && ballGone(pitch)) showResult(swingAt !== null ? '空振り' : '見逃し', null, false);
+    } else if (mode === 'flight'){
+      // 着地した瞬間にあまった時間は、着地した後の時間に回す（着地で一瞬止まって見えないように）
+      const nu = flight.u + dt / flight.airTime;
+      if (nu >= 1){ flight.post += (nu - 1) * flight.airTime; flight.u = 1; } else flight.u = nu;
+      if (flight.u >= 1){
+        if (flight.foul) showResult('ファウル', flight.dist, false);
+        else if (flight.hr) showResult('ホームラン', flight.dist, true);
+        else showResult('ヒット', flight.dist, false);
+      }
+    } else if (mode === 'result'){
+      if (flight) flight.post += dt;   // 結果を出している間も、弾んだり転がったりを続ける
+      if (timer >= (play.results[play.results.length - 1]?.isHr ? HR_RESULT_TIME : RESULT_TIME)) afterResult();
+    }
+    updateCamera(dt);
+    // 描ける線の残りのゲージ：満タンから描いた分だけ減る。空になるとそれ以上線が伸びない
+    const showGauge = mode === 'eaim' || mode === 'edraw';
+    $('gauge').classList.toggle('hidden', !showGauge || !$('codeDlg').classList.contains('hidden'));
+    if (showGauge){
+      const left = mode === 'edraw' ? Math.max(0, 100 - Math.round(strokeLen / maxPath() * 100)) : 100;
+      $('gaugeFill').style.width = left + '%';
+      $('gaugeFill').classList.toggle('low', left <= GAUGE_LOW);
+      $('gauge').setAttribute('aria-valuenow', left);
+    }
+  }
+
+  // ---------- 描画 ----------
+  function poly(pts, fill){
+    ctx.beginPath();
+    pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+  }
+
+  // 球場を図形で描く（真上から見た図。どこまで拡大しても荒れない）
+  // 位置は m で考え、ホームを原点、センター方向を +z とした座標 (x, z) を画面に写す
+  const W2S = (x, z) => ({ x: cx + x * pxPerM(), y: plateY - z * pxPerM() });
+  const polar = (r, deg) => ({ x: Math.sin(deg * Math.PI / 180) * r, z: Math.cos(deg * Math.PI / 180) * r });
+  function pathTo(pts, close){
+    ctx.beginPath();
+    pts.forEach((p, i) => { const q = W2S(p.x, p.z); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); });
+    if (close) ctx.closePath();
+  }
+  function circleAt(x, z, r, fill){
+    const q = W2S(x, z);
+    ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(q.x, q.y, r * pxPerM(), 0, Math.PI * 2); ctx.fill();
+  }
+  function drawField(){
+    const k = pxPerM();
+    ctx.lineJoin = 'round'; ctx.lineCap = 'butt';
+    // 球場の外
+    ctx.fillStyle = COL['--back'];
+    ctx.fillRect(cx - OUTSIDE, plateY - OUTSIDE, OUTSIDE * 2, OUTSIDE * 2);
+
+    // グラウンドの外周：フェンス → ファウルゾーンの外側（スタンド沿い）→ バックネット
+    const s45 = Math.SQRT1_2;
+    const fence = [];
+    for (let d = -FOUL_ANGLE; d <= FOUL_ANGLE; d += 1) fence.push(polar(fenceAt(d), d));
+    const side = (sgn, r) => ({ x: sgn * (r * s45 + FOUL_ROOM * s45), z: r * s45 - FOUL_ROOM * s45 });   // ファウルラインを外側へずらした線
+    const r0 = Math.sqrt(BACKSTOP * BACKSTOP - FOUL_ROOM * FOUL_ROOM);
+    const aR = Math.atan2(side(1, r0).x, side(1, r0).z), aL = Math.atan2(side(-1, r0).x, side(-1, r0).z);
+    const lower = [];                                           // 右のポール側 → バックネット → 左のポール側
+    for (let r = FENCE_LINE; r >= r0; r -= 2) lower.push(side(1, r));
+    for (let a = aR; a <= aL + Math.PI * 2; a += 0.05) lower.push({ x: Math.sin(a) * BACKSTOP, z: Math.cos(a) * BACKSTOP });   // ホームの後ろを回る
+    for (let r = r0; r <= FENCE_LINE; r += 2) lower.push(side(-1, r));
+    const ground = [...lower, ...fence];
+
+    // スタンド（外周の下側に沿って、外へはみ出す太い帯として描き、内側はグラウンドで上から塗る）
+    pathTo(lower, false);
+    ctx.strokeStyle = COL['--concourse']; ctx.lineWidth = (STANDS_W + 3) * 2 * k; ctx.stroke();
+    ctx.strokeStyle = COL['--stands']; ctx.lineWidth = STANDS_W * 2 * k; ctx.stroke();
+
+    // グラウンド（芝）
+    pathTo(ground, true);
+    ctx.fillStyle = COL['--grass']; ctx.fill();
+    // フェンス沿いの土（フェンスの線に沿って太く引き、グラウンドの外にはみ出す分は切り取る）
+    ctx.save();
+    pathTo(ground, true); ctx.clip();          // グラウンドの内側だけに塗る
+    pathTo(fence, false);
+    ctx.strokeStyle = COL['--track']; ctx.lineWidth = TRACK_W * 2 * k; ctx.stroke();
+    ctx.restore();
+    // フェンス（外側に黄色い縁）
+    const wallMid = [];
+    for (let d = -FOUL_ANGLE; d <= FOUL_ANGLE; d += 1) wallMid.push(polar(fenceAt(d) + WALL_W / 2, d));
+    pathTo(wallMid, false);
+    ctx.strokeStyle = COL['--wall']; ctx.lineWidth = WALL_W * k; ctx.stroke();
+    const wallTop = [];
+    for (let d = -FOUL_ANGLE; d <= FOUL_ANGLE; d += 1) wallTop.push(polar(fenceAt(d) + WALL_W, d));
+    pathTo(wallTop, false);
+    ctx.strokeStyle = COL['--wall-top']; ctx.lineWidth = Math.max(1.5, 0.35 * k); ctx.stroke();
+
+    // 内野の土：ホームから両ファウルラインに沿って、マウンドを中心とした円弧まで
+    const mz = MOUND_DIST;
+    const uz = s45 * mz, rCut = uz + Math.sqrt(uz * uz - (mz * mz - INFIELD_ARC * INFIELD_ARC));   // ファウルラインと円弧の交点までの距離
+    const pR = polar(rCut, 45), pL = polar(rCut, -45);
+    const a1 = Math.atan2(pR.x, pR.z - mz), a0 = Math.atan2(pL.x, pL.z - mz);
+    const dirt = [{ x: 0, z: 0 }, pR];
+    for (let a = a1; a >= a0; a -= 0.03) dirt.push({ x: Math.sin(a) * INFIELD_ARC, z: mz + Math.cos(a) * INFIELD_ARC });
+    dirt.push(pL);
+    pathTo(dirt, true); ctx.fillStyle = COL['--dirt']; ctx.fill();
+    // 内野の芝（ダイヤモンドを少し内側に縮めて、塁間に土の走路を残す）
+    const b1 = polar(BASE_DIST, 45), b2 = polar(BASE_DIST * Math.SQRT2, 0), b3 = polar(BASE_DIST, -45);
+    const cz = b2.z / 2, shrink = 0.9;
+    const inset = p => ({ x: p.x * shrink, z: cz + (p.z - cz) * shrink });
+    pathTo([inset({ x: 0, z: 0 }), inset(b1), inset(b2), inset(b3)], true);
+    ctx.fillStyle = COL['--grass']; ctx.fill();
+    // 塁まわり・ホームまわり・マウンドの土
+    [b1, b2, b3].forEach(b => circleAt(b.x, b.z, 3.5, COL['--dirt']));
+    circleAt(0, 0, HOME_DIRT, COL['--dirt']);
+    circleAt(0, mz, 2.8, COL['--dirt']);
+
+    // ホームまわり（ホームベースとバッターボックス）は実物の寸法を BOX_SCALE 倍して描く。
+    // 原点はホームベースの後ろのとがった角（ファウルラインが始まるところ）
+    const S = BOX_SCALE;
+    const boxIn = (PLATE_W / 2 + BOX_GAP) * S, boxOut = boxIn + BOX_W * S;       // 箱の内側・外側の線（横）
+    const plateMid = PLATE_W / 2 * S;                                            // ホームベースの前後の真ん中
+    const boxBack = plateMid - BOX_L / 2 * S, boxFront = plateMid + BOX_L / 2 * S; // 箱の後ろ・前の線
+    // ファウルライン（バッターボックスの中は引かない）
+    ctx.strokeStyle = COL['--line']; ctx.lineWidth = Math.max(2, 0.3 * k); ctx.lineCap = 'butt';
+    for (const sgn of [-1, 1]){
+      const a = sgn * FOUL_ANGLE;
+      pathTo([{ x: 0, z: 0 }, polar(boxIn * Math.SQRT2, a)], false); ctx.stroke();       // ホームベースから箱まで
+      pathTo([polar(boxFront * Math.SQRT2, a), polar(FENCE_LINE, a)], false); ctx.stroke(); // 箱の前からフェンスまで
+    }
+    // バッターボックス
+    ctx.lineWidth = Math.max(1.5, 0.12 * k);
+    for (const sgn of [-1, 1]){
+      const x0 = sgn * boxIn, x1 = sgn * boxOut;
+      pathTo([{ x: x0, z: boxBack }, { x: x1, z: boxBack }, { x: x1, z: boxFront }, { x: x0, z: boxFront }], true); ctx.stroke();
+    }
+    // 塁（見やすいように実物より少し大きく）
+    const baseSq = (b, size) => {
+      pathTo([{ x: b.x, z: b.z - size }, { x: b.x + size, z: b.z }, { x: b.x, z: b.z + size }, { x: b.x - size, z: b.z }], true);
+      ctx.fillStyle = COL['--line']; ctx.fill();
+    };
+    [b1, b2, b3].forEach(b => baseSq(b, 0.55));
+    // ホームベース（五角形）とピッチャープレート
+    const pw = PLATE_W / 2 * S;
+    pathTo([{ x: 0, z: 0 }, { x: pw, z: pw }, { x: pw, z: pw * 2 }, { x: -pw, z: pw * 2 }, { x: -pw, z: pw }], true);
+    ctx.fillStyle = COL['--line']; ctx.fill();
+    pathTo([{ x: -0.4, z: mz + 0.1 }, { x: 0.4, z: mz + 0.1 }, { x: 0.4, z: mz - 0.1 }, { x: -0.4, z: mz - 0.1 }], true);
+    ctx.fill();
+  }
+
+  function drawZone(){
+    // ストライクにならない線を描いた直後は、赤で点滅させる
+    const ng = (performance.now() - zoneNgAt) / 1000;
+    const red = ng < ZONE_NG_TIME && Math.floor(ng / ZONE_NG_BLINK) % 2 === 0;
+    ctx.strokeStyle = COL[red ? '--zone-ng' : '--zone']; ctx.lineWidth = red ? 4 : 3;
+    ctx.strokeRect(cx - ZONE_X, zoneY - ZONE_Y, ZONE_X * 2, ZONE_Y * 2);
+  }
+
+  function drawPitcher(){
+    // 球が出る位置（ピッチャーの手元）を中心に大きくする。球の出る位置は変えない
+    ctx.save();
+    ctx.translate(handX, handY); ctx.scale(PITCHER_SCALE, PITCHER_SCALE); ctx.translate(-handX, -handY);
+    const x = cx, foot = moundY;
+    ctx.fillStyle = COL['--pitcher-shirt'];   // 服
+    ctx.fillRect(x - 8, foot - 44, 16, 24);
+    ctx.fillStyle = COL['--pitcher-pants'];   // ズボン
+    ctx.fillRect(x - 7, foot - 20, 5, 20);
+    ctx.fillRect(x + 2, foot - 20, 5, 20);
+    ctx.fillStyle = COL['--pitcher-skin'];   // 顔
+    ctx.beginPath(); ctx.arc(x, foot - 51, 7, 0, Math.PI * 2); ctx.fill();
+    // 茶色の髪（頭の上半分より少し下まで）
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x - 9, foot - 60, 18, 10); ctx.clip();
+    ctx.fillStyle = COL['--pitcher-hair'];
+    ctx.beginPath(); ctx.arc(x, foot - 51, 7.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    // 投げた直後は腕を振り下ろした形にする
+    const a = pitch && (mode === 'pitch' || mode === 'epreview') && pitch.t < 0.3 ? Math.PI * 0.8 : 0.3;
+    const sx = x + 8, sy = foot - 40;
+    ctx.strokeStyle = COL['--pitcher-shirt']; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + Math.sin(a) * 18, sy - Math.cos(a) * 18); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBatter(){
+    const s0 = playing() ? sweet : { x: cx, y: zoneY };
+    const hx = s0.x - BAT_SWEET, hy = s0.y;
+    const bx = hx - 24;
+    ctx.fillStyle = COL['--batter-shirt'];   // 服
+    ctx.fillRect(bx - 14, hy - 38, 28, 44);
+    // 半袖の服の下に、頭から足までの黄色いタイツを着ている
+    ctx.fillStyle = COL['--batter-tights'];
+    ctx.fillRect(bx - 13, hy + 6, 10, BATTER_LEG);   // 足
+    ctx.fillRect(bx + 3, hy + 6, 10, BATTER_LEG);
+    ctx.beginPath(); ctx.arc(bx, hy - 52, 13, 0, Math.PI * 2); ctx.fill();   // 頭
+
+    // 絵は3枚：構え（肩にかついで後ろへ寝かせる）→ 振っている（前へ真横。当たる瞬間はこの絵）→ 振り抜いた
+    const swung = swingAt !== null && (mode === 'pitch' || mode === 'flight' || mode === 'result');
+    const pose = !swung ? 0 : swingElapsed < SWING_DELAY + SWING_HOLD ? 1 : 2;
+    const ang = [BAT_REST, 0, BAT_FOLLOW][pose];
+    const gx = [bx + GRIP_X, hx, bx + FOLLOW_X][pose], gy = [hy + GRIP_Y, hy, hy + FOLLOW_Y][pose];   // 手の位置
+    const c = Math.cos(ang), s = Math.sin(ang);
+    ctx.lineWidth = 7; ctx.lineCap = 'round';
+    ctx.strokeStyle = COL['--bat'];
+    ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + c * BAT_LEN, gy + s * BAT_LEN); ctx.stroke();
+
+    // 腕はバットを握っているようにバットの上に描く
+    const ax = bx + 12, ay = hy - 32;         // 肩
+    const kx = ax + (gx - ax) * SLEEVE, ky = ay + (gy - ay) * SLEEVE;   // 袖の終わり
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = COL['--batter-tights']; ctx.lineWidth = 7;   // 腕（袖から先）
+    ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(gx, gy); ctx.stroke();
+    ctx.strokeStyle = COL['--batter-shirt']; ctx.lineWidth = 10;   // 半袖
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(kx, ky); ctx.stroke();
+  }
+
+  // Editモードで見せる線（描いている線、または保存した球の形）
+  function drawPath(){
+    let pts = null;
+    if (mode === 'edraw' && stroke) pts = [{ x: handX, y: handY }].concat(stroke);
+    else if (slots[cur]) pts = [{ x: handX, y: handY }].concat(decodeBall(slots[cur]));
+    if (!pts) return;
+    ctx.strokeStyle = COL['--path']; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // 投げた球の残像：少し前の位置ほど薄く小さく
+  function drawTrail(p){
+    ctx.fillStyle = COL['--ball'];
+    for (let i = TRAIL_N; i >= 1; i--){
+      const t = p.t - i * TRAIL_GAP;
+      if (t < 0) continue;
+      const b = ballPos(p, t), k = 1 - i / (TRAIL_N + 1);
+      ctx.globalAlpha = TRAIL_ALPHA * k;
+      ctx.beginPath(); ctx.arc(b.x, b.y, BALL_R * (0.5 + 0.5 * k), 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawBallAt(b){
+    ctx.fillStyle = COL['--ball'];
+    ctx.beginPath(); ctx.arc(b.x, b.y, BALL_R, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // 打球の高さ1mを画面で何px上に描くか（地面と同じ縮尺 × HEIGHT_K）
+  function heightScale(r){
+    return pxPerM() * HEIGHT_K;
+  }
+  // 打球の点 → 画面上のボールの位置と、その真下の地面の位置
+  function flightScreen(p){
+    const R = Math.hypot(p.x, p.z);
+    const g = fieldXZ(p.x, p.z);                    // ボールの真下の地面
+    return { x: g.x, y: g.y - p.y * heightScale(R), gy: g.y, R };
+  }
+  // 着地までの見せ方の時間割を作る。計算どおりの時間と、画面上で進んだ距離を混ぜて、
+  // 画面上の速さがなるべくそろうようにする
+  function prepareFlightTimeline(fl){
+    flight = fl;
+    const n = fl.landIdx;
+    const S = [0];
+    let prev = flightScreen(fl.pts[0]);
+    for (let i = 1; i <= n; i++){
+      const q = flightScreen(fl.pts[i]);
+      S.push(S[i - 1] + Math.hypot(q.x - prev.x, q.y - prev.y));
+      prev = q;
+    }
+    const total = S[n] || 1;
+    fl.D = S.map((v, i) => FLIGHT_EVEN * v / total + (1 - FLIGHT_EVEN) * (n ? i / n : 1));
+    fl.airTime = Math.max(SIM_DT, Math.min(AIR_MAX, n * SIM_DT / FLIGHT_SPEED));
+    // 着地した直後は着地する直前と同じ速さで時間を進め、そこから計算どおりの速さへなめらかに移す
+    // （着地の前後で急に速さが変わらないように）。速さは1秒に進む点の数
+    const dEnd = n ? fl.D[n] - fl.D[n - 1] : 0;
+    fl.rateBase = FLIGHT_SPEED / SIM_DT;
+    fl.rateLand = dEnd > 0 ? 1 / dEnd / fl.airTime : fl.rateBase;
+    fl.u = 0;       // 着地までの進み具合（0〜1）
+    fl.post = 0;    // 着地してからの秒数
+  }
+  // いま見せる軌道の位置（点の番号。小数で点の間）
+  function flightIndex(){
+    const fl = flight, n = fl.landIdx;
+    if (fl.u < 1){
+      let lo = 0, hi = n;
+      while (hi - lo > 1){ const m = (lo + hi) >> 1; if (fl.D[m] <= fl.u) lo = m; else hi = m; }
+      const span = fl.D[hi] - fl.D[lo];
+      return lo + (span > 0 ? (fl.u - fl.D[lo]) / span : 0);
+    }
+    // 着地した後は弾む・転がる（速さを着地の直前から計算どおりへ移していった分だけ進む）
+    const t = fl.post, tau = LAND_EASE;
+    return n + fl.rateBase * t + (fl.rateLand - fl.rateBase) * tau * (1 - Math.exp(-t / tau));
+  }
+  // いまの打球の位置（計算した軌道の点の間をなめらかにつなぐ）
+  function currentFlight(){
+    const f = flightIndex();
+    const i = Math.min(flight.pts.length - 1, Math.floor(f));
+    const j = Math.min(flight.pts.length - 1, i + 1), u = f - Math.floor(f);
+    const a = flight.pts[i], c = flight.pts[j];
+    const p = { x: a.x + (c.x - a.x) * u, y: a.y + (c.y - a.y) * u, z: a.z + (c.z - a.z) * u };
+    return { f, p, sc: flightScreen(p) };
+  }
+  // 打球を追いかけるカメラ。打ったらボールを追い、遠くへ行くほど寄る。それ以外は元の位置へ戻る
+  function updateCamera(dt){
+    let t = camHome();
+    if (flight && (mode === 'flight' || mode === 'result')){
+      const { sc } = currentFlight();
+      t = { x: sc.x, y: sc.y, zoom: 1 + (CAM_ZOOM_FAR - 1) * Math.min(1, sc.R / CAM_ZOOM_DIST) };
+    }
+    const k = Math.min(1, dt * CAM_EASE);
+    cam.x += (t.x - cam.x) * k; cam.y += (t.y - cam.y) * k; cam.zoom += (t.zoom - cam.zoom) * k;
+  }
+  function drawFlightBall(){
+    const { f, p, sc } = currentFlight();
+    const R = sc.R, bx = sc.x, by = sc.y, g = { y: sc.gy };
+    // 高く上がるほど大きく見せる
+    const base = BALL_R;
+    const r = base + p.y * BALL_GROW;
+    // ホームランはスタンドに入ったら消していく
+    let alpha = 1;
+    if (flight.hr && f > flight.landIdx) alpha = Math.max(0, 1 - (f - flight.landIdx) * SIM_DT / HR_FADE);
+    if (alpha <= 0) return;
+    ctx.globalAlpha = alpha;
+    // 影：いつも地面の上。ボールが高いほど小さく薄くなり、落ちてくると濃くなる
+    const hf = Math.min(1, p.y / SHADOW_FADE_H);
+    const sr = Math.max(2.2, base * (1.3 - 0.5 * hf));
+    ctx.fillStyle = `rgba(0,0,0,${(0.55 - 0.25 * hf).toFixed(3)})`;
+    ctx.beginPath(); ctx.ellipse(bx, g.y, sr, sr * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = COL['--ball'];
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // 打った瞬間：白く光って、輪が広がり、光の線が飛び散る
+  function drawHitFx(){
+    const f = hitFx, e = f.t / HITFX_TIME, out = 1 - Math.pow(1 - e, 3);
+    const size = HITFX_SIZE * (0.5 + 0.5 * f.q);
+    ctx.save();
+    ctx.globalAlpha = 1 - e;
+    ctx.fillStyle = COL['--hitfx']; ctx.strokeStyle = COL['--hitfx']; ctx.lineCap = 'round';
+    if (e < 0.3){ ctx.beginPath(); ctx.arc(f.x, f.y, size * 0.35 * (1 - e / 0.3) + 6, 0, Math.PI * 2); ctx.fill(); }
+    ctx.lineWidth = 4 * (1 - e) + 1;
+    ctx.beginPath(); ctx.arc(f.x, f.y, size * 0.6 * out, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 3 * (1 - e) + 1;
+    for (const r of f.rays){
+      const r1 = size * (0.25 + 0.6 * out) * r.len, r2 = r1 + size * 0.35 * (1 - e) * r.len;
+      ctx.beginPath();
+      ctx.moveTo(f.x + Math.cos(r.a) * r1, f.y + Math.sin(r.a) * r1);
+      ctx.lineTo(f.x + Math.cos(r.a) * r2, f.y + Math.sin(r.a) * r2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function draw(){
+    // カメラの外側に見える部分も、奥の色で塗っておく
+    ctx.fillStyle = COL['--back']; ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    // 打った瞬間は画面を少し揺らす
+    if (hitFx){
+      const a = HIT_SHAKE * (0.4 + 0.6 * hitFx.q) * Math.pow(1 - hitFx.t / HITFX_TIME, 1.5);
+      ctx.translate((Math.random() * 2 - 1) * a, (Math.random() * 2 - 1) * a);
+    }
+    ctx.translate(W / 2, H * CAM_ANCHOR_Y);
+    ctx.scale(cam.zoom, cam.zoom);
+    ctx.translate(-cam.x, -cam.y);
+    drawField();
+    if (!play) drawZone();   // 打つとき（プレイモード）はストライクゾーンを出さない
+    drawPitcher();
+    const editing = mode === 'eaim' || mode === 'edraw' || mode === 'epreview';
+    if (!editing) drawBatter();   // Editモードでは打者は出さない
+    if (editing) drawPath();
+    if (mode === 'eaim' || mode === 'edraw') drawBallAt({ x: handX, y: handY });
+    // プレイモードでは、バットの芯の当たる範囲を示す
+    if (playing() && mode !== 'flight' && !(mode === 'result' && flight)){
+      ctx.beginPath(); ctx.arc(sweet.x, sweet.y, MEET, 0, Math.PI * 2);
+      ctx.strokeStyle = COL['--meet']; ctx.lineWidth = 2.5; ctx.stroke();
+      // 中心点：ここにボールを当てるほど遠くへ飛ぶ
+      ctx.beginPath(); ctx.arc(sweet.x, sweet.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = COL['--meet']; ctx.fill();
+    }
+    if (pitch && (mode === 'epreview' || mode === 'pitch' || (mode === 'result' && !flight))){
+      drawTrail(pitch);
+      drawBallAt(ballPos(pitch, pitch.t));
+    }
+    if (flight && (mode === 'flight' || mode === 'result')) drawFlightBall();
+    if (hitFx) drawHitFx();
+    ctx.restore();
+    drawConfetti();   // 紙吹雪は画面に貼りつけて描く（カメラに合わせて動かない）
+  }
+
+  // ---------- ループ ----------
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+  resize();
+  addEventListener('resize', resize);
+  showMenu();
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/double-booking/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ダブルブッキング</title>
+<meta name="description" content="動く予定を空き時間にねじ込む">
+<style>
+:root{
+  --bg:#fff; --fg:#222; --sub:#777; --line:#e3e3e3; --overlay:rgba(255,255,255,.9);
+  --ev:#1a73e8; --req:#0b8043; --ng:#d93025; --evtext:#fff;
+  --howto-bg:#1a73e8; --howto-fg:#fff;
+}
+/* システムのダークモードに合わせる（Canvasも毎フレームこの変数を読むので、途中で切り替えても追従する） */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#181818; --fg:#eee; --sub:#9aa0a6; --line:#333; --overlay:rgba(24,24,24,.9)}
+}
+:root[data-theme="dark"]{--bg:#181818; --fg:#eee; --sub:#9aa0a6; --line:#333; --overlay:rgba(24,24,24,.9)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+#game{
+  position:relative;width:100%;max-width:420px;margin:0 auto;
+  height:100vh;height:100dvh;display:flex;flex-direction:column;
+  /* ノッチ・ホームバー・角丸を避けて、画面はすべてセーフエリアの内側に収める（下はホームバーから少し離す） */
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
+  padding-left:env(safe-area-inset-left,0px);
+  padding-right:env(safe-area-inset-right,0px);
+}
+#hud{flex:none;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;line-height:1.2;padding:calc(env(safe-area-inset-top,0px) + 20px) 0 8px}
+#cv{flex:1;min-height:0;width:100%;display:block;touch-action:none}
+#over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--overlay);padding:16px;text-align:center}
+.hidden{display:none !important}
+#result{font-size:26px;font-weight:bold}
+#result.big{font-size:52px}  /* ゲームオーバーの「予定崩壊」だけ2倍 */
+#detail{font-size:15px;color:var(--sub)}
+#over button{min-width:180px;min-height:48px;font-size:18px;font-weight:bold;border-radius:8px;border:none;background:var(--ev);color:var(--evtext);font-family:inherit}
+#over button#share{background:var(--bg);color:var(--ev);border:2px solid var(--ev)}
+/* 右上のモード切り替え（結果の画面の上にも出すので #over より後ろに置いている） */
+#mode{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:calc(env(safe-area-inset-right,0px) + 8px);min-height:44px;padding:0 10px;font-size:12px;font-weight:bold;border-radius:8px;border:2px solid var(--ev);background:var(--bg);color:var(--ev);font-family:inherit}
+button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hud" aria-live="polite"></div>
+  <canvas id="cv" aria-label="1日の予定"></canvas>
+  <div id="over" class="hidden" role="dialog" aria-live="assertive">
+    <div id="result"></div>
+    <div id="detail"></div>
+    <button id="next" type="button">次の日へ</button>
+    <button id="endless" type="button">エンドレスモード</button>
+    <button id="retry" type="button">もう一回</button>
+    <button id="share" type="button">共有</button>
+  </div>
+  <button id="mode" type="button" class="hidden"></button>
+  <section class="howto" data-pos="bottom-left" hidden>
+    <h2>遊び方</h2>
+    <p>空き時間の少ない1日の予定表に、上下に動き続ける予定をねじ込むゲームです。隙間に収まる位置で押せば次の予定へ進み、全部入れるとその日はクリアです。既存の予定に重なると崩れて失敗し、通常はその日の最初からやり直します。月曜から金曜へ進むほど動きは速くなり、隙間の余裕は40分から15分まで減ります。金曜日を終えると、何日続くかを競うエンドレスモードも遊べます。</p>
+    <h2>操作</h2>
+    <p>予定表をタップすると、動いている予定を今の位置で右の欄へ押し込みます。PC ではクリックのほか、スペースキーや Enter キーでも押し込めます。</p>
+    <h2>コツ</h2>
+    <p>制限時間はないので、何往復か見てから押せます。緑の2本の線が予定の上端と下端なので、両方が隙間に入る瞬間を狙いましょう。左の列には次の予定が同じ縮尺で並びます。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  const START_HOUR = 8;          // 1日の開始時刻
+  const DAY_MIN = 720;           // 1日の長さ（分）＝ 8:00〜20:00
+  const STEP = 15;               // 予定の長さの刻み（分）
+  const EV_LEN_MIN = 30;         // 最初から入っている予定の長さの最小（分）
+  const EV_LEN_MAX = 120;        // 最初から入っている予定の長さの最大（分）
+  const REQ_LEN_MIN = 30;        // ねじ込む予定の長さの最小（分）
+  // ステージ（曜日）ごとの設定
+  //   count: ねじ込む予定の数 / lenMax: ねじ込む予定の長さの最大（分）
+  //   slack: 隙間がねじ込む予定より何分長いか（小さいほどシビア） / speed: 上下に動く速さ（分/秒）
+  const STAGES = [
+    { name:'月', count:3, lenMax:60, slack:40, speed:200 },
+    { name:'火', count:4, lenMax:60, slack:30, speed:240 },
+    { name:'水', count:4, lenMax:75, slack:25, speed:280 },
+    { name:'木', count:5, lenMax:60, slack:20, speed:320 },
+    { name:'金', count:5, lenMax:75, slack:15, speed:360 },
+  ];
+  // エンドレスモード（ミスするまで何日続くか）。5日目までは月〜金と同じ設定で、
+  // 6日目からは金曜日の設定のまま1日ごとに速くなる
+  const ENDLESS_SPEED_UP = 20;   // 6日目から、1日ごとに速くなる量（分/秒）
+  const ENDLESS_SPEED_MAX = 520; // 速さの上限（分/秒）
+  const INSERT_TIME = 0.25;      // 押し込んで右の欄に入るまでの時間（秒）
+  // ---------- 物理（ぶつかったときの崩壊） ----------
+  const PUSH_SPEED = 1400;       // ぶつかるとき、押し込む予定が右へ進む速さ（px/秒）
+  const BURST_X = 700;           // 当たって外れた予定が左右に弾け飛ぶ速さ（px/秒）
+  const BURST_UP = 500;          // 弾け飛ぶときの上向きの勢い（px/秒）
+  const BURST_SPIN = 10;         // 弾け飛ぶときの回転の速さ（ラジアン/秒）
+  const REQ_BACK_X = 900;        // ぶつかったとき、押し込んだ予定が左へ跳ね返される速さ（px/秒）
+  const REQ_BACK_UP = 400;       // 跳ね返されるときの上向きの勢い（px/秒）
+  const REQ_BACK_SPIN = 8;       // 跳ね返されるときの回転の速さ（ラジアン/秒）
+  const GRAVITY = 1800;          // 重力（px/秒²）
+  const DENSITY = 0.001;         // 予定の箱の密度（重さ＝面積×密度）
+  const RESTITUTION = 0.3;       // 跳ね返りの強さ
+  const BOUNCE_MIN = 100;        // この速さ（px/秒）より遅くぶつかったときは跳ね返らない（積み重なったときの震え止め）
+  const DAMPING = 0.5;           // 動きの減衰（1秒あたり）
+  const FRICTION = 0.4;          // 箱どうしの摩擦
+  const PHYS_DT = 1 / 120;       // 物理の刻み（秒）
+  const PHYS_ITER = 10;          // 衝突を解く反復回数
+  const POS_FIX = 0.6;           // めり込みを押し戻す割合
+  const POS_SLOP = 0.5;          // この量（px）まではめり込みを許す
+  const SETTLE_SPEED = 60;       // これより遅くなった箱は止まったとみなす（px/秒）
+  const WALL_SIDE_OUT = 0.5;     // 左右の見えない壁を画面の外へずらす量（1日の予定の箱の幅に対する割合）
+  const WALL_TOP_OUT = 60;       // 上の見えない壁を画面の外へずらす量（px）
+  const WALL_FLOOR_OUT = 20;     // 床を画面の外へずらす量（px）
+  const CRASH_AFTER = 0.5;       // 崩れた箱が全部止まってから結果を出すまでの時間（秒）
+  const CRASH_MAX = 4;           // ぶつかってから結果を出すまでの最長時間（秒）
+  const SHOT_DELAY = 0.1;        // ぶつかってから共有画像用の画面を撮るまでの時間（秒）
+  const SHAKE_TIME = 0.4;        // 予定が崩れるたびに画面が揺れる時間（秒）
+  const SHAKE_AMP = 12;          // 画面の揺れの大きさ（px）。時間とともに小さくなる
+  const QUEUE_W = 80;            // 左端の「残りの予定」の列の幅
+  const AXIS_W = 40;             // 時刻欄の幅
+  const LANE_RATE = 0.36;        // 動く予定の欄の幅（時刻欄を除いた幅に対する割合）
+  const LANE_GAP = 12;           // 動く予定の欄と1日の予定の欄の間
+  const PAD_TOP = 14;            // 1日の欄の上の余白（「このあと」の見出しが入る）
+  const PAD_BOTTOM = 10;         // 1日の欄の下の余白
+  const LABEL_SIZE = 13;         // 予定の件名・時間の文字の大きさ（収まらないときは自動で小さくなる）
+  const CORNER_R = 4;            // 予定の箱の角の丸み（px）
+  const TITLES = ['定例会議','打ち合わせ','1on1','面接','レビュー','歯医者','移動','ランチ','商談','研修','来客','電話会議','資料作成','面談','説明会','振り返り'];
+
+  const $ = id => document.getElementById(id);
+  const cv = $('cv'), ctx = cv.getContext('2d');
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const FONT = getComputedStyle(document.body).fontFamily;
+  const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const randStep = (a, b) => STEP * rand(a / STEP, b / STEP);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--){ const j = rand(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const lerp = (a, b, p) => a + (b - a) * p;
+
+  // ---------- 状態 ----------
+  let stage = 0;         // 0=月 〜 4=金（エンドレスモードでは 0=1日目 で、その先も続く）
+  let endless = false;   // エンドレスモードで遊んでいるか
+  let newBest = false;   // エンドレスモードの今回の挑戦で最長記録を更新したか
+  let evs = [];          // 1日の予定 {s:開始(分), e:終了(分), t:件名, len:長さ(分)}
+  let queue = [];        // まだ出ていないねじ込む予定
+  let req = null;        // 動いている予定 {len, t}
+  let left = 0;          // この日の残りのねじ込む予定の数
+  let pos = 0, dir = 1;  // 動いている予定の開始位置（分）と向き
+  let speed = 0;
+  let score = 0;         // これまでにねじ込んだ数（全ステージ合計）
+  let stageStartScore = 0;
+  let mode = 'playing';  // playing / crash（ぶつかって崩れている間） / clear / over
+  let hitEv = null;
+  let anim = null;       // 押し込み中 {t:0〜1, s, e}
+  let bodies = [];       // ぶつかった後の物理の箱。空でなければ1日の予定の代わりにこれを描く
+  let crashTime = 0, goneTime = 0, physAcc = 0;
+  let crashShot = null;   // ぶつかって少し経ったときの画面（ミスしたときの共有画像に使う）
+  let shotT = -1;         // 共有画像用の画面を撮るまでの残り時間（秒）。負のときは待っていない
+  let shotPending = false;   // 次の描画を共有画像用に撮る
+  let shakeT = 0;        // 画面の揺れの残り時間（秒）
+  let W = 0, H = 0, top = 0, bottom = 0, k = 1, axisR = 0, laneX = 0, laneW = 0, colX = 0, colW = 0;
+
+  // エンドレスモードの解放と最長記録：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  const UNLOCK_KEY = 'doubleBooking.endlessUnlocked', BEST_KEY = 'doubleBooking.endlessBest';
+  let unlocked = false;  // 金曜日までクリアしたことがあるか
+  let best = 0;          // エンドレスモードで到達した最長の日数
+  try {
+    unlocked = localStorage.getItem(UNLOCK_KEY) === '1';
+    best = parseInt(localStorage.getItem(BEST_KEY)) || 0;
+  } catch(e) {}
+  function save(key, v){ try { localStorage.setItem(key, String(v)); } catch(e) {} }
+
+  function fmtDur(m){
+    const h = Math.floor(m / 60), r = m % 60;
+    if (!h) return r + '分';
+    return h + '時間' + (r ? r + '分' : '');
+  }
+
+  // ---------- ステージの生成 ----------
+  // ねじ込む予定1つにつき、それより slack 分だけ長い隙間を1つ用意する。
+  // 残りの時間を最初から入っている予定で埋める。
+  function buildStage(cfg){
+    const lens = [...Array(cfg.count)].map(() => randStep(REQ_LEN_MIN, cfg.lenMax));
+    const gapSizes = shuffle(lens.map(l => l + cfg.slack));
+    const slots = cfg.count + 1;   // 隙間と隙間の間（と上下の端）に予定を入れる
+    const fill = Array(slots).fill(EV_LEN_MIN);
+    let extra = DAY_MIN - gapSizes.reduce((a, b) => a + b, 0) - EV_LEN_MIN * slots;
+    while (extra >= STEP){ fill[rand(0, slots - 1)] += STEP; extra -= STEP; }
+    fill[rand(0, slots - 1)] += Math.max(0, extra);
+
+    evs = [];
+    let cur = 0;
+    for (let i = 0; i < slots; i++){
+      let len = fill[i];
+      while (len > EV_LEN_MAX){
+        const piece = Math.min(randStep(EV_LEN_MIN, EV_LEN_MAX), len - EV_LEN_MIN);
+        evs.push({ s: cur, e: cur + piece, t: pick(TITLES), len: piece });
+        cur += piece; len -= piece;
+      }
+      evs.push({ s: cur, e: cur + len, t: pick(TITLES), len });
+      cur += len;
+      if (i < cfg.count) cur += gapSizes[i];
+    }
+    queue = lens.map(len => ({ len, t: pick(TITLES) }));
+    left = queue.length;
+  }
+  function nextReq(){
+    if (!queue.length){ req = null; return false; }
+    req = queue.shift();
+    pos = 0; dir = 1;
+    return true;
+  }
+
+  // ---------- ねじ込み ----------
+  // ほかの予定と重なる位置なら物理で崩れる。重ならなければ滑り込む
+  function insert(){
+    if (anim || !req) return;
+    const s = pos, e = pos + req.len;
+    const hit = evs.filter(ev => ev.e > s && ev.s < e).sort((a, b) => a.s - b.s)[0];
+    if (hit){ hitEv = hit; startCrash(); return; }
+    anim = { t: 0, s, e };
+  }
+  function finishInsert(){
+    const { s, e } = anim;
+    anim = null;
+    evs.push({ s, e, t: req.t, len: req.len });
+    score++;
+    left--;
+    updateHud();
+    if (!nextReq()) stageClear();
+  }
+
+  // ---------- 物理 ----------
+  // 1日の予定は、何かが当たるまでその場に固定された箱。当たった瞬間に固定が外れて重力で落ち、
+  // 当たった箱にさらに当たった箱も外れていく。押し込む予定は右へ飛んでいく箱。
+  function makeBody(x, y, w, h, kind, ev, pinned){
+    const b = { x, y, w, h, a: 0, vx: 0, vy: 0, av: 0, kind, ev, pinned, noGravity: false };
+    setMass(b);
+    return b;
+  }
+  function setMass(b){
+    if (b.pinned){ b.im = 0; b.iI = 0; return; }
+    const m = b.w * b.h * DENSITY;
+    b.im = 1 / m;
+    b.iI = 12 / (m * (b.w * b.w + b.h * b.h));
+  }
+  function release(b){
+    if (!b.pinned || b.wall) return;
+    b.pinned = false;
+    b.kind = 'hit';
+    setMass(b);
+  }
+  function bounceBack(p){
+    p.vx = -REQ_BACK_X * (0.8 + 0.4 * Math.random());
+    p.vy = -REQ_BACK_UP * (0.6 + 0.8 * Math.random());
+    p.av = -REQ_BACK_SPIN * (0.5 + Math.random());
+  }
+  // 外れた瞬間、当ててきた箱から離れる向きに弾け飛ぶ（真上・真下から当たったときは左右どちらか）
+  function burst(b, by){
+    const dx = b.x - by.x;
+    const side = Math.abs(dx) > b.w * 0.25 ? Math.sign(dx) : (Math.random() < 0.5 ? -1 : 1);
+    b.vx += side * BURST_X * (0.6 + 0.8 * Math.random());
+    b.vy -= BURST_UP * (0.5 + 0.5 * Math.random());
+    b.av += side * BURST_SPIN * (0.5 + Math.random());
+  }
+  function startCrash(){
+    bodies = evs.map(ev => makeBody(colX + colW / 2, top + (ev.s + ev.e) / 2 * k,
+      colW - 2, (ev.e - ev.s) * k, 'ev', ev, true));
+    const p = makeBody(laneX + laneW / 2, top + (pos + req.len / 2) * k,
+      laneW - 4, req.len * k, 'req', req, false);
+    p.vx = PUSH_SPEED;
+    p.noGravity = true;   // 手で押し込んでいる間は落ちない（何かに当たったら落ち始める）
+    bodies.push(p);
+    // 画面の左右・上下の少し外側に見えない壁を置き、飛んだ箱が画面から消えてしまわないようにする
+    // （左右は箱の幅の半分くらい、上下も少しだけ画面の外にはみ出せる）
+    const T = 200, sx = colW * WALL_SIDE_OUT;
+    for (const [x, y, w, h] of [
+      [-sx - T / 2, H / 2, T, H + 2 * T], [W + sx + T / 2, H / 2, T, H + 2 * T],
+      [W / 2, -WALL_TOP_OUT - T / 2, W + 2 * T + 2 * sx, T], [W / 2, H + WALL_FLOOR_OUT + T / 2, W + 2 * T + 2 * sx, T]]){
+      const wall = makeBody(x, y, w, h, 'wall', null, true);
+      wall.wall = true;
+      bodies.push(wall);
+    }
+    mode = 'crash';
+    crashTime = 0; goneTime = 0; physAcc = 0;
+    crashShot = null; shotT = -1; shotPending = false;
+  }
+
+  function boxAxes(b){
+    const c = Math.cos(b.a), s = Math.sin(b.a);
+    return [{ x: c, y: s, h: b.w / 2 }, { x: -s, y: c, h: b.h / 2 }];
+  }
+  function boxCorners(b){
+    const c = Math.cos(b.a), s = Math.sin(b.a), hw = b.w / 2, hh = b.h / 2;
+    return [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]]
+      .map(([px, py]) => ({ x: b.x + px * c - py * s, y: b.y + px * s + py * c }));
+  }
+  // 箱 b を軸 ax に投影したときの半分の長さ
+  function halfOn(b, ax){
+    const [u, v] = boxAxes(b);
+    return Math.abs(u.x * ax.x + u.y * ax.y) * b.w / 2 + Math.abs(v.x * ax.x + v.y * ax.y) * b.h / 2;
+  }
+  // 分離軸で重なりを調べ、法線（AからB向き）・めり込み量・接触点を返す
+  function collide(A, B){
+    const dx = B.x - A.x, dy = B.y - A.y;
+    let best = null;
+    for (const R of [A, B]){
+      for (const ax of boxAxes(R)){
+        const d = dx * ax.x + dy * ax.y;
+        const over = halfOn(A, ax) + halfOn(B, ax) - Math.abs(d);
+        if (over <= 0) return null;
+        if (!best || over < best.pen) best = { pen: over, ax, sign: d < 0 ? -1 : 1, R };
+      }
+    }
+    const n = { x: best.ax.x * best.sign, y: best.ax.y * best.sign };
+    // 軸を持つ箱の面を基準に、もう一方の箱の角のうちめり込んでいるものを接触点にする
+    const R = best.R, I = R === A ? B : A;
+    const out = R === A ? n : { x: -n.x, y: -n.y };
+    const plane = R.x * out.x + R.y * out.y + best.ax.h;
+    let pts = boxCorners(I)
+      .map(p => ({ x: p.x, y: p.y, d: plane - (p.x * out.x + p.y * out.y) }))
+      .filter(p => p.d > 0).sort((a, b) => b.d - a.d).slice(0, 2);
+    if (!pts.length) pts = [{ x: (A.x + B.x) / 2, y: (A.y + B.y) / 2, d: best.pen }];
+    return { n, pen: best.pen, pts };
+  }
+  function applyImpulse(A, B, px, py, p){
+    const rax = p.x - A.x, ray = p.y - A.y, rbx = p.x - B.x, rby = p.y - B.y;
+    A.vx -= px * A.im; A.vy -= py * A.im; A.av -= (rax * py - ray * px) * A.iI;
+    B.vx += px * B.im; B.vy += py * B.im; B.av += (rbx * py - rby * px) * B.iI;
+  }
+  function relVel(A, B, p){
+    const rax = p.x - A.x, ray = p.y - A.y, rbx = p.x - B.x, rby = p.y - B.y;
+    return { x: (B.vx - B.av * rby) - (A.vx - A.av * ray), y: (B.vy + B.av * rbx) - (A.vy + A.av * rax) };
+  }
+  function solveContact(A, B, n, p){
+    const rax = p.x - A.x, ray = p.y - A.y, rbx = p.x - B.x, rby = p.y - B.y;
+    let rv = relVel(A, B, p);
+    const vn = rv.x * n.x + rv.y * n.y;
+    if (vn > 0) return;
+    const raN = rax * n.y - ray * n.x, rbN = rbx * n.y - rby * n.x;
+    const kN = A.im + B.im + raN * raN * A.iI + rbN * rbN * B.iI;
+    if (kN <= 0) return;
+    const j = -(1 + (vn < -BOUNCE_MIN ? RESTITUTION : 0)) * vn / kN;
+    applyImpulse(A, B, n.x * j, n.y * j, p);
+    // 摩擦
+    rv = relVel(A, B, p);
+    const tx = -n.y, ty = n.x;
+    const vt = rv.x * tx + rv.y * ty;
+    const raT = rax * ty - ray * tx, rbT = rbx * ty - rby * tx;
+    const kT = A.im + B.im + raT * raT * A.iI + rbT * rbT * B.iI;
+    if (kT <= 0) return;
+    const jt = Math.max(-FRICTION * j, Math.min(FRICTION * j, -vt / kT));
+    applyImpulse(A, B, tx * jt, ty * jt, p);
+  }
+  function physStep(dt){
+    for (const b of bodies) if (!b.pinned && !b.noGravity) b.vy += GRAVITY * dt;
+    // 当たり判定。固定された箱どうしは調べない
+    const pairs = [];
+    for (let i = 0; i < bodies.length; i++){
+      for (let j = i + 1; j < bodies.length; j++){
+        const A = bodies[i], B = bodies[j];
+        if (A.pinned && B.pinned) continue;
+        const rA = Math.hypot(A.w, A.h) / 2, rB = Math.hypot(B.w, B.h) / 2;
+        if (Math.hypot(A.x - B.x, A.y - B.y) > rA + rB) continue;
+        const c = collide(A, B);
+        if (!c) continue;
+        // 当たられた固定の箱は外れて弾け飛ぶ
+        // 既存の予定が崩れるたびに画面を揺らす
+        if (A.pinned && !A.wall){ release(A); burst(A, B); shakeT = SHAKE_TIME; }
+        if (B.pinned && !B.wall){ release(B); burst(B, A); shakeT = SHAKE_TIME; }
+        // 押し込んだ予定は、最初にぶつかった瞬間に左へ跳ね返される。共有画像はここから少し経った画面を使う
+        for (const P of [A, B]) if (P.kind === 'req' && P.noGravity){ bounceBack(P); shotT = SHOT_DELAY; }
+        A.noGravity = false; B.noGravity = false;
+        pairs.push({ A, B, ...c });
+      }
+    }
+    for (let it = 0; it < PHYS_ITER; it++){
+      for (const c of pairs) for (const p of c.pts) solveContact(c.A, c.B, c.n, p);
+    }
+    for (const b of bodies){
+      if (b.pinned) continue;
+      const damp = 1 - DAMPING * dt;
+      b.vx *= damp; b.vy *= damp; b.av *= damp;
+      b.x += b.vx * dt; b.y += b.vy * dt; b.a += b.av * dt;
+    }
+    // めり込みを押し戻す
+    for (const { A, B, n, pen } of pairs){
+      const im = A.im + B.im;
+      if (im <= 0) continue;
+      const corr = Math.max(pen - POS_SLOP, 0) / im * POS_FIX;
+      A.x -= n.x * corr * A.im; A.y -= n.y * corr * A.im;
+      B.x += n.x * corr * B.im; B.y += n.y * corr * B.im;
+    }
+    // 画面の外へ出た箱は消す
+    bodies = bodies.filter(b => {
+      if (b.pinned) return true;
+      const r = Math.hypot(b.w, b.h) / 2;
+      return b.y - r < H + 20 && b.x - r < W + 20 && b.x + r > -20;
+    });
+  }
+
+  // ---------- 進行 ----------
+  // その日の設定。エンドレスモードで金曜日より先は、金曜日の設定のまま速くしていく
+  function stageCfg(i){
+    if (i < STAGES.length) return STAGES[i];
+    const last = STAGES[STAGES.length - 1];
+    return { ...last, speed: Math.min(ENDLESS_SPEED_MAX, last.speed + ENDLESS_SPEED_UP * (i - STAGES.length + 1)) };
+  }
+  const dayName = () => endless ? `${stage + 1}日目` : `${STAGES[stage].name}曜日`;
+  // 月曜日（1日目）から始める
+  function startRun(isEndless){
+    endless = isEndless;
+    newBest = false;
+    stageStartScore = 0;
+    startStage(0);
+    updateModeBtn();
+  }
+  function updateModeBtn(){
+    $('mode').textContent = endless ? '通常モード' : 'エンドレス';
+    $('mode').classList.toggle('hidden', !unlocked);
+  }
+  function startStage(i){
+    stage = i;
+    score = stageStartScore;
+    const cfg = stageCfg(i);
+    // 最長記録は、その日に着いた時点で残す（途中で閉じても記録が消えないように）
+    if (endless && i + 1 > best){ best = i + 1; newBest = true; save(BEST_KEY, best); }
+    speed = cfg.speed;
+    hitEv = null; anim = null; bodies = []; crashShot = null; shotT = -1; shotPending = false; shakeT = 0;
+    buildStage(cfg);
+    nextReq();
+    mode = 'playing';
+    $('over').classList.add('hidden');
+    updateHud();
+  }
+  function showOverlay(result, detail, btns){
+    $('result').textContent = result;
+    $('result').classList.toggle('big', !!btns.big);
+    $('detail').textContent = detail;
+    $('next').classList.toggle('hidden', !btns.next);
+    $('endless').classList.toggle('hidden', !btns.endless);
+    $('retry').classList.toggle('hidden', !btns.retry);
+    $('share').classList.toggle('hidden', !btns.share);
+    $('over').classList.remove('hidden');
+  }
+  function stageClear(){
+    mode = 'clear';
+    if (endless || stage < STAGES.length - 1){
+      showOverlay(`${dayName()}クリア`, '', { next: true });
+    } else {
+      // 金曜日までクリアしたらエンドレスモードが遊べるようになる
+      if (!unlocked){ unlocked = true; save(UNLOCK_KEY, 1); updateModeBtn(); }
+      showOverlay('月〜金 全部ねじ込んだ！', `${score}件ねじ込んだ`, { endless: true, retry: true, share: true });
+    }
+  }
+  function gameOver(){
+    mode = 'over';
+    const detail = endless ? `エンドレス ${dayName()}　${newBest ? '新記録！' : `最長 ${best}日目`}` : dayName();
+    showOverlay('予定崩壊', detail, { retry: true, share: true, big: true });
+  }
+  function updateHud(){ $('hud').textContent = `${dayName()}　残り${left}件`; }
+
+  function update(dt){
+    shakeT = Math.max(0, shakeT - dt);
+    if (mode === 'crash'){
+      if (shotT >= 0){ shotT -= dt; if (shotT < 0) shotPending = true; }
+      crashTime += dt;
+      physAcc += dt;
+      while (physAcc >= PHYS_DT){ physStep(PHYS_DT); physAcc -= PHYS_DT; }
+      // 崩れた箱が全部止まったら結果へ
+      const moving = bodies.some(b => !b.pinned && (Math.hypot(b.vx, b.vy) > SETTLE_SPEED || Math.abs(b.av) > 0.5));
+      goneTime = moving ? 0 : goneTime + dt;
+      if (goneTime >= CRASH_AFTER || crashTime >= CRASH_MAX) gameOver();
+      return;
+    }
+    if (mode !== 'playing') return;
+    if (anim){
+      anim.t = Math.min(1, anim.t + dt / INSERT_TIME);
+      if (anim.t >= 1) finishInsert();
+      return;
+    }
+    const max = DAY_MIN - req.len;
+    pos += dir * speed * dt;
+    if (pos > max){ pos = max - (pos - max); dir = -1; }
+    if (pos < 0){ pos = -pos; dir = 1; }
+    pos = Math.max(0, Math.min(max, pos));
+  }
+
+  // ---------- 描画 ----------
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    top = PAD_TOP; bottom = H - PAD_BOTTOM;
+    k = (bottom - top) / DAY_MIN;
+    axisR = QUEUE_W + AXIS_W;
+    laneX = axisR; laneW = (W - axisR) * LANE_RATE;
+    colX = laneX + laneW + LANE_GAP; colW = W - colX - 8;
+  }
+
+  function drawCard(x, y, w, h, color, lines){
+    boxPath(x, y, w, h);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.save();
+    ctx.clip();
+    drawLabel(x, y, w, h, lines[0], lines[1]);
+    ctx.restore();
+  }
+  // 予定の箱の形（角を少し丸める）
+  function boxPath(x, y, w, h){
+    const r = Math.max(0, Math.min(CORNER_R, w / 2, h / 2));
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h);
+  }
+  // 箱に収まるように件名と時間を書く。見切れないように文字を小さくし、低い箱では1行にまとめる
+  function drawLabel(x, y, w, h, title, dur){
+    const base = LABEL_SIZE, pad = 4;
+    ctx.font = `${base}px ${FONT}`;
+    const wt = ctx.measureText(title).width, wd = ctx.measureText(dur).width, wsp = ctx.measureText(' ').width;
+    const two = Math.min(base, (h - pad) / 2.3, base * (w - pad * 2) / Math.max(wt, wd));   // 2行にしたときの文字の大きさ
+    const one = Math.min(base, h - pad, base * (w - pad * 2) / (wt + wsp + wd));           // 1行にしたときの文字の大きさ
+    ctx.fillStyle = css('--evtext');
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    if (two >= one){
+      const s = Math.max(1, two);
+      ctx.font = `${s}px ${FONT}`;
+      ctx.fillText(title, x + pad, y + pad / 2);
+      ctx.fillText(dur, x + pad, y + pad / 2 + s * 1.15);
+    } else {
+      const s = Math.max(1, one);
+      ctx.font = `${s}px ${FONT}`;
+      ctx.fillText(`${title} ${dur}`, x + pad, y + Math.max(pad / 2, (h - s) / 2));
+    }
+  }
+  // 時刻の位置に合わせて予定を描く
+  function drawBlock(x, w, s, e, color, lines){
+    drawCard(x, top + s * k + 0.5, w, Math.max(1, (e - s) * k - 1), color, lines);
+  }
+
+  // noShake：画面の揺れを入れずに描く（共有画像用の画面をブレさせないため）
+  function draw(noShake){
+    if (!W) return;
+    const cLine = css('--line'), cSub = css('--sub'), cReq = css('--req'), cEv = css('--ev');
+    ctx.fillStyle = css('--bg'); ctx.fillRect(0, 0, W, H);
+    // ぶつかったときの画面の揺れ
+    ctx.save();
+    if (shakeT > 0 && !noShake){
+      const a = SHAKE_AMP * shakeT / SHAKE_TIME;
+      ctx.translate((Math.random() * 2 - 1) * a, (Math.random() * 2 - 1) * a);
+    }
+
+    // 時刻の線とラベル
+    ctx.strokeStyle = cLine; ctx.lineWidth = 1;
+    ctx.font = `11px ${FONT}`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let h = 0; h <= DAY_MIN / 60; h++){
+      const y = Math.round(top + h * 60 * k) + 0.5;
+      ctx.beginPath(); ctx.moveTo(axisR, y); ctx.lineTo(W, y); ctx.stroke();
+      ctx.fillStyle = cSub;
+      ctx.fillText(`${START_HOUR + h}:00`, axisR - 5, y);
+    }
+
+    // 左端：このあとねじ込む残りの予定（長さは1日の欄と同じ縮尺）
+    ctx.fillStyle = cSub; ctx.font = `11px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText('このあと', 4, 0);
+    let qy = top;
+    for (const q of queue){
+      const h = q.len * k - 1;
+      drawCard(4, qy, QUEUE_W - 8, h, cReq, [q.t, fmtDur(q.len)]);
+      qy += h + 4;
+    }
+    // 1日の予定の欄の枠
+    ctx.strokeRect(Math.round(colX) + 0.5, Math.round(top) + 0.5, Math.round(colW), Math.round(bottom - top));
+
+    // 1日の予定（ぶつかった後は物理の箱を描く）
+    if (!bodies.length){
+      for (const ev of evs) drawBlock(colX + 1, colW - 2, ev.s, ev.e, cEv, [ev.t, fmtDur(ev.len)]);
+    }
+
+    if (mode === 'playing' && anim){
+      // 押し込み中：左の欄から右の欄へ滑り込む
+      const p = ease(anim.t);
+      drawBlock(lerp(laneX + 2, colX + 1, p), lerp(laneW - 4, colW - 2, p), anim.s, anim.e, cReq, [req.t, fmtDur(req.len)]);
+    } else if (mode === 'playing' && req){
+      // 動いている予定と、位置を合わせるための線
+      const y1 = Math.round(top + pos * k) + 0.5, y2 = Math.round(top + (pos + req.len) * k) + 0.5;
+      ctx.strokeStyle = cReq; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(laneX, y1); ctx.lineTo(colX + colW, y1);
+      ctx.moveTo(laneX, y2); ctx.lineTo(colX + colW, y2);
+      ctx.stroke();
+      drawBlock(laneX + 2, laneW - 4, pos, pos + req.len, cReq, [req.t, fmtDur(req.len)]);
+    }
+
+
+    // ぶつかった後の箱（固定のまま＝青、外れて崩れた＝赤、押し込んだ予定＝緑）
+    const cNg = css('--ng');
+    for (const b of bodies){
+      if (b.wall) continue;
+      ctx.save();
+      ctx.translate(b.x, b.y); ctx.rotate(b.a);
+      const w = b.w, h = b.h - 1;
+      ctx.fillStyle = b.kind === 'req' ? cReq : b.kind === 'hit' ? cNg : cEv;
+      boxPath(-w / 2, -h / 2, w, h);
+      ctx.fill();
+      ctx.clip();
+      drawLabel(-w / 2, -h / 2, w, h, b.ev.t, fmtDur(b.ev.len));
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // ---------- ゲームループ ----------
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    update(dt);
+    draw(shotPending);
+    // ぶつかって少し経った画面を取っておく
+    if (shotPending){
+      shotPending = false;
+      crashShot = document.createElement('canvas');
+      crashShot.width = cv.width; crashShot.height = cv.height;
+      crashShot.getContext('2d').drawImage(cv, 0, 0);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- 入力 ----------
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (mode === 'playing') insert();
+  });
+  function onNext(){ stageStartScore = score; startStage(stage + 1); }
+  // 失敗したらその日からやり直し。全部クリアしたら月曜日から。エンドレスモードは必ず1日目から
+  function onRetry(){
+    if (endless || mode === 'clear') startRun(endless);
+    else startStage(stage);
+  }
+  addEventListener('keydown', e => {
+    if (e.repeat) return;
+    if (e.key === ' ' || e.key === 'Enter'){
+      e.preventDefault();
+      if (mode === 'playing') insert();
+      else if (mode === 'clear' && (endless || stage < STAGES.length - 1)) onNext();
+      else if (mode === 'clear' || mode === 'over') onRetry();
+    }
+  });
+  $('next').addEventListener('click', onNext);
+  $('retry').addEventListener('click', onRetry);
+  $('endless').addEventListener('click', () => startRun(true));
+  // 右上のボタン：通常モードとエンドレスモードを行き来する（どちらも最初の日から）
+  $('mode').addEventListener('click', () => {
+    $('mode').blur();   // フォーカスが残ると、スペース・Enterキーでのねじ込みがこのボタンを押してしまう
+    startRun(!endless);
+  });
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  const isGameArea = t => t instanceof Element && !!t.closest('#cv');
+  document.addEventListener('touchstart', e => { if (isGameArea(e.target)) e.preventDefault(); }, { passive:false });
+  document.addEventListener('touchmove', e => { if (isGameArea(e.target)) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => { if (isGameArea(e.target)) e.preventDefault(); });
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+
+  // ---------- 共有 ----------
+  function headline(){
+    if (endless) return `エンドレス${dayName()}で予定崩壊`;
+    return mode === 'clear' ? '月〜金の予定を全部ねじ込んだ！' : '予定崩壊';
+  }
+  function shareText(){
+    const url = location.href.split(/[?#]/)[0];
+    if (endless) return `エンドレスモード${dayName()}で予定崩壊\n${url}\n#ダブルブッキング`;
+    const detail = mode === 'clear' ? `${score}件ねじ込んだ` : dayName();
+    return `${headline()}\n${detail}\n${url}\n#ダブルブッキング`;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // ミスしたときは、ぶつかって少し経ったときの画面を使う
+  function resultImageFile(){
+    const src = mode === 'over' && crashShot ? crashShot : cv;
+    const dpr = src.width / W;
+    const band = Math.round(48 * dpr);
+    const c = document.createElement('canvas');
+    c.width = src.width; c.height = src.height + band;
+    const g = c.getContext('2d');
+    g.fillStyle = css('--bg'); g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(src, 0, band);
+    g.fillStyle = css('--fg');
+    g.font = `bold ${Math.round(20 * dpr)}px ${FONT}`;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(headline(), c.width / 2, band / 2);
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);   // toBlob の非同期コールバックは避ける
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    const file = resultImageFile();
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ text, files: [file] }).catch(() => {});
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    navigator.clipboard?.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+
+  // ---------- 開始 ----------
+  addEventListener('resize', resize);
+  resize();
+  startRun(false);
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

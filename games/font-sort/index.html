@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/font-sort/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<title>フォント仕分け</title>
+<meta name="description" content="降ってくる文字をフォントごとに仕分ける">
+<style>
+  :root{
+    --bg:#f8f2dc; --fg:#222; --sub:#666; --line:#888; --panel:#fdf9ea; /* 背景はうっすら黄色の紙 */
+    --ok:#c8e6c9; --ng:#ffcdd2; --danger:#d33; --right:#2e7d32;
+    --howto-bg:#fdf9ea; --howto-fg:#222;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+    display:flex;align-items:center;justify-content:center;
+    height:100vh;height:100dvh;
+  }
+  /* 9:16 の枠に収める */
+  #game{
+    position:relative;
+    width:min(100vw, calc(100vh * 9 / 16));
+    width:min(100vw, calc(100dvh * 9 / 16));
+    aspect-ratio:9/16;
+  }
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  /* フォントの読み込みに失敗したときの表示（画面下）。赤字 */
+  #fontMsg{position:absolute;left:8px;right:8px;bottom:2px;margin:0;font-size:11px;line-height:1.4;color:var(--danger);pointer-events:none}
+  #over{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
+  .panel{background:var(--panel);border-radius:12px;padding:24px;width:min(300px,86%);text-align:center;font-size:20px}
+  #r-score{font-size:64px;font-weight:bold}
+  #r-detail{font-size:18px;color:var(--sub)}
+  .btn{display:block;width:100%;min-height:48px;margin-top:12px;font:inherit;border:2px solid var(--fg);border-radius:8px;background:var(--panel);color:var(--fg)}
+  :focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="cv"></canvas>
+  <p id="fontMsg" class="hidden" aria-live="polite"></p>
+  <div id="over" class="hidden">
+    <div class="panel">
+      <div>仕分けた数</div>
+      <div id="r-score" aria-live="polite">0</div>
+      <div id="r-detail"></div>
+      <button type="button" id="retry" class="btn">もう一回</button>
+      <button type="button" id="share" class="btn">共有</button>
+    </div>
+  </div>
+  <section class="howto" data-pos="top-right" hidden>
+    <h2>遊び方</h2>
+    <p>上の箱に降り積もる文字を、フォントごとに下のエリアへ仕分けるゲームです。エリアにはお手本の「永」とフォント名が書かれています。正しく仕分けた数がスコアになり、積もった文字が点線より上に2秒とどまるとゲームオーバーです。10個を超えるとエリアが2つから4つに増えます。</p>
+    <h2>操作</h2>
+    <p>箱の中の文字を指でつかみ、エリアまでドラッグして離します。同時に持てるのは1文字です。PC ではマウスのドラッグで操作します。</p>
+    <h2>コツ</h2>
+    <p>違うエリアで離すと文字が3個追加で降り、正解のエリアの枠が点滅します。エリアの外で離せば罰はないので、迷ったら無理に入れないほうが安全です。正しく仕分けるたびに降る間隔は短くなり、最短で0.7秒になりますが、エリアが増えたときは最初の2.2秒に戻ります。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+
+  // ---------- 定数 ----------
+  const W = 360, H = 640;        // 論理解像度（9:16）
+  const GLYPH_PX = 108;          // 文字の大きさ
+  // 上の箱（文字が降り積もる）
+  const BOX_L = 16, BOX_R = 344; // 箱の左右の内壁
+  const BOX_T = 70;              // 箱の壁の上端（上は開いている）
+  const BOX_B = 420;             // 箱の底
+  const LINE_Y = 110;            // ゲームオーバーライン（積もった文字の一番上がこれより上だとアウト判定）
+  const OVER_TIME = 2.0;         // ラインより上にこの秒数とどまるとゲームオーバー
+  const SPAWN_Y = 10;            // 文字が現れる高さ（文字の重心の位置。画面の上端あたりから降ってくる）
+  const SPAWN_START = 2.2;       // 文字が降ってくる最初の間隔（秒）
+  const SPAWN_RATE = 0.97;       // 1個正しく仕分けるごとに間隔に掛ける倍率（小さいほど早く忙しくなる）
+  const SPAWN_MIN = 0.7;         // 降ってくる間隔の下限（秒）
+  const PENALTY = 3;             // 間違えたときに追加で降ってくる文字の数
+  const FRESH_TIME = 1.0;        // 降ってきた直後・箱に戻した直後の文字はこの秒数だけライン判定から外す
+  // 下の仕分けエリア（フォントごとに1つ。2つなら左右、4つなら2×2に並べる）
+  const ZONE_T = 450, ZONE_B = 620;
+  const START_FONTS = 2;         // 最初に使うフォントの数
+  const MORE_FONTS = 4;          // 仕分けた数が ADD_AT を超えたら、使うフォントをこの数に増やす
+  const ADD_AT = 10;
+  // 間違えたときの演出
+  const MISS_TIME = 0.8;         // 正しいエリアの枠を点滅させる時間（秒）
+  const SHAKE_PX = 8;            // 画面の揺れの大きさ
+  const SHAKE_TIME = 0.3;        // 画面が揺れる時間（秒）
+  const SAMPLE_CH = '永';        // 仕分けエリアに出すお手本の文字
+  const SAMPLE_MAX = 72;         // お手本の文字の最大の大きさ（エリアが低いときはエリアに合わせて小さくする）
+  const NAME_MAX = 14;           // エリアのフォント名の最大の大きさ
+  const NAME_RATE = 0.14;        // エリアが低いときのフォント名の大きさ（エリアの高さに対する割合）
+  const SAMPLE_GAP = 4;          // お手本の文字とフォント名の間
+  const HUD_Y = 30;              // スコアの高さ
+  const GRAB_PAD = 24;           // 文字の線（当たり判定）からこの距離までは掴める（指で掴みやすくする）
+  const HELD_ALPHA = 0.35;       // ドラッグ中、箱に残っている元の文字の不透明度
+  const FLASH_TIME = 0.3;        // 仕分けたときエリアの色が変わっている時間（秒）
+  const RETRY_LOCK = 600;        // 終了直後の連打で「もう一回」を押してしまわないための待ち（ミリ秒）
+
+  // 物理
+  const G = 1600;                // 重力
+  const REST = 0.15;             // 反発係数（小さいほど跳ねない）
+  const BOUNCE_TH = 60;          // これより遅い衝突は跳ねさせない（静止した山が震えるのを防ぐ）
+  const MU = 0.5;                // 摩擦係数（文字同士・壁・床共通。大きいほど滑りにくい）
+  const DAMP = 0.9995;           // 空気抵抗的な全体減衰
+  const ANG_DAMP = 0.995;        // 回転の減衰（小さいほど早く止まる）
+  const SLOP = 0.5;              // めり込みの許容量
+  const BETA = 0.2;              // めり込みを押し戻す強さ（0〜1）
+  const MAX_BIAS = 200;          // 押し戻す速さの上限
+  // ※めり込みの押し戻しは位置だけに効かせ、速度には残さない（挟まれた文字が弾け飛ぶのを防ぐ）
+  const ITER = 10;               // 衝突解決の反復回数（多いほど積み重ねが安定）
+  const STEP = 1 / 120;          // 物理の固定タイムステップ
+
+  // 当たり判定の生成：文字を画像として描き、その形を小さな円の集まりで埋める
+  const HIT_ALPHA = 100;         // この不透明度以上のピクセルを「文字の一部」とみなす
+  const HIT_MIN_R = 3;           // 判定円の最小半径（細い線もこの太さで判定する）
+  const HIT_MAX_R = 12;          // 判定円の最大半径
+  const HIT_SPACING = 1.5;       // 判定円の間隔（半径に対する倍率。2未満なら円どうしが重なり隙間ができない）
+
+  const CHARS = '永東京山川海空花鳥風月雪星森林水火木金土日本語文字書道線点色音楽歌夢愛心手足目耳口'
+    + 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん'
+    + 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワン';
+  // 使うフォントの候補。同じ配列にまとめたものは1文字では字形が完全に同じ（違いは字幅だけ）なので、1ゲームでどちらか片方しか使わない
+  const FONT_POOL = [
+    ['Noto Sans JP'],
+    ['Kosugi Maru'], ['Zen Maru Gothic'],
+    ['Noto Serif JP'], ['BIZ UDMincho', 'BIZ UDPMincho'],
+  ];
+  // Google Fonts にないフォントを使うときは、ここに フォント名: ファイルパス（HTMLからの相対） を書く。今は全部 Google Fonts
+  const LOCAL_FONTS = {};
+  // 仕分けエリアに出すフォント名（書いていないものはフォント名のまま）。名前はそのフォント自身で書く
+  const FONT_LABEL = {
+    'BIZ UDMincho': 'BIZ UD明朝', 'BIZ UDPMincho': 'BIZ UDP明朝',
+  };
+  const ALL_FONTS = FONT_POOL.flat();
+  const labelOf = f => FONT_LABEL[f] || f;
+  // Google Fonts から読み込む文字（出題する文字＋フォント名の文字）
+  const GF_TEXT = [...new Set(CHARS + ALL_FONTS.map(labelOf).join(''))].join('');
+  const FONT_TIMEOUT = 20000;    // フォント読み込みを待つ最大時間（ミリ秒）
+
+  // ---------- 準備 ----------
+  const cv = $('cv');
+  const ctx = cv.getContext('2d');
+  const css = getComputedStyle(document.documentElement);
+  // 紙のざらつき：小さな濃淡の点をランダムに置いた模様を作り、背景に敷き詰める
+  const GRAIN_SIZE = 128;        // 模様1枚の大きさ（これを繰り返して敷く）
+  const GRAIN_DOTS = 2600;       // 模様1枚に置く点の数
+  const GRAIN_ALPHA = 0.05;      // 点の濃さ
+  const paperGrain = (() => {
+    const g = document.createElement('canvas');
+    g.width = g.height = GRAIN_SIZE;
+    const gc = g.getContext('2d');
+    for (let i = 0; i < GRAIN_DOTS; i++){
+      gc.fillStyle = Math.random() < 0.5 ? `rgba(120,95,40,${GRAIN_ALPHA})` : `rgba(255,255,255,${GRAIN_ALPHA * 2})`;
+      gc.fillRect(Math.random() * GRAIN_SIZE, Math.random() * GRAIN_SIZE, 1 + Math.random(), 1 + Math.random());
+    }
+    return ctx.createPattern(g, 'repeat');
+  })();
+  const C = {};
+  for (const k of ['bg', 'fg', 'sub', 'line', 'panel', 'ok', 'ng', 'danger', 'right']) C[k] = css.getPropertyValue('--' + k).trim();
+
+  let state = 'loading';         // loading / playing / over
+  let usablePool = FONT_POOL;    // 読み込めたフォントだけの候補（読み込み後に決まる）
+  let poolLeft = [];             // 今回のゲームでまだ使っていない候補（シャッフル済み）
+  let active = [];               // 今使っているフォント（仕分けエリアの並び順）
+  let bodies = [];
+  let held = null;               // 掴んでいる文字 {b, lx, ly, ang, x, y, id}。元の文字は箱に残り（半透明・当たり判定あり）、指には写しがついてくる
+  let score = 0, miss = 0, spawnInt = SPAWN_START, spawnT = 0;
+  let acc = 0, danger = false, overAt = 0;
+  let lastCh = '';
+  let nextId = 1;
+  let flashes = {};              // エリアの色 フォント名 → {cls, t}
+  let missFx = null;             // 間違えたときの演出 {right, t}（正しいエリアのフォント名）
+  let shake = 0;                 // 画面の揺れの残り時間
+  const chars = Array.from(CHARS);
+
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = cv.clientWidth, ch = cv.clientHeight;
+    cv.width = Math.round(cw * dpr);
+    cv.height = Math.round(ch * dpr);
+    const sc = cw / W;
+    ctx.setTransform(dpr * sc, 0, 0, dpr * sc, 0, 0); // 以降は論理座標で描ける
+    draw();
+  }
+  addEventListener('resize', resize);
+
+  // ---------- 文字から当たり判定を作る ----------
+  // 手順：文字を画像に描く → 各ピクセルの「文字の縁までの距離」を求める →
+  // 縁から遠い（線の太い）所から順に、その距離を半径とする円を置いていく。
+  // 結果は文字の重心を原点とした円のリスト。フォントと文字の組ごとに1回だけ作る。
+  const shapeCache = new Map();
+  const maskCv = document.createElement('canvas');
+  function getShape(font, ch){
+    const key = font + ':' + ch;
+    if (shapeCache.has(key)) return shapeCache.get(key);
+
+    const S = Math.ceil(GLYPH_PX * 1.6);
+    maskCv.width = S; maskCv.height = S;
+    const mc = maskCv.getContext('2d', { willReadFrequently: true });
+    mc.clearRect(0, 0, S, S);
+    mc.fillStyle = '#000';
+    mc.font = `${GLYPH_PX}px "${font}"`;
+    mc.textAlign = 'center'; mc.textBaseline = 'middle';
+    mc.fillText(ch, S / 2, S / 2);
+    const px = mc.getImageData(0, 0, S, S).data;
+
+    // 距離変換（縦横3・斜め4の近似）。文字の外は0
+    const N = S * S, d = new Float32Array(N);
+    for (let i = 0; i < N; i++) d[i] = px[i * 4 + 3] >= HIT_ALPHA ? 1e9 : 0;
+    const at = (x, y) => (x < 0 || y < 0 || x >= S || y >= S) ? 0 : d[y * S + x];
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++){
+      const i = y * S + x; if (!d[i]) continue;
+      d[i] = Math.min(d[i], at(x - 1, y) + 3, at(x, y - 1) + 3, at(x - 1, y - 1) + 4, at(x + 1, y - 1) + 4);
+    }
+    for (let y = S - 1; y >= 0; y--) for (let x = S - 1; x >= 0; x--){
+      const i = y * S + x; if (!d[i]) continue;
+      d[i] = Math.min(d[i], at(x + 1, y) + 3, at(x, y + 1) + 3, at(x + 1, y + 1) + 4, at(x - 1, y + 1) + 4);
+    }
+
+    // 太い所から順に円を置く。置いた円の周り（半径×HIT_SPACING）は済みにする
+    const cand = [];
+    for (let i = 0; i < N; i++) if (d[i]) cand.push(i);
+    cand.sort((a, b) => d[b] - d[a]);
+    const done = new Uint8Array(N);
+    let parts = [];
+    for (const i of cand){
+      if (done[i]) continue;
+      const x = i % S, y = (i / S) | 0;
+      const r = Math.min(HIT_MAX_R, Math.max(HIT_MIN_R, d[i] / 3));
+      parts.push({ x: x + 0.5, y: y + 0.5, r });
+      const cr = r * HIT_SPACING, c2 = cr * cr;
+      for (let yy = Math.max(0, Math.floor(y - cr)); yy <= Math.min(S - 1, Math.ceil(y + cr)); yy++)
+        for (let xx = Math.max(0, Math.floor(x - cr)); xx <= Math.min(S - 1, Math.ceil(x + cr)); xx++)
+          if ((xx - x) ** 2 + (yy - y) ** 2 <= c2) done[yy * S + xx] = 1;
+    }
+    if (!parts.length) parts = [{ x: S / 2, y: S / 2, r: GLYPH_PX / 3 }]; // 文字が描けなかったときの保険
+
+    // 質量・重心・慣性モーメント（円の面積に比例）
+    let m = 0, cx = 0, cy = 0;
+    for (const p of parts){ const pm = p.r * p.r; m += pm; cx += pm * p.x; cy += pm * p.y; }
+    cx /= m; cy /= m;
+    let I = 0, minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+    const local = parts.map(p => {
+      const lx = p.x - cx, ly = p.y - cy, pm = p.r * p.r;
+      I += pm * (p.r * p.r / 2 + lx * lx + ly * ly);
+      minX = Math.min(minX, lx - p.r); maxX = Math.max(maxX, lx + p.r);
+      minY = Math.min(minY, ly - p.r); maxY = Math.max(maxY, ly + p.r);
+      return { lx, ly, r: p.r };
+    });
+    // 質量は平均的な文字でおよそ1になるよう正規化する
+    const NORM = 1500 * (GLYPH_PX / 126) ** 2;
+    const shape = { parts: local, m: m / NORM, I: I / NORM, ox: S / 2 - cx, oy: S / 2 - cy, minX, maxX, minY, maxY };
+    shapeCache.set(key, shape);
+    return shape;
+  }
+
+  // ---------- 出題 ----------
+  function newPiece(){
+    let ch;
+    do { ch = chars[Math.floor(Math.random() * chars.length)]; } while (ch === lastCh);  // 同じ文字の連続は避ける
+    lastCh = ch;
+    return { ch, font: active[Math.floor(Math.random() * active.length)] };  // 使っているフォントから同じ割合で出す
+  }
+
+  function makeBody(p, x, y){
+    const sh = getShape(p.font, p.ch);
+    return { id: nextId++, ch: p.ch, font: p.font, sh, x, y, vx: 0, vy: 0, w: 0, ang: 0, px: 0, py: 0, pw: 0,
+      invM: 1 / sh.m, invI: 1 / sh.I, age: 0, over: 0, top: y };
+  }
+  // 文字が箱の左右からはみ出さない位置に収める
+  function clampX(b, x){
+    return Math.max(BOX_L - b.sh.minX + 1, Math.min(BOX_R - b.sh.maxX - 1, x));
+  }
+  // 箱の上へ移して降らせる（新しい文字・箱に戻す文字）
+  function toTop(b, x){
+    b.x = clampX(b, x); b.y = SPAWN_Y;
+    b.vx = b.vy = b.w = 0; b.age = 0; b.over = 0;
+  }
+  // offsetY：複数を同時に降らせるとき、重ならないよう上に積んで出す量
+  function spawn(offsetY = 0){
+    const b = makeBody(newPiece(), 0, 0);
+    toTop(b, BOX_L + Math.random() * (BOX_R - BOX_L));
+    b.y -= offsetY;
+    bodies.push(b);
+  }
+
+  // ---------- 状態遷移 ----------
+  function start(){
+    bodies = []; held = null; score = 0; miss = 0; lastCh = '';
+    spawnInt = SPAWN_START; spawnT = 0; acc = 0; danger = false;
+    flashes = {}; missFx = null; shake = 0;
+    // 候補の組をシャッフルしておき、先頭から順に使う。各組からは1つ選ぶ
+    poolLeft = usablePool.slice();
+    for (let i = poolLeft.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [poolLeft[i], poolLeft[j]] = [poolLeft[j], poolLeft[i]];
+    }
+    active = [];
+    addFonts(START_FONTS);
+    state = 'playing';
+    $('over').classList.add('hidden');
+    document.documentElement.setAttribute('data-howto-hidden', '');
+  }
+  function gameOver(){
+    state = 'over'; overAt = performance.now();
+    document.documentElement.removeAttribute('data-howto-hidden');
+    held = null;
+    draw(); // 共有画像用に最終盤面を描いておく
+    $('r-score').textContent = score;
+    $('r-detail').textContent = `間違えた数 ${miss}`;
+    $('over').classList.remove('hidden');
+  }
+
+  // ---------- 仕分け ----------
+  // 下のエリアで離したら判定する。正しければ箱に残っていた元の文字が消える。それ以外は元の文字がそのまま残る
+  // 間違ったエリアで離したら、罰として文字が追加で降ってくる
+  function addFonts(n){
+    while (active.length < n && poolLeft.length){
+      const set = poolLeft.shift();
+      active.push(set[Math.floor(Math.random() * set.length)]);
+    }
+  }
+  // 仕分けエリアの位置。2つなら左右、3〜4つなら2×2
+  const ZONE_GAP = 8;
+  function zones(){
+    const cols = 2, rows = active.length > 2 ? 2 : 1;
+    const w = (BOX_R - BOX_L - ZONE_GAP) / cols, h = (ZONE_B - ZONE_T - ZONE_GAP * (rows - 1)) / rows;
+    return active.map((font, i) => ({ font, x: BOX_L + (i % cols) * (w + ZONE_GAP), y: ZONE_T + Math.floor(i / cols) * (h + ZONE_GAP), w, h }));
+  }
+  const zoneAt = (x, y) => { const z = zones().find(z => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h); return z ? z.font : null; };
+  function release(x, y){
+    const b = held.b;
+    held = null;
+    const zone = zoneAt(x, y);
+    if (zone === b.font){
+      score++;
+      // 一定数を超えたらフォントが増える。増えたときは、降ってくる間隔を最初の長さに戻す
+      const before = active.length;
+      if (score > ADD_AT) addFonts(MORE_FONTS);
+      if (active.length > before) spawnInt = SPAWN_START;
+      else spawnInt = Math.max(SPAWN_MIN, spawnInt * SPAWN_RATE);
+      flashes[zone] = { cls: 'ok', t: FLASH_TIME };
+      bodies = bodies.filter(o => o !== b);
+    } else if (zone){
+      miss++;
+      flashes[zone] = { cls: 'ng', t: FLASH_TIME };
+      missFx = { right: b.font, t: MISS_TIME };
+      shake = SHAKE_TIME;
+      for (let i = 0; i < PENALTY; i++) spawn(i * GLYPH_PX);
+    }
+  }
+
+  // ---------- 物理 ----------
+  // 文字は「判定円の集まり」でできた剛体。円どうし・円と壁の接触を集め、
+  // 接触点ごとに法線（押し返し）と接線（摩擦）の力積を反復で解く。
+  // めり込みの解消は別枠の「押し戻し専用の速度」で解き、位置の更新にだけ使って捨てる。
+
+  // 判定円のワールド座標（毎ステップ作り直す）と、近くの円を探すための格子
+  let cap = 0, PX, PY, PR, PB, NXT;
+  const CELL = HIT_MAX_R * 2 + 2;
+  const GX0 = BOX_L - CELL, GY0 = -H;
+  const GCOLS = Math.ceil((BOX_R - BOX_L + 2 * CELL) / CELL) + 1;
+  const GROWS = Math.ceil((BOX_B + H + CELL) / CELL) + 1;
+  const head = new Int32Array(GCOLS * GROWS);
+  const cellX = x => Math.max(0, Math.min(GCOLS - 1, Math.floor((x - GX0) / CELL)));
+  const cellY = y => Math.max(0, Math.min(GROWS - 1, Math.floor((y - GY0) / CELL)));
+
+  function worldParts(){
+    let n = 0;
+    for (const b of bodies) n += b.sh.parts.length;
+    if (n > cap){
+      cap = Math.max(n, cap * 2, 256);
+      PX = new Float32Array(cap); PY = new Float32Array(cap); PR = new Float32Array(cap);
+      PB = new Int32Array(cap); NXT = new Int32Array(cap);
+    }
+    head.fill(-1);
+    let i = 0;
+    for (let bi = 0; bi < bodies.length; bi++){
+      const b = bodies[bi], c = Math.cos(b.ang), s = Math.sin(b.ang);
+      let top = 1e9;
+      const ps = b.sh.parts;
+      for (let k = 0; k < ps.length; k++, i++){
+        const p = ps[k];
+        const x = b.x + p.lx * c - p.ly * s, y = b.y + p.lx * s + p.ly * c;
+        PX[i] = x; PY[i] = y; PR[i] = p.r; PB[i] = bi;
+        if (y - p.r < top) top = y - p.r;
+        const cell = cellY(y) * GCOLS + cellX(x);
+        NXT[i] = head[cell]; head[cell] = i;
+      }
+      b.top = top;
+    }
+    return n;
+  }
+
+  function addContact(cs, a, b, nx, ny, x, y, pen, dt){
+    const rax = a ? x - a.x : 0, ray = a ? y - a.y : 0;
+    const rbx = x - b.x, rby = y - b.y;
+    const ima = a ? a.invM : 0, iia = a ? a.invI : 0;
+    const ran = rax * ny - ray * nx, rbn = rbx * ny - rby * nx;
+    const rat = rax * nx + ray * ny, rbt = rbx * nx + rby * ny; // r × t（t = (-ny, nx)）
+    const c = { a, b, nx, ny, rax, ray, rbx, rby,
+      kn: ima + b.invM + iia * ran * ran + b.invI * rbn * rbn,
+      kt: ima + b.invM + iia * rat * rat + b.invI * rbt * rbt,
+      jn: 0, jt: 0, jp: 0, target: 0, bias: 0 };
+    const [vn] = relVel(c);
+    c.target = vn < -BOUNCE_TH ? -REST * vn : 0; // 速い衝突だけ跳ねる
+    c.bias = Math.min(MAX_BIAS, BETA / dt * Math.max(pen - SLOP, 0)); // めり込みを少しずつ戻す
+    cs.push(c);
+  }
+
+  // 接触点での相対速度（b − a）を [法線成分, 接線成分] で返す。回転による速度も含む
+  function relVel(c){
+    const { a, b, nx, ny } = c;
+    let vx = b.vx - b.w * c.rby, vy = b.vy + b.w * c.rbx;
+    if (a){ vx -= a.vx - a.w * c.ray; vy -= a.vy + a.w * c.rax; }
+    return [vx * nx + vy * ny, -vx * ny + vy * nx];
+  }
+
+  // 押し戻し専用の速度での、接触点の法線方向の相対速度
+  function relPush(c){
+    const { a, b, nx, ny } = c;
+    let vx = b.px - b.pw * c.rby, vy = b.py + b.pw * c.rbx;
+    if (a){ vx -= a.px - a.pw * c.ray; vy -= a.py + a.pw * c.rax; }
+    return vx * nx + vy * ny;
+  }
+  function applyPush(c, dn){
+    const { a, b, nx, ny } = c;
+    const px = dn * nx, py = dn * ny;
+    b.px += px * b.invM; b.py += py * b.invM; b.pw += b.invI * (c.rbx * py - c.rby * px);
+    if (a){ a.px -= px * a.invM; a.py -= py * a.invM; a.pw -= a.invI * (c.rax * py - c.ray * px); }
+  }
+
+  // 法線 dn・接線 dt の力積を b に、逆向きを a に加える
+  function applyImpulse(c, dn, dt){
+    const { a, b, nx, ny } = c;
+    const px = dn * nx - dt * ny, py = dn * ny + dt * nx;
+    b.vx += px * b.invM; b.vy += py * b.invM; b.w += b.invI * (c.rbx * py - c.rby * px);
+    if (a){ a.vx -= px * a.invM; a.vy -= py * a.invM; a.w -= a.invI * (c.rax * py - c.ray * px); }
+  }
+
+  function step(dt){
+    for (const b of bodies){
+      b.vy += G * dt;
+      b.vx *= DAMP; b.vy *= DAMP; b.w *= ANG_DAMP;
+      b.age += dt;
+    }
+
+    const n = worldParts();
+    const cs = [];
+    // 文字どうし
+    for (let i = 0; i < n; i++){
+      const A = bodies[PB[i]];
+      const cx = cellX(PX[i]), cy = cellY(PY[i]);
+      for (let gy = Math.max(0, cy - 1); gy <= Math.min(GROWS - 1, cy + 1); gy++)
+        for (let gx = Math.max(0, cx - 1); gx <= Math.min(GCOLS - 1, cx + 1); gx++)
+          for (let j = head[gy * GCOLS + gx]; j >= 0; j = NXT[j]){
+            if (j <= i || PB[j] === PB[i]) continue;
+            const B = bodies[PB[j]];
+            const dx = PX[j] - PX[i], dy = PY[j] - PY[i];
+            const rr = PR[i] + PR[j];
+            const d2 = dx * dx + dy * dy;
+            if (d2 >= (rr + SLOP) * (rr + SLOP)) continue;
+            const d = Math.sqrt(d2) || 1e-4;
+            const nx = d2 ? dx / d : 1, ny = d2 ? dy / d : 0;
+            const pen = rr - d;
+            const t = PR[i] - pen / 2; // 重なりの中央を接触点にする
+            addContact(cs, A, B, nx, ny, PX[i] + nx * t, PY[i] + ny * t, pen, dt);
+          }
+    }
+    // 壁と床
+    for (let i = 0; i < n; i++){
+      const B = bodies[PB[i]];
+      const x = PX[i], y = PY[i], r = PR[i];
+      if (x - r < BOX_L + SLOP) addContact(cs, null, B, 1, 0, BOX_L, y, BOX_L - (x - r), dt);
+      if (x + r > BOX_R - SLOP) addContact(cs, null, B, -1, 0, BOX_R, y, x + r - BOX_R, dt);
+      if (y + r > BOX_B - SLOP) addContact(cs, null, B, 0, -1, x, BOX_B, y + r - BOX_B, dt);
+    }
+
+    for (let it = 0; it < ITER; it++){
+      for (const c of cs){
+        // 法線：離れる方向にだけ押す（蓄積値が負にならないようにする）
+        const [vn] = relVel(c);
+        let old = c.jn;
+        c.jn = Math.max(old + (c.target - vn) / c.kn, 0);
+        applyImpulse(c, c.jn - old, 0);
+        // 接線：ずれを止める方向に、μ×法線力積 を上限として
+        const [, vt] = relVel(c);
+        const max = MU * c.jn;
+        old = c.jt;
+        c.jt = Math.max(-max, Math.min(max, old - vt / c.kt));
+        applyImpulse(c, 0, c.jt - old);
+        // めり込みの押し戻し（位置専用）
+        const vp = relPush(c);
+        old = c.jp;
+        c.jp = Math.max(old + (c.bias - vp) / c.kn, 0);
+        applyPush(c, c.jp - old);
+      }
+    }
+
+    for (const b of bodies){
+      b.x += (b.vx + b.px) * dt; b.y += (b.vy + b.py) * dt;
+      b.ang += (b.w + b.pw) * dt;
+      b.px = b.py = b.pw = 0;
+    }
+
+    // ゲームオーバー判定（文字の一番上の点で判定。降ってきたばかりの文字は外す）
+    danger = false;
+    for (const b of bodies){
+      if (b.age > FRESH_TIME && b.top < LINE_Y){
+        b.over += dt; danger = true;
+        if (b.over > OVER_TIME){ gameOver(); return; }
+      } else {
+        b.over = 0;
+      }
+    }
+  }
+
+  // ---------- 描画 ----------
+  // 文字を重心 (x, y) を中心に回して描く。当たり判定を作ったときと同じ描き方をするので形が一致する
+  function drawGlyph(x, y, font, ch, ang = 0, color = C.fg){
+    const sh = getShape(font, ch);
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(ang);
+    ctx.fillStyle = color;
+    ctx.font = `${GLYPH_PX}px "${font}"`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(ch, sh.ox, sh.oy);
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = paperGrain; // 紙のざらつき
+    ctx.fillRect(0, 0, W, H);
+    // 間違えた直後は画面を揺らす
+    ctx.save();
+    if (shake > 0){
+      const a = SHAKE_PX * shake / SHAKE_TIME;
+      ctx.translate((Math.random() * 2 - 1) * a, (Math.random() * 2 - 1) * a);
+    }
+
+    // 仕分けエリア（仕分けたときに色が変わる）
+    // お手本の「永」とフォント名を、そのフォント自身で書く（エリアに入りきらない長い名前は縮める）
+    for (const z of zones()){
+      const f = flashes[z.font];
+      ctx.fillStyle = f ? C[f.cls] : C.panel;
+      ctx.fillRect(z.x, z.y, z.w, z.h);
+      ctx.strokeStyle = C.fg; ctx.lineWidth = 2;
+      ctx.strokeRect(z.x, z.y, z.w, z.h);
+      const gs = Math.min(SAMPLE_MAX, z.h * 0.55), ns = Math.min(NAME_MAX, z.h * NAME_RATE);
+      const top = z.y + (z.h - (gs + SAMPLE_GAP + ns)) / 2;
+      ctx.fillStyle = C.fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `${gs}px "${z.font}"`;
+      ctx.fillText(SAMPLE_CH, z.x + z.w / 2, top + gs / 2);
+      ctx.font = `${ns}px "${z.font}"`;
+      ctx.fillText(labelOf(z.font), z.x + z.w / 2, top + gs + SAMPLE_GAP + ns / 2, z.w - 12);
+    }
+
+    // 間違えたとき：正しいエリアの枠を点滅させる
+    if (missFx){
+      const rz = zones().find(z => z.font === missFx.right);
+      if (rz && Math.floor(missFx.t * 8) % 2 === 0){
+        ctx.strokeStyle = C.right; ctx.lineWidth = 6;
+        ctx.strokeRect(rz.x + 3, rz.y + 3, rz.w - 6, rz.h - 6);
+      }
+    }
+
+    // 箱
+    ctx.strokeStyle = C.fg; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(BOX_L, BOX_T); ctx.lineTo(BOX_L, BOX_B);
+    ctx.lineTo(BOX_R, BOX_B); ctx.lineTo(BOX_R, BOX_T);
+    ctx.stroke();
+
+    // ゲームオーバーライン
+    ctx.setLineDash([6, 6]);
+    ctx.strokeStyle = danger ? C.danger : C.line; ctx.lineWidth = danger ? 2 : 1;
+    ctx.beginPath(); ctx.moveTo(BOX_L, LINE_Y); ctx.lineTo(BOX_R, LINE_Y); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ラインを超えている文字（降ってきた直後のものは除く）は赤
+    const colorOf = b => b.over > 0 ? C.danger : C.fg;
+    for (const b of bodies) if (!held || b !== held.b) drawGlyph(b.x, b.y, b.font, b.ch, b.ang, colorOf(b));
+    if (held){
+      // 箱に残っている元の文字は半透明
+      ctx.globalAlpha = HELD_ALPHA;
+      drawGlyph(held.b.x, held.b.y, held.b.font, held.b.ch, held.b.ang, colorOf(held.b));
+      ctx.globalAlpha = 1;
+      // 指についてくる写し（掴んだ点が指の位置に来るように描く）
+      const c = Math.cos(held.ang), s = Math.sin(held.ang);
+      drawGlyph(held.x - (held.lx * c - held.ly * s), held.y - (held.lx * s + held.ly * c), held.b.font, held.b.ch, held.ang);
+    }
+
+    ctx.restore();
+
+    // HUD
+    ctx.fillStyle = C.fg; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(`仕分けた数 ${score}`, BOX_L, HUD_Y);
+    if (state === 'loading'){
+      ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = C.sub;
+      ctx.fillText(loadingText, W / 2, (BOX_T + BOX_B) / 2);
+    }
+  }
+  let loadingText = 'フォント読み込み中…';
+
+  // ---------- ループ ----------
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);  // タブ復帰時に一気に進まないよう上限をつける
+    last = now;
+    if (state === 'playing'){
+      spawnT -= dt;
+      if (spawnT <= 0){ spawn(); spawnT = spawnInt; }
+      acc += dt;
+      while (acc >= STEP && state === 'playing'){ step(STEP); acc -= STEP; }
+      for (const k in flashes) if ((flashes[k].t -= dt) <= 0) delete flashes[k];
+      if (missFx && (missFx.t -= dt) <= 0) missFx = null;
+      if (shake > 0) shake -= dt;
+    }
+    if (state !== 'over') draw();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- 入力 ----------
+  // 箱の中の文字を掴んで、下のエリアまでドラッグして離す
+  const toLogical = e => {
+    const r = cv.getBoundingClientRect();
+    return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
+  };
+  // (x, y) にある文字を探す（手前に描いたものから）。掴んだ点を文字の座標で返す
+  // 掴める範囲が広いので、範囲に入っている文字のうち線にいちばん近いものを選ぶ（隣の文字を掴まないように）
+  function pick(x, y){
+    let best = null, bestD = GRAB_PAD;
+    for (let i = bodies.length - 1; i >= 0; i--){
+      const b = bodies[i], c = Math.cos(b.ang), s = Math.sin(b.ang);
+      const dx = x - b.x, dy = y - b.y;
+      const lx = dx * c + dy * s, ly = -dx * s + dy * c;
+      for (const p of b.sh.parts){
+        const d = Math.hypot(lx - p.lx, ly - p.ly) - p.r;  // 線の外側までの距離（線の上なら0以下）
+        if (d < bestD){ bestD = d; best = { b, i, lx, ly }; }
+      }
+    }
+    return best;
+  }
+
+  cv.addEventListener('pointerdown', e => {
+    if (state !== 'playing' || held) return;
+    e.preventDefault();
+    const [x, y] = toLogical(e);
+    const hit = pick(x, y);
+    if (!hit) return;
+    cv.setPointerCapture(e.pointerId);
+    held = { b: hit.b, lx: hit.lx, ly: hit.ly, ang: hit.b.ang, x, y, id: e.pointerId };
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!held || e.pointerId !== held.id) return;
+    [held.x, held.y] = toLogical(e);
+  });
+  cv.addEventListener('pointerup', e => {
+    if (!held || e.pointerId !== held.id) return;
+    const [x, y] = toLogical(e);
+    release(x, y);
+  });
+  cv.addEventListener('pointercancel', e => {
+    if (!held || e.pointerId !== held.id) return;
+    held = null;
+  });
+
+  // ---------- 結果画面 ----------
+  $('retry').addEventListener('pointerdown', e => e.stopPropagation());
+  $('retry').addEventListener('click', () => {
+    if (state !== 'over' || performance.now() - overAt < RETRY_LOCK) return;
+    start();
+  });
+
+  function shareText(){
+    return `フォント仕分けで${score}個仕分けた！\n間違えた数 ${miss}\n${location.href.split(/[?#]/)[0]}\n#フォント仕分け`;
+  }
+  // 最終盤面をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(){
+    const bin = atob(cv.toDataURL('image/png').split(',')[1]);  // toBlob の非同期コールバックは避ける
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    const file = resultImageFile();
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ text, files: [file] }).catch(() => {});
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    navigator.clipboard?.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+
+  // ---------- iOS 対策 ----------
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  cv.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+  document.addEventListener('touchmove', e => { if (held) e.preventDefault(); }, { passive: false });
+  document.addEventListener('selectstart', e => e.preventDefault());
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  // ---------- フォント読み込み ----------
+  // Google Fonts のものは使う文字だけに絞って読み込む（日本語フォント全体だと重いため）。
+  // 自前配信のものはファイルをそのまま読み込む。
+  // 読み込めなかったフォントは使わない。使えるフォントが2つ未満なら遊べない
+  (function loadFonts(){
+    const all = ALL_FONTS;
+    const gfFonts = all.filter(f => !LOCAL_FONTS[f]);
+    const loaded = new Set();
+    const gf = new Promise(res => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      const fam = gfFonts.map(f => 'family=' + f.replace(/ /g, '+')).join('&');
+      link.href = `https://fonts.googleapis.com/css2?${fam}&text=${encodeURIComponent(GF_TEXT)}&display=block`;
+      link.onload = () => Promise.all(gfFonts.map(f =>
+        document.fonts.load(`40px "${f}"`, GF_TEXT).then(faces => { if (faces.length) loaded.add(f); }, () => {})
+      )).then(res);
+      link.onerror = res;
+      document.head.appendChild(link);
+    });
+    const local = Promise.all(Object.entries(LOCAL_FONTS).map(([f, path]) =>
+      new FontFace(f, `url("${path}")`).load().then(face => { document.fonts.add(face); loaded.add(f); }, () => {})
+    ));
+    const timeout = new Promise(res => setTimeout(res, FONT_TIMEOUT));
+    Promise.race([Promise.all([gf, local]), timeout]).then(() => {
+      usablePool = FONT_POOL.map(g => g.filter(f => loaded.has(f))).filter(g => g.length);
+      const missing = all.filter(f => !loaded.has(f)).map(labelOf);
+      if (missing.length){
+        $('fontMsg').textContent = `フォントを読み込めませんでした：${missing.join('、')}`;
+        $('fontMsg').classList.remove('hidden');
+      }
+      if (usablePool.length < START_FONTS){
+        loadingText = '遊べません（フォント不足）';
+        return;
+      }
+      start(); // 開始画面は無いので、読み込みが終わったらすぐ始める
+    });
+  })();
+
+  resize();
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

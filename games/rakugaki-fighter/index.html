@@ -1,0 +1,2462 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/rakugaki-fighter/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ラクガキファイター</title>
+<meta name="description" content="描いたラクガキが立体になって戦う">
+<style>
+  /* ノートとペンの世界観：方眼ノートの紙、ボールペンの青黒、赤ペン、蛍光ペン */
+  :root{
+    --bg:#e8eef1;        /* 机の上の紙の色（対戦画面の背景にも使う） */
+    --paper:#fbfcfd;     /* ノートの紙 */
+    --grid:#d3e1ea;      /* 方眼の線 */
+    --ink:#1f2a44;       /* ボールペンの青黒（自分の絵・文字） */
+    --fg:#1f2a44; --sub:#5d6b80; --line:#1f2a44;
+    --enemy:#d33a2f;     /* 赤ペン（相手の絵） */
+    --floor:#cdd8df;     /* 土俵 */
+    --you:#5ec8f2;       /* 自分の体力：青の蛍光ペン */
+    --foe:#ff7eae;       /* 相手の体力：ピンクの蛍光ペン */
+    --hpbg:rgba(31,42,68,.08);
+    --stam:#3aa556;      /* スタミナ：緑 */
+    --spark:#ffd400; --flash:#ff4a3d; --trail:#ffffff;
+    --howto-bg:#fbfcfd; --howto-fg:#1f2a44;
+  }
+  [hidden]{display:none!important}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:"Hiragino Maru Gothic ProN","Hiragino Maru Gothic Pro","BIZ UDPGothic","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  canvas{display:block;touch-action:none}
+  /* ボタンはペンで描いた枠のように少しいびつな角丸にする */
+  button{font:inherit;font-size:18px;font-weight:bold;min-height:48px;padding:0 22px;color:var(--ink);background:var(--paper);
+    border:2.5px solid var(--ink);border-radius:14px 22px 16px 20px/20px 14px 22px 16px;cursor:pointer;transition:transform .08s}
+  button:active,button.on{transform:scale(.95)}
+  button.primary{background:var(--ink);color:var(--paper)}
+  button:disabled{opacity:.35;cursor:default;transform:none}
+  :focus-visible{outline:3px solid var(--you);outline-offset:3px}
+
+  #app{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden}
+
+  /* お絵かき画面：方眼ノートの1ページ */
+  #drawScr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+    padding:calc(12px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px))}
+  #pad{width:min(100%, calc(100vh - 290px));width:min(100%, calc(100dvh - 290px));aspect-ratio:1/1;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:6.25% 6.25%;background-position:-1px -1px;
+    border:2.5px solid var(--ink);border-radius:6px 10px 8px 12px/12px 6px 10px 8px}
+  .row{display:flex;gap:12px;width:min(100%, calc(100vh - 290px));width:min(100%, calc(100dvh - 290px))}
+  #drawScr{gap:12px}
+  /* 道具（ペン／塗りつぶし／消しゴム）：3つで1組の切り替え。狭い画面でも3つ並ぶよう文字は少し小さめ */
+  .seg{display:flex;flex:1}
+  .seg button{flex:1;font-size:15px;padding:0 4px;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:4px}
+  .seg button:not(:first-child):not(:last-child){border-radius:4px;margin-left:-2.5px}
+  /* 道具のアイコン：文字と同じ色（選択中は白抜き） */
+  .ic{width:22px;height:22px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .ic .drop{fill:currentColor;stroke:none}
+  .seg button:first-child{border-top-right-radius:4px;border-bottom-right-radius:4px}
+  .seg button:last-child{border-top-left-radius:4px;border-bottom-left-radius:4px;margin-left:-2.5px}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+  /* 色えらび：選んでいる色は二重の枠で示す */
+  .colors{display:flex;gap:8px;padding:0 6px}   /* 選択中の二重枠がはみ出さないよう左右に余白 */
+  /* ボタン自体は押しやすい大きさ（高さ44px）のまま、見た目は中に描いた真円にする */
+  .sw{position:relative;flex:1;min-width:0;height:44px;padding:0;border:none;border-radius:0;background:none}
+  .sw::before{content:"";position:absolute;left:50%;top:50%;width:min(34px, calc(100% - 4px));aspect-ratio:1/1;transform:translate(-50%,-50%);
+    border-radius:50%;background:var(--c);border:2.5px solid var(--ink);box-sizing:border-box}
+  .sw[aria-pressed="true"]::before{box-shadow:0 0 0 3px var(--paper),0 0 0 5.5px var(--ink)}
+  /* 絵の上の列：左にライブラリ、右に 1つ戻す・全部消す（「たたかう」から離す） */
+  .row.edit{justify-content:space-between;gap:10px}
+  .row.edit .grp{display:flex;gap:10px}
+  .row.edit button{display:flex;align-items:center;gap:6px;font-size:16px;padding:0 12px;white-space:nowrap}
+
+  /* ライブラリ：保存した絵をノートの切れ端のカードに並べる */
+  #lib{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(31,42,68,.35)}
+  #lib .card{width:min(100%,340px);max-height:100%;transform:none;padding:20px 18px 18px}
+  #libHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  #libHead h2{margin:0;font-size:20px}
+  #libHead button{min-height:44px;font-size:16px;padding:0 14px}
+  #libActs{display:flex;gap:10px}
+  #libActs .primary{flex:1}
+  #libLoad{font-size:16px;padding:0 14px;white-space:nowrap}
+  #libMsg{margin:0;min-height:1.4em;text-align:center;font-size:14px;color:var(--sub)}
+  #libGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 14px;padding:14px 14px 6px 4px;margin:0 -6px;   /* 上と右は消すボタンの丸がはみ出す分の余白 */
+    max-height:min(46vh,420px);max-height:min(46dvh,420px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #libEmpty{margin:8px 0;text-align:center;font-size:15px;color:var(--sub)}
+  .item{position:relative;display:flex;flex-direction:column;gap:6px}
+  /* 絵のボタン：小さなノートの紙。押すとその絵を開く */
+  .pick{width:100%;aspect-ratio:1/1;min-height:0;padding:0;overflow:hidden;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:12.5% 12.5%;background-position:-1px -1px;
+    border-radius:6px 10px 8px 12px/12px 6px 10px 8px}
+  .pick img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+  /* 共有ボタン：絵の下に置く。押しやすい高さ（44px）のまま文字は小さめ */
+  .shr{min-height:44px;font-size:14px;padding:0 4px;display:flex;align-items:center;justify-content:center;gap:4px}
+  .shr .ic{width:18px;height:18px}
+  /* 消すボタン：押しやすい大きさ（44px）のまま、見た目は小さな丸にする。1回目で赤くなり、2回目で消える */
+  .del{position:absolute;right:-12px;top:-12px;width:44px;height:44px;min-height:0;padding:0;border:none;border-radius:0;background:none}
+  .del::before{content:"×";position:absolute;left:50%;top:50%;width:28px;height:28px;transform:translate(-50%,-50%);
+    display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;
+    color:var(--paper);background:var(--ink);border:2px solid var(--paper);border-radius:50%;box-sizing:border-box}
+  .del.arm::before{content:"消す";font-size:11px;width:40px;height:28px;border-radius:14px;background:var(--enemy)}
+  .row.edit button{min-height:44px;font-size:15px;padding:0 14px;white-space:nowrap}
+  #go{flex:1;font-size:20px;padding:0 8px}
+  #howtoBtn{flex:none;font-size:15px;padding:0 8px;white-space:nowrap}
+  /* 「CPU」：画像を読み込んで相手にする。読み込み後はアイコンの代わりに小さくその絵を出し、横に「おまかせに戻す」が出る */
+  #cpuBtn{display:flex;align-items:center;gap:6px;font-size:16px;padding:0 12px;white-space:nowrap}
+  #cpuThumb{width:30px;height:30px;flex:0 0 auto;object-fit:contain;background:var(--paper);border:1.5px solid var(--ink);border-radius:5px 7px 6px 8px/8px 5px 7px 6px}
+  #cpuClear{width:44px;min-height:44px;padding:0;font-size:22px;line-height:1}
+  #cpuMsg{margin:0;font-size:14px;text-align:center;color:var(--enemy)}
+  #cpuMsg:empty{display:none}
+
+  /* 対戦画面 */
+  #fightScr{position:absolute;inset:0}
+  #view{position:absolute;inset:0;width:100%;height:100%}
+  #hud{position:absolute;left:0;right:0;top:0;display:flex;gap:18px;padding:calc(env(safe-area-inset-top,0px) + 14px) 14px 0;pointer-events:none}
+  .hp{flex:1;min-width:0}
+  .hp.r{text-align:right}
+  .name{font-size:14px;font-weight:bold}
+  .hp.l .name{color:var(--ink)}
+  .hp.r .name{color:var(--enemy)}
+  /* 体力バー：鉛筆の枠に蛍光ペンを引いたような見た目 */
+  .bar{position:relative;height:16px;margin-top:4px;border:2px solid var(--ink);border-radius:5px 9px 6px 8px/8px 5px 9px 6px;background:var(--paper);overflow:hidden}
+  /* 中身は常に枠いっぱいの蛍光ペンの形で、体力の分だけ切り取って見せる（短くなっても形が崩れない） */
+  .bar i{position:absolute;top:1px;bottom:1px;left:1px;right:1px;
+    clip-path:polygon(0% 12%,100% 0%,99% 100%,1% 88%);transition:clip-path .25s ease-out}
+  .hp.l .bar i{background:var(--you)}
+  .hp.r .bar i{background:var(--foe)}
+
+  #controls{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;
+    padding:0 20px calc(20px + env(safe-area-inset-bottom,0px));pointer-events:none}
+  #joy{position:relative;width:132px;height:132px;border-radius:50%;border:2.5px dashed rgba(31,42,68,.45);background:rgba(251,252,253,.55);touch-action:none;pointer-events:auto}
+  #knob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:var(--ink);opacity:.85}
+  .acts{display:flex;align-items:flex-end;gap:12px;pointer-events:none}
+  #def{width:76px;height:76px;margin-bottom:6px;border-radius:48% 52% 50% 50%/52% 48% 50% 50%;padding:0;font-size:17px;touch-action:none;pointer-events:auto}
+  #def.on{background:var(--ink);color:var(--paper)}
+  /* スタミナ：体力バーの下の緑の線（攻撃・防御で減り、0で防ぐとガードが崩れる） */
+  .gd{height:6px;margin-top:3px;border-radius:3px;background:var(--hpbg);overflow:hidden}
+  .gd i{display:block;height:100%;width:100%;background:var(--stam)}
+  .hp.r .gd i{margin-left:auto}
+  .gd.broken i{background:var(--enemy)}
+  .pop.guard{font-size:18px;color:var(--sub)}
+  #atk{width:100px;height:100px;border-radius:50% 48% 52% 50%/48% 52% 50% 50%;padding:0;font-size:20px;background:var(--enemy);color:var(--paper);border-color:var(--ink);touch-action:none;pointer-events:auto}
+
+  /* 演出：ダメージ数字（紙の上に書いたように、白いふちどりの青黒文字） */
+  #fx{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+  .pop{position:absolute;left:0;top:0;font-weight:bold;font-size:24px;color:var(--ink);white-space:nowrap;
+    text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff,0 0 4px #fff;will-change:transform,opacity}
+  .pop.big{font-size:34px;color:var(--enemy)}
+
+  /* 結果：ノートの切れ端のカード */
+  #result{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(31,42,68,.35)}
+  .card{width:min(100%,300px);display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:24px 22px 22px;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:20px 20px;
+    border:2.5px solid var(--ink);border-radius:8px 14px 10px 16px/16px 8px 14px 10px;transform:rotate(-1.2deg)}
+  #resTxt{margin:0 0 6px;text-align:center;font-size:48px;font-weight:bold;color:var(--ink)}
+  #resTxt.lose{color:var(--enemy)}
+  .sub-row{display:flex;gap:10px}
+  .sub-row button{flex:1;padding:0 8px;font-size:16px}
+
+  @media (prefers-reduced-motion: reduce){
+    .bar i,button{transition:none}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <section class="howto" hidden data-pos="none">
+    <h2>遊び方</h2>
+    <p>ノートに描いたラクガキが立体になり、CPU と1対1で戦うゲームです。ペンや塗りつぶしで好きな形を描いて「たたかう」を押すと、絵が膨らんで土俵に立ちます。相手の体力を0にすれば勝ちで、自分が0になると負けです。力や速さ、体力は対戦ごとにランダムで決まります。</p>
+    <h2>操作</h2>
+    <p>スマホは左のスティックで移動し、右の攻撃ボタンで攻撃します。防御ボタンは押している間だけ構えます。PC は矢印キーで移動、Space で攻撃、Shift を押している間が防御です。</p>
+    <h2>コツ</h2>
+    <p>防御中は体力が減りませんが、受けるたびにスタミナが減り、尽きるとガードが崩れて無防備になります。攻撃にもスタミナを使うので、連打しすぎないでください。絵の形で戦い方も変わり、手足のない絵は踏み込みの強い体当たりで戦います。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+
+  <section id="drawScr">
+    <div class="row edit">
+      <button id="libBtn" aria-haspopup="dialog"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h6l2 2h8v11H4z"/><path d="M4 11h16"/></svg>ライブラリ</button>
+      <div class="grp" role="group" aria-label="やり直し">
+        <button id="undo" disabled>1つ戻す</button>
+        <button id="clear">全部消す</button>
+      </div>
+    </div>
+    <canvas id="pad" width="1024" height="1024" aria-label="絵を描くところ"></canvas>
+    <div class="row">
+      <div class="seg" role="group" aria-label="道具">
+        <button id="toolPen" aria-pressed="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4.5l4 4L9 19H5v-4z"/><path d="M13 7l4 4"/></svg>ペン</button>
+        <button id="toolFill" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(-35 9 13)"><path d="M3 9h12l-1.6 10.2a1 1 0 0 1-1 .8H5.6a1 1 0 0 1-1-.8z"/><path d="M5.5 9a3.5 3.5 0 0 1 7 0"/></g><path class="drop" d="M19.5 12c1.2 1.8 2.2 3.1 2.2 4.4a2.2 2.2 0 0 1-4.4 0c0-1.3 1-2.6 2.2-4.4z"/></svg>塗りつぶし</button>
+        <button id="toolEraser" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(-45 12 11)"><rect x="5" y="7.5" width="14" height="7" rx="1.5"/><path d="M11 7.5v7"/></g><path d="M8 20h12"/></svg>消しゴム</button>
+      </div>
+    </div>
+    <div class="row colors" id="colors" role="group" aria-label="色"></div>
+    <div class="row">
+      <button id="go" class="primary" disabled>たたかう</button>
+      <button id="cpuBtn" aria-label="CPUにする画像を読み込む"><svg id="cpuIcon" class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.6"/></svg><img id="cpuThumb" alt="" hidden>CPU</button>
+      <button id="cpuClear" aria-label="CPUをおまかせに戻す" hidden>×</button>
+      <button id="howtoBtn" type="button" data-howto-open>遊び方</button>
+    </div>
+    <input id="cpuFile" type="file" accept="image/*" hidden>
+    <p id="cpuMsg" aria-live="polite"></p>
+  </section>
+
+  <section id="lib" hidden role="dialog" aria-label="ライブラリ">
+    <div class="card">
+      <div id="libHead">
+        <h2>ライブラリ</h2>
+        <button id="libClose">閉じる</button>
+      </div>
+      <div id="libActs">
+        <button id="libSave" class="primary">いまの絵を保存</button>
+        <button id="libLoad">読み込む</button>
+      </div>
+      <input id="libFile" type="file" accept="image/*" hidden>
+      <p id="libMsg" aria-live="polite"></p>
+      <p id="libEmpty">まだ保存した絵はありません</p>
+      <div id="libGrid"></div>
+    </div>
+  </section>
+
+  <section id="fightScr" hidden>
+    <canvas id="view"></canvas>
+    <div id="fx" aria-hidden="true"></div>
+    <div id="hud">
+      <div class="hp l"><span class="name">あなた</span><div class="bar"><i id="hpP"></i></div><div class="gd" id="gdPw"><i id="gdP"></i></div></div>
+      <div class="hp r"><span class="name">CPU</span><div class="bar"><i id="hpE"></i></div><div class="gd" id="gdEw"><i id="gdE"></i></div></div>
+    </div>
+    <div id="controls">
+      <div id="joy" aria-label="移動"><div id="knob"></div></div>
+      <div class="acts">
+        <button id="def" aria-pressed="false">防御</button>
+        <button id="atk">攻撃</button>
+      </div>
+    </div>
+    <div id="result" hidden>
+      <div class="card">
+        <p id="resTxt" aria-live="assertive"></p>
+        <button id="again" class="primary">もう一回</button>
+        <div class="sub-row">
+          <button id="redraw">描き直す</button>
+          <button id="share">共有</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  // ---------- 定数 ----------
+  const PAD_RES = 1024;     // お絵かきキャンバスの解像度（3Dで引き伸ばしても色の境目がギザギザにならないよう高めにする）
+  const PEN_W = 36;         // ペンの太さ（PAD_RES基準のピクセル）
+  const ERASER_W = 80;      // 消しゴムの太さ（ペンより太めにして消しやすくする。PAD_RES基準）
+  const COLORS = [          // 描くときに選べる色（最初の色が初期値）
+    ['#1f2a44', '青黒'], ['#d33a2f', '赤'], ['#f08a24', 'だいだい'], ['#f5cf1f', '黄'],
+    ['#3aa556', '緑'], ['#2f7fd8', '青'], ['#f28cb8', 'もも'], ['#ffffff', '白'],
+  ];
+  const UNDO_MAX = 10;      // 「1つ戻す」で戻れる回数（1回分ごとに絵をまるごと保存するので多すぎると重い）
+  const IDB_NAME = 'rakugakiFighter';           // ライブラリ（好きな絵を何枚も保存しておく場所）のデータベース名
+  const IDB_STORE = 'library';                  // その中で絵を入れておく表の名前
+  const LIB_MAX = 30;       // ライブラリに保存できる枚数（容量よりも一覧が長くなりすぎないための上限）
+  const IMPORT_WHITE_GAIN = 3;  // 読み込んだ画像に透明な所がないとき、白からの遠さ（0〜255）をこの倍で不透明度にして背景を抜く
+  const THUMB_RES = 192;    // ライブラリに並べる小さい絵の解像度
+  const CPU_MSG_MS = 2500;  // 「CPU」の画像が読み込めなかったときの知らせを出しておく時間（ミリ秒）
+  const DEL_ARM_MS = 2500;  // 「消す」を1回押してから、もう1回押せば消える状態でいる時間（ミリ秒）
+  const FILL_TOL = 90;      // 塗りつぶし：同じ色とみなす差（RGBAの差の合計）
+  const FILL_ALPHA = 60;    // 塗りつぶし：何も描いていない所とみなす透明度の上限
+  const FILL_BLEED = 3;     // 塗りつぶし：線のふちとのすき間を埋めるため、外側へ広げるピクセル数
+  const TEX = 1024;         // 3Dに貼る絵の解像度（お絵かきと同じにして細部を落とさない）
+  const MASK_RES = 512;     // 線で囲まれた内側を判定する解像度（重い処理なので半分で行う）
+  const ANA = 128;          // ボーン解析の解像度（小さいほど速く、粗くなる）
+  const CHAR_H = 2.0;       // キャラの高さ（3D空間の単位）
+  const SEG_LEN = 9;        // ボーン1本の長さの目安（解析ピクセル）
+  const SPUR = 5;           // これより短い枝はボーンにしない（細線化で出るヒゲを除く）
+  const RAY_N = 6;          // 骨格からボーンがほとんど取れない形（丸など）に、中心から放射状に足すボーンの本数
+  const MIN_JOINTS = 3;     // 関節がこれより少ないときに放射状のボーンを足す
+  const RAY_COVER = 1.0;    // 骨格の長さが「形の大きさ（面積の平方根）×この値」より短いときも放射状のボーンを足す
+  const MAX_JOINTS = 48;    // 関節数の目安の上限（超えそうならボーンを長くする）
+  const GRID_N = 96;        // 変形メッシュの細かさ（長辺方向の分割数。輪郭のなめらかさに効く）
+  const BLEND = 0.5;        // 関節まわりで親ボーンと混ぜる範囲（ボーン長に対する比）
+  const Z_LAYER = 0.004;    // 重なり順：根元から1段離れるごとに手前へずらす量（同じ面で重なるとちらつくため）
+  const Z_SUB = 0.0005;     // 重なり順：同じ段のボーンどうしをずらす量
+
+  const INFLATE = 3.5;      // 絵のふくらみ（太い所ほど厚くなる。0で紙のように平ら）
+  const THICK_MAX = 0.45;   // ふくらみの厚さの上限（片側）
+  const THICK_SMOOTH = 12;  // ふくらみをなめらかにする回数（多いほど縁のギザギザが消えて丸くなる）
+  const TURN_SPEED = 8;     // 相手のほうへ向き直る速さ（ラジアン/秒）
+  const CAM_ANGLE = 0.8;    // カメラ：自分の真後ろから右へ回り込む角度（ラジアン。自分で相手が隠れないように斜め後ろから見る）
+  const CAM_DIST = 4.4;     // カメラ：2人の中間からの距離（相手との距離に応じて足す）
+  const CAM_H = 1.5;        // カメラ：高さ（距離に応じて足す）
+  const ARENA_R = 4.2;      // 土俵の半径
+  const FLOOR_CELL = 0.5;   // 土俵の方眼の1マスの大きさ
+  const FLOOR_LINE_A = 0.09;// 土俵の方眼の線の濃さ（0〜1。小さいほどうっすら）
+  const FLOOR_TEX = 1024;   // 土俵の模様の画像の大きさ（ピクセル）
+  const MOVE_SPEED = 3.0;   // 移動の速さ
+  const GRAVITY = 5;        // 関節にかかる重力
+  const DAMP = 0.94;        // 関節の揺れの減衰（小さいほどすぐ止まる）
+  const STIFF_ROOT = 0.22;  // 体の中心付近が元の形に戻ろうとする強さ
+  const STIFF_TIP = 0.05;   // 手足の先が元の形に戻ろうとする強さ
+  const ITER = 4;           // ボーンの長さを保つ計算の反復回数
+  const STEP = 1 / 120;     // 物理の固定タイムステップ
+
+  const LEG_FREQ = 5;       // 移動中に足をダバダバさせる速さ（1秒あたりの往復回数）
+  const LEG_SWING = 0.9;    // 足を前後に振る角度（ラジアン）
+  const LEG_STIFF = 0.35;   // 足を振る動きに引っぱる強さ
+  const LEG_LOW = 0.3;      // 先端がキャラの高さ×この値より下にある手足を「足」とみなす
+  const ATK_WIND = 0.09;    // 攻撃の振りかぶり時間（秒）
+  const ATK_STRIKE = 0.2;   // 攻撃で手足を伸ばしている時間（秒）
+  const ATK_COOL = 0.12;    // 攻撃後に次の攻撃ができるまで（秒）
+  const ATK_STIFF = 0.25;   // 攻撃中に手足を狙いへ引っぱる強さ
+  const LUNGE = 1.6;        // 攻撃時の踏み込みの速さ（手足が無い絵は体当たりで2.5倍）
+  const HIT_PAD = 0.12;     // 当たり判定の余白
+  const DMG_MIN = 5;        // ダメージの最小
+  const DMG_MAX = 16;       // ダメージの最大
+  const SPEED_FULL = 25;    // 先端がこの速さ以上で当たると最大ダメージ
+  const KNOCKBACK = 3.5;    // 当たったときに吹っ飛ぶ速さ
+  const KB_FRICTION = 5;    // 吹っ飛びの減速
+  const HIT_SHAKE = 0.05;   // 当たったときに体がたわむ強さ
+  const STUN = 0.3;         // 当たったあと動けない時間（秒）
+  const DMG_RAND = 0.3;     // ダメージのばらつき（±30%）
+  const END_WAIT = 1.5;     // 決着してから結果を出すまで（秒。倒れるところを見せる）
+
+  const STAT = {            // 対戦ごとにランダムで決まる能力の幅（最小, 最大）
+    power: [0.7, 1.3],      // 力（ダメージの倍率）
+    speed: [0.7, 1.3],      // 速さ（移動の速さの倍率）
+    hp:    [70, 130],       // 体力
+    def:   [0.7, 1.3],      // 守り（受けるダメージの倍率は 2−守り。防いだときのスタミナの減りは 1÷守り 倍）
+  };
+
+  // ---------- 防御 ----------
+  // 防御中に当たった攻撃は体力が減らない。代わりにスタミナが減る
+  const GUARD_SPEED = 0.4;      // 防御中の移動の速さ（倍率）
+  const GUARD_KB = 0.3;         // 防御中に当たったときの吹っ飛び（倍率）
+  const GUARD_STUN = 0.08;      // 防御中に当たったときに動けない時間（秒）
+  // スタミナ（ダクソ風）：攻撃すると減り、防いだ攻撃でも減る。使ってから少し待つと回復が始まる
+  const STAM_MAX = 100;         // スタミナの最大
+  const STAM_ATK = 28;          // 攻撃1回で使うスタミナ（少しでも残っていれば攻撃でき、足りない分は0で止まる）
+  const STAM_GUARD = 2.0;       // 防いだ攻撃で減るスタミナ（ダメージ × この値 ÷ 守り）
+  const STAM_REGEN = 45;        // 回復の速さ（1秒あたり）
+  const STAM_REGEN_GUARD = 0.15;// 防御を構えている間の回復の速さ（倍率。構えっぱなしだと少しずつ削られる）
+  const STAM_DELAY = 0.6;       // 使ってから回復が始まるまで（秒）
+  const GUARD_BREAK_STUN = 0.9; // スタミナが尽きてガードが崩れたときに無防備になる時間（秒）
+  const GUARD_FWD = 0.35;       // 防御の構え：腕などを体の前へ出す距離
+
+  // ---------- 演出 ----------
+  const HITSTOP_BASE = 0.035;   // ヒットストップ（当たった瞬間に止まる時間、秒）
+  const HITSTOP_PER_DMG = 0.004;// ダメージ1あたりの追加ヒットストップ（秒）
+  const SHAKE_PER_DMG = 0.012;  // カメラの揺れ幅（ダメージ1あたり）
+  const SHAKE_DECAY = 9;        // カメラの揺れの収まる速さ
+  const SPARK_N = 12;           // 1回の当たりで飛ぶ火花の数
+  const SPARK_SPEED = 5;        // 火花の速さ
+  const SPARK_LIFE = 0.28;      // 火花が消えるまで（秒）
+  const SPARK_W = 0.035;        // 火花の太さ
+  const RING_LIFE = 0.22;       // 衝撃の輪が広がって消えるまで（秒）
+  const RING_SIZE = 0.7;        // 衝撃の輪の最大の大きさ
+  const FLASH_TIME = 0.2;       // 被弾したキャラが赤く光る時間（秒）
+  const POP_LIFE = 0.75;        // ダメージ数字が消えるまで（秒）
+  const BIG_HIT = 14;           // このダメージ以上は数字を大きく出す
+  const TRAIL_LEN = 10;         // 攻撃の軌跡の長さ（フレーム数）
+  const TRAIL_W = 0.07;         // 攻撃の軌跡の太さ
+  const SHARE_FILL = 0.85;      // 共有画像でキャラが画面の狭い方の幅に占める割合（大きいほど寄る）
+  // 登場：描いた絵（ぺらぺらの2D）がボンッと煙に包まれて3Dになる
+  const INTRO_HOLD = 0.7;       // 2Dの絵のまま見せる時間（秒）
+  const INTRO_SWAP = 0.1;       // 煙が出てから3Dに切り替わるまで（秒。煙で隠れた瞬間に替える）
+  const INTRO_END = 0.65;       // 煙が出てから戦い開始まで（秒）
+  const PUFF_N = 16;            // 1人あたりの煙の玉の数
+  const PUFF_SIZE = 0.6;        // 煙の玉の大きさ
+  const PUFF_GROW = 0.1;        // 煙の玉がふくらみきるまで（秒）
+  const PUFF_LIFE = 0.6;        // 煙の玉が消えるまで（秒）
+  const PUFF_SPEED = 1.6;       // 煙の玉が外へ広がる速さ
+  const POPIN_TIME = 0.35;      // 3Dになったときに少し大きくなって戻る時間（秒）
+  // ガードが崩れたとき：紙の破片が飛び散り、崩れている間は頭の上を星が回る
+  const SHARD_N = 12;           // 破片の数
+  const SHARD_SIZE = 0.3;       // 破片の大きさ
+  const SHARD_SPEED = 3.2;      // 破片の飛ぶ速さ
+  const SHARD_LIFE = 0.7;       // 破片が消えるまで（秒）
+  const BREAK_SHAKE = 0.18;     // 崩れたときのカメラの揺れ
+  const BREAK_HITSTOP = 0.12;   // 崩れたときのヒットストップ（秒）
+  const DIZZY_N = 3;            // 頭の上を回る星の数
+  const DIZZY_R = 0.32;         // 星が回る半径
+  const DIZZY_SPEED = 6;        // 星が回る速さ（ラジアン/秒）
+  const DIZZY_SIZE = 0.2;       // 星の大きさ
+  const POPIN_SCALE = 0.15;     // そのときの大きくなる割合
+  const INTRO_SHAKE = 0.08;     // ボンッのときのカメラの揺れ
+  const FALL_KICK = 2.5;        // やられたとき：倒れ始めの回る速さ（ラジアン/秒）
+  const FALL_ACCEL = 14;        // やられたとき：倒れる加速（大きいほど勢いよく倒れる）
+  const FALL_MAX = 1.45;        // やられたとき：倒れる角度（ラジアン。約83°で仰向け）
+  const FALL_BOUNCE = 0.3;      // 地面に着いたときの跳ね返り
+  const DOWN_STIFF = 0.3;       // 倒れたあと元の形に戻ろうとする強さ（倍率。小さいほどぐったりする）
+  const DOWN_GRAVITY = 30;      // 倒れたあと手足にかかる重力（地面に垂れるように）
+  const KO_SLOW = 0.25;         // 決着の一撃のスローの速さ（倍率）
+  const KO_SLOW_TIME = 0.8;     // 決着の一撃のスローの長さ（実時間・秒）
+  const KO_SHAKE = 0.25;        // 決着の一撃の追加の揺れ
+
+  // CPUの戦い方（対戦ごとにランダムで1つ選ぶ）
+  //  speed    移動の速さ（プレイヤーに対する倍率）
+  //  waitMin/waitMax  攻撃の間隔（秒）
+  //  guard    相手の攻撃を防御する確率 / react 防御するまでの時間（秒）
+  //  dist     立つ距離（届く距離に対する倍率。大きいほど遠くから）
+  //  strafe   相手の周りを回り込む強さ（0で回らない）
+  //  retreat  攻撃したあと離れている時間（秒。0で離れない）
+  //  counter  防御で受け止めたら、すぐ反撃する
+  const CPU_TYPES = [
+    { name:'ふつう',     speed:0.6,  waitMin:0.5,  waitMax:1.3, guard:0.45, react:0.12, dist:0.6,  strafe:0,   retreat:0,   counter:false, stam:0.35 },
+    { name:'せっかち',   speed:0.85, waitMin:0.25, waitMax:0.6, guard:0.12, react:0.2,  dist:0.45, strafe:0,   retreat:0,   counter:false, stam:0.01 },
+    { name:'ガード上手', speed:0.5,  waitMin:0.9,  waitMax:1.8, guard:0.85, react:0.06, dist:0.7,  strafe:0,   retreat:0,   counter:true,  stam:0.55 },
+    { name:'逃げ足',     speed:0.8,  waitMin:0.4,  waitMax:0.9, guard:0.35, react:0.12, dist:0.6,  strafe:0,   retreat:1.1, counter:false, stam:0.3 },
+    { name:'回り込み',   speed:0.75, waitMin:0.5,  waitMax:1.1, guard:0.4,  react:0.12, dist:0.65, strafe:0.9, retreat:0,   counter:false, stam:0.3 },
+  ];
+  const RETREAT_DIST = 1.6;   // 逃げ足：攻撃したあと下がる距離
+  const TIRED_DIST = 0.6;     // スタミナが足りない間は、これだけ離れて回復を待つ
+  // stam：攻撃するのに残しておきたいスタミナの割合（せっかちは尽きるまで攻める）
+
+  const NB8 = [[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]];
+
+  // ---------- 状態 ----------
+  let state = 'draw';       // draw / intro / fight / ending / over
+  let introT = 0;           // 登場演出の経過時間
+  let player = null, enemy = null;
+  let acc = 0, endT = 0;
+  let hitStop = 0, slowT = 0, shake = 0;   // 演出用：ヒットストップ・スロー・カメラの揺れ
+  const drags = new Map();
+
+  // ===== お絵かき =====
+  const pad = $('pad'), pctx = pad.getContext('2d');
+  let hasInk = false;
+  function padPos(e){
+    const r = pad.getBoundingClientRect();
+    return [(e.clientX - r.left) / r.width * PAD_RES, (e.clientY - r.top) / r.height * PAD_RES];
+  }
+  let penColor = COLORS[0][0], tool = 'pen';
+  // 色えらびのボタンを作る
+  COLORS.forEach(([hex, name], k) => {
+    const b = document.createElement('button');
+    b.className = 'sw'; b.style.setProperty('--c', hex);
+    b.setAttribute('aria-label', name); b.setAttribute('aria-pressed', String(k === 0));
+    b.addEventListener('click', () => {
+      penColor = hex;
+      document.querySelectorAll('.sw').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      if (tool === 'eraser') setTool('pen');   // 消しゴム中に色を選んだら、その色で描きたいはずなのでペンに戻す
+    });
+    $('colors').appendChild(b);
+  });
+  const setTool = t => {
+    tool = t;
+    $('toolPen').setAttribute('aria-pressed', String(t === 'pen'));
+    $('toolFill').setAttribute('aria-pressed', String(t === 'fill'));
+    $('toolEraser').setAttribute('aria-pressed', String(t === 'eraser'));
+  };
+  $('toolPen').addEventListener('click', () => setTool('pen'));
+  $('toolFill').addEventListener('click', () => setTool('fill'));
+  $('toolEraser').addEventListener('click', () => setTool('eraser'));
+
+  // 塗りつぶし：押した所と同じ色でつながっている範囲を塗る
+  function floodFill(px, py, hex){
+    const W = PAD_RES, N = W * W;
+    const x0 = Math.max(0, Math.min(W - 1, Math.floor(px))), y0 = Math.max(0, Math.min(W - 1, Math.floor(py)));
+    const img = pctx.getImageData(0, 0, W, W), d = img.data;
+    const fr = parseInt(hex.slice(1, 3), 16), fg = parseInt(hex.slice(3, 5), 16), fb = parseInt(hex.slice(5, 7), 16);
+    const k0 = (y0 * W + x0) * 4, tr = d[k0], tg = d[k0+1], tb = d[k0+2], ta = d[k0+3];
+    if (ta > 200 && Math.abs(tr - fr) + Math.abs(tg - fg) + Math.abs(tb - fb) < 12) return false;   // もう同じ色
+    const empty = ta < FILL_ALPHA;   // 何も描いていない所は透明度だけで判定（透明な所の色は当てにならない）
+    const match = i => {
+      const k = i * 4;
+      if (empty) return d[k+3] < FILL_ALPHA;
+      return Math.abs(d[k] - tr) + Math.abs(d[k+1] - tg) + Math.abs(d[k+2] - tb) + Math.abs(d[k+3] - ta) <= FILL_TOL;
+    };
+    const area = new Uint8Array(N), q = new Int32Array(N);
+    let h = 0, t = 0;
+    area[y0 * W + x0] = 1; q[t++] = y0 * W + x0;
+    while (h < t){
+      const i = q[h++], x = i % W, y = (i / W) | 0;
+      const go = j => { if (!area[j] && match(j)){ area[j] = 1; q[t++] = j; } };
+      if (x > 0) go(i - 1); if (x < W - 1) go(i + 1); if (y > 0) go(i - W); if (y < W - 1) go(i + W);
+    }
+    // 少し外側まで広げ、線のふち（元の色と線の色が混ざった所）にも色を乗せてすき間を無くす
+    let grown = area;
+    for (let r = 0; r < FILL_BLEED; r++) grown = dilate(grown, W, W);
+    const R = FILL_BLEED + 1;   // ふちの画素から線の色を探す範囲
+    for (let i = 0; i < N; i++){
+      if (!grown[i]) continue;
+      const k = i * 4;
+      if (area[i]){ d[k] = fr; d[k+1] = fg; d[k+2] = fb; d[k+3] = 255; continue; }
+      if (empty){
+        // 何も無い所に塗った：ふちの半透明な部分は、透けているぶんだけ下に色を敷く
+        const a = d[k+3] / 255;
+        d[k] = d[k] * a + fr * (1 - a); d[k+1] = d[k+1] * a + fg * (1 - a); d[k+2] = d[k+2] * a + fb * (1 - a); d[k+3] = 255;
+        continue;
+      }
+      // 色の上に塗った：ふちの画素は不透明で「元の色」と「線の色」が混ざっているので、
+      // 透明度では判定できない。近くの線の色を探して混ざり具合を求め、「元の色」のぶんだけを新しい色に置き換える
+      const x = i % W, y = (i / W) | 0;
+      let lr = tr, lg = tg, lb = tb, best = 0;
+      for (let dy = -R; dy <= R; dy++){
+        const yy = y + dy; if (yy < 0 || yy >= W) continue;
+        for (let dx = -R; dx <= R; dx++){
+          const xx = x + dx; if (xx < 0 || xx >= W) continue;
+          const j = (yy * W + xx) * 4;
+          if (grown[yy * W + xx] || d[j+3] < 200) continue;
+          const dist = Math.abs(d[j] - tr) + Math.abs(d[j+1] - tg) + Math.abs(d[j+2] - tb);
+          if (dist > best){ best = dist; lr = d[j]; lg = d[j+1]; lb = d[j+2]; }
+        }
+      }
+      const er = d[k] - tr, eg = d[k+1] - tg, eb = d[k+2] - tb;
+      let c;   // この画素に含まれる「線の色」の割合（0=元の色だけ、1=線の色だけ）
+      if (best > FILL_TOL){
+        const vr = lr - tr, vg = lg - tg, vb = lb - tb;
+        c = (er * vr + eg * vg + eb * vb) / (vr * vr + vg * vg + vb * vb);
+      } else {
+        c = (Math.abs(er) + Math.abs(eg) + Math.abs(eb)) / 255;   // 線が見つからない所（透明との境目など）は色の差で代用
+      }
+      c = Math.max(0, Math.min(1, c));
+      d[k] = fr * (1 - c) + lr * c; d[k+1] = fg * (1 - c) + lg * c; d[k+2] = fb * (1 - c) + lb * c;
+      if (best > FILL_TOL) d[k+3] = 255;   // 線のふちは不透明にそろえる（透明との境目は元の透け具合のまま）
+    }
+    pctx.putImageData(img, 0, 0);
+    return true;
+  }
+
+  // 線を引く。erase のときは色を乗せる代わりに透明に戻す（消しゴム）
+  function penLine(a, b, erase){
+    pctx.globalCompositeOperation = erase ? 'destination-out' : 'source-over';
+    pctx.strokeStyle = penColor; pctx.lineWidth = erase ? ERASER_W : PEN_W;
+    pctx.lineCap = pctx.lineJoin = 'round';
+    pctx.beginPath(); pctx.moveTo(a[0], a[1]); pctx.lineTo(b[0] + 0.01, b[1]); pctx.stroke();
+    pctx.globalCompositeOperation = 'source-over';
+  }
+  // 消しゴムのあと：絵が残っているか調べて「たたかう」の有効・無効を合わせる（線の判定と同じしきい値）
+  function refreshInk(){
+    const d = pctx.getImageData(0, 0, PAD_RES, PAD_RES).data;
+    hasInk = false;
+    for (let i = 3; i < d.length; i += 4) if (d[i] > 40){ hasInk = true; break; }
+    $('go').disabled = !hasInk;
+  }
+  // 1つ戻す：描く・塗る・全部消すの直前の絵を保存しておき、押すと1つ前に戻す
+  // 保存は画素データで持つ（iPhoneのブラウザはキャンバスに使えるメモリが少なく、キャンバスで何枚も持つと絵が崩れるため）
+  const history = [];
+  function pushUndo(){
+    history.push({ d:pctx.getImageData(0, 0, PAD_RES, PAD_RES), ink:hasInk });
+    if (history.length > UNDO_MAX) history.shift();
+    $('undo').disabled = false;
+  }
+  function undo(){
+    const h = history.pop();
+    if (!h) return;
+    pctx.putImageData(h.d, 0, 0);
+    hasInk = h.ink; $('go').disabled = !hasInk;
+    $('undo').disabled = !history.length;
+  }
+  $('undo').addEventListener('click', undo);
+  // PC：Ctrl+Z（Macは⌘+Z）でも戻す
+  addEventListener('keydown', e => {
+    if (state === 'draw' && !libOpen && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); undo(); }
+  });
+
+  pad.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    for (const d of drags.values()) if (d.kind === 'pad') return;   // 1本指だけで描く
+    const p = padPos(e);
+    if (tool === 'fill'){
+      pushUndo();
+      if (floodFill(p[0], p[1], penColor)){ hasInk = true; $('go').disabled = false; }
+      else { history.pop(); $('undo').disabled = !history.length; }   // 何も塗れなかったら記録しない
+      return;
+    }
+    const erase = tool === 'eraser';
+    if (erase && !hasInk) return;   // 何も無い所を消しても変わらないので記録しない
+    pushUndo();
+    pad.setPointerCapture(e.pointerId);
+    drags.set(e.pointerId, { kind:'pad', last:p, erase });
+    penLine(p, p, erase);
+    if (!erase){ hasInk = true; $('go').disabled = false; }
+  });
+  $('clear').addEventListener('click', () => {
+    if (hasInk) pushUndo();   // 全部消したあとも「1つ戻す」で戻せる
+    pctx.clearRect(0, 0, PAD_RES, PAD_RES);
+    hasInk = false; $('go').disabled = true;
+  });
+
+  // ===== ライブラリ：好きな絵を何枚も保存しておき、あとで開ける =====
+  // 保存先は IndexedDB。絵は PNG のバイト列（ArrayBuffer）で入れる
+  // （localStorage の文字列だと 5MB 程度で頭打ちになり base64 で 1.4 倍に膨らむ。Blob のまま入れると Safari で再読み込み後に開けなくなることがある）
+  // 1件 = { id, t:保存した時刻, png:絵そのもの, thumb:一覧用の小さい絵 }。開けない環境では、その回だけメモリ上に残す
+  let lib = [];
+  let db = null;
+  const dbReady = new Promise(resolve => {
+    try {
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore(IDB_STORE, { keyPath:'id' }); };
+      req.onsuccess = () => { db = req.result; resolve(); };
+      req.onerror = req.onblocked = () => resolve();
+    } catch(e) { resolve(); }
+  });
+  // 1回の読み書きを Promise にする：fn(表) の結果を、書き込みが終わってから返す
+  function dbRun(mode, fn){
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error('IndexedDB が使えない'));
+      let req = null;
+      try {
+        const tx = db.transaction(IDB_STORE, mode);
+        req = fn(tx.objectStore(IDB_STORE));
+        tx.oncomplete = () => resolve(req && req.result);
+        tx.onerror = tx.onabort = () => reject(tx.error);
+      } catch(e) { reject(e); }
+    });
+  }
+  // 保存してある絵を読み込む（新しいものが先頭）。開いている最中なら一覧も作り直す
+  dbReady.then(() => dbRun('readonly', st => st.getAll())).then(rows => {
+    lib = (rows || []).sort((a, b) => b.t - a.t);
+    if (libOpen) renderLib();
+  }).catch(() => {});
+
+  const thumbCanvas = document.createElement('canvas');
+  thumbCanvas.width = thumbCanvas.height = THUMB_RES;
+  const toBlob = c => new Promise(resolve => c.toBlob(resolve, 'image/png'));
+  // FileReader で変換する（古い iPhone でも動く書き方）
+  const readAs = (how, x) => new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result); r.onerror = () => reject(r.error);
+    r[how](x);
+  });
+  const toBytes = blob => readAs('readAsArrayBuffer', blob);
+  // 保存してあるバイト列を <img> に渡せる data URL にする（昔の形式で Blob のまま入っていても同じ道で通る）
+  const toDataUrl = bytes => readAs('readAsDataURL', new Blob([bytes], { type:'image/png' }));
+  const libEl = $('lib'), libGrid = $('libGrid'), libMsg = $('libMsg');
+  let libOpen = false, saving = false, armedId = null, armTimer = 0, msgTimer = 0;
+  function showLibMsg(text, autoClear){
+    clearTimeout(msgTimer);
+    libMsg.textContent = text;
+    if (autoClear) msgTimer = setTimeout(() => { libMsg.textContent = ''; }, 1500);
+  }
+  // 一覧用の小さい絵の data URL は1件につき1回だけ作って持っておく
+  const thumbSrc = it => it.thumbSrc || (it.thumbSrc = toDataUrl(it.thumb));
+  // 一覧を作り直す
+  function renderLib(){
+    libGrid.innerHTML = '';
+    $('libEmpty').hidden = lib.length > 0;
+    lib.forEach((it, k) => {
+      const item = document.createElement('div');
+      item.className = 'item';
+      const pick = document.createElement('button');
+      pick.className = 'pick';
+      pick.setAttribute('aria-label', `保存した絵 ${k + 1} を開く`);
+      const img = document.createElement('img');
+      img.alt = ''; thumbSrc(it).then(src => { img.src = src; }).catch(() => {});
+      pick.appendChild(img);
+      pick.addEventListener('click', () => openFromLib(it));
+      const shr = document.createElement('button');
+      shr.className = 'shr';
+      shr.setAttribute('aria-label', `保存した絵 ${k + 1} を共有する`);
+      shr.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M5 12v8h14v-8"/></svg>共有';
+      shr.addEventListener('click', () => shareFromLib(it));
+      const del = document.createElement('button');
+      del.className = 'del';
+      del.setAttribute('aria-label', `保存した絵 ${k + 1} を消す`);
+      if (it.id === armedId) del.classList.add('arm');
+      del.addEventListener('click', () => deleteFromLib(it));
+      item.appendChild(pick); item.appendChild(shr); item.appendChild(del);
+      libGrid.appendChild(item);
+    });
+  }
+  function disarm(){
+    clearTimeout(armTimer); armedId = null;
+    libGrid.querySelectorAll('.del.arm').forEach(b => b.classList.remove('arm'));
+  }
+  // いまの絵を保存：先頭に足す。いっぱいのときは知らせるだけ。端末に書けなかったときはこの回だけ残す
+  $('libSave').addEventListener('click', async () => {
+    if (!hasInk || saving) return;
+    if (lib.length >= LIB_MAX){ showLibMsg(`いっぱいです（${LIB_MAX}枚まで）。いらない絵を消してください`); return; }
+    saving = true; $('libSave').disabled = true;
+    try {
+      const tc = thumbCanvas.getContext('2d');
+      tc.clearRect(0, 0, THUMB_RES, THUMB_RES);
+      tc.drawImage(pad, 0, 0, THUMB_RES, THUMB_RES);
+      const [pngBlob, thumbBlob] = await Promise.all([toBlob(pad), toBlob(thumbCanvas)]);
+      if (!pngBlob || !thumbBlob) throw new Error('PNG にできなかった');
+      const [png, thumb] = await Promise.all([toBytes(pngBlob), toBytes(thumbBlob)]);
+      const entry = { id:Date.now().toString(36) + Math.random().toString(36).slice(2, 6), t:Date.now(), png, thumb };
+      let stored = true;
+      try { await dbReady; await dbRun('readwrite', st => st.add(entry)); } catch(e) { stored = false; }
+      lib.unshift(entry);
+      disarm(); renderLib();
+      showLibMsg(stored ? '保存しました' : '端末には保存できませんでした（この回だけ残ります）', stored);
+    } catch(e) {
+      showLibMsg('保存できませんでした');
+    }
+    saving = false; $('libSave').disabled = !hasInk;
+  });
+  // 保存した絵を開く：いまの絵は「1つ戻す」で戻せるように残しておく
+  function openFromLib(it){
+    const img = new Image();
+    img.onload = () => {
+      pushUndo();
+      pctx.clearRect(0, 0, PAD_RES, PAD_RES);
+      pctx.drawImage(img, 0, 0, PAD_RES, PAD_RES);
+      hasInk = true; $('go').disabled = false;
+      setLibOpen(false);
+    };
+    img.onerror = () => showLibMsg('この絵は開けませんでした');
+    toDataUrl(it.png).then(src => { img.src = src; }).catch(img.onerror);
+  }
+  // 消す：1回目は赤い「消す」にして、もう1回押したら消える（押し間違いで消えないように）
+  function deleteFromLib(it){
+    if (armedId !== it.id){
+      disarm(); armedId = it.id;
+      libGrid.querySelectorAll('.del').forEach((b, k) => b.classList.toggle('arm', lib[k] === it));
+      armTimer = setTimeout(disarm, DEL_ARM_MS);
+      return;
+    }
+    disarm();
+    lib = lib.filter(x => x !== it);
+    dbRun('readwrite', st => st.delete(it.id)).catch(() => {});
+    renderLib();
+  }
+  // 共有：保存した絵（PNG）をそのままファイルとして友だちに渡す。受け取った側は「読み込む」で使える
+  // 共有シートはユーザー操作の直後にしか開けないので、保存してあるバイト列からその場で同期的にファイルを作る
+  function shareFromLib(it){
+    const file = new File([it.png], 'rakugaki.png', { type:'image/png' });
+    const text = `ラクガキファイターの絵\nライブラリの「読み込む」で使えるよ\n${location.href.split(/[?#]/)[0]}`;
+    // 1) 画像を渡せる共有シート（スマホなど）: 絵＋文面
+    if (navigator.canShare && navigator.canShare({ files:[file] })){
+      navigator.share({ text, files:[file] }).catch(() => {});
+      return;
+    }
+    // 2) 画像を渡せない環境（PCのブラウザなど）: PNG をダウンロードして、好きな方法で送ってもらう
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(file); a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    showLibMsg('PNG をダウンロードしました。友だちに送ってください');
+  }
+  // 読み込む：画像ファイル（友だちから受け取った絵など）を選んでキャンバスに取り込む
+  $('libLoad').addEventListener('click', () => $('libFile').click());
+  $('libFile').addEventListener('change', async () => {
+    const inp = $('libFile'), file = inp.files && inp.files[0];
+    inp.value = '';   // 同じファイルをもう一度選べるように空にしておく
+    if (!file) return;
+    try {
+      const got = importedPixels(await loadImageFile(file));
+      if (!got.ink){ showLibMsg('この画像には絵が見つかりませんでした'); return; }
+      pushUndo();
+      pctx.clearRect(0, 0, PAD_RES, PAD_RES);
+      pctx.putImageData(got.data, 0, 0);
+      hasInk = true; $('go').disabled = false;
+      setLibOpen(false);
+    } catch(e) {
+      showLibMsg('この画像は読み込めませんでした');
+    }
+  });
+  // 選ばれた画像ファイルを <img> として開く（開けない形式なら失敗する）
+  async function loadImageFile(file){
+    const src = await readAs('readAsDataURL', file);
+    return new Promise((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => resolve(im); im.onerror = () => reject(new Error('画像として開けない'));
+      im.src = src;
+    });
+  }
+  // 読み込んだ画像をキャンバスの大きさに収めた画素データにする
+  // 透明な所が1つもない画像（LINE などで JPEG に変わった絵や、白い紙に描いた写真）は、白に近い所を透明にして絵だけを残す
+  function importedPixels(img){
+    const c = document.createElement('canvas'); c.width = c.height = PAD_RES;
+    const g = c.getContext('2d', { willReadFrequently:true });
+    const sc = Math.min(PAD_RES / img.naturalWidth, PAD_RES / img.naturalHeight);   // はみ出さないように縮めて真ん中に置く
+    const w = Math.round(img.naturalWidth * sc), h = Math.round(img.naturalHeight * sc);
+    const x0 = Math.round((PAD_RES - w) / 2), y0 = Math.round((PAD_RES - h) / 2);
+    g.drawImage(img, x0, y0, w, h);
+    const data = g.getImageData(0, 0, PAD_RES, PAD_RES), d = data.data, N = PAD_RES * PAD_RES;
+    c.width = c.height = 0;   // 使い終わったキャンバスはすぐ手放す（iPhoneのキャンバス用メモリ対策）
+    // 透明の有無は画像を置いた範囲だけで見る（縦横比が違うと上下や左右に透明な余白ができるため）
+    let opaque = true;
+    for (let y = y0; y < y0 + h && opaque; y++) for (let x = x0; x < x0 + w; x++) if (d[(y * PAD_RES + x) * 4 + 3] < 255){ opaque = false; break; }
+    if (opaque) for (let i = 0; i < N; i++){
+      const far = 255 - Math.min(d[i * 4], d[i * 4 + 1], d[i * 4 + 2]);
+      d[i * 4 + 3] = Math.min(d[i * 4 + 3], far * IMPORT_WHITE_GAIN);   // 余白の透明な所はそのまま
+    }
+    let ink = false;
+    for (let i = 3; i < d.length; i += 4) if (d[i] > 40){ ink = true; break; }   // 線の判定（makeTexture）と同じしきい値
+    return { data, ink };
+  }
+  function setLibOpen(open){
+    libOpen = open;
+    libEl.hidden = !open;
+    if (open){
+      $('libSave').disabled = !hasInk || saving;
+      libMsg.textContent = '';
+      disarm(); renderLib();
+      $('libClose').focus();
+    } else {
+      $('libBtn').focus();
+    }
+  }
+  $('libBtn').addEventListener('click', () => setLibOpen(true));
+  $('libClose').addEventListener('click', () => setLibOpen(false));
+  // 背景（暗い所）を押しても閉じる
+  libEl.addEventListener('click', e => { if (e.target === libEl) setLibOpen(false); });
+  addEventListener('keydown', e => { if (libOpen && e.key === 'Escape') setLibOpen(false); });
+
+  // ===== 絵 → テクスチャ（線で囲まれた内側は白で塗って1枚の紙にする） =====
+  function dilate(m, W, H){
+    const o = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+      if (!m[y * W + x]) continue;
+      for (let dy = -1; dy <= 1; dy++){
+        const yy = y + dy; if (yy < 0 || yy >= H) continue;
+        for (let dx = -1; dx <= 1; dx++){
+          const xx = x + dx; if (xx < 0 || xx >= W) continue;
+          o[yy * W + xx] = 1;
+        }
+      }
+    }
+    return o;
+  }
+  // 外周から壁を越えずに届く場所（4近傍で広げて、斜めのすき間から漏れないようにする）
+  function outsideOf(bar, W, H){
+    const out = new Uint8Array(W * H), q = new Int32Array(W * H);
+    let h = 0, t = 0;
+    const push = i => { if (!bar[i] && !out[i]){ out[i] = 1; q[t++] = i; } };
+    for (let x = 0; x < W; x++){ push(x); push((H - 1) * W + x); }
+    for (let y = 0; y < H; y++){ push(y * W); push(y * W + W - 1); }
+    while (h < t){
+      const i = q[h++], x = i % W, y = (i / W) | 0;
+      if (x > 0) push(i - 1); if (x < W - 1) push(i + 1);
+      if (y > 0) push(i - W); if (y < H - 1) push(i + W);
+    }
+    return out;
+  }
+  function makeTexture(src){
+    const c = document.createElement('canvas'); c.width = c.height = TEX;
+    const g = c.getContext('2d', { willReadFrequently:true });
+    g.drawImage(src, 0, 0, TEX, TEX);
+    const img = g.getImageData(0, 0, TEX, TEX), d = img.data, N = TEX * TEX;
+    // 線で囲まれた内側の判定は半分の解像度で行う（境目は線の下に隠れるので粗くても見えない）
+    const M = MASK_RES, mc = document.createElement('canvas'); mc.width = mc.height = M;
+    const mg = mc.getContext('2d', { willReadFrequently:true });
+    mg.drawImage(src, 0, 0, M, M);
+    const md = mg.getImageData(0, 0, M, M).data, MN = M * M;
+    mc.width = mc.height = 0;   // 使い終わったキャンバスはすぐ手放す（iPhoneのキャンバス用メモリ対策）
+    const st = new Uint8Array(MN);
+    for (let i = 0; i < MN; i++) st[i] = md[i * 4 + 3] > 40 ? 1 : 0;
+    const bar = dilate(dilate(st, M, M), M, M);   // 線の小さなすき間をふさいでから内側を判定
+    const out = outsideOf(bar, M, M);
+    const inner = new Uint8Array(MN);
+    for (let i = 0; i < MN; i++) inner[i] = (!out[i] && !bar[i]) ? 1 : 0;
+    const fillM = dilate(inner, M, M), sc = M / TEX;
+    for (let i = 0; i < N; i++){
+      if (!fillM[((((i / TEX) | 0) * sc) | 0) * M + (((i % TEX) * sc) | 0)]) continue;
+      const a = d[i * 4 + 3] / 255;
+      d[i * 4]     = d[i * 4]     * a + 255 * (1 - a);
+      d[i * 4 + 1] = d[i * 4 + 1] * a + 255 * (1 - a);
+      d[i * 4 + 2] = d[i * 4 + 2] * a + 255 * (1 - a);
+      d[i * 4 + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    return c;
+  }
+
+  // 表示用のテクスチャ：メッシュ自体が輪郭に沿うので透明度は使わない。
+  // 縁で隣の透明な所の色（黒）が混ざらないよう、絵の色を外側へ広げてから不透明にする
+  function displayTexture(tex){
+    const W = tex.width, c = document.createElement('canvas'); c.width = c.height = W;
+    const g = c.getContext('2d');
+    const src = tex.getContext('2d').getImageData(0, 0, W, W), d = src.data, N = W * W;
+    let have = new Uint8Array(N);
+    for (let i = 0; i < N; i++) have[i] = d[i * 4 + 3] >= 128 ? 1 : 0;
+    for (let pass = 0; pass < 4; pass++){
+      const next = have.slice();
+      for (let i = 0; i < N; i++){
+        if (have[i]) continue;
+        const x = i % W;
+        let j = -1;
+        if (x > 0 && have[i - 1]) j = i - 1;
+        else if (x < W - 1 && have[i + 1]) j = i + 1;
+        else if (i >= W && have[i - W]) j = i - W;
+        else if (i < N - W && have[i + W]) j = i + W;
+        if (j >= 0){ d[i*4] = d[j*4]; d[i*4+1] = d[j*4+1]; d[i*4+2] = d[j*4+2]; next[i] = 1; }
+      }
+      have = next;
+    }
+    for (let i = 0; i < N; i++) d[i * 4 + 3] = 255;
+    g.putImageData(src, 0, 0);
+    return c;
+  }
+
+  // ===== 自動ボーン入れ =====
+  // Zhang-Suen 細線化：形の真ん中を通る1ピクセル幅の線（骨格）を取り出す
+  function thin(m, W, H){
+    const img = m.slice(), del = [];
+    let changed = true;
+    while (changed){
+      changed = false;
+      for (let pass = 0; pass < 2; pass++){
+        del.length = 0;
+        for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++){
+          const i = y * W + x;
+          if (!img[i]) continue;
+          const p2 = img[i-W], p3 = img[i-W+1], p4 = img[i+1], p5 = img[i+W+1],
+                p6 = img[i+W], p7 = img[i+W-1], p8 = img[i-1], p9 = img[i-W-1];
+          const B = p2+p3+p4+p5+p6+p7+p8+p9;
+          if (B < 2 || B > 6) continue;
+          const A = (1-p2)*p3 + (1-p3)*p4 + (1-p4)*p5 + (1-p5)*p6 + (1-p6)*p7 + (1-p7)*p8 + (1-p8)*p9 + (1-p9)*p2;
+          if (A !== 1) continue;
+          if (pass === 0){ if (p2*p4*p6 || p4*p6*p8) continue; }
+          else           { if (p2*p4*p8 || p2*p6*p8) continue; }
+          del.push(i);
+        }
+        for (const i of del) img[i] = 0;
+        if (del.length) changed = true;
+      }
+    }
+    return img;
+  }
+
+  function analyze(tex){
+    const W = ANA, H = ANA, N = W * H;
+    const c = document.createElement('canvas'); c.width = c.height = ANA;
+    const g = c.getContext('2d');
+    g.drawImage(tex, 0, 0, ANA, ANA);
+    const d = g.getImageData(0, 0, W, H).data;
+    c.width = c.height = 0;   // 使い終わったキャンバスはすぐ手放す
+    let m = new Uint8Array(N);
+    for (let i = 0; i < N; i++) m[i] = d[i * 4 + 3] > 90 ? 1 : 0;
+    m = dilate(m, W, H);                                  // 近い線どうしをつなぐ
+    for (let x = 0; x < W; x++){ m[x] = 0; m[(H - 1) * W + x] = 0; }
+    for (let y = 0; y < H; y++){ m[y * W] = 0; m[y * W + W - 1] = 0; }
+
+    // 絵全体の範囲
+    let bx0 = W, by0 = H, bx1 = -1, by1 = -1;
+    for (let i = 0; i < N; i++) if (m[i]){
+      const x = i % W, y = (i / W) | 0;
+      if (x < bx0) bx0 = x; if (x > bx1) bx1 = x; if (y < by0) by0 = y; if (y > by1) by1 = y;
+    }
+    if (bx1 < 0) return null;
+
+    // いちばん大きいかたまりだけで骨格を作る（離れた部分は近いボーンにくっつける）
+    const comp = new Int32Array(N).fill(-1), q = new Int32Array(N);
+    let best = -1, bestN = 0;
+    for (let s = 0; s < N; s++){
+      if (!m[s] || comp[s] >= 0) continue;
+      let h = 0, t = 0; q[t++] = s; comp[s] = s;
+      while (h < t){
+        const i = q[h++], x = i % W, y = (i / W) | 0;
+        for (const [dx, dy] of NB8){
+          const j = (y + dy) * W + x + dx;
+          if (m[j] && comp[j] < 0){ comp[j] = s; q[t++] = j; }
+        }
+      }
+      if (t > bestN){ bestN = t; best = s; }
+    }
+    const main = new Uint8Array(N);
+    let sx = 0, sy = 0;
+    for (let i = 0; i < N; i++) if (comp[i] === best){ main[i] = 1; sx += i % W; sy += (i / W) | 0; }
+    const gx = sx / bestN, gy = sy / bestN;
+
+    // 太さ（輪郭からの距離）：当たり判定の半径に使う
+    const dist = new Int16Array(N).fill(-1);
+    { let h = 0, t = 0;
+      for (let i = 0; i < N; i++) if (!m[i]){ dist[i] = 0; q[t++] = i; }
+      while (h < t){
+        const i = q[h++], x = i % W, y = (i / W) | 0;
+        for (const [dx, dy] of NB8){
+          const xx = x + dx, yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+          const j = yy * W + xx;
+          if (dist[j] < 0){ dist[j] = dist[i] + 1; q[t++] = j; }
+        }
+      }
+    }
+
+    // 骨格と根元（重心にいちばん近い骨格のピクセル）
+    let sk = thin(main, W, H);
+    let root = -1, rd = Infinity;
+    for (let i = 0; i < N; i++) if (sk[i]){
+      const dd = (i % W - gx) ** 2 + (((i / W) | 0) - gy) ** 2;
+      if (dd < rd){ rd = dd; root = i; }
+    }
+    if (root < 0){
+      for (let i = 0; i < N; i++) if (main[i]){
+        const dd = (i % W - gx) ** 2 + (((i / W) | 0) - gy) ** 2;
+        if (dd < rd){ rd = dd; root = i; }
+      }
+      sk = new Uint8Array(N); sk[root] = 1;
+    }
+
+    // 骨格を根元からたどって木にする（輪っかは自然に切れる）
+    const par = new Int32Array(N).fill(-2), kids = new Array(N), order = [root];
+    par[root] = -1;
+    for (let h = 0; h < order.length; h++){
+      const i = order[h], x = i % W, y = (i / W) | 0;
+      for (const [dx, dy] of NB8){
+        const j = (y + dy) * W + x + dx;
+        if (sk[j] && par[j] === -2){ par[j] = i; order.push(j); (kids[i] || (kids[i] = [])).push(j); }
+      }
+    }
+    const height = new Int32Array(N);
+    for (let h = order.length - 1; h > 0; h--){
+      const i = order[h];
+      if (height[i] + 1 > height[par[i]]) height[par[i]] = height[i] + 1;
+    }
+    // 分かれ道の短い枝（細線化で出るヒゲ）だけ捨てる。塗った形の角へ伸びる枝も手足として残す
+    // （どんな形でも動くことを優先し、形が崩れるのは遊びとして許容する）
+    const keep = new Array(N);
+    for (const i of order){
+      const k = kids[i] || [];
+      let r;
+      if (k.length <= 1) r = k;
+      else {
+        r = k.filter(c2 => height[c2] + 1 >= SPUR);
+        if (!r.length){ let b = k[0]; for (const c2 of k) if (height[c2] > height[b]) b = c2; r = [b]; }
+      }
+      keep[i] = r;
+    }
+    let total = 0;
+    { const st = [root]; while (st.length){ const i = st.pop(); total++; for (const c2 of keep[i]) st.push(c2); } }
+    const segLen = Math.max(SEG_LEN, Math.ceil(total / (MAX_JOINTS * 0.8)));
+
+    // 骨格に沿って一定間隔・分かれ道・先端に関節を置く
+    const J = [{ p:root, par:-1 }];
+    const lab = new Int16Array(N).fill(-3);              // 各ピクセルがどのボーンに付くか（-2=根元に固定）
+    const st = [[root, 0]];
+    while (st.length){
+      const [p0, j] = st.pop();
+      for (const c2 of keep[p0]){
+        let p = c2, len = 1; const path = [c2];
+        while (keep[p].length === 1 && len < segLen){ p = keep[p][0]; len++; path.push(p); }
+        if (keep[p].length === 0 && len < 3){ for (const qq of path) lab[qq] = j > 0 ? j : -2; continue; }
+        const nj = J.length;
+        J.push({ p, par:j });
+        for (const qq of path) lab[qq] = nj;
+        st.push([p, nj]);
+      }
+    }
+    // 丸や点のように骨格がほぼ1点になる形は、中心から放射状にボーンを伸ばして動けるようにする
+    if (J.length < MIN_JOINTS || total < Math.sqrt(bestN) * RAY_COVER){
+      const rx0 = root % W + 0.5, ry0 = ((root / W) | 0) + 0.5;
+      for (let k = 0; k < RAY_N; k++){
+        const a = Math.PI / 2 + k * Math.PI * 2 / RAY_N;   // 真上から等間隔
+        const dx = Math.cos(a), dy = -Math.sin(a), path = [];
+        for (let t = 1; ; t++){   // 形の外に出るまで進む
+          const x = Math.floor(rx0 + dx * t), y = Math.floor(ry0 + dy * t);
+          if (x < 0 || y < 0 || x >= W || y >= H || !m[y * W + x]) break;
+          const i = y * W + x;
+          if (path[path.length - 1] !== i) path.push(i);
+        }
+        if (path.length < 2) continue;
+        const step = Math.max(1, Math.min(segLen, Math.floor(path.length / 2)));   // 1本に関節を2つ以上置いて曲がるようにする
+        let parent = 0, start = 0;
+        for (let e = step - 1; e < path.length; e += step){
+          const nj = J.length;
+          J.push({ p:path[e], par:parent });
+          for (let q = start; q <= e; q++) lab[path[q]] = nj;
+          parent = nj; start = e + 1;
+        }
+      }
+    }
+
+    let firstChild = -2;
+    for (let j = 1; j < J.length; j++) if (J[j].par === 0){ firstChild = j; break; }
+    lab[root] = firstChild;
+
+    // 絵の各ピクセルを、絵の中を通って近いボーンに割り当てる（腕と胴がくっつかないように）
+    function grow(cond){
+      let h = 0, t = 0;
+      for (let i = 0; i < N; i++) if (lab[i] !== -3) q[t++] = i;
+      while (h < t){
+        const i = q[h++], x = i % W, y = (i / W) | 0;
+        for (const [dx, dy] of NB8){
+          const xx = x + dx, yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+          const j2 = yy * W + xx;
+          if (lab[j2] === -3 && cond(j2)){ lab[j2] = lab[i]; q[t++] = j2; }
+        }
+      }
+    }
+    grow(i => m[i] === 1);   // まず絵の中だけで広げる
+    grow(() => true);         // 離れた部分や余白は近いものに付ける
+
+    // 3D座標へ（足元を y=0、横の中心を x=0）
+    const s = CHAR_H / Math.max(by1 - by0 + 1, (bx1 - bx0 + 1) * 0.7);
+    const cx = (bx0 + bx1 + 1) / 2, base = by1 + 1;
+    const toX = x => (x - cx) * s, toY = y => (base - y) * s;
+    const joints = J.map(o => {
+      const x = o.p % W, y = (o.p / W) | 0;
+      return { x:toX(x + 0.5), y:toY(y + 0.5), par:o.par, rad:Math.max(dist[o.p], 1.5) * s };
+    });
+
+    // 変形用のメッシュ：絵の輪郭（不透明度0.5の線）にぴったり沿わせる（マーチングスクエア）
+    // 格子で切り抜くと縁がガタガタになり、厚みを付けたときに側面が開くため、輪郭上に頂点を置いて厚さ0にする
+    const TW = tex.width, A = tex.getContext('2d').getImageData(0, 0, TW, TW).data;
+    const k4 = TW / ANA;
+    const alphaAt = (X, Y) => {   // 解析座標での不透明度（0〜1、なめらかに補間）
+      const fx = Math.max(0, Math.min(TW - 1.001, X * k4 - 0.5)), fy = Math.max(0, Math.min(TW - 1.001, Y * k4 - 0.5));
+      const ix = Math.floor(fx), iy = Math.floor(fy), tx = fx - ix, ty = fy - iy;
+      const a = (x, y) => A[((y * TW) + x) * 4 + 3];
+      return ((a(ix, iy) * (1 - tx) + a(ix + 1, iy) * tx) * (1 - ty) + (a(ix, iy + 1) * (1 - tx) + a(ix + 1, iy + 1) * tx) * ty) / 255;
+    };
+    const ISO = 0.5;
+    const span = Math.max(bx1 - bx0, by1 - by0) + 3;
+    const stp = Math.max(0.75, span / GRID_N);
+    const x0 = bx0 - 1, y0 = by0 - 1;
+    const nx = Math.ceil((bx1 + 2 - x0) / stp) + 1, ny = Math.ceil((by1 + 2 - y0) / stp) + 1;
+    const val = new Float32Array(nx * ny);
+    for (let iy = 0; iy < ny; iy++) for (let ix = 0; ix < nx; ix++) val[iy * nx + ix] = alphaAt(x0 + ix * stp, y0 + iy * stp);
+    const VX = [], VY = [], onEdge = [];
+    const cornerId = new Int32Array(nx * ny).fill(-1), hId = new Int32Array(nx * ny).fill(-1), vId = new Int32Array(nx * ny).fill(-1);
+    const corner = (ix, iy) => {
+      const g = iy * nx + ix;
+      if (cornerId[g] < 0){ cornerId[g] = VX.length; VX.push(x0 + ix * stp); VY.push(y0 + iy * stp); onEdge.push(0); }
+      return cornerId[g];
+    };
+    const cross = (ids, ax, ay, bx, by, horiz) => {   // 辺の上で不透明度がちょうど0.5になる点
+      const g = ay * nx + ax;
+      if (ids[g] < 0){
+        const va = val[g], vb = val[by * nx + bx], t = Math.max(0, Math.min(1, (ISO - va) / ((vb - va) || 1e-6)));
+        ids[g] = VX.length;
+        VX.push(x0 + (ax + (bx - ax) * t) * stp); VY.push(y0 + (ay + (by - ay) * t) * stp); onEdge.push(1);
+      }
+      return ids[g];
+    };
+    const tris = [];
+    for (let iy = 0; iy < ny - 1; iy++) for (let ix = 0; ix < nx - 1; ix++){
+      const c = [[ix, iy], [ix + 1, iy], [ix + 1, iy + 1], [ix, iy + 1]];
+      const inn = c.map(([x, y]) => val[y * nx + x] >= ISO);
+      if (!inn[0] && !inn[1] && !inn[2] && !inn[3]) continue;
+      const poly = [];
+      for (let e = 0; e < 4; e++){   // 左上→上の辺→右上→右の辺→右下→下の辺→左下→左の辺 の順に一周
+        const [cx, cy] = c[e], [dx, dy] = c[(e + 1) % 4];
+        if (inn[e]) poly.push(corner(cx, cy));
+        if (inn[e] !== inn[(e + 1) % 4]){
+          if (e === 0) poly.push(cross(hId, ix, iy, ix + 1, iy));
+          else if (e === 1) poly.push(cross(vId, ix + 1, iy, ix + 1, iy + 1));
+          else if (e === 2) poly.push(cross(hId, ix, iy + 1, ix + 1, iy + 1));
+          else poly.push(cross(vId, ix, iy, ix, iy + 1));
+        }
+      }
+      for (let k = 1; k + 1 < poly.length; k++) tris.push(poly[0], poly[k], poly[k + 1]);
+    }
+    const nv = VX.length;
+    const rx = new Float32Array(nv), ry = new Float32Array(nv), uv = new Float32Array(nv * 2), vlab = new Int16Array(nv);
+    const clampI = v => Math.max(0, Math.min(ANA - 1, Math.floor(v)));
+    for (let i = 0; i < nv; i++){
+      rx[i] = toX(VX[i]); ry[i] = toY(VY[i]);
+      uv[i * 2] = VX[i] / ANA; uv[i * 2 + 1] = 1 - VY[i] / ANA;
+      vlab[i] = lab[clampI(VY[i]) * W + clampI(VX[i])];
+    }
+    // 表が手前（+z）を向くように三角形の向きをそろえる
+    const index = [];
+    for (let t = 0; t < tris.length; t += 3){
+      const a = tris[t], b = tris[t + 1], c = tris[t + 2];
+      const cr = (rx[b] - rx[a]) * (ry[c] - ry[a]) - (ry[b] - ry[a]) * (rx[c] - rx[a]);
+      if (Math.abs(cr) < 1e-12) continue;
+      if (cr > 0) index.push(a, b, c); else index.push(a, c, b);
+    }
+    // ふくらみの厚さ：輪郭からメッシュの上を何歩で届くか（格子の間隔を掛けて距離にする）。
+    // 細かいばらつきは次のなめらか処理で消えるので、重い最短距離計算はしない
+    const deg = new Int32Array(nv + 1);
+    for (let t = 0; t < index.length; t++) deg[index[t] + 1] += 2;
+    for (let i = 0; i < nv; i++) deg[i + 1] += deg[i];
+    const adj = new Int32Array(deg[nv]), fill = deg.slice(0, nv);
+    for (let t = 0; t < index.length; t += 3){
+      const a = index[t], b = index[t + 1], c = index[t + 2];
+      adj[fill[a]++] = b; adj[fill[a]++] = c; adj[fill[b]++] = a; adj[fill[b]++] = c; adj[fill[c]++] = a; adj[fill[c]++] = b;
+    }
+    const dd = new Float32Array(nv).fill(-1), qq = new Int32Array(nv);
+    let qh = 0, qt = 0;
+    for (let i = 0; i < nv; i++) if (onEdge[i]){ dd[i] = 0; qq[qt++] = i; }
+    while (qh < qt){
+      const v = qq[qh++];
+      for (let k = deg[v]; k < deg[v + 1]; k++){ const w = adj[k]; if (dd[w] < 0){ dd[w] = dd[v] + stp; qq[qt++] = w; } }
+    }
+    // 輪郭のすぐ内側は格子の頂点ごとに距離がばらつき、平方根で厚さにすると縁がノコギリ状になるので、
+    // 輪郭（0）を固定したまま周りの頂点と平均してなめらかにしてから厚さにする
+    for (let i = 0; i < nv; i++) if (dd[i] < 0) dd[i] = 0;
+    let cur = dd, nx2 = new Float32Array(nv);
+    for (let it = 0; it < THICK_SMOOTH; it++){
+      for (let i = 0; i < nv; i++){
+        const n0 = deg[i], n1 = deg[i + 1];
+        if (onEdge[i] || n0 === n1){ nx2[i] = 0; continue; }
+        let sum = 0; for (let k = n0; k < n1; k++) sum += cur[adj[k]];
+        nx2[i] = cur[i] * 0.5 + sum / (n1 - n0) * 0.5;
+      }
+      [cur, nx2] = [nx2, cur];
+    }
+    const thick = new Float32Array(nv);
+    for (let i = 0; i < nv; i++) thick[i] = Math.min(THICK_MAX, INFLATE * Math.sqrt(cur[i]) * s);
+    return { joints, rx, ry, uv, vlab, nv, index, tex, thick };
+  }
+
+  // ===== キャラ（3D） =====
+  let renderer = null, scene = null, camera = null;
+  // 土俵の模様：ノートの方眼をうっすら引く
+  function floorTexture(){
+    const c = document.createElement('canvas'); c.width = c.height = FLOOR_TEX;
+    const g = c.getContext('2d');
+    g.fillStyle = css('--floor'); g.fillRect(0, 0, FLOOR_TEX, FLOOR_TEX);
+    g.strokeStyle = css('--ink'); g.globalAlpha = FLOOR_LINE_A; g.lineWidth = FLOOR_TEX / 400;
+    const n = Math.round(ARENA_R * 2 / FLOOR_CELL), step = FLOOR_TEX / n;
+    g.beginPath();
+    for (let i = 1; i < n; i++){ const v = i * step; g.moveTo(v, 0); g.lineTo(v, FLOOR_TEX); g.moveTo(0, v); g.lineTo(FLOOR_TEX, v); }
+    g.stroke();
+    const t = new THREE.CanvasTexture(c);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();   // 斜めに見たときの線のちらつきを抑える
+    return t;
+  }
+  function initThree(){
+    renderer = new THREE.WebGLRenderer({ canvas:$('view'), antialias:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(css('--bg'));
+    camera = new THREE.PerspectiveCamera(60, 1, 0.5, 100);   // near を離して奥行きの精度を上げる
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(ARENA_R, 64), new THREE.MeshBasicMaterial({ map:floorTexture() }));
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+    // 土俵の縁（奥行きと場外の位置が分かるように）
+    const edge = new THREE.Mesh(new THREE.RingGeometry(ARENA_R - 0.06, ARENA_R, 96), new THREE.MeshBasicMaterial({ color:css('--ink') }));
+    edge.rotation.x = -Math.PI / 2; edge.position.y = 0.005;
+    scene.add(edge);
+    // ふくらみに陰影を付けるための光（真上からの環境光＋斜め上からの光）
+    scene.add(new THREE.HemisphereLight(0xffffff, new THREE.Color(css('--floor')), 0.85));
+    const sun = new THREE.DirectionalLight(0xffffff, 0.45);
+    sun.position.set(2, 5, 3);
+    scene.add(sun);
+  }
+  function resize3(){
+    const c = $('view'), w = c.clientWidth, h = c.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', () => { if (renderer) resize3(); });
+
+  function makeFighter(data, layer){
+    const J = data.joints, n = J.length;
+    const f = {
+      n, par:new Int16Array(n), ox:new Float32Array(n), oy:new Float32Array(n), restY0:J[0].y,
+      rad:new Float32Array(n), len:new Float32Array(n), stiff:new Float32Array(n),
+      pos:new Float32Array(n * 3), prev:new Float32Array(n * 3), frame:new Float32Array(n * 12),
+      atkMark:new Uint8Array(n), allIdx:[...Array(n).keys()],
+    };
+    const depth = new Int16Array(n), nk = new Int16Array(n), kidsOf = [...Array(n)].map(() => []);
+    let maxD = 1;
+    for (let j = 0; j < n; j++){
+      f.par[j] = J[j].par;
+      f.ox[j] = J[j].x - J[0].x; f.oy[j] = J[j].y - J[0].y;
+      f.rad[j] = J[j].rad;
+      if (j > 0){
+        const p = J[j].par;
+        f.len[j] = Math.hypot(J[j].x - J[p].x, J[j].y - J[p].y);
+        depth[j] = depth[p] + 1; if (depth[j] > maxD) maxD = depth[j];
+        nk[p]++; kidsOf[p].push(j);
+      }
+    }
+    for (let j = 1; j < n; j++) f.stiff[j] = STIFF_ROOT + (STIFF_TIP - STIFF_ROOT) * (depth[j] / maxD);
+    // 同じ絵の中で部位が重なったときのちらつき防止：ボーンごとに厚さを少しずつ足す（手足ほど外側）
+    f.zoff = new Float32Array(n);
+    for (let j = 1; j < n; j++) f.zoff[j] = depth[j] * Z_LAYER + j * Z_SUB;
+
+    // 攻撃に使う手足（先端から分かれ道までの関節の並び）
+    f.chains = [];
+    for (let j = 1; j < n; j++){
+      if (nk[j] !== 0) continue;
+      // 先端から根元へ、分かれ道までたどる
+      const joints = [j];
+      let p = f.par[j];
+      while (p > 0 && nk[p] === 1){ joints.unshift(p); p = f.par[p]; }
+      const cum = []; let sum = 0;
+      for (const k of joints){ sum += f.len[k]; cum.push(sum); }
+      f.chains.push({ pivot:p, joints, cum, dirX:(J[j].x - J[p].x) / (sum || 1), reach:sum + Math.abs(f.ox[p]) });
+    }
+    f.reach = f.chains.length ? Math.max(...f.chains.map(c => c.reach)) : 0;
+    // 足：先端が根元より下で、地面の近くにある手足。左右の位置で並べ、交互に逆向きに振る
+    const tipY = c => J[c.joints[c.joints.length - 1]].y;
+    let legs = f.chains.filter(c => tipY(c) < J[0].y && tipY(c) < CHAR_H * LEG_LOW);
+    if (!legs.length) legs = f.chains.filter(c => tipY(c) < J[0].y).sort((a, b) => tipY(a) - tipY(b)).slice(0, 2);
+    legs.sort((a, b) => J[a.joints[a.joints.length - 1]].x - J[b.joints[b.joints.length - 1]].x);
+    f.legOf = new Int16Array(n).fill(-1);
+    f.legs = legs.map((c, k) => { for (const j of c.joints) f.legOf[j] = k; return { pivot:c.pivot, phase:k % 2 ? Math.PI : 0 }; });
+    // 防御の構え：足以外の手足を体の前へ寄せる（付け根からの順番で、先ほど前へ）
+    f.armOf = new Int16Array(n).fill(-1); f.armRank = new Float32Array(n);
+    f.arms = f.chains.filter(c => !legs.includes(c)).map((c, k) => {
+      c.joints.forEach((j, i) => { f.armOf[j] = k; f.armRank[j] = (i + 1) / c.joints.length; });
+      return { pivot:c.pivot };
+    });
+    f.body = Math.max(0.25, f.rad[0] + 0.1);
+    let hw = 0.2;
+    for (let j = 0; j < n; j++) hw = Math.max(hw, Math.abs(f.ox[j]) + f.rad[j]);
+    f.halfW = hw;
+
+    // 頂点ごとのボーン割り当て（ボーンの向きに沿った座標で持つ）
+    const nv = data.nv;
+    f.nv = nv;
+    f.bj1 = new Int16Array(nv); f.bu1 = new Float32Array(nv); f.bv1 = new Float32Array(nv);
+    f.bj2 = new Int16Array(nv); f.bu2 = new Float32Array(nv); f.bv2 = new Float32Array(nv); f.bw = new Float32Array(nv);
+    const local = (j, px, py) => {
+      const A = J[J[j].par], B = J[j];
+      const L = Math.hypot(B.x - A.x, B.y - A.y) || 1e-6;
+      const X0x = (B.x - A.x) / L, X0y = (B.y - A.y) / L;
+      return [(px - A.x) * X0x + (py - A.y) * X0y, (px - A.x) * -X0y + (py - A.y) * X0x, L];
+    };
+    for (let i = 0; i < nv; i++){
+      const lb = data.vlab[i], px = data.rx[i], py = data.ry[i];
+      if (lb <= 0 || n === 1){ f.bj1[i] = -1; f.bu1[i] = px - J[0].x; f.bv1[i] = py - J[0].y; continue; }
+      const [u, v, L] = local(lb, px, py);
+      f.bj1[i] = lb; f.bu1[i] = u; f.bv1[i] = v;
+      // 関節の手前・先の両側で隣のボーンと半分ずつ混ぜる（関節の位置で左右が同じ形になり、継ぎ目が裂けない）
+      const pj = J[lb].par, bl = L * BLEND;
+      let j2 = -1, w = 0;
+      const nearest = (list, A) => {   // 候補のボーンのうち、この頂点に一番近いもの
+        let best = Infinity, r = -1;
+        for (const c of list){
+          const B = J[c], d = segDist(px, py, 0, A.x, A.y, 0, B.x, B.y, 0);
+          if (d < best){ best = d; r = c; }
+        }
+        return r;
+      };
+      if (u < bl && pj > 0){ j2 = pj; w = 0.5 * (1 - Math.max(u, 0) / bl); }
+      else if (u < bl && kidsOf[0].length > 1){   // 根元から出るボーンどうしは互いに混ぜる
+        j2 = nearest(kidsOf[0].filter(c => c !== lb), J[0]); w = 0.5 * (1 - Math.max(u, 0) / bl);
+      }
+      else if (kidsOf[lb].length && u > L - bl){
+        j2 = nearest(kidsOf[lb], J[lb]);   // 子が複数あるときは一番近い子
+        w = 0.5 * Math.min(1, (u - (L - bl)) / bl);
+      }
+      if (j2 > 0 && w > 0){
+        const [u2, v2] = local(j2, px, py);
+        f.bj2[i] = j2; f.bu2[i] = u2; f.bv2[i] = v2; f.bw[i] = w;
+      }
+    }
+
+    // メッシュ：表（+厚さ）と裏（-厚さ）の2枚を重ねて、ふくらんだ立体にする
+    f.thick = data.thick;
+    f.maxThick = data.thick.reduce((a, b) => Math.max(a, b), 0);
+    f.vpos = new Float32Array(nv * 6);
+    const uv2 = new Float32Array(nv * 4);
+    uv2.set(data.uv, 0); uv2.set(data.uv, nv * 2);
+    const idx = new Uint16Array(data.index.length * 2);
+    idx.set(data.index, 0);
+    for (let t = 0; t < data.index.length; t += 3){   // 裏は向きを逆にする
+      idx[data.index.length + t] = data.index[t] + nv;
+      idx[data.index.length + t + 1] = data.index[t + 2] + nv;
+      idx[data.index.length + t + 2] = data.index[t + 1] + nv;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(f.vpos, 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv2, 2));
+    geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    const tex = new THREE.CanvasTexture(displayTexture(data.tex));
+    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();   // 斜めから見たときもぼやけ・ちらつきを抑える
+    // 2人が同じ奥行きで重なったときのちらつき防止：描画の奥行きをキャラごとにずらす（layer が小さいほど手前）
+    const mat = new THREE.MeshLambertMaterial({ map:tex, side:THREE.DoubleSide,
+      polygonOffset:true, polygonOffsetFactor:layer * 2, polygonOffsetUnits:layer * 8 });
+    f.mesh = new THREE.Mesh(geo, mat);
+    f.mesh.frustumCulled = false;
+    f.geo = geo; f.tex = tex; f.mat = mat; f.inflate = 1;
+    // 足元の影（奥行きの位置を分かりやすくするため）
+    f.shadow = new THREE.Mesh(new THREE.CircleGeometry(1, 32),
+      new THREE.MeshBasicMaterial({ color:0x000000, transparent:true, opacity:0.18, depthWrite:false }));
+    f.shadow.rotation.x = -Math.PI / 2;
+    const sr = Math.max(0.3, f.halfW * 0.6);   // 向きが変わるので丸い影にする
+    f.shadow.scale.set(sr, sr, 1);
+    scene.add(f.mesh, f.shadow);
+    return f;
+  }
+  function disposeFighter(f){
+    if (!f) return;
+    scene.remove(f.mesh, f.shadow);
+    f.geo.dispose(); f.mat.dispose(); f.tex.dispose();
+    if (f.tex.image) f.tex.image.width = f.tex.image.height = 0;   // 表示用の絵のキャンバスも手放す
+    f.shadow.geometry.dispose(); f.shadow.material.dispose();
+  }
+  const rand = ([a, b]) => a + Math.random() * (b - a);
+  // 向き：絵の正面（nx, nz）を相手のほうへ向ける。instant なら一瞬で向く
+  function faceToward(f, opp, dt, instant){
+    const dx = opp.x - f.x, dz = opp.z - f.z;
+    if (Math.hypot(dx, dz) < 1e-4) return;
+    const want = Math.atan2(dx, dz);
+    if (instant || f.yaw === undefined){ f.yaw = want; }
+    else {
+      let d = want - f.yaw;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      f.yaw += Math.max(-TURN_SPEED * dt, Math.min(TURN_SPEED * dt, d));
+    }
+    f.nx = Math.sin(f.yaw); f.nz = Math.cos(f.yaw);
+  }
+  function resetFighter(f, x, z){
+    // 能力は対戦ごとにランダム（表示しやすいよう力と速さは0.1刻み）
+    f.power = Math.round(rand(STAT.power) * 10) / 10;
+    f.spd = Math.round(rand(STAT.speed) * 10) / 10;
+    f.hpMax = Math.round(rand(STAT.hp));
+    f.def = Math.round(rand(STAT.def) * 10) / 10;
+    f.guardWant = false; f.guard = false; f.blockStun = false; f.guardAmt = 0; f.stam = STAM_MAX; f.stamT = 0; f.broken = false; f.seenAtk = null; f.guardT = 0;
+    f.x = x; f.z = z; f.kvx = f.kvz = 0; f.ix = f.iz = 0;
+    f.walk = 0; f.legT = 0; f.mvx = 0; f.mvz = 1;
+    f.down = false; f.fallA = 0; f.fallV = 0;
+    if (f.nx !== undefined) bodyAxes(f);
+    f.hp = f.hpMax; f.atk = null; f.atkMark.fill(0); f.cool = 0; f.stun = 0; f.think = 1;
+    if (f.nx === undefined){ f.nx = 0; f.nz = 1; }
+    bodyAxes(f);
+    for (let j = 0; j < f.n; j++){   // 絵の横方向は、正面に対して右向き（nz, -nx）
+      f.pos[3*j] = x + f.nz * f.ox[j]; f.pos[3*j+1] = f.restY0 + f.oy[j]; f.pos[3*j+2] = z - f.nx * f.ox[j];
+    }
+    f.prev.set(f.pos);
+  }
+
+  // 関節の位置から絵を変形させる（各ボーンの向きに頂点を乗せ、関節まわりは親ボーンと混ぜる）
+  function deform(f){
+    const P = f.pos, F = f.frame, NX = f.bnx, NY = f.bny, NZ = f.bnz;   // 絵の正面の向き（倒れると上を向く）
+    // ボーンごとの向き：X＝ボーンの向き、Y＝絵の面内の横、Z＝絵の面の正面（厚さの方向）
+    for (let j = 1; j < f.n; j++){
+      const a = 3 * f.par[j], b = 3 * j, o = 12 * j;
+      let x = P[b] - P[a], y = P[b+1] - P[a+1], z = P[b+2] - P[a+2];
+      const l = Math.hypot(x, y, z) || 1; x /= l; y /= l; z /= l;
+      // Y = 正面 × X
+      let yx = NY * z - NZ * y, yy = NZ * x - NX * z, yz = NX * y - NY * x;
+      if (Math.hypot(yx, yy, yz) < 1e-3){ yx = 0; yy = 1; yz = 0; const d = y; yx -= x * d; yy -= y * d; yz -= z * d; }   // ボーンが真正面を向いたとき
+      const yl = Math.hypot(yx, yy, yz) || 1; yx /= yl; yy /= yl; yz /= yl;
+      F[o] = P[a]; F[o+1] = P[a+1]; F[o+2] = P[a+2];
+      F[o+3] = x; F[o+4] = y; F[o+5] = z;
+      F[o+6] = yx; F[o+7] = yy; F[o+8] = yz;
+      F[o+9] = x * 0 + (y * yz - z * yy); F[o+10] = z * yx - x * yz; F[o+11] = x * yy - y * yx;   // Z = X × Y
+    }
+    const V = f.vpos, nv = f.nv;
+    // ふくらみ（0＝描いた絵そのままの平ら、1＝立体）。平らなときは部位ごとの段差もなくし、表と裏だけわずかに離す
+    const inf = f.inflate, flat = (1 - inf) * 0.003;
+    for (let i = 0; i < nv; i++){
+      const j1 = f.bj1[i];
+      let px, py, pz, zx, zy, zz, th;
+      if (j1 < 0){   // 根元に固定の部分：向きだけ回す
+        px = P[0] + f.nz * f.bu1[i] + f.ux * f.bv1[i]; py = P[1] + f.uy * f.bv1[i]; pz = P[2] - f.nx * f.bu1[i] + f.uz * f.bv1[i];
+        zx = NX; zy = NY; zz = NZ; th = f.thick[i] * inf + flat;
+      } else {
+        const o = 12 * j1, u = f.bu1[i], v = f.bv1[i];
+        px = F[o] + F[o+3] * u + F[o+6] * v;
+        py = F[o+1] + F[o+4] * u + F[o+7] * v;
+        pz = F[o+2] + F[o+5] * u + F[o+8] * v;
+        zx = F[o+9]; zy = F[o+10]; zz = F[o+11];
+        const zk = Math.min(1, f.thick[i] * 20);   // 輪郭（厚さ0）ではずらさない＝表と裏が縁でぴったり閉じる
+        th = (f.thick[i] + f.zoff[j1] * zk) * inf + flat;
+        const w = f.bw[i];
+        if (w > 0){
+          const o2 = 12 * f.bj2[i], u2 = f.bu2[i], v2 = f.bv2[i];
+          px += (F[o2] + F[o2+3] * u2 + F[o2+6] * v2 - px) * w;
+          py += (F[o2+1] + F[o2+4] * u2 + F[o2+7] * v2 - py) * w;
+          pz += (F[o2+2] + F[o2+5] * u2 + F[o2+8] * v2 - pz) * w;
+          zx += (F[o2+9] - zx) * w; zy += (F[o2+10] - zy) * w; zz += (F[o2+11] - zz) * w;
+          th += (f.zoff[f.bj2[i]] - f.zoff[j1]) * zk * w * inf;
+        }
+      }
+      // 表は正面側へ、裏は背中側へ厚さの分だけずらす
+      V[3*i] = px + zx * th; V[3*i+1] = py + zy * th; V[3*i+2] = pz + zz * th;
+      const k = 3 * (i + nv);
+      V[k] = px - zx * th; V[k+1] = py - zy * th; V[k+2] = pz - zz * th;
+    }
+    f.geo.attributes.position.needsUpdate = true;
+    f.geo.computeVertexNormals();   // 陰影のための法線
+    f.shadow.position.set(f.x, 0.01, f.z);
+  }
+
+  // ===== 物理（関節を点として動かし、ボーンの長さを保つ） =====
+  // 体の向き：倒れる角度 a だけ、右方向を軸に後ろ（正面と逆）へ傾けた「上」と「正面」
+  function bodyAxes(f){
+    const a = f.fallA, c = Math.cos(a), sn = Math.sin(a);
+    f.ux = -f.nx * sn; f.uy = c; f.uz = -f.nz * sn;   // 上
+    f.bnx = f.nx * c; f.bny = sn; f.bnz = f.nz * c;   // 正面（仰向けで真上を向く）
+  }
+  function physStep(f, opp, dt){
+    const P = f.pos, Q = f.prev, n = f.n;
+    // やられたら後ろへ倒れる（足元を軸に回し、地面で少し跳ねて止まる）
+    if (f.down){
+      f.fallV += FALL_ACCEL * Math.cos(Math.min(f.fallA, FALL_MAX)) * dt + FALL_ACCEL * 0.3 * dt;
+      f.fallA += f.fallV * dt;
+      if (f.fallA >= FALL_MAX){ f.fallA = FALL_MAX; f.fallV = Math.abs(f.fallV) > 0.6 ? -f.fallV * FALL_BOUNCE : 0; }
+    }
+    bodyAxes(f);
+    // 根元（体の中心）は操作どおりに動かす（倒れているときは足元を軸に回した位置。背中が床に沈まないよう厚さ分持ち上げる）
+    const lift = f.maxThick * Math.sin(f.fallA);
+    P[0] = Q[0] = f.x + f.ux * f.restY0; P[1] = Q[1] = f.uy * f.restY0 + lift; P[2] = Q[2] = f.z + f.uz * f.restY0;
+    const a = f.atk, ch = a && a.chain;
+    let mode = 0;
+    if (a){ if (a.t < ATK_WIND) mode = 1; else if (a.t < ATK_WIND + ATK_STRIKE) mode = 2; }
+    const g = (f.down ? DOWN_GRAVITY : GRAVITY) * dt * dt;
+    for (let j = 1; j < n; j++){
+      const k = 3 * j;
+      const vx = (P[k] - Q[k]) * DAMP, vy = (P[k+1] - Q[k+1]) * DAMP, vz = (P[k+2] - Q[k+2]) * DAMP;
+      Q[k] = P[k]; Q[k+1] = P[k+1]; Q[k+2] = P[k+2];
+      P[k] += vx; P[k+1] += vy - g; P[k+2] += vz;
+      if (mode && f.atkMark[j]) continue;
+      let s = f.stiff[j];   // 描いたときの形（今の向きに回したもの）に戻ろうとする
+      let tx = P[0] + f.nz * f.ox[j] + f.ux * f.oy[j], ty = P[1] + f.uy * f.oy[j], tz = P[2] - f.nx * f.ox[j] + f.uz * f.oy[j];
+      const lg = f.legOf[j];
+      if (f.down) s *= DOWN_STIFF;   // 倒れたらぐったり
+      if (lg >= 0 && f.walk > 0.01 && !f.down){
+        // 足：付け根からの向きを、進む向きに対して前後に振る（進む向きと上の外積を軸にして回す）
+        const L = f.legs[lg], p = L.pivot;
+        const bx = P[0] + f.nz * f.ox[p], by = P[1] + f.oy[p], bz = P[2] - f.nx * f.ox[p];
+        const wx = tx - bx, wy = ty - by, wz = tz - bz;
+        const ax = f.mvz, az = -f.mvx;   // 回転軸（水平で、進む向きに直角）
+        const th = Math.sin(f.legT + L.phase) * LEG_SWING * f.walk, c = Math.cos(th), sn = Math.sin(th);
+        const dot = ax * wx + az * wz;
+        const cx = -az * wy, cy = az * wx - ax * wz, cz = ax * wy;   // 軸 × w
+        tx = bx + wx * c + cx * sn + ax * dot * (1 - c);
+        ty = by + wy * c + cy * sn;
+        tz = bz + wz * c + cz * sn + az * dot * (1 - c);
+        s = s + (LEG_STIFF - s) * f.walk;
+      }
+      const am = f.armOf[j];
+      if (am >= 0 && f.guardAmt > 0.01 && !f.down){
+        // 防御：付け根からの形を半分に縮めて、体の前（正面の向き）へ出す
+        const p = f.arms[am].pivot, g = f.guardAmt;
+        const bx = P[0] + f.nz * f.ox[p], by = P[1] + f.oy[p], bz = P[2] - f.nx * f.ox[p];
+        const gx = bx + (tx - bx) * 0.45 + f.nx * GUARD_FWD * f.armRank[j];
+        const gy = by + (ty - by) * 0.45;
+        const gz = bz + (tz - bz) * 0.45 + f.nz * GUARD_FWD * f.armRank[j];
+        tx += (gx - tx) * g; ty += (gy - ty) * g; tz += (gz - tz) * g;
+        s = s + (LEG_STIFF - s) * g;
+      }
+      P[k]   += (tx - P[k]) * s;
+      P[k+1] += (ty - P[k+1]) * s;
+      P[k+2] += (tz - P[k+2]) * s;
+    }
+    if (ch && mode){
+      const pv = 3 * ch.pivot, O = opp.pos;
+      let dx = O[0] - P[pv], dy = O[1] - P[pv+1], dz = O[2] - P[pv+2];
+      const l = Math.hypot(dx, dy, dz) || 1; dx /= l; dy /= l; dz /= l;
+      if (mode === 1){ dx = -dx * 0.5; dy = 0.5; dz = -dz * 0.5; }   // 振りかぶり：狙いと逆へ引く
+      for (let c = 0; c < ch.joints.length; c++){
+        const k = 3 * ch.joints[c], r = ch.cum[c];
+        P[k]   += (P[pv]   + dx * r - P[k])   * ATK_STIFF;
+        P[k+1] += (P[pv+1] + dy * r - P[k+1]) * ATK_STIFF;
+        P[k+2] += (P[pv+2] + dz * r - P[k+2]) * ATK_STIFF;
+      }
+    }
+    for (let it = 0; it < ITER; it++){
+      for (let j = 1; j < n; j++){
+        const p = f.par[j], a3 = 3 * p, b = 3 * j;
+        const dx = P[b] - P[a3], dy = P[b+1] - P[a3+1], dz = P[b+2] - P[a3+2];
+        const d = Math.hypot(dx, dy, dz) || 1e-6, diff = (d - f.len[j]) / d;
+        if (p === 0){ P[b] -= dx * diff; P[b+1] -= dy * diff; P[b+2] -= dz * diff; }
+        else {
+          const h = diff * 0.5;
+          P[b] -= dx * h; P[b+1] -= dy * h; P[b+2] -= dz * h;
+          P[a3] += dx * h; P[a3+1] += dy * h; P[a3+2] += dz * h;
+        }
+      }
+    }
+    for (let j = 1; j < n; j++) if (P[3*j+1] < 0.02) P[3*j+1] = 0.02;
+  }
+
+  // ===== 攻撃 =====
+  const pickChain = f => f.chains.length ? f.chains[Math.floor(Math.random() * f.chains.length)] : null;   // 使う手足は毎回ランダム
+  function startAttack(f, opp, chain = pickChain(f)){
+    if (f.atk || f.cool > 0 || f.stun > 0 || f.guard || f.stam <= 0) return;   // 防御中・スタミナ切れは攻撃できない
+    f.stam = Math.max(0, f.stam - STAM_ATK); f.stamT = STAM_DELAY;
+    if (!chain){ f.atk = { t:0, chain:null, hit:false }; return; }   // 手足が無い絵は体当たり
+    f.atk = { t:0, chain, hit:false };
+    for (const j of chain.joints) f.atkMark[j] = 1;
+  }
+  function endAttack(f, cool){
+    f.atk = null; f.atkMark.fill(0);
+    if (cool) f.cool = ATK_COOL;
+  }
+  function segDist(px, py, pz, ax, ay, az, bx, by, bz){
+    const vx = bx - ax, vy = by - ay, vz = bz - az;
+    const vv = vx*vx + vy*vy + vz*vz;
+    let t = vv > 0 ? ((px-ax)*vx + (py-ay)*vy + (pz-az)*vz) / vv : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - ax - vx*t, py - ay - vy*t, pz - az - vz*t);
+  }
+  function hitTest(f, opp){
+    const P = f.pos, O = opp.pos;
+    const tips = f.atk.chain ? f.atk.chain.joints.slice(-2) : f.allIdx;
+    for (const t of tips){
+      const k = 3 * t, r = Math.max(f.rad[t], 0.05) + HIT_PAD;
+      for (let j = opp.n > 1 ? 1 : 0; j < opp.n; j++){
+        const p = j > 0 ? opp.par[j] : 0, a = 3 * p, b = 3 * j;
+        const rr = Math.max(opp.rad[j], opp.rad[p]);
+        if (segDist(P[k], P[k+1], P[k+2], O[a], O[a+1], O[a+2], O[b], O[b+1], O[b+2]) < r + rr){
+          applyHit(f, opp, t);
+          return;
+        }
+      }
+    }
+  }
+  function applyHit(f, opp, t){
+    const P = f.pos, Q = f.prev, O = opp.pos, k = 3 * t;
+    const sp = Math.hypot(P[k] - Q[k], P[k+1] - Q[k+1], P[k+2] - Q[k+2]) / STEP;
+    const base = DMG_MIN + (DMG_MAX - DMG_MIN) * Math.min(1, sp / SPEED_FULL);
+    // ダメージ = 基本 × 自分の力 × (2 − 相手の守り) × ばらつき
+    let raw = base * f.power * (2 - opp.def) * (1 + (Math.random() * 2 - 1) * DMG_RAND);
+    let guarded = false, broke = false;
+    if (opp.guard){
+      guarded = true;   // 防いだ攻撃は体力が減らず、スタミナが減る
+      opp.stam -= raw * STAM_GUARD / opp.def; opp.stamT = STAM_DELAY;
+      if (opp.stam <= 0){   // スタミナが尽きるとガードが崩れる：この一撃は防げるが、しばらく無防備になる
+        opp.stam = 0; opp.guard = false; opp.broken = true; broke = true;
+      }
+    }
+    const dmg = guarded ? 0 : Math.max(1, Math.round(raw));
+    opp.hp = Math.max(0, opp.hp - dmg);
+    const fxDmg = Math.max(1, Math.round(raw));   // 演出の大きさは防いだときも攻撃の強さに合わせる
+    let dx = opp.x - f.x, dz = opp.z - f.z;
+    const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l;
+    const kb = guarded && !broke ? GUARD_KB : 1;
+    opp.kvx += dx * KNOCKBACK * kb; opp.kvz += dz * KNOCKBACK * kb;
+    opp.stun = broke ? GUARD_BREAK_STUN : guarded ? GUARD_STUN : STUN;
+    opp.blockStun = guarded && !broke;   // 防いだ直後の短い硬直中も防御は続ける（続けて来た攻撃も防げるように）
+    if (opp.atk) endAttack(opp, false);
+    // 当たった所の近くほど大きくたわませる
+    for (let j = 1; j < opp.n; j++){
+      const b = 3 * j;
+      const fa = Math.max(0, 1 - Math.hypot(O[b] - P[k], O[b+1] - P[k+1], O[b+2] - P[k+2]) / 1.2);
+      const hs = HIT_SHAKE * fa * kb;
+      opp.prev[b] -= dx * hs; opp.prev[b+1] -= 0.4 * hs; opp.prev[b+2] -= dz * hs;
+    }
+    f.atk.hit = true;
+    updateHud();
+    // 演出：止める・揺らす・光らせる・火花と数字を出す
+    hitStop = Math.max(hitStop, (HITSTOP_BASE + fxDmg * HITSTOP_PER_DMG) * (guarded ? 0.6 : 1));
+    shake = Math.max(shake, fxDmg * SHAKE_PER_DMG * (guarded ? 0.5 : 1));
+    if (!guarded) opp.flash = FLASH_TIME;   // 防いだときは赤く光らせない
+    if (broke){ shake = Math.max(shake, BREAK_SHAKE); hitStop = Math.max(hitStop, BREAK_HITSTOP); }
+    fxHit(P[k], P[k+1], P[k+2], dx, dz, fxDmg, guarded, broke);
+  }
+  function attackUpdate(f, opp, dt){
+    const a = f.atk; if (!a) return;
+    const t0 = a.t; a.t += dt;
+    if (t0 < ATK_WIND && a.t >= ATK_WIND){   // 踏み込み
+      let dx = opp.x - f.x, dz = opp.z - f.z;
+      const l = Math.hypot(dx, dz) || 1;
+      const v = a.chain ? LUNGE : LUNGE * 2.5;
+      f.kvx += dx / l * v; f.kvz += dz / l * v;
+    }
+    if (state === 'fight' && a.t >= ATK_WIND && a.t < ATK_WIND + ATK_STRIKE && !a.hit) hitTest(f, opp);
+    if (f.atk && a.t >= ATK_WIND + ATK_STRIKE) endAttack(f, true);
+  }
+
+  // ===== 移動・CPU =====
+  function move(f, ix, iz, speed, dt){
+    if (f.stun > 0){ f.stun -= dt; ix = iz = 0; }
+    if (f.stun <= 0) f.blockStun = false;
+    if (f.cool > 0) f.cool -= dt;
+    // 防御：押している間（攻撃中・動けない間・ガードが崩れている間は除く）
+    if (f.broken && f.stun <= 0) f.broken = false;
+    // スタミナ0でも構えられる（その状態で攻撃を受けるとガードが崩れる）
+    f.guard = f.guardWant && !f.atk && (f.stun <= 0 || f.blockStun) && !f.broken;
+    f.guardAmt += ((f.guard ? 1 : 0) - f.guardAmt) * Math.min(1, dt * 18);
+    // スタミナの回復：使ってから少し待ってから。攻撃中は回復せず、防御を構えている間はゆっくり
+    if (f.stamT > 0) f.stamT -= dt;
+    else if (!f.atk) f.stam = Math.min(STAM_MAX, f.stam + STAM_REGEN * (f.guard ? STAM_REGEN_GUARD : 1) * dt);
+    speed *= 1 - (1 - GUARD_SPEED) * f.guardAmt;
+    const vx = ix * speed + f.kvx, vz = iz * speed + f.kvz;
+    f.x += vx * dt;
+    f.z += vz * dt;
+    // 足を振る量（動く速さに合わせて0〜1）と、振る向き（進む向き）
+    const sp = Math.hypot(vx, vz);
+    f.walk += (Math.min(1, sp / MOVE_SPEED) - f.walk) * Math.min(1, dt * 12);
+    if (sp > 0.1){ f.mvx = vx / sp; f.mvz = vz / sp; }
+    if (f.walk > 0.01) f.legT += dt * LEG_FREQ * Math.PI * 2;
+    const fr = Math.exp(-KB_FRICTION * dt);
+    f.kvx *= fr; f.kvz *= fr;
+    const r = Math.hypot(f.x, f.z), lim = ARENA_R - 0.4;
+    if (r > lim){ f.x *= lim / r; f.z *= lim / r; }
+  }
+  function separate(){
+    let dx = enemy.x - player.x, dz = enemy.z - player.z;
+    let d = Math.hypot(dx, dz);
+    if (d < 1e-4){ dx = 1; dz = 0; d = 1e-4; }
+    const min = player.body + enemy.body;
+    if (d < min){
+      const push = (min - d) / 2;
+      player.x -= dx / d * push; player.z -= dz / d * push;
+      enemy.x  += dx / d * push; enemy.z  += dz / d * push;
+    }
+  }
+  // CPUが使う手足：体が太くて、立てる距離から相手に届かない短い手足は選ばない（無いときは一番長い手足）
+  function cpuChain(e){
+    if (!e.chains.length) return null;
+    const ok = e.chains.filter(c => c.reach + HIT_PAD > e.body + 0.05);
+    return ok.length ? ok[Math.floor(Math.random() * ok.length)] : e.chains.reduce((a, b) => (a.reach > b.reach ? a : b));
+  }
+  function cpuThink(dt){
+    const e = enemy, p = player, ai = e.ai;
+    e.think -= dt;
+    if (e.retreatT > 0) e.retreatT -= dt;
+    // 防御：相手が攻撃を始めたら、一定の確率で少し遅れて防御し、攻撃が終わるまで続ける
+    if (p.atk && p.atk !== e.seenAtk){
+      e.seenAtk = p.atk;
+      e.guardT = Math.random() < ai.guard && Math.hypot(p.x - e.x, p.z - e.z) < p.reach + p.body + 1 ? ai.react : -1;
+    }
+    if (e.guardT > 0){ e.guardT -= dt; if (e.guardT <= 0) e.guardT = 0; }
+    const wasGuard = e.guardWant;
+    e.guardWant = e.guardT === 0 && !!p.atk && p.atk === e.seenAtk;
+    if (ai.counter && wasGuard && !e.guardWant && !e.broken) e.think = 0;   // 防ぎ切ったらすぐ反撃
+    if (e.stun > 0 || e.atk){ e.ix = e.iz = 0; return; }
+    // 次に使う手足を先に決め、その手足が相手の体の表面に届く距離まで近づいてから攻撃する
+    // （相手の絵が太いと中心までは届かないので、中心との距離ではなく表面との距離で判断する）
+    if (e.next === undefined) e.next = cpuChain(e);
+    const range = (e.next ? e.next.reach : e.body) + HIT_PAD;
+    let want = p.body + Math.max(e.body, range * ai.dist);   // 届く距離より少し内側に立つ（戦い方で変わる）
+    if (e.retreatT > 0) want += RETREAT_DIST;                // 逃げ足：攻撃したあとはしばらく下がる
+    const tired = e.stam <= Math.max(0, STAM_MAX * ai.stam); // スタミナが足りない間は少し離れて回復を待つ
+    if (tired) want += TIRED_DIST;
+    let ux = e.x - p.x, uz = e.z - p.z;   // 相手から自分への向き（この向きのまま距離だけ合わせる）
+    const ul = Math.hypot(ux, uz) || 1; ux /= ul; uz /= ul;
+    const dx = p.x + ux * want - e.x, dz = p.z + uz * want - e.z, l = Math.hypot(dx, dz);
+    if (l > 0.05){ const k = Math.min(1, l / 0.3); e.ix = dx / l * k; e.iz = dz / l * k; } else e.ix = e.iz = 0;   // 近くでは減速して行き過ぎない
+    if (ai.strafe > 0){   // 回り込み：相手の周りを横へ回る（ときどき向きを変える）
+      e.orbitT -= dt;
+      if (e.orbitT <= 0){ e.orbitDir = -e.orbitDir; e.orbitT = 1.5 + Math.random() * 2; }
+      e.ix += -uz * ai.strafe * e.orbitDir; e.iz += ux * ai.strafe * e.orbitDir;
+      const il = Math.hypot(e.ix, e.iz); if (il > 1){ e.ix /= il; e.iz /= il; }
+    }
+    const surface = Math.hypot(p.x - e.x, p.z - e.z) - p.body;
+    if (e.think <= 0 && surface < range && !e.guard && !(e.retreatT > 0) && !tired){
+      startAttack(e, p, e.next);
+      e.next = undefined;
+      e.think = ai.waitMin + Math.random() * (ai.waitMax - ai.waitMin);
+      if (ai.retreat > 0) e.retreatT = ai.retreat + ATK_WIND + ATK_STRIKE;
+    }
+  }
+
+  // ===== 入力 =====
+  const joy = $('joy'), knob = $('knob');
+  let jx = 0, jy = 0;
+  const JOY_R = 45;
+  function setJoy(e, d){
+    let dx = e.clientX - d.cx, dy = e.clientY - d.cy;
+    const l = Math.hypot(dx, dy);
+    if (l > JOY_R){ dx *= JOY_R / l; dy *= JOY_R / l; }
+    knob.style.transform = `translate(${dx}px,${dy}px)`;
+    jx = dx / JOY_R; jy = dy / JOY_R;
+  }
+  joy.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    joy.setPointerCapture(e.pointerId);
+    const r = joy.getBoundingClientRect();
+    const d = { kind:'joy', cx:r.left + r.width / 2, cy:r.top + r.height / 2 };
+    drags.set(e.pointerId, d);
+    setJoy(e, d);
+  });
+  document.addEventListener('pointermove', e => {
+    const d = drags.get(e.pointerId);
+    if (!d) return;
+    if (d.kind === 'pad'){ const p = padPos(e); penLine(d.last, p, d.erase); d.last = p; }
+    else if (d.kind === 'joy') setJoy(e, d);
+  });
+  const endDrag = e => {
+    const d = drags.get(e.pointerId);
+    if (!d) return;
+    if (d.kind === 'joy'){ jx = jy = 0; knob.style.transform = ''; }
+    else if (d.kind === 'pad' && d.erase) refreshInk();   // 全部消してしまったら「たたかう」を押せなくする
+    drags.delete(e.pointerId);
+  };
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', endDrag);
+
+  // 押した見た目（iPhoneでは touchstart を止めているため :active が効かないのでクラスで付ける）
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => $('atk').addEventListener(t, () => $('atk').classList.remove('on')));
+  $('atk').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    $('atk').classList.add('on');
+    if (state === 'fight') startAttack(player, enemy);
+  });
+
+  // 防御ボタン：押している間だけ防御
+  let defHeld = false;
+  const defBtn = $('def');
+  const setDef = on => { defHeld = on; defBtn.classList.toggle('on', on); defBtn.setAttribute('aria-pressed', String(on)); };
+  defBtn.addEventListener('pointerdown', e => { e.preventDefault(); defBtn.setPointerCapture(e.pointerId); setDef(true); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => defBtn.addEventListener(t, () => setDef(false)));
+
+  // PC：矢印キーで移動、スペースで攻撃、Shiftを押している間は防御
+  const keys = {};
+  addEventListener('keydown', e => {
+    if (state !== 'fight') return;
+    if (e.key.startsWith('Arrow')){ keys[e.key] = true; e.preventDefault(); }
+    if (e.key === 'Shift') keys.Shift = true;
+    if (e.key === ' '){ e.preventDefault(); if (!e.repeat) startAttack(player, enemy); }
+  });
+  addEventListener('keyup', e => { keys[e.key] = false; });
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  const isDraggable = t => t instanceof Element && !!t.closest('#pad,#joy,#atk,#def');
+  document.addEventListener('touchstart', e => { if (isDraggable(e.target)) e.preventDefault(); }, { passive:false });
+  document.addEventListener('touchmove',  e => { if (drags.size) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => { if (isDraggable(e.target)) e.preventDefault(); });
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  // ボタンには効かせない：touchend を止めると click が発生せず、素早く続けて押したボタンが反応しなくなるため
+  // （ボタンのダブルタップ拡大は body の touch-action:manipulation で防いでいる）
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    const onButton = e.target instanceof Element && !!e.target.closest('button');
+    if (!onButton && now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+
+  // ===== 画面の切り替え =====
+  // 相手の絵：赤ペンで描いたラクガキ。対戦ごとにランダムで選ぶ（座標は512四方の紙の上）
+  const ENEMY_LOOKS = [
+    // 棒人間
+    g => {
+      g.beginPath(); g.arc(256, 130, 52, 0, Math.PI * 2); g.stroke();
+      line(g, 256, 182, 256, 330);
+      line(g, 256, 215, 175, 290); line(g, 256, 215, 337, 290);
+      line(g, 256, 330, 196, 450); line(g, 256, 330, 316, 450);
+    },
+    // おばけ
+    g => {
+      line(g, 160, 300, 100, 260); line(g, 352, 300, 412, 260);   // 手
+      g.beginPath(); g.moveTo(150, 440); g.lineTo(150, 220); g.arc(256, 220, 106, Math.PI, 0); g.lineTo(362, 440);
+      for (let i = 0; i < 4; i++){ const x = 362 - i * 53; g.quadraticCurveTo(x - 13, 470, x - 26, 440); g.quadraticCurveTo(x - 40, 410, x - 53, 440); }
+      fillStroke(g, '#ffffff');
+      dot(g, 220, 220, 14); dot(g, 292, 220, 14);
+    },
+    // ねこ
+    g => {
+      g.beginPath(); g.moveTo(318, 340); g.quadraticCurveTo(430, 330, 410, 230); g.stroke();   // しっぽ
+      line(g, 222, 360, 212, 455); line(g, 290, 360, 300, 455);   // 足
+      line(g, 200, 270, 135, 330); line(g, 312, 270, 377, 330);   // 手
+      g.beginPath(); g.ellipse(256, 300, 72, 82, 0, 0, Math.PI * 2); fillStroke(g, '#f08a24');
+      g.beginPath(); g.moveTo(196, 130); g.lineTo(200, 60); g.lineTo(240, 100); g.lineTo(272, 100); g.lineTo(312, 60); g.lineTo(316, 130);
+      g.arc(256, 150, 66, -0.3, Math.PI + 0.3); g.closePath(); fillStroke(g, '#f08a24');
+      dot(g, 230, 150, 9); dot(g, 282, 150, 9);
+    },
+    // ロボット
+    g => {
+      line(g, 256, 70, 256, 40); dot(g, 256, 36, 16);   // アンテナ
+      line(g, 186, 200, 110, 300); line(g, 326, 200, 402, 300);   // 腕
+      line(g, 222, 320, 222, 455); line(g, 290, 320, 290, 455);   // 足
+      g.beginPath(); g.rect(201, 70, 110, 90); fillStroke(g, '#2f7fd8');
+      g.beginPath(); g.rect(181, 175, 150, 150); fillStroke(g, '#2f7fd8');
+      g.fillStyle = css('--enemy'); g.fillRect(222, 100, 20, 20); g.fillRect(270, 100, 20, 20);
+    },
+    // タコ
+    g => {
+      for (let i = 0; i < 6; i++){   // 足
+        const x0 = 196 + i * 24, x1 = 100 + i * 62, w = (i % 2 ? 1 : -1) * 30;
+        g.beginPath(); g.moveTo(x0, 230); g.bezierCurveTo(x0 + w, 320, x1 - w, 380, x1, 455); g.stroke();
+      }
+      g.beginPath(); g.ellipse(256, 165, 100, 95, 0, 0, Math.PI * 2); fillStroke(g, '#f28cb8');
+      dot(g, 220, 175, 12); dot(g, 292, 175, 12);
+    },
+    // ほし
+    g => {
+      g.beginPath();
+      for (let i = 0; i < 10; i++){
+        const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 82 : 200;
+        g[i ? 'lineTo' : 'moveTo'](256 + Math.cos(a) * r, 270 + Math.sin(a) * r);
+      }
+      g.closePath(); fillStroke(g, '#f5cf1f');
+      dot(g, 228, 255, 11); dot(g, 284, 255, 11);
+    },
+  ];
+  function line(g, a, b, c, d){ g.beginPath(); g.moveTo(a, b); g.lineTo(c, d); g.stroke(); }
+  function fillStroke(g, col){ g.fillStyle = col; g.fill(); g.stroke(); }
+  function dot(g, x, y, r){ g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fillStyle = css('--enemy'); g.fill(); }
+  function enemyCanvas(k){
+    const c = document.createElement('canvas'); c.width = c.height = PAD_RES;
+    const g = c.getContext('2d');
+    const s = PAD_RES / 512; g.setTransform(s, 0, 0, s, 0, 0);   // 座標は512基準で書いてある
+    g.strokeStyle = css('--enemy'); g.lineWidth = PEN_W / s; g.lineCap = g.lineJoin = 'round';
+    ENEMY_LOOKS[k](g);
+    return c;
+  }
+  const enemyDatas = [];
+  const enemyDataOf = k => enemyDatas[k] || (enemyDatas[k] = analyze(makeTexture(enemyCanvas(k))));
+  let lastLook = -1;
+  // 相手の絵の解析は重いので、ページを開いてお絵かきしている間に1枚ずつ済ませておく（「たたかう」を押したときの待ちを減らす）
+  ENEMY_LOOKS.forEach((_, k) => setTimeout(() => { if (state === 'draw') enemyDataOf(k); }, 300 + k * 400));
+
+  // ===== 任意のCPU：画像を読み込んで相手の絵にする =====
+  // customEnemy = { data, thumb }：読み込んだ画像の解析結果と小さい絵。null ならいつものCPUからランダムに選ぶ
+  // 解析結果の data.tex は「もう一回」のたびに相手を作り直すときに使うので、次の画像に替えるか「おまかせに戻す」まで持っておく
+  let customEnemy = null, cpuMsgTimer = 0;
+  function showCpuMsg(text){
+    clearTimeout(cpuMsgTimer);
+    $('cpuMsg').textContent = text;
+    cpuMsgTimer = setTimeout(() => { $('cpuMsg').textContent = ''; }, CPU_MSG_MS);
+  }
+  function setCustomEnemy(ce){
+    if (customEnemy) customEnemy.data.tex.width = customEnemy.data.tex.height = 0;   // 前の解析用キャンバスは手放す
+    customEnemy = ce;
+    $('cpuIcon').style.display = ce ? 'none' : '';   // SVG には hidden が効かないので表示で切り替える
+    $('cpuThumb').hidden = !ce; $('cpuThumb').src = ce ? ce.thumb : '';
+    $('cpuClear').hidden = !ce;
+    $('cpuBtn').setAttribute('aria-label', ce ? 'CPUの画像を選び直す' : 'CPUにする画像を読み込む');
+  }
+  $('cpuBtn').addEventListener('click', () => $('cpuFile').click());
+  $('cpuClear').addEventListener('click', () => { setCustomEnemy(null); $('cpuBtn').focus(); });
+  $('cpuFile').addEventListener('change', async () => {
+    const inp = $('cpuFile'), file = inp.files && inp.files[0];
+    inp.value = '';   // 同じファイルをもう一度選べるように空にしておく
+    if (!file) return;
+    $('cpuMsg').textContent = '';
+    try {
+      const got = importedPixels(await loadImageFile(file));   // ライブラリの「読み込む」と同じ道（白い背景も抜く）
+      if (!got.ink){ showCpuMsg('この画像には絵が見つかりませんでした'); return; }
+      const c = document.createElement('canvas'); c.width = c.height = PAD_RES;
+      c.getContext('2d').putImageData(got.data, 0, 0);
+      const data = analyze(makeTexture(c));   // 自分の絵・いつものCPUと同じ解析
+      if (!data){ c.width = c.height = 0; showCpuMsg('この画像は相手にできませんでした'); return; }
+      const tc = thumbCanvas.getContext('2d');
+      tc.clearRect(0, 0, THUMB_RES, THUMB_RES);
+      tc.drawImage(c, 0, 0, THUMB_RES, THUMB_RES);
+      c.width = c.height = 0;   // 使い終わったキャンバスはすぐ手放す
+      setCustomEnemy({ data, thumb:thumbCanvas.toDataURL() });
+    } catch(e) {
+      showCpuMsg('この画像は読み込めませんでした');
+    }
+  });
+
+  $('go').addEventListener('click', () => {
+    if (!hasInk) return;
+    const data = analyze(makeTexture(pad));
+    if (!data) return;
+    $('drawScr').hidden = true;
+    $('fightScr').hidden = false;
+    if (!renderer){ initThree(); initFx(); }
+    resize3();
+    let enemyData;
+    if (customEnemy) enemyData = customEnemy.data;   // 画像を読み込んであればそれが相手
+    else {
+      let look = Math.floor(Math.random() * ENEMY_LOOKS.length);   // 見た目は前回と違うものにする
+      if (look === lastLook) look = (look + 1 + Math.floor(Math.random() * (ENEMY_LOOKS.length - 1))) % ENEMY_LOOKS.length;
+      lastLook = look;
+      enemyData = enemyDataOf(look);
+    }
+    fxClear();
+    for (const f of [player, enemy]) if (f && f.trail){ scene.remove(f.trail.m); f.trail.geo.dispose(); }
+    disposeFighter(player); disposeFighter(enemy);
+    if (fx){ for (const st of fx.dizzy.values()) st.forEach(m => { scene.remove(m); m.material.dispose(); }); fx.dizzy.clear(); }
+    player = makeFighter(data, -1);
+    data.tex.width = data.tex.height = 0;   // 自分の絵の解析用キャンバスはもう使わないので手放す
+    enemy = makeFighter(enemyData, 1);
+    startFight();
+    startIntro();
+  });
+  // 登場演出：まず2Dの絵のまま立たせる
+  function startIntro(){
+    state = 'intro'; introT = 0;
+    player.inflate = enemy.inflate = 0;
+  }
+  function introUpdate(dt){
+    const t0 = introT; introT += dt;
+    const t = introT - INTRO_HOLD;   // ボンッからの経過時間
+    if (t0 < INTRO_HOLD && introT >= INTRO_HOLD){ fxPoof(player); fxPoof(enemy); shake += INTRO_SHAKE; }
+    if (t >= INTRO_SWAP){
+      const r = Math.min(1, (t - INTRO_SWAP) / POPIN_TIME);
+      const s = 1 + POPIN_SCALE * Math.sin(r * Math.PI) * (1 - r * 0.5);   // ぽんと大きくなって戻る
+      for (const f of [player, enemy]){
+        f.inflate = 1;
+        f.mesh.scale.setScalar(s); f.mesh.position.set(f.x * (1 - s), 0, f.z * (1 - s));   // 足元を中心に大きくする
+      }
+    }
+    if (t >= INTRO_END){
+      for (const f of [player, enemy]){ f.mesh.scale.setScalar(1); f.mesh.position.set(0, 0, 0); }
+      state = 'fight';
+    }
+  }
+  function startFight(){
+    player.nx = undefined; enemy.nx = undefined;
+    player.x = 0; player.z = 1.6; enemy.x = 0; enemy.z = -1.6;   // 手前が自分、奥が相手
+    faceToward(player, enemy, 0, true); faceToward(enemy, player, 0, true);
+    resetFighter(player, 0, 1.6);
+    resetFighter(enemy, 0, -1.6);
+    enemy.next = undefined;
+    enemy.ai = CPU_TYPES[Math.floor(Math.random() * CPU_TYPES.length)];   // 戦い方は対戦ごとにランダム
+    enemy.retreatT = 0; enemy.orbitT = 1; enemy.orbitDir = Math.random() < 0.5 ? 1 : -1;
+    player.flash = enemy.flash = 0;
+    for (const f of [player, enemy]){ f.inflate = 1; f.mesh.scale.setScalar(1); f.mesh.position.set(0, 0, 0); }
+    hitStop = slowT = shake = 0;
+    fxClear();
+    state = 'fight'; acc = 0;
+    $('result').hidden = true;
+    updateHud();
+    updateCamera(0, true);
+  }
+  $('again').addEventListener('click', startFight);
+  $('redraw').addEventListener('click', () => {
+    state = 'draw';
+    $('result').hidden = true;
+    $('fightScr').hidden = true;
+    $('drawScr').hidden = false;
+  });
+
+  function guardHud(){
+    $('gdP').style.width = (player.stam / STAM_MAX * 100) + '%';
+    $('gdE').style.width = (enemy.stam / STAM_MAX * 100) + '%';
+    $('gdPw').classList.toggle('broken', player.broken);
+    $('gdEw').classList.toggle('broken', enemy.broken);
+  }
+  // 体力バーの切り取り形：蛍光ペンの四角形（左上0,12%／右上100%,0／右下99%,100%／左下1%,88%）を体力の位置で切る
+  // fromRight なら右端を残して左から減らす（相手のバー）
+  function hpClip(r, fromRight){
+    r = Math.max(0, Math.min(1, r));
+    const top = x => 12 - 12 * x / 100, bot = x => 88 + 12 * (x - 1) / 98;
+    const f = v => v.toFixed(2) + '%';
+    if (!fromRight){
+      const x = r * 100;
+      return `polygon(0% 12%,${f(x)} ${f(top(x))},${f(x)} ${f(bot(x))},${f(Math.min(1, x))} 88%)`;
+    }
+    const x = 100 - r * 100;
+    return `polygon(${f(x)} ${f(top(x))},100% 0%,${f(Math.max(99, x))} 100%,${f(x)} ${f(bot(x))})`;
+  }
+  function updateHud(){
+    $('hpP').style.clipPath = hpClip(player.hp / player.hpMax, false);
+    $('hpE').style.clipPath = hpClip(enemy.hp / enemy.hpMax, true);
+  }
+  let lastWin = false;
+  function showResult(){
+    state = 'over';
+    lastWin = player.hp > 0;
+    $('resTxt').textContent = lastWin ? '勝ち！' : '負け…';
+    $('resTxt').classList.toggle('lose', !lastWin);
+    $('result').hidden = false;
+  }
+
+  // ===== 共有 =====
+  function shareText(){
+    return `${lastWin ? '勝ち！' : '負け…'}\n${location.href.split(/[?#]/)[0]}\n#ラクガキファイター`;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(){
+    // 画像には自分の描いたキャラだけを写す：CPUのキャラ・影・攻撃の軌跡・頭の上の星を一時的に隠す
+    const hide = [enemy.mesh, enemy.shadow, enemy.trail && enemy.trail.m, ...(fx && fx.dizzy.get(enemy) || [])].filter(Boolean);
+    const was = hide.map(o => o.visible);
+    hide.forEach(o => { o.visible = false; });
+    // 自分のキャラを画像の真ん中に大きく写す：カメラの向きはそのままで、写ったときの縦横の大きさに合わせて近づける
+    const dir = camLook.clone().sub(camPos).normalize();
+    const right = new THREE.Vector3().crossVectors(dir, camera.up).normalize();
+    const up = new THREE.Vector3().crossVectors(right, dir);
+    const V = player.vpos;
+    let u0 = Infinity, u1 = -Infinity, w0 = Infinity, w1 = -Infinity;   // カメラから見た左右・上下の広がり
+    for (let i = 0; i < V.length; i += 3){
+      const u = V[i] * right.x + V[i+1] * right.y + V[i+2] * right.z, w = V[i] * up.x + V[i+1] * up.y + V[i+2] * up.z;
+      u0 = Math.min(u0, u); u1 = Math.max(u1, u); w0 = Math.min(w0, w); w1 = Math.max(w1, w);
+    }
+    // 中心：左右・上下の広がりの真ん中（奥行きは頂点の平均）
+    let zc = 0; for (let i = 0; i < V.length; i += 3) zc += V[i] * dir.x + V[i+1] * dir.y + V[i+2] * dir.z;
+    zc /= V.length / 3;
+    const c = right.clone().multiplyScalar((u0 + u1) / 2).addScaledVector(up, (w0 + w1) / 2).addScaledVector(dir, zc);
+    // 距離：どの頂点も画面の内側（SHARE_FILL の範囲）に収まる一番近い距離
+    const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * SHARE_FILL, th = tv * camera.aspect;
+    let dist = 0.5;
+    for (let i = 0; i < V.length; i += 3){
+      const px = V[i] - c.x, py = V[i+1] - c.y, pz = V[i+2] - c.z;
+      const u = px * right.x + py * right.y + pz * right.z, w = px * up.x + py * up.y + pz * up.z, z = px * dir.x + py * dir.y + pz * dir.z;
+      dist = Math.max(dist, Math.abs(u) / th - z, Math.abs(w) / tv - z);
+    }
+    const camP = camera.position.clone(), camQ = camera.quaternion.clone();
+    camera.position.copy(c).addScaledVector(dir, -dist);
+    camera.lookAt(c); camera.updateMatrixWorld();
+    renderer.render(scene, camera);   // 描いた直後なら描画バッファが読める
+    const url = renderer.domElement.toDataURL('image/png');
+    camera.position.copy(camP); camera.quaternion.copy(camQ); camera.updateMatrixWorld();
+    hide.forEach((o, i) => { o.visible = was[i]; });
+    const bin = atob(url.split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type:'image/png' });
+  }
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    const file = resultImageFile();
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files:[file] })){
+      navigator.share({ text, files:[file] }).catch(() => {});
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share){
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    navigator.clipboard?.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+
+  // ===== 演出（火花・衝撃の輪・赤い点滅・ダメージ数字・攻撃の軌跡） =====
+  let fx = null;
+  const SPARK_MAX = 64, RING_MAX = 4;
+  // 板ポリゴンをまとめた動的メッシュ（四角形 n 枚分）
+  function quadMesh(n, mat){
+    const pos = new Float32Array(n * 12), idx = new Uint16Array(n * 6);
+    for (let i = 0; i < n; i++){ const v = i * 4; idx.set([v, v+1, v+2, v+2, v+1, v+3], i * 6); }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    const m = new THREE.Mesh(geo, mat);
+    m.frustumCulled = false;
+    scene.add(m);
+    return { m, pos, geo };
+  }
+  function initFx(){
+    const spark = css('--spark');
+    fx = {
+      sparks:[], rings:[], pops:[],
+      sparkMesh:quadMesh(SPARK_MAX, new THREE.MeshBasicMaterial({ color:spark, side:THREE.DoubleSide })),
+      ringPool:[...Array(RING_MAX)].map(() => {
+        const r = new THREE.Mesh(new THREE.RingGeometry(0.75, 1, 32),
+          new THREE.MeshBasicMaterial({ color:spark, transparent:true, depthWrite:false, side:THREE.DoubleSide }));
+        r.visible = false; scene.add(r); return { m:r, t:1 };
+      }),
+      white:new THREE.Color(0xffffff), flash:new THREE.Color(css('--flash')), sparkC:new THREE.Color(spark),
+      trailMat:new THREE.MeshBasicMaterial({ color:css('--trail'), transparent:true, opacity:0.55, depthWrite:false, side:THREE.DoubleSide }),
+      layer:$('fx'), v:new THREE.Vector3(),
+      puffs:[], puffTex:puffTexture(),
+      shards:[], shardTex:shardTexture(), starTex:starTexture(), dizzy:new Map(), dizzyT:0,
+    };
+  }
+  // 煙の玉の絵：紙の色の丸に鉛筆の縁取り（重なると漫画の「ボンッ」の煙になる）
+  function puffTexture(){
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d');
+    g.beginPath(); g.arc(64, 64, 58, 0, Math.PI * 2);
+    g.fillStyle = css('--paper'); g.fill();
+    g.lineWidth = 7; g.strokeStyle = css('--ink'); g.stroke();
+    const t = new THREE.CanvasTexture(c);
+    return t;
+  }
+  // 破片の絵：紙の色の三角に鉛筆の縁取り
+  function shardTexture(){
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d');
+    g.beginPath(); g.moveTo(10, 54); g.lineTo(34, 6); g.lineTo(56, 46); g.closePath();
+    g.fillStyle = css('--paper'); g.fill(); g.lineWidth = 5; g.lineJoin = 'round'; g.strokeStyle = css('--ink'); g.stroke();
+    return new THREE.CanvasTexture(c);
+  }
+  // 頭の上を回る星の絵：黄色の星に鉛筆の縁取り
+  function starTexture(){
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d');
+    g.beginPath();
+    for (let i = 0; i < 10; i++){ const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 12 : 28; g[i ? 'lineTo' : 'moveTo'](32 + Math.cos(a) * r, 34 + Math.sin(a) * r); }
+    g.closePath(); g.fillStyle = css('--spark'); g.fill(); g.lineWidth = 4; g.lineJoin = 'round'; g.strokeStyle = css('--ink'); g.stroke();
+    return new THREE.CanvasTexture(c);
+  }
+  // ガードが崩れた：当たった所から紙の破片を飛び散らせる
+  function fxBreak(x, y, z, dx, dz){
+    for (let i = 0; i < SHARD_N; i++){
+      const a = Math.random() * Math.PI * 2;
+      let vx = Math.cos(a) + dx * 0.6, vy = 0.6 + Math.random() * 1.2, vz = Math.sin(a) + dz * 0.6;
+      const l = Math.hypot(vx, vy, vz) || 1, sp = SHARD_SPEED * (0.5 + Math.random() * 0.7);
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map:fx.shardTex, transparent:true, rotation:Math.random() * 6.28 }));
+      m.position.set(x, y, z); m.scale.setScalar(SHARD_SIZE * (0.6 + Math.random() * 0.8));
+      scene.add(m);
+      fx.shards.push({ m, vx:vx / l * sp, vy:vy / l * sp, vz:vz / l * sp, rv:(Math.random() * 2 - 1) * 12, t:0, s:m.scale.x });
+    }
+  }
+  function fxPoof(f){
+    if (!fx) return;
+    // 絵の上のあちこち（メッシュの頂点からランダムに選ぶ）から煙を出す
+    const V = f.vpos, nv = f.nv;
+    let cx = 0, cy = 0, cz = 0;
+    for (let i = 0; i < nv; i++){ cx += V[3*i]; cy += V[3*i+1]; cz += V[3*i+2]; }
+    cx /= nv; cy /= nv; cz /= nv;
+    const size = PUFF_SIZE * Math.max(1, Math.min(1.4, f.halfW / 0.6));
+    for (let k = 0; k < PUFF_N; k++){
+      const i = Math.floor(Math.random() * nv);
+      const x = V[3*i], y = V[3*i+1], z = V[3*i+2];
+      let dx = x - cx, dy = y - cy, dz = z - cz;
+      const l = Math.hypot(dx, dy, dz) || 1, sp = PUFF_SPEED * (0.4 + Math.random() * 0.8);
+      const sm = new THREE.Sprite(new THREE.SpriteMaterial({ map:fx.puffTex, transparent:true, depthTest:false, depthWrite:false }));
+      sm.renderOrder = 10; sm.position.set(x, y, z); sm.scale.setScalar(0.001);
+      scene.add(sm);
+      fx.puffs.push({ m:sm, vx:dx / l * sp, vy:dy / l * sp + 0.4, vz:dz / l * sp, t:0,
+        life:PUFF_LIFE * (0.7 + Math.random() * 0.3), size:size * (0.6 + Math.random() * 0.7) });
+    }
+    // 中心から火花も散らす
+    for (let k = 0; k < SPARK_N; k++){
+      const a = Math.random() * Math.PI * 2, b = Math.random() * 1.2 - 0.3, sp = SPARK_SPEED * (0.6 + Math.random() * 0.6);
+      if (fx.sparks.length >= SPARK_MAX) fx.sparks.shift();
+      fx.sparks.push({ x:cx, y:cy, z:cz, vx:Math.cos(a) * Math.cos(b) * sp, vy:Math.sin(b) * sp + 1, vz:Math.sin(a) * Math.cos(b) * sp,
+        life:SPARK_LIFE * (0.8 + Math.random() * 0.5), max:SPARK_LIFE * 1.3 });
+    }
+  }
+  function ensureTrail(f){
+    if (!f.trail){ f.trail = quadMesh(TRAIL_LEN - 1, fx.trailMat); f.trailPts = []; }
+  }
+  function fxClear(){
+    if (!fx) return;
+    fx.sparks.length = 0;
+    for (const r of fx.ringPool){ r.m.visible = false; r.t = 1; }
+    for (const p of fx.pops) p.el.remove();
+    fx.pops.length = 0;
+    for (const p of fx.puffs){ scene.remove(p.m); p.m.material.dispose(); }
+    for (const p of fx.shards){ scene.remove(p.m); p.m.material.dispose(); }
+    fx.shards.length = 0;
+    fx.puffs.length = 0;
+    for (const f of [player, enemy]) if (f && f.trailPts) f.trailPts.length = 0;
+  }
+  function fxHit(x, y, z, dx, dz, dmg, guarded, broke){
+    if (!fx) return;
+    const n = Math.round(SPARK_N * (0.6 + dmg / DMG_MAX * 0.6) * (guarded ? 0.4 : 1));
+    for (let i = 0; i < n; i++){   // 攻撃の向きに寄せて四方へ飛ばす
+      let vx = dx * 0.8 + (Math.random() * 2 - 1), vy = Math.random() * 1.4 - 0.3, vz = dz * 0.8 + (Math.random() * 2 - 1) * 0.6;
+      const l = Math.hypot(vx, vy, vz) || 1, sp = SPARK_SPEED * (0.5 + Math.random() * 0.8);
+      if (fx.sparks.length >= SPARK_MAX) fx.sparks.shift();
+      fx.sparks.push({ x, y, z, vx:vx / l * sp, vy:vy / l * sp, vz:vz / l * sp, life:SPARK_LIFE * (0.6 + Math.random() * 0.4), max:SPARK_LIFE });
+    }
+    const ring = fx.ringPool.reduce((a, b) => (a.t > b.t ? a : b));   // 一番古い輪を使い回す
+    ring.t = 0; ring.size = RING_SIZE * (0.6 + dmg / DMG_MAX * 0.6);
+    ring.m.position.set(x, y, z); ring.m.visible = true;
+    ring.m.material.color.copy(guarded ? fx.white : fx.sparkC);
+    if (broke){ fxBreak(x, y, z, dx, dz); ring.size *= 1.8; return; }   // 崩れたときは文字を出さず、破片と大きな輪で見せる
+    const el = document.createElement('div');
+    el.className = 'pop' + (guarded ? ' guard' : dmg >= BIG_HIT ? ' big' : '');
+    el.textContent = guarded ? 'ガード' : dmg;   // 防いだときは体力が減らないので数字は出さない
+    fx.layer.appendChild(el);
+    fx.pops.push({ el, x, y, z, t:0 });
+  }
+  function fxUpdate(dt){
+    if (!fx) return;
+    const cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
+    // 被弾したキャラの赤い点滅
+    for (const f of [player, enemy]){
+      if (f.flash > 0) f.flash -= dt;
+      f.mat.color.copy(fx.white).lerp(fx.flash, Math.max(0, f.flash / FLASH_TIME) * 0.8);
+    }
+    // 板をカメラに向けて a→b の帯として書き込む
+    const strip = (pos, o, ax, ay, az, bx, by, bz, wa, wb) => {
+      let tx = bx - ax, ty = by - ay, tz = bz - az;
+      const vx = cx - ax, vy = cy - ay, vz = cz - az;
+      let sx = ty * vz - tz * vy, sy = tz * vx - tx * vz, sz = tx * vy - ty * vx;
+      const sl = Math.hypot(sx, sy, sz) || 1; sx /= sl; sy /= sl; sz /= sl;
+      pos.set([ax - sx*wa, ay - sy*wa, az - sz*wa,  ax + sx*wa, ay + sy*wa, az + sz*wa,
+               bx - sx*wb, by - sy*wb, bz - sz*wb,  bx + sx*wb, by + sy*wb, bz + sz*wb], o);
+    };
+    // 火花（速さの向きに伸びた細い板）
+    const S = fx.sparkMesh;
+    S.pos.fill(0);
+    let k = 0;
+    for (let i = fx.sparks.length - 1; i >= 0; i--){
+      const p = fx.sparks[i];
+      p.life -= dt;
+      if (p.life <= 0){ fx.sparks.splice(i, 1); continue; }
+      p.vy -= 9 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+      const a = p.life / p.max, w = SPARK_W * a;
+      strip(S.pos, k * 12, p.x, p.y, p.z, p.x - p.vx * 0.035, p.y - p.vy * 0.035, p.z - p.vz * 0.035, w, w * 0.3);
+      k++;
+    }
+    S.geo.attributes.position.needsUpdate = true;
+    // 破片（くるくる回りながら落ちて、小さくなって消える）
+    for (let i = fx.shards.length - 1; i >= 0; i--){
+      const p = fx.shards[i];
+      p.t += dt;
+      if (p.t >= SHARD_LIFE){ scene.remove(p.m); p.m.material.dispose(); fx.shards.splice(i, 1); continue; }
+      p.vy -= 9 * dt;
+      p.m.position.x += p.vx * dt; p.m.position.y = Math.max(0.03, p.m.position.y + p.vy * dt); p.m.position.z += p.vz * dt;
+      p.m.material.rotation += p.rv * dt;
+      p.m.scale.setScalar(p.s * Math.min(1, (SHARD_LIFE - p.t) / (SHARD_LIFE * 0.4)));
+    }
+    // ガードが崩れている間：頭の上を星が回る
+    fx.dizzyT += dt * DIZZY_SPEED;
+    for (const f of [player, enemy]){
+      let st = fx.dizzy.get(f);
+      if (!st){
+        st = [...Array(DIZZY_N)].map(() => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map:fx.starTex, transparent:true })); m.scale.setScalar(DIZZY_SIZE); m.visible = false; scene.add(m); return m; });
+        fx.dizzy.set(f, st);
+      }
+      let top = 0, cx = 0, cz = 0;
+      for (let j = 0; j < f.n; j++){ const y = f.pos[3*j+1]; if (y > top){ top = y; cx = f.pos[3*j]; cz = f.pos[3*j+2]; } }
+      st.forEach((m, k) => {
+        m.visible = f.broken;
+        if (!f.broken) return;
+        const a = fx.dizzyT + k * Math.PI * 2 / DIZZY_N;
+        m.position.set(cx + Math.cos(a) * DIZZY_R, top + 0.25 + Math.sin(a * 2) * 0.03, cz + Math.sin(a) * DIZZY_R);
+      });
+    }
+    // 煙の玉（ぽんとふくらんで外へ広がり、しぼんで消える）
+    for (let i = fx.puffs.length - 1; i >= 0; i--){
+      const p = fx.puffs[i];
+      p.t += dt;
+      if (p.t >= p.life){ scene.remove(p.m); p.m.material.dispose(); fx.puffs.splice(i, 1); continue; }
+      const drag = Math.exp(-5 * dt);
+      p.vx *= drag; p.vy *= drag; p.vz *= drag;
+      p.m.position.x += p.vx * dt; p.m.position.y += p.vy * dt; p.m.position.z += p.vz * dt;
+      const g = Math.min(1, p.t / PUFF_GROW), r = p.t / p.life;
+      const sc = p.size * (1 - (1 - g) * (1 - g)) * (r > 0.5 ? 1 - (r - 0.5) / 0.5 : 1);
+      p.m.scale.setScalar(Math.max(0.001, sc));
+    }
+    // 衝撃の輪（カメラを向いて広がりながら消える）
+    for (const r of fx.ringPool){
+      if (!r.m.visible) continue;
+      r.t += dt / RING_LIFE;
+      if (r.t >= 1){ r.m.visible = false; continue; }
+      const e = 1 - (1 - r.t) * (1 - r.t);
+      r.m.quaternion.copy(camera.quaternion);
+      r.m.scale.setScalar(r.size * (0.25 + 0.75 * e));
+      r.m.material.opacity = 1 - r.t;
+    }
+    // 攻撃の軌跡（手足の先の通り道を帯で描く）
+    for (const f of [player, enemy]){
+      ensureTrail(f);
+      const a = f.atk, pts = f.trailPts;
+      if (a && a.chain && a.t >= ATK_WIND * 0.5){
+        const t = 3 * a.chain.joints[a.chain.joints.length - 1];
+        pts.push([f.pos[t], f.pos[t+1], f.pos[t+2]]);
+        if (pts.length > TRAIL_LEN) pts.shift();
+      } else if (pts.length) pts.shift();   // 攻撃が終わったら後ろから縮める
+      const T = f.trail;
+      T.pos.fill(0);
+      for (let i = 0; i + 1 < pts.length; i++){
+        const p0 = pts[i], p1 = pts[i + 1], n = pts.length - 1;
+        strip(T.pos, i * 12, p0[0], p0[1], p0[2], p1[0], p1[1], p1[2], TRAIL_W * i / n, TRAIL_W * (i + 1) / n);
+      }
+      T.geo.attributes.position.needsUpdate = true;
+    }
+    // ダメージ数字（3D位置を画面に写して、浮かび上がりながら消える）
+    const W = fx.layer.clientWidth, H = fx.layer.clientHeight;
+    for (let i = fx.pops.length - 1; i >= 0; i--){
+      const p = fx.pops[i];
+      p.t += dt;
+      if (p.t >= POP_LIFE){ p.el.remove(); fx.pops.splice(i, 1); continue; }
+      const r = p.t / POP_LIFE;
+      fx.v.set(p.x, p.y + 0.25 + r * 0.5, p.z).project(camera);
+      const sc = r < 0.15 ? 0.6 + r / 0.15 * 0.6 : 1.2 - Math.min(0.2, (r - 0.15));   // ぽんと大きく出てから落ち着く
+      p.el.style.transform = `translate(${(fx.v.x + 1) / 2 * W}px,${(1 - fx.v.y) / 2 * H}px) translate(-50%,-50%) scale(${sc})`;
+      p.el.style.opacity = String(1 - r * r);
+    }
+  }
+
+  // ===== カメラ（2人が画面に収まるように横から見る） =====
+  const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
+  function updateCamera(dt, snap){
+    // 自分の斜め後ろから、2人の中間を見る（自分の向き＝相手のほう）
+    const fx = player.nx, fz = player.nz, rx = -fz, rz = fx;
+    const d = Math.hypot(enemy.x - player.x, enemy.z - player.z);
+    const mx = (player.x + enemy.x) / 2, mz = (player.z + enemy.z) / 2;
+    const dist = CAM_DIST + d * 0.7 + Math.max(player.halfW, enemy.halfW) * 0.6;
+    const cx = -fx * Math.cos(CAM_ANGLE) + rx * Math.sin(CAM_ANGLE), cz = -fz * Math.cos(CAM_ANGLE) + rz * Math.sin(CAM_ANGLE);
+    const tp = new THREE.Vector3(mx + cx * dist, CAM_H + dist * 0.32, mz + cz * dist);
+    const tl = new THREE.Vector3(mx, CHAR_H * 0.42, mz);
+    if (snap){ camPos.copy(tp); camLook.copy(tl); }
+    else { const k = 1 - Math.exp(-4 * dt); camPos.lerp(tp, k); camLook.lerp(tl, k); }
+    camera.position.copy(camPos);
+    camera.lookAt(camLook);
+    if (shake > 0.001){   // 揺れは向きを変えずに位置だけずらす（camPos には残さない）
+      camera.position.x += (Math.random() * 2 - 1) * shake;
+      camera.position.y += (Math.random() * 2 - 1) * shake;
+      shake *= Math.exp(-SHAKE_DECAY * dt);
+    }
+    camera.updateMatrixWorld();
+  }
+
+  // ===== 1ステップ =====
+  function tick(dt){
+    let ix = 0, iz = 0;
+    if (state === 'fight'){
+      ix = jx + (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
+      iz = jy + (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
+      const l = Math.hypot(ix, iz); if (l > 1){ ix /= l; iz /= l; }
+      // 画面の上＝相手のほう（自分の正面）、右＝自分の右
+      const fx = player.nx, fz = player.nz, rx = -fz, rz = fx;
+      const wx = rx * ix - fx * iz, wz = rz * ix - fz * iz;
+      ix = wx; iz = wz;
+      player.guardWant = defHeld || !!keys.Shift;
+      cpuThink(dt);
+    } else { enemy.ix = enemy.iz = 0; player.guardWant = enemy.guardWant = false; }
+    if (!player.down) faceToward(player, enemy, dt);   // いつも相手のほうを向く（倒れたら向きはそのまま）
+    if (!enemy.down) faceToward(enemy, player, dt);
+    move(player, ix, iz, MOVE_SPEED * player.spd, dt);
+    move(enemy, enemy.ix, enemy.iz, MOVE_SPEED * enemy.ai.speed * enemy.spd, dt);
+    separate();
+    physStep(player, enemy, dt);
+    physStep(enemy, player, dt);
+    attackUpdate(player, enemy, dt);
+    attackUpdate(enemy, player, dt);
+    if (state === 'fight' && (player.hp <= 0 || enemy.hp <= 0)){
+      state = 'ending'; endT = END_WAIT;
+      for (const f of [player, enemy]) if (f.hp <= 0){ f.down = true; f.fallV = FALL_KICK; f.guard = false; f.guardAmt = 0; }
+      slowT = KO_SLOW_TIME; shake += KO_SHAKE;   // 決着の一撃はスローで見せる
+      if (player.atk) endAttack(player, false);
+      if (enemy.atk) endAttack(enemy, false);
+    }
+    if (state === 'ending'){ endT -= dt; if (endT <= 0) showResult(); }
+  }
+
+  // ===== ゲームループ =====
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    try { frame(dt); }
+    catch (err){ console.error(err); }   // 1フレームで例外が出てもゲーム全体が止まらないようにする
+    requestAnimationFrame(loop);
+  }
+  function frame(dt){
+    if (state !== 'draw' && player){
+      const rate = slowT > 0 ? KO_SLOW : 1;   // 決着のスロー中はゆっくり進める
+      if (slowT > 0) slowT -= dt;
+      if (hitStop > 0) hitStop -= dt;         // ヒットストップ中は物理を止める（火花などは動かす）
+      else {
+        acc += dt * rate;
+        while (acc >= STEP){
+          acc -= STEP; tick(STEP);
+          if (hitStop > 0){ acc = 0; break; }
+        }
+      }
+      if (state === 'intro') introUpdate(dt);
+      updateCamera(dt, false);
+      deform(player); deform(enemy);
+      fxUpdate(dt * rate);
+      guardHud();
+      renderer.render(scene, camera);
+    }
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

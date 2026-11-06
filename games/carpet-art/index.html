@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/carpet-art/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>カーペットアート</title>
+<meta name="description" content="カーペットをなぞって模様を描く">
+<style>
+  :root{ --bg:#3a3a3e; --pile:#ba2315; --howto-bg:#3a3a3e; --howto-fg:#fff; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg);
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #game{position:fixed;inset:0}
+  canvas{display:block;touch-action:none}
+  /* 上：視点の操作（左）と共有（右）。下：色・画像・指の大きさ */
+  #buttons{
+    position:absolute;left:calc(16px + env(safe-area-inset-left));top:calc(16px + env(safe-area-inset-top));
+    display:flex;
+  }
+  /* 視点リセットは、視点が最初の位置から動いているときだけ「視点を動かす」の右にくっつけて出す */
+  #buttons #resetBtn{display:none}
+  #buttons.rotated #resetBtn{display:flex;border-radius:0 22px 22px 0}
+  #buttons.rotated #camBtn{border-radius:22px 0 0 22px}
+  #share{position:absolute;right:calc(16px + env(safe-area-inset-right));top:calc(16px + env(safe-area-inset-top))}
+  /* 画面が狭いときは、ボタンはそのままで「指の大きさ」のスライダーだけを短くして1行に収める */
+  #bottom{
+    position:absolute;left:calc(16px + env(safe-area-inset-left));right:calc(16px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));
+    display:flex;align-items:center;gap:8px;pointer-events:none;
+  }
+  #bottom > *{pointer-events:auto}
+  #tools{display:flex;gap:8px;flex:none}
+  #sizeTool{min-width:0}
+  #sizeTool svg{flex:none}
+  #brushSize{flex:0 1 120px;width:120px;min-width:24px;margin:0}
+  /* 指の大きさのリング（画面の中央に正円で出す） */
+  #ring{position:absolute;left:50%;top:50%;border:2px solid #fffe;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-sizing:border-box}
+  /* 位置（position）は各要素ごとに指定しているので、ここでは見た目だけをそろえる */
+  #tools label{position:relative}
+  #buttons button,#tools label,#tools button,#sizeTool,#share,#share-close,#crop-buttons button{
+    display:flex;align-items:center;gap:8px;
+    min-width:44px;height:44px;padding:0 16px;border:none;border-radius:22px;
+    background:#0008;color:#fff;font:15px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif;touch-action:manipulation;
+  }
+  /* アイコンだけのボタンは正方形にする */
+  #tools #colorPick,#tools #undo,#share,#buttons button{width:44px;padding:0;justify-content:center}
+  #buttons #howtoBtn{width:auto;padding:0 16px;margin-left:8px}
+  #undo:disabled{opacity:.4}
+  /* 画像ボタンは普段はアイコンだけ。読み込めなかったときだけ横に文字を出す */
+  #tools #pick{min-width:44px;padding:0 11px;justify-content:center}
+  #pickText:empty{display:none}
+  #camBtn[aria-pressed="true"]{background:#fffd;color:#000}
+  #buttons button:focus-visible,#undo:focus-visible,#share:focus-visible,#share-close:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .hidden{display:none !important}
+  #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
+  #share-view .panel{
+    width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;
+    padding:16px;border-radius:12px;background:#222;color:#fff;
+    font:14px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  }
+  #share-img{display:block;width:100%;height:auto}
+  #share-text{white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text}
+  #share-close{margin:0 auto}
+  /* 画像の切り取り画面 */
+  #crop-view{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(0,0,0,.8)}
+  #crop-title{margin:0;color:#fff;font:15px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+  #crop-wrap{position:relative;touch-action:none}
+  #crop-canvas{display:block}
+  #crop-dim{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+  #crop-shade{position:absolute;box-shadow:0 0 0 9999px rgba(0,0,0,.55)}
+  #crop-rect{position:absolute;border:2px solid #fff;box-sizing:border-box;cursor:move}
+  .crop-h{position:absolute;width:32px;height:32px;margin:-16px 0 0 -16px}
+  .crop-h::after{content:"";position:absolute;left:10px;top:10px;width:12px;height:12px;background:#fff}
+  .crop-h[data-c="nw"]{left:0;top:0;cursor:nwse-resize}
+  .crop-h[data-c="ne"]{left:100%;top:0;cursor:nesw-resize}
+  .crop-h[data-c="sw"]{left:0;top:100%;cursor:nesw-resize}
+  .crop-h[data-c="se"]{left:100%;top:100%;cursor:nwse-resize}
+  #crop-buttons{display:flex;gap:12px}
+  #crop-buttons button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  #tools label:focus-within{outline:2px solid #fff;outline-offset:2px}
+  #color{width:26px;height:26px;padding:0;border:none;border-radius:4px;background:none}
+  /* inputは消さずに見えなくするだけ（display:noneにすると環境によってファイル選択が効かない） */
+  #file{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="ring" class="hidden"></div>
+  <div id="buttons">
+    <!-- 視点を動かす：カメラの周りを回る矢印 -->
+    <button id="camBtn" type="button" aria-pressed="false" aria-label="視点を動かす">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="8" y="10" width="8" height="6" rx="1"/><circle cx="12" cy="13" r="1.5"/><path d="M10.5 10l.8-1.4h1.4l.8 1.4"/>
+        <path d="M4 12a8 8 0 0 1 13.7-5.6"/><path d="M18 3.4v3.3h-3.3"/>
+        <path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M6 20.6v-3.3h3.3"/>
+      </svg>
+    </button>
+    <!-- 視点リセット：カメラと、元に戻す向きの矢印 -->
+    <button id="resetBtn" type="button" aria-label="視点リセット">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="8" y="10" width="8" height="6" rx="1"/><circle cx="12" cy="13" r="1.5"/><path d="M10.5 10l.8-1.4h1.4l.8 1.4"/>
+        <path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 3v4.5H8"/>
+      </svg>
+    </button>
+    <button id="howtoBtn" type="button" data-howto-open>遊び方</button>
+  </div>
+  <div id="bottom">
+    <div id="tools">
+      <label id="colorPick"><input id="color" type="color" value="#ba2315" aria-label="カーペットの色"></label>
+      <label id="pick" aria-label="画像を選ぶ">
+        <!-- 画像アイコン（額縁の中に山と太陽） -->
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 9"/>
+        </svg>
+        <span id="pickText"></span><input id="file" type="file" accept="image/*" aria-label="画像を選ぶ">
+      </label>
+      <!-- 元に戻す：左向きに戻る矢印 -->
+      <button id="undo" type="button" aria-label="元に戻す" disabled>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>
+        </svg>
+      </button>
+    </div>
+    <!-- 指の大きさ：左の小さな丸（小さい）〜右の大きな丸（大きい） -->
+    <label id="sizeTool">
+      <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>
+      <input id="brushSize" type="range" min="0.015" max="0.22" step="0.005" value="0.065" aria-label="指の大きさ">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10" fill="currentColor"/></svg>
+    </label>
+  </div>
+  <button id="share" type="button" aria-label="共有">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>
+    </svg>
+  </button>
+  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+    <div class="panel">
+      <img id="share-img" alt="共有される画像">
+      <p id="share-text"></p>
+      <button id="share-close" type="button">閉じる</button>
+    </div>
+  </div>
+  <div id="crop-view" class="hidden" role="dialog" aria-label="画像の使う範囲を選ぶ">
+    <p id="crop-title">使う範囲を選んでください</p>
+    <div id="crop-wrap">
+      <canvas id="crop-canvas"></canvas>
+      <div id="crop-dim"><div id="crop-shade"></div></div>
+      <div id="crop-rect">
+        <div class="crop-h" data-c="nw"></div><div class="crop-h" data-c="ne"></div>
+        <div class="crop-h" data-c="sw"></div><div class="crop-h" data-c="se"></div>
+      </div>
+    </div>
+    <div id="crop-buttons">
+      <button id="crop-cancel" type="button">キャンセル</button>
+      <button id="crop-ok" type="button">決定</button>
+    </div>
+  </div>
+</div>
+<section class="howto" hidden data-pos="none">
+  <h2>遊び方</h2>
+  <p>毛足のあるカーペットを指でなぞり、毛の倒れる向きの違いで模様や文字を描く作品です。手前に倒した毛は濃く、奥へ倒した毛は明るく見えます。勝ち負けや得点はありません。描いた跡はこのブラウザに自動で保存され、次に開くと続きから始まります。</p>
+  <h2>操作</h2>
+  <p>指でなぞると毛が倒れます。何本の指でも同時に描けて、PC では左ドラッグです。左上のカメラのボタンを押すと、なぞる代わりに視点を回せます(PC は右ドラッグでも回せます)。下のボタンで毛の色と画像を選べるほか、なぞった操作を20回まで戻せます。スライダーで指の大きさを変えられます。</p>
+  <h2>楽しみ方</h2>
+  <p>1回なぞるだけでは毛は少ししか倒れないので、同じ所を何度かなぞると濃淡がはっきりします。線を消したいときは反対向きになぞってください。画像を選ぶと、使う範囲を切り取ってカーペットの柄にできます。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+
+  // ---------- 定数 ----------
+  const VIEW_SIZE = 1.8;       // 画面の短い方の辺に映るカーペットの幅（m）。小さいほど寄って見える
+  const GRID = 80;             // 毛の向きを持つマスの細かさ（1mあたりのマス数）
+  const SHELLS = 32;           // 毛足を表す層の数（多いほど毛がなめらかだが重い）
+  const PILE_H = 0.05;         // 毛足の長さ（m）
+  const LEAN = 1.2;            // 毛が完全に寝たときに毛先がずれる量（毛足の長さに対する比）
+  const TUFT_DENSITY = 80;     // 毛束の細かさ（1mあたりに並ぶ毛束の列数）。画面で毛束が見分けられる大きさにする
+  const TUFT_R = 0.62;         // 毛束の根元の太さ（毛束の間隔に対する半径）。0.5より大きいと根元で隣と重なり、すき間なく詰まる
+  const TUFT_TAPER = 0.65;     // 毛先で毛束が細くなる割合（0＝細くならない）
+  const TUFT_JITTER = 0.4;     // 毛束の生える位置のばらつき（毛束の間隔に対する割合）
+  const TUFT_LEAN_JITTER = 0.35;   // 毛束ごとの倒れ方のばらつき（毛束の間隔に対する、毛先のずれ）
+  const STRANDS = 5;           // 毛束1つを横切る毛の本数（毛束の中の筋の細かさ）
+  // 1ピクセルあたりの毛束の列数がこの範囲で、毛束を描く → 毛先の面として平均の色で描く、に切り替える（遠くのちらつき防止）
+  const FIBER_LOD = [0.3, 0.5];
+  const LIGHT_DIR = [-0.4, 0.85, -0.5];   // 光が来る向き（カーペットの奥・左上から）
+
+  // なぞる指の半径は画面上の正円で決める（画面の短い辺に対する割合）。「指の大きさ」スライダーの範囲（0.015〜0.22、最初は0.065）はHTML側で指定
+  const PATTERN_BRUSH_R = 0.12;   // 最初の模様を付けるときの半径（m、カーペット上）
+  const BRUSH_EDGE = 0.1;      // 指の縁のぼけ幅（半径に対する割合）
+  const BRUSH_POWER = 0.2;    // 指が1回通ったときに毛がなぞった向きへ倒れる割合（0〜1）
+  const STEP = 0.015;          // なぞった線をこの間隔（m）で区切って毛を倒す
+  const DIR_SMOOTH = 0.5;      // なぞる向きのなめらかさ（指の細かいぶれで毛の向きが乱れないようにする）
+  const INIT_X = 0, INIT_Z = 0.9;   // 下地の毛の倒れ方（手前向き＝毛先が見えて暗い側にそろえておく）
+
+  const PATTERN_DENSITY = 1.9;         // 最初に付けておく模様の線の数（1m²あたり）
+  const PATTERN_LEN = [0.6, 2.2];      // 模様の線1本の長さ（m）の範囲
+  const PATTERN_CURVE = 0.06;          // 模様の線の曲がりやすさ（1区切りあたりの向きの変化 rad）
+
+  const CAM_FOV = 40;          // カメラの画角（度）
+  const CAM_ELEV = 1.0;        // 最初のカメラの見下ろし角（rad）
+  const ELEV_MIN = 0.5, ELEV_MAX = 1.5;   // 見下ろし角の範囲（rad）。浅くしすぎると遠くでカーペットの端が見える
+  const ROT_SPEED = 0.008;     // 視点を回す速さ（rad/px）
+  const RESET_TIME = 0.6;      // 視点リセットで最初の視点に戻るまでの時間（秒）
+
+  const DARK_RATIO = 0.58;     // 毛先が見える向き（手前に倒れた毛）の明るさ（側面が見える向きを1とした比）
+  const IMAGE_WIDTH = 1.8;     // 画像がカーペットの中央で占める横幅（m）。画像は1枚だけで、外側は画像の端に近い色で馴染ませる
+  const IMAGE_TEX = 1024;      // 画像を貼るときのテクスチャの大きさ（px）
+  const BLUR_TEX = 16;         // 画像の外側に使う、ぼかした画像の大きさ（px）。小さいほど大きくぼける
+  const IMAGE_FADE = 0.5;      // 画像の端から、端の平均の色に変わりきるまでの距離（m）
+
+  const UNDO_MAX = 20;         // 元に戻せる回数（なぞった回数）
+
+  const SAVE_KEY = 'carpetArt';   // ブラウザに保存するときの名前（項目ごとに carpetArt.pile のように付ける）
+  const SAVE_DELAY = 0.5;      // 操作が止まってからこの秒数で保存する（なぞっている間に何度も保存しない）
+  const SAVE_TILE = 32;        // なぞった所をこの大きさ（マス）の区画ごとに保存する
+  const SAVE_IMAGE_PX = 1024;  // 保存する画像の長い辺の上限（px）。大きいとブラウザの保存容量を超えやすい
+
+  // ---------- 色（CSS変数から読む） ----------
+  const css = getComputedStyle(document.documentElement);
+  const hex = s => { s = s.trim().replace('#', ''); return [0, 2, 4].map(i => parseInt(s.substr(i, 2), 16) / 255); };
+  const BG = hex(css.getPropertyValue('--bg'));
+  const PILE = hex(css.getPropertyValue('--pile'));   // 最初のカーペットの色（側面が見える向きの色）
+
+  // ---------- three.js ----------
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const cv = renderer.domElement;
+  $('game').appendChild(cv);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(BG[0], BG[1], BG[2]);
+  const camera = new THREE.PerspectiveCamera(CAM_FOV, 1, 0.05, 100);
+
+  // ---------- 毛の向き ----------
+  // マスごとに「毛が倒れている向き」を(x, z)のベクトルで持つ（長さ0＝毛が立っている、1＝完全に寝ている）。
+  // カーペットは原点を中心とした 2S × 2S の正方形
+  let S = 0, gn = 0;
+  let px = new Float32Array(0), pz = new Float32Array(0);
+  let texData = null, pileTex = null;
+
+  // 毛の向きをテクスチャに書き込む（-1〜1 を 0〜255 に詰める）
+  function encodePile(){
+    for (let i = 0; i < gn * gn; i++){
+      const k = i * 4;
+      texData[k]     = (px[i] * 127.5 + 128) | 0;
+      texData[k + 1] = (pz[i] * 127.5 + 128) | 0;
+      texData[k + 2] = 0;
+      texData[k + 3] = 255;
+    }
+    pileTex.needsUpdate = true;
+  }
+
+  // ---------- カーペット（毛足を薄い層の重ねで表す） ----------
+  // 同じ大きさの板を毛足の高さぶん積み、各層で「その高さに毛がある所」だけを残すと毛の束に見える。
+  // 毛が寝ている所は、上の層ほど毛先を倒れた向きへずらす
+  const mat = new THREE.ShaderMaterial({
+    side: THREE.DoubleSide,
+    extensions: { derivatives: true },   // 1ピクセルに入る毛束の数を調べる（fwidth）のに使う
+    uniforms: {
+      pileTex: { value: null },
+      pileH:   { value: PILE_H },
+      leanLen: { value: PILE_H * LEAN },
+      density: { value: TUFT_DENSITY },
+      tuftR:   { value: TUFT_R },
+      taper:   { value: TUFT_TAPER },
+      jitter:  { value: TUFT_JITTER },
+      leanJit: { value: TUFT_LEAN_JITTER },
+      strands: { value: STRANDS },
+      pileCol: { value: new THREE.Vector3(...PILE) },
+      darkRatio:{ value: DARK_RATIO },
+      baseTex: { value: new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat) },
+      useTex:  { value: 0 },
+      texSize: { value: new THREE.Vector2(IMAGE_WIDTH, IMAGE_WIDTH) },
+      blurTex: { value: new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat) },
+      edgeAvg: { value: new THREE.Vector4(1, 1, 1, 1) },
+      fadeLen: { value: IMAGE_FADE },
+      fiberLod:{ value: new THREE.Vector2(...FIBER_LOD) },
+      lightDir:{ value: new THREE.Vector3(...LIGHT_DIR).normalize() }
+    },
+    vertexShader: `
+      attribute float layer;
+      uniform float pileH;
+      varying vec2 vUv;
+      varying float vH;
+      varying vec3 vWorld;
+      void main(){
+        vUv = uv;
+        vH = layer;
+        vec4 w = modelMatrix * vec4(position.x, layer * pileH, position.z, 1.0);
+        vWorld = w.xyz;
+        gl_Position = projectionMatrix * viewMatrix * w;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D pileTex;
+      uniform sampler2D baseTex, blurTex;
+      uniform vec4 edgeAvg;
+      uniform float fadeLen;
+      uniform float pileH, leanLen, density, darkRatio, useTex;
+      uniform float tuftR, taper, jitter, leanJit, strands;
+      uniform vec2 texSize, fiberLod;
+      uniform vec3 pileCol, lightDir;
+      varying vec2 vUv;
+      varying float vH;
+      varying vec3 vWorld;
+      // 毛束ごとの乱数。sin を使う式では精度が足りず縞になるので、sin を使わない式にする
+      float hash(vec2 p){
+        vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+        p3 += dot(p3, p3.yzx + 33.33);
+        return fract((p3.x + p3.y) * p3.z);
+      }
+      // 毛は根元では立っていて、上ほど大きく倒れる（まっすぐ斜めではなく、しなって曲がる）
+      float bend(float h){ return h * (0.35 + 0.65 * h); }
+      float bendD(float h){ return 0.35 + 1.3 * h; }
+
+      // 毛の色：画像を選んでいれば、その位置（カーペット上、m）の画像の色
+      vec3 pileColorAt(vec2 c){
+        if (useTex < 0.5) return pileCol;
+        vec2 raw = vec2(0.5 + c.x / texSize.x, 0.5 - c.y / texSize.y);
+        vec2 tuv = clamp(raw, 0.0, 1.0);
+        vec4 t = texture2D(baseTex, tuv);
+        // 画像の外：端の色から、ぼかした端の色を経て、端全体の平均の色へなめらかに変える（筋状に伸びないように）
+        float d = length(max(abs(raw - 0.5) - 0.5, 0.0) * texSize);   // 画像の端からの距離（m）
+        if (d > 0.0){
+          t = mix(t, texture2D(blurTex, tuv), smoothstep(0.0, fadeLen * 0.3, d));
+          t = mix(t, edgeAvg, smoothstep(0.0, fadeLen, d));
+        }
+        // 透過部分は選んでいる色を透かす（画像は透過度を掛けた色で持っているので、そのまま足し合わせる）
+        return t.rgb + pileCol * (1.0 - t.a);
+      }
+
+      void main(){
+        vec2 pv = texture2D(pileTex, vUv).rg * 2.0 - 1.0;   // 毛が倒れている向き(x, z)
+        float h = vH;
+
+        // 毛束の並び（毛束の間隔を1とした座標）
+        vec2 g = vWorld.xz * density;
+        vec2 lean = pv * leanLen * density;   // 毛先がいちばん上でずれる量（毛束の間隔を1とした値）
+
+        // 毛束が画面の数ピクセルより小さいと、毛束の並びとピクセルの並びがずれて縞の模様（モアレ）が出る。
+        // そこで、1ピクセルに入る毛束の数を調べ、細かすぎる所では毛束を描かず、毛先の面として平均の色で描く。
+        // 切り替わりの境目は、ピクセルごとにばらして目立たなくする
+        vec2 fw = fwidth(g);
+        float lod = smoothstep(fiberLod.x, fiberLod.y, max(fw.x, fw.y));
+        bool avg = hash(gl_FragCoord.xy) < lod;
+
+        vec2 tuftLean = lean;    // この点にある毛束の倒れ方
+        vec2 rootPos;            // この点の毛の根元の位置（カーペット上、m）
+        float rim = 0.0;         // 毛束の中心からの距離（0＝中心、1＝縁）
+        float tone = 1.0;        // 毛束・毛ごとの色のばらつき
+        float tip = 1.0;         // 毛束の長さ（毛足の長さに対する比）
+        if (avg){
+          if (h < 0.999) discard;   // 平均で描く所は、いちばん上の層だけを使う
+          rootPos = (g - lean * bend(0.8)) / density;
+          h = 0.66;                 // 平均で描く所は、毛束を描いた所と同じくらいの明るさになる高さとして明るさを決める
+          rim = 0.6;
+        } else {
+          // この高さでこの点を通る毛束を、まわりの4つのマスから探す（毛束ごとに生える位置・倒れ方・長さがばらつく）
+          vec2 q = g - lean * bend(h);
+          vec2 base = floor(q - 0.5);
+          float best = 2.0;
+          vec2 bestCell = vec2(0.0);
+          if (h > 0.0){
+            for (int j = 0; j < 2; j++){
+              for (int i = 0; i < 2; i++){
+                vec2 c = base + vec2(float(i), float(j));
+                float top = 0.72 + 0.28 * hash(c + 9.0);   // 毛束ごとの長さのばらつき
+                if (h > top) continue;
+                vec2 ctr = c + 0.5 + (vec2(hash(c), hash(c + 17.0)) - 0.5) * jitter * 2.0;
+                vec2 lj = (vec2(hash(c + 31.0), hash(c + 47.0)) - 0.5) * leanJit * 2.0;
+                vec2 d = g - ctr - (lean + lj) * bend(h);
+                float t = h / top;
+                float r = tuftR * (1.0 - taper * t * t) * (0.85 + 0.3 * hash(c + 5.0));   // 毛先ほど細い
+                float dd = length(d) / r;
+                if (dd < best){ best = dd; bestCell = c; }
+              }
+            }
+            if (best >= 1.0) discard;
+          } else {
+            bestCell = floor(q);   // いちばん下の層（裏地）は全部塗る
+            best = 1.0;
+          }
+          vec2 c = bestCell;
+          tip = 0.72 + 0.28 * hash(c + 9.0);
+          tuftLean = lean + (vec2(hash(c + 31.0), hash(c + 47.0)) - 0.5) * leanJit * 2.0;
+          rootPos = (c + 0.5 + (vec2(hash(c), hash(c + 17.0)) - 0.5) * jitter * 2.0) / density;
+          rim = best;
+          // 毛束の中の1本1本の毛：毛束を横切る向きに細かい筋を付ける
+          vec2 sp = floor((q - c) * strands);
+          tone = (0.85 + 0.3 * hash(c + 23.0)) * (0.85 + 0.3 * hash(sp + c * 7.0 + 3.0));
+        }
+
+        // 毛1本を細い円柱とみなした陰影（毛の向きと光・視線の関係で明るさが変わる）
+        vec2 leanW = tuftLean / density;   // 毛束の倒れ方（m）
+        vec3 T = normalize(vec3(leanW.x * bendD(h), pileH, leanW.y * bendD(h)));
+        vec3 V = normalize(cameraPosition - vWorld);
+        vec3 L = normalize(lightDir);
+        float tl = dot(T, L);
+        float diff = sqrt(max(0.0, 1.0 - tl * tl));
+        float th = dot(T, normalize(L + V));
+        float spec = pow(sqrt(max(0.0, 1.0 - th * th)), 40.0);
+
+        // 毛が見る人の方へ倒れているほど毛先（断面）が見えて濃い色に、向こうへ倒れているほど側面が見えて明るい色にする
+        vec2 vh = V.xz;
+        float vl = length(vh);
+        vh = vl > 1e-4 ? vh / vl : vec2(0.0);
+        float facing = dot(pv, vh) * smoothstep(0.0, 0.3, vl);
+        vec3 pileC = pileColorAt(rootPos);
+        vec3 baseCol = pileC * mix(darkRatio, 1.0, clamp(0.5 - 0.5 * facing, 0.0, 1.0));
+
+        float ao = mix(0.3, 1.0, pow(h / tip, 0.6));     // 根元ほど奥まって暗い（毛束のすき間が影になる）
+        float bulge = mix(1.05, 0.8, rim * rim);           // 毛束の縁ほど少し暗く、ふくらみを出す
+        vec3 col = baseCol * tone * bulge * (0.6 + 0.4 * diff) * ao
+                 + pileC * 0.35 * spec * h * (1.0 - rim * 0.5);   // つやも毛の色を帯びる（白く飛ばさない）
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `
+  });
+  const carpet = new THREE.Mesh(new THREE.BufferGeometry(), mat);
+  scene.add(carpet);
+
+  function makeCarpetGeometry(S){
+    const geo = new THREE.BufferGeometry();
+    const pos = [], uv = [], layer = [], idx = [];
+    for (let s = 0; s < SHELLS; s++){
+      const h = s / (SHELLS - 1), b = s * 4;
+      pos.push(-S, 0, -S,  S, 0, -S,  S, 0, S,  -S, 0, S);
+      uv.push(0, 0, 1, 0, 1, 1, 0, 1);
+      layer.push(h, h, h, h);
+      idx.push(b, b + 2, b + 1, b, b + 3, b + 2);
+    }
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setAttribute('layer', new THREE.Float32BufferAttribute(layer, 1));
+    geo.setIndex(idx);
+    return geo;
+  }
+
+  // カーペットを半径 newS の大きさで作り直す。すでになぞった跡は同じ場所に残す
+  function buildCarpet(newS){
+    const ngn = 2 * Math.ceil(newS * GRID);   // 偶数にして、中心がいつもマスの境目に来るようにする（大きさが変わってもマスの位置がずれない）
+    newS = ngn / GRID / 2;
+    const nx = new Float32Array(ngn * ngn).fill(INIT_X);
+    const nz = new Float32Array(ngn * ngn).fill(INIT_Z);
+    const off = Math.round((newS - S) * GRID);
+    for (let z = 0; z < gn; z++){
+      for (let x = 0; x < gn; x++){
+        const X = x + off, Z = z + off;
+        if (X < 0 || Z < 0 || X >= ngn || Z >= ngn) continue;
+        nx[Z * ngn + X] = px[z * gn + x];
+        nz[Z * ngn + X] = pz[z * gn + x];
+      }
+    }
+    S = newS; gn = ngn; px = nx; pz = nz;
+
+    if (pileTex) pileTex.dispose();
+    texData = new Uint8Array(gn * gn * 4);
+    pileTex = new THREE.DataTexture(texData, gn, gn, THREE.RGBAFormat);
+    pileTex.magFilter = pileTex.minFilter = THREE.LinearFilter;
+    mat.uniforms.pileTex.value = pileTex;
+
+    carpet.geometry.dispose();
+    carpet.geometry = makeCarpetGeometry(S);
+    pileDirty = true;
+  }
+
+  // ---------- カメラ ----------
+  let W = 0, H = 0, azim = 0, elev = CAM_ELEV, camDist = 6;
+
+  // 画面の短い方の辺に VIEW_SIZE の幅が映る距離
+  const camDistFor = aspect => (VIEW_SIZE / 2) / (Math.tan(CAM_FOV * Math.PI / 360) * Math.min(1, aspect));
+
+  function placeCamera(cam, dist, el, az){
+    cam.position.set(dist * Math.cos(el) * Math.sin(az), dist * Math.sin(el), dist * Math.cos(el) * Math.cos(az));
+    cam.lookAt(0, 0, 0);
+    cam.updateMatrixWorld();
+  }
+
+  // どの向きに視点を回しても画面がカーペットで埋まる大きさ（中心からの半径）を求める。
+  // 見下ろし角の両端で、画面の四隅に映る床の点が中心からどれだけ離れるかを調べる
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3();
+  const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  function coverRadius(aspect){
+    const cam = new THREE.PerspectiveCamera(CAM_FOV, aspect, 0.05, 100);
+    const dist = camDistFor(aspect);
+    let r = 0;
+    for (const el of [ELEV_MIN, ELEV_MAX]){
+      placeCamera(cam, dist, el, 0);
+      for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]){
+        ndc.set(sx, sy);
+        ray.setFromCamera(ndc, cam);
+        if (ray.ray.intersectPlane(groundPlane, hit)) r = Math.max(r, Math.hypot(hit.x, hit.z));
+      }
+    }
+    return r * 1.03 + PATTERN_BRUSH_R;
+  }
+
+  function resize(){
+    W = $('game').clientWidth; H = $('game').clientHeight;
+    renderer.setSize(W, H);
+    camera.aspect = W / H;
+    camera.updateProjectionMatrix();
+    camDist = camDistFor(camera.aspect);
+    // 画面を回転させても足りるよう、縦横を入れ替えた場合も含めて大きさを決める（足りなくなったときだけ広げる）
+    const need = Math.max(coverRadius(camera.aspect), coverRadius(1 / camera.aspect));
+    if (need > S) buildCarpet(need);
+    placeCamera(camera, camDist, elev, azim);
+    requestRender();
+  }
+
+  // ---------- 描画（変化があったときだけ描く） ----------
+  let renderPending = false, pileDirty = true;
+  function requestRender(){
+    if (renderPending) return;
+    renderPending = true;
+    requestAnimationFrame(() => {
+      renderPending = false;
+      if (pileDirty){ encodePile(); pileDirty = false; }
+      renderer.render(scene, camera);
+    });
+  }
+
+  // ---------- なぞる ----------
+  // 指の半径（画面の短い辺に対する割合）。「指の大きさ」スライダーで変える
+  let brushFrac = parseFloat($('brushSize').value);
+  $('brushSize').addEventListener('input', e => { brushFrac = parseFloat(e.target.value); });
+  const brushPx = () => brushFrac * Math.min(W, H);   // 指の半径（画面上のpx）
+
+  // マス i の毛を、中心からの距離 dist（半径を1とした値）に応じて、なぞった向き(ux, uz)へ倒す
+  function tiltCell(i, dist, ux, uz){
+    const w = BRUSH_POWER * Math.min(1, (1 - dist) / BRUSH_EDGE);   // 指の中心は一様に、縁だけ少しぼかす
+    px[i] += (ux - px[i]) * w;
+    pz[i] += (uz - pz[i]) * w;
+  }
+
+  // 最初の模様用：カーペット上の点(x, z)を中心に、カーペット上の正円（半径 PATTERN_BRUSH_R）の範囲の毛を倒す
+  function brushWorld(x, z, ux, uz){
+    const r = PATTERN_BRUSH_R * GRID;
+    const cx = (x + S) * GRID, cz = (z + S) * GRID;
+    const x0 = Math.max(0, Math.floor(cx - r)), x1 = Math.min(gn - 1, Math.ceil(cx + r));
+    const z0 = Math.max(0, Math.floor(cz - r)), z1 = Math.min(gn - 1, Math.ceil(cz + r));
+    for (let gz = z0; gz <= z1; gz++){
+      for (let gx = x0; gx <= x1; gx++){
+        const dx = gx + 0.5 - cx, dz = gz + 0.5 - cz;
+        const dist = Math.sqrt(dx * dx + dz * dz) / r;
+        if (dist < 1) tiltCell(gz * gn + gx, dist, ux, uz);
+      }
+    }
+  }
+
+  // 画面上の位置(sx, sy)（px）→ カーペット上の位置
+  function screenToCarpet(sx, sy){
+    ndc.set(sx / W * 2 - 1, -sy / H * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    return ray.ray.intersectPlane(pilePlane, hit) ? { x: hit.x, z: hit.z } : null;
+  }
+
+  // 指でなぞる用：カーペット上の点(x, z)が映っている画面の位置を中心に、画面上の正円（半径 brushPx）の範囲の毛を倒す。
+  // 斜めから見ているので、カーペット上では奥行き方向に長い範囲になる
+  const viewProj = new THREE.Matrix4();
+  function brushScreen(x, z, ux, uz){
+    viewProj.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    const e = viewProj.elements, y = PILE_H * 0.5;
+    // カーペット上の点 → 画面の位置（px）
+    const toScreen = (wx, wz) => {
+      const cw = e[3] * wx + e[7] * y + e[11] * wz + e[15];
+      return [
+        ((e[0] * wx + e[4] * y + e[8] * wz + e[12]) / cw + 1) * 0.5 * W,
+        (1 - (e[1] * wx + e[5] * y + e[9] * wz + e[13]) / cw) * 0.5 * H
+      ];
+    };
+    const [sx, sy] = toScreen(x, z);
+    const R = brushPx();
+    // 画面上の正円を囲む四角の四隅をカーペット上に戻し、調べるマスの範囲を決める
+    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (const [ox, oy] of [[-R, -R], [R, -R], [-R, R], [R, R]]){
+      const q = screenToCarpet(sx + ox, sy + oy);
+      if (!q) return;
+      minX = Math.min(minX, q.x); maxX = Math.max(maxX, q.x);
+      minZ = Math.min(minZ, q.z); maxZ = Math.max(maxZ, q.z);
+    }
+    const x0 = Math.max(0, Math.floor((minX + S) * GRID)), x1 = Math.min(gn - 1, Math.ceil((maxX + S) * GRID));
+    const z0 = Math.max(0, Math.floor((minZ + S) * GRID)), z1 = Math.min(gn - 1, Math.ceil((maxZ + S) * GRID));
+    markUndo(x0, x1, z0, z1);
+    markDirty(x0, x1, z0, z1);
+    for (let gz = z0; gz <= z1; gz++){
+      for (let gx = x0; gx <= x1; gx++){
+        const [qx, qy] = toScreen((gx + 0.5) / GRID - S, (gz + 0.5) / GRID - S);
+        const dist = Math.hypot(qx - sx, qy - sy) / R;
+        if (dist < 1) tiltCell(gz * gn + gx, dist, ux, uz);
+      }
+    }
+  }
+
+  // なぞっている線（前回の位置と向き）を、カーペット上の点 p まで延ばす。brush は毛を倒す範囲の決め方
+  function strokeTo(st, p, brush = brushWorld){
+    const dx = p.x - st.x, dz = p.z - st.z;
+    const len = Math.hypot(dx, dz);
+    if (len < STEP) return;   // 少し動くまで待つ（細かすぎる動きでは向きが定まらない）
+    let ux = dx / len, uz = dz / len;
+    if (st.ux !== null){
+      ux = st.ux + (ux - st.ux) * DIR_SMOOTH;
+      uz = st.uz + (uz - st.uz) * DIR_SMOOTH;
+      const m = Math.hypot(ux, uz) || 1;
+      ux /= m; uz /= m;
+    }
+    const n = Math.floor(len / STEP);
+    const sx = dx / len * STEP, sz = dz / len * STEP;
+    for (let k = 1; k <= n; k++) brush(st.x + sx * k, st.z + sz * k, ux, uz);
+    st.x += sx * n; st.z += sz * n;
+    st.ux = ux; st.uz = uz;
+    pileDirty = true;
+    requestRender();
+  }
+
+  // ---------- 最初の模様 ----------
+  // ゆるく曲がる線をランダムになぞったのと同じ処理で、半径 R の範囲に模様を付けておく。
+  // 乱数は種（seed）から作るので、同じ種なら同じ模様になる（保存では種だけを残せば済む）
+  function randomPattern(seed, R){
+    let a = seed >>> 0;
+    const rand = () => {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const rnd = (lo, hi) => lo + rand() * (hi - lo);
+    const count = Math.round((2 * R) * (2 * R) * PATTERN_DENSITY);
+    for (let n = 0; n < count; n++){
+      const st = { x: rnd(-R, R), z: rnd(-R, R), ux: null, uz: null };
+      let ang = rnd(0, Math.PI * 2);
+      let turn = rnd(-PATTERN_CURVE, PATTERN_CURVE);
+      const steps = Math.round(rnd(PATTERN_LEN[0], PATTERN_LEN[1]) / STEP);
+      for (let k = 0; k < steps; k++){
+        turn += rnd(-0.01, 0.01);
+        turn = Math.max(-PATTERN_CURVE, Math.min(PATTERN_CURVE, turn));
+        ang += turn;
+        strokeTo(st, { x: st.x + Math.cos(ang) * STEP * 1.0001, z: st.z + Math.sin(ang) * STEP * 1.0001 });
+      }
+    }
+  }
+
+  // 画面上の位置 → カーペット上の位置（毛足の中ほどの高さの面と交わる点）
+  const pilePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -PILE_H * 0.5);
+  function carpetPoint(e){
+    const r = cv.getBoundingClientRect();
+    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    return ray.ray.intersectPlane(pilePlane, hit) ? { x: hit.x, z: hit.z } : null;
+  }
+
+  // ---------- 指の大きさのリング ----------
+  // 「指の大きさ」スライダーを動かしている間だけ、画面の中央に、なぞる範囲と同じ大きさの正円のリングを出す
+  function showRing(){
+    const d = brushPx() * 2 + 'px';
+    $('ring').style.width = $('ring').style.height = d;
+    $('ring').classList.remove('hidden');
+  }
+  function hideRing(){ $('ring').classList.add('hidden'); }
+  const sizeInput = $('brushSize');
+  sizeInput.addEventListener('pointerdown', showRing);
+  sizeInput.addEventListener('input', showRing);
+  for (const ev of ['pointerup', 'pointercancel', 'keyup', 'blur']) sizeInput.addEventListener(ev, hideRing);
+
+  // ---------- カーペットの色・画像 ----------
+  // 色を選ぶと単色のカーペットに戻す
+  function setPileColor(value){
+    const c = hex(value);
+    mat.uniforms.pileCol.value.set(c[0], c[1], c[2]);
+  }
+  $('color').addEventListener('input', e => {
+    setPileColor(e.target.value);
+    mat.uniforms.useTex.value = 0;
+    store.del('image');   // 単色に戻したので、次に開いたときも画像は使わない
+    scheduleSave();
+    requestRender();
+  });
+
+  // blob: のURLを<img>に渡す方式は、表示する環境によっては読み込みが禁止されていて全部失敗するので使わない。
+  // まず createImageBitmap でファイルから直接作り、使えなければ data: URL で読む
+  function loadImage(file){
+    const viaDataUrl = () => new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => {
+        const im = new Image();
+        im.onload = () => resolve(im);
+        im.onerror = reject;
+        im.src = fr.result;
+      };
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+    if (window.createImageBitmap) return createImageBitmap(file).catch(viaDataUrl);
+    return viaDataUrl();
+  }
+
+  // 画像をカーペットの柄にする。縦横比は保ったまま、横幅 IMAGE_WIDTH でカーペットの中央に1枚だけ置き、
+  // 外側は画像の端に近い色（ぼかした端の色 → 端全体の平均の色）で馴染ませる。
+  // テクスチャは正方形のcanvasに描き直してから使う（縦横の大きさが2の累乗でない画像を扱えない環境があるため）
+  let imageTex = null, blurTex = null;
+  const makeTex = canvas => {
+    const t = new THREE.CanvasTexture(canvas);
+    t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+    t.premultiplyAlpha = true;   // 透過の境目が黒くにじまないよう、透過度を掛けた色で読み込む
+    t.minFilter = THREE.LinearFilter;   // 毛ごとに色を拾うので、縮小用の画像は作らない
+    t.generateMipmaps = false;
+    return t;
+  };
+  function setCarpetImage(im, save = true){
+    const c = document.createElement('canvas');
+    c.width = c.height = IMAGE_TEX;
+    c.getContext('2d').drawImage(im, 0, 0, IMAGE_TEX, IMAGE_TEX);
+
+    // ぼかした画像：一度に小さくすると色が飛び飛びに拾われるので、段階的に縮める
+    let src = c;
+    for (let s = IMAGE_TEX / 4; s >= BLUR_TEX; s = s / 4){
+      const n = document.createElement('canvas');
+      n.width = n.height = Math.max(BLUR_TEX, Math.round(s));
+      const nctx = n.getContext('2d');
+      nctx.imageSmoothingEnabled = true;
+      nctx.imageSmoothingQuality = 'high';
+      nctx.drawImage(src, 0, 0, n.width, n.height);
+      src = n;
+      if (n.width === BLUR_TEX) break;
+    }
+
+    // 端全体の平均の色（ぼかした画像のいちばん外側の1周から求める。透過度を掛けた色で平均する）
+    const px = src.getContext('2d').getImageData(0, 0, src.width, src.height).data;
+    let r = 0, g = 0, b = 0, a = 0, n = 0;
+    for (let y = 0; y < src.height; y++){
+      for (let x = 0; x < src.width; x++){
+        if (x > 0 && y > 0 && x < src.width - 1 && y < src.height - 1) continue;
+        const k = (y * src.width + x) * 4, al = px[k + 3] / 255;
+        r += px[k] / 255 * al; g += px[k + 1] / 255 * al; b += px[k + 2] / 255 * al; a += al; n++;
+      }
+    }
+    mat.uniforms.edgeAvg.value.set(r / n, g / n, b / n, a / n);
+
+    if (imageTex) imageTex.dispose();
+    if (blurTex) blurTex.dispose();
+    imageTex = makeTex(c);
+    blurTex = makeTex(src);
+    mat.uniforms.baseTex.value = imageTex;
+    mat.uniforms.blurTex.value = blurTex;
+    mat.uniforms.texSize.value.set(IMAGE_WIDTH, IMAGE_WIDTH * im.height / im.width);
+    mat.uniforms.useTex.value = 1;
+    if (save) saveImage(im);
+    requestRender();
+  }
+
+  $('file').addEventListener('change', e => {
+    const input = e.target;
+    const f = input.files && input.files[0];
+    if (!f) return;
+    loadImage(f).then(openCrop).catch(() => {
+      $('pickText').textContent = 'この画像は読み込めません';
+      setTimeout(() => { $('pickText').textContent = ''; }, 1500);
+    }).finally(() => { input.value = ''; });  // 空にするのは読み込みが終わってから
+  });
+
+  // ---------- 入力 ----------
+  // 押さえた指（PCは左ドラッグ）ごとに、それぞれ別の線としてなぞる。何本の指でも同時に描ける。
+  // 「視点を動かす」ボタンを押している間（PCは右ドラッグ）は、指の動きで視点を回す
+  const strokes = new Map();    // pointerId → なぞっている指の前回の位置（カーペット上）と向き（まだ位置が無ければ null）
+  const orbits = new Map();     // pointerId → 視点を回している指の前回の画面上の位置
+  let camMode = false;          // 「視点を動かす」ボタンが押されている
+
+  $('camBtn').addEventListener('click', () => {
+    camMode = !camMode;
+    $('camBtn').setAttribute('aria-pressed', String(camMode));
+    $('camBtn').setAttribute('aria-label', camMode ? 'なぞるに戻す' : '視点を動かす');
+  });
+
+  // 視点を最初の位置に戻す（RESET_TIME 秒かけてなめらかに）
+  let resetAnim = null;   // 戻している途中の { 開始時刻, 開始時の向き, 開始時の角度 }
+  $('resetBtn').addEventListener('click', () => {
+    // 何周も回していても、近い方の回り方で戻す
+    azim = Math.atan2(Math.sin(azim), Math.cos(azim));
+    if (!resetAnim) requestAnimationFrame(resetStep);
+    resetAnim = { t0: performance.now(), azim0: azim, elev0: elev };
+  });
+  function resetStep(now){
+    if (!resetAnim) return;
+    const t = Math.min((now - resetAnim.t0) / 1000 / RESET_TIME, 1);
+    const k = t * t * (3 - 2 * t);   // 動き始めと止まり際をゆっくりにする
+    azim = resetAnim.azim0 * (1 - k);
+    elev = resetAnim.elev0 + (CAM_ELEV - resetAnim.elev0) * k;
+    placeCamera(camera, camDist, elev, azim);
+    requestRender();
+    if (t < 1) requestAnimationFrame(resetStep);
+    else { resetAnim = null; updateResetBtn(); scheduleSave(); }
+  }
+
+  // 視点が最初の位置から動いているときだけ、視点リセットを出す
+  function updateResetBtn(){
+    const a = Math.atan2(Math.sin(azim), Math.cos(azim));
+    const rotated = Math.abs(a) > 1e-3 || Math.abs(elev - CAM_ELEV) > 1e-3;
+    $('buttons').classList.toggle('rotated', rotated);
+  }
+
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    if (camMode || e.button === 2){
+      orbits.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      return;
+    }
+    if (strokes.size === 0) beginUndoStep();   // 1本目の指を置いたときから、全部の指を離すまでを1回分にする
+    const p = carpetPoint(e);
+    strokes.set(e.pointerId, p ? { x: p.x, z: p.z, ux: null, uz: null } : null);
+  });
+
+  cv.addEventListener('pointermove', e => {
+    const pt = orbits.get(e.pointerId);
+    if (pt){
+      resetAnim = null;   // 戻している途中に回し始めたら、戻すのをやめて指の操作を優先する
+      // 押さえている指の平均の動きで回す
+      const n = orbits.size;
+      azim -= (e.clientX - pt.x) / n * ROT_SPEED;
+      elev = Math.min(ELEV_MAX, Math.max(ELEV_MIN, elev + (e.clientY - pt.y) / n * ROT_SPEED));
+      pt.x = e.clientX; pt.y = e.clientY;
+      placeCamera(camera, camDist, elev, azim);
+      updateResetBtn();
+      scheduleSave();
+      requestRender();
+      return;
+    }
+    if (!strokes.has(e.pointerId)) return;
+    // 速くなぞったときも線が途切れないよう、間の位置もすべて使う
+    const list = (e.getCoalescedEvents && e.getCoalescedEvents()) || [];
+    for (const ev of (list.length ? list : [e])){
+      const p = carpetPoint(ev);
+      if (!p) continue;
+      const st = strokes.get(e.pointerId);
+      if (!st){ strokes.set(e.pointerId, { x: p.x, z: p.z, ux: null, uz: null }); continue; }
+      strokeTo(st, p, brushScreen);
+    }
+    scheduleSave();
+  });
+
+  const release = e => {
+    if (strokes.delete(e.pointerId) && strokes.size === 0) endUndoStep();
+    orbits.delete(e.pointerId);
+  };
+  cv.addEventListener('pointerup', release);
+  cv.addEventListener('pointercancel', release);
+
+  // ---------- 元に戻す ----------
+  // なぞり始めに毛の向きを丸ごと控えておき、なぞり終わったら、なぞった範囲だけを切り出して残す。
+  // 画面の大きさが変わってカーペットが広がっても戻せるよう、そのときのカーペットの大きさ（S）も残す
+  const undoStack = [];
+  let undoSnap = null;   // なぞっている間の控え { gn, x, z, 範囲 }
+  function beginUndoStep(){
+    undoSnap = { gn, x: px.slice(), z: pz.slice(), x0: Infinity, x1: -Infinity, z0: Infinity, z1: -Infinity };
+  }
+  function markUndo(x0, x1, z0, z1){
+    if (!undoSnap) return;
+    undoSnap.x0 = Math.min(undoSnap.x0, x0); undoSnap.x1 = Math.max(undoSnap.x1, x1);
+    undoSnap.z0 = Math.min(undoSnap.z0, z0); undoSnap.z1 = Math.max(undoSnap.z1, z1);
+  }
+  function endUndoStep(){
+    const u = undoSnap;
+    undoSnap = null;
+    if (!u || u.gn !== gn || u.x1 < u.x0) return;   // 毛が倒れなかった（タップだけ等）、または途中でカーペットが作り直された
+    const w = u.x1 - u.x0 + 1, h = u.z1 - u.z0 + 1;
+    const x = new Float32Array(w * h), z = new Float32Array(w * h);
+    for (let r = 0; r < h; r++){
+      const a = (u.z0 + r) * gn + u.x0;
+      x.set(u.x.subarray(a, a + w), r * w);
+      z.set(u.z.subarray(a, a + w), r * w);
+    }
+    undoStack.push({ S, x0: u.x0, z0: u.z0, w, h, x, z });
+    if (undoStack.length > UNDO_MAX) undoStack.shift();
+    $('undo').disabled = false;
+  }
+  $('undo').addEventListener('click', () => {
+    if (undoSnap || !undoStack.length) return;   // なぞっている途中は戻さない
+    const u = undoStack.pop();
+    const off = Math.round((S - u.S) * GRID);
+    for (let r = 0; r < u.h; r++){
+      for (let c = 0; c < u.w; c++){
+        const X = u.x0 + c + off, Z = u.z0 + r + off;
+        if (X < 0 || Z < 0 || X >= gn || Z >= gn) continue;
+        px[Z * gn + X] = u.x[r * u.w + c];
+        pz[Z * gn + X] = u.z[r * u.w + c];
+      }
+    }
+    markDirty(u.x0 + off, u.x0 + off + u.w - 1, u.z0 + off, u.z0 + off + u.h - 1);
+    $('undo').disabled = !undoStack.length;
+    pileDirty = true;
+    scheduleSave();
+    requestRender();
+  });
+
+  // ---------- 画像の切り取り ----------
+  // 画像を選んだあと、四角い枠で使う範囲を選ぶ。枠の中をドラッグで移動、四隅をドラッグで大きさを変える
+  const CROP_MIN = 24;         // 枠の最小の大きさ（画面上のpx）
+  const CROP_MAX_PX = 2048;    // 切り取った画像の長い辺の上限（px）
+  let cropSrc = null, cropScale = 1, cropW = 0, cropH = 0;
+  let cropBox = { x: 0, y: 0, w: 0, h: 0 };   // 枠の位置と大きさ（画面上のpx、画像の左上が原点）
+  let cropDrag = null;
+
+  function openCrop(im){
+    cropSrc = im;
+    // 画面に収まる大きさで画像を表示する
+    const maxW = Math.max(100, innerWidth - 32), maxH = Math.max(100, innerHeight - 170);
+    cropScale = Math.min(maxW / im.width, maxH / im.height);
+    cropW = Math.round(im.width * cropScale); cropH = Math.round(im.height * cropScale);
+    const c = $('crop-canvas'), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    c.width = Math.round(cropW * dpr); c.height = Math.round(cropH * dpr);
+    c.style.width = cropW + 'px'; c.style.height = cropH + 'px';
+    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+    $('crop-wrap').style.width = cropW + 'px'; $('crop-wrap').style.height = cropH + 'px';
+    cropBox = { x: 0, y: 0, w: cropW, h: cropH };   // 最初は画像全体
+    drawCropBox();
+    $('crop-view').classList.remove('hidden');
+    $('crop-ok').focus({ preventScroll:true });
+  }
+  function drawCropBox(){
+    for (const el of [$('crop-rect'), $('crop-shade')]){
+      el.style.left = cropBox.x + 'px'; el.style.top = cropBox.y + 'px';
+      el.style.width = cropBox.w + 'px'; el.style.height = cropBox.h + 'px';
+    }
+  }
+  function closeCrop(){
+    $('crop-view').classList.add('hidden');
+    cropSrc = null; cropDrag = null;
+    $('file').focus({ preventScroll:true });
+  }
+
+  const clampN = (v, a, b) => Math.min(b, Math.max(a, v));
+  $('crop-wrap').addEventListener('pointerdown', e => {
+    const corner = e.target.dataset ? e.target.dataset.c : undefined;
+    if (!corner && e.target !== $('crop-rect')) return;
+    e.preventDefault();
+    $('crop-wrap').setPointerCapture(e.pointerId);
+    cropDrag = { id: e.pointerId, corner, x0: e.clientX, y0: e.clientY, box: { ...cropBox } };
+  });
+  $('crop-wrap').addEventListener('pointermove', e => {
+    if (!cropDrag || e.pointerId !== cropDrag.id) return;
+    const dx = e.clientX - cropDrag.x0, dy = e.clientY - cropDrag.y0, b = cropDrag.box;
+    if (!cropDrag.corner){
+      // 枠ごと移動（画像からはみ出さない）
+      cropBox = { x: clampN(b.x + dx, 0, cropW - b.w), y: clampN(b.y + dy, 0, cropH - b.h), w: b.w, h: b.h };
+    } else {
+      // つかんだ角だけ動かす
+      let l = b.x, r = b.x + b.w, t = b.y, btm = b.y + b.h;
+      const c = cropDrag.corner;
+      if (c.includes('w')) l = clampN(l + dx, 0, r - CROP_MIN);
+      if (c.includes('e')) r = clampN(r + dx, l + CROP_MIN, cropW);
+      if (c.includes('n')) t = clampN(t + dy, 0, btm - CROP_MIN);
+      if (c.includes('s')) btm = clampN(btm + dy, t + CROP_MIN, cropH);
+      cropBox = { x: l, y: t, w: r - l, h: btm - t };
+    }
+    drawCropBox();
+  });
+  const endCropDrag = e => { if (cropDrag && e.pointerId === cropDrag.id) cropDrag = null; };
+  $('crop-wrap').addEventListener('pointerup', endCropDrag);
+  $('crop-wrap').addEventListener('pointercancel', endCropDrag);
+
+  $('crop-cancel').addEventListener('click', closeCrop);
+  $('crop-ok').addEventListener('click', () => {
+    if (!cropSrc) return;
+    // 枠の範囲を元の画像の大きさで切り取る
+    const sx = cropBox.x / cropScale, sy = cropBox.y / cropScale;
+    const sw = cropBox.w / cropScale, sh = cropBox.h / cropScale;
+    const k = Math.min(1, CROP_MAX_PX / Math.max(sw, sh));
+    const out = document.createElement('canvas');
+    out.width = Math.max(1, Math.round(sw * k)); out.height = Math.max(1, Math.round(sh * k));
+    out.getContext('2d').drawImage(cropSrc, sx, sy, sw, sh, 0, 0, out.width, out.height);
+    closeCrop();
+    setCarpetImage(out);
+  });
+  $('crop-view').addEventListener('pointerdown', e => e.stopPropagation());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('crop-view').classList.contains('hidden')) closeCrop();
+  });
+
+  // ---------- 共有 ----------
+  const SHARE_INSTANT = 0.5;   // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const shareText = () => 'カーペットに模様を描いた！\n' + location.href.split(/[?#]/)[0] + '\n#カーペットアート';
+
+  // 今の画面をPNGにする。描いた直後でないとcanvasの中身が消えていることがあるので、その場で描き直して読む
+  function screenDataUrl(){
+    if (pileDirty){ encodePile(); pileDirty = false; }
+    renderer.render(scene, camera);
+    return cv.toDataURL('image/png');
+  }
+  // PNGを共有用のファイルにする（共有シートの制約があるため同期処理で作る）
+  function pngFile(dataUrl){
+    const bin = atob(dataUrl.split(',')[1]);   // toBlob の非同期コールバックは避ける
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'carpet.png', { type: 'image/png' });
+  }
+
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const text = shareText();
+    const url = screenDataUrl();
+    const file = pngFile(url);
+    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（画像と文面）を画面に出す
+    const fallback = () => {
+      navigator.clipboard?.writeText(text).catch(() => {});
+      $('share-img').src = url;
+      $('share-text').textContent = text;
+      $('share-view').classList.remove('hidden');
+      $('share-close').focus({ preventScroll:true });
+    };
+    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
+    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    const shareStart = performance.now();
+    const failed = err => {
+      const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
+      if (!err || err.name !== 'AbortError' || instant) fallback();
+    };
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋画像
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ text, files: [file] }).catch(failed);
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share) {
+      navigator.share({ text }).catch(failed);
+      return;
+    }
+    fallback();
+  });
+  const closeShareView = () => {
+    $('share-view').classList.add('hidden');
+    $('share').focus({ preventScroll:true });
+  };
+  $('share-close').addEventListener('click', closeShareView);
+  $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('share-view').classList.contains('hidden')) closeShareView();
+  });
+
+  // ---------- 保存 ----------
+  // 今の状態をブラウザに残し、次に開いたときに続きから始める。
+  // 毛の向き・色・視点は操作が止まるたびに自動で保存する。画像は大きいので、選んだときに1回だけ保存する
+  const store = {
+    get(k){ try { return localStorage.getItem(SAVE_KEY + '.' + k); } catch (e){ return null; } },
+    set(k, v){ try { localStorage.setItem(SAVE_KEY + '.' + k, v); return true; } catch (e){ return false; } },
+    del(k){ try { localStorage.removeItem(SAVE_KEY + '.' + k); } catch (e){} }
+  };
+
+  // 毛の向きは、最初の模様の種と、なぞって変えた区画だけを残す（カーペット全体は広すぎて保存容量に入らない）。
+  // 区画の位置はカーペットの中心から数えるので、画面の大きさが変わってカーペットが広がっても同じ場所に戻せる
+  let patternSeed = 0, patternGn = 0;   // 最初の模様の種と、そのときのマスの数
+  const dirtyTiles = new Set();         // なぞって変えた区画（"横,縦"）
+  function markDirty(x0, x1, z0, z1){
+    const h = gn / 2;
+    for (let tz = Math.floor((z0 - h) / SAVE_TILE); tz <= Math.floor((z1 - h) / SAVE_TILE); tz++){
+      for (let tx = Math.floor((x0 - h) / SAVE_TILE); tx <= Math.floor((x1 - h) / SAVE_TILE); tx++) dirtyTiles.add(tx + ',' + tz);
+    }
+  }
+  // 区画の中のマスを順に呼ぶ（カーペットの外のマスは i = -1）
+  function eachTileCell(keys, fn){
+    const h = gn / 2, T = SAVE_TILE;
+    let k = 0;
+    for (const key of keys){
+      const [tx, tz] = key.split(',').map(Number);
+      for (let r = 0; r < T; r++){
+        for (let c = 0; c < T; c++, k++){
+          const X = tx * T + c + h, Z = tz * T + r + h;
+          fn(k, X >= 0 && Z >= 0 && X < gn && Z < gn ? Z * gn + X : -1);
+        }
+      }
+    }
+    return k;
+  }
+  // 毛の向き（-1〜1）を1バイトずつに詰める。となりのマスとの差で持つと、ほとんどが小さな値になってよく縮む
+  function packTiles(keys){
+    const n = keys.length * SAVE_TILE * SAVE_TILE, b = new Uint8Array(n * 2);
+    let lx = 0, lz = 0;
+    eachTileCell(keys, (k, i) => {
+      const vx = Math.round((i < 0 ? INIT_X : px[i]) * 127.5 + 127.5), vz = Math.round((i < 0 ? INIT_Z : pz[i]) * 127.5 + 127.5);
+      b[k] = (vx - lx) & 255; b[n + k] = (vz - lz) & 255;
+      lx = vx; lz = vz;
+    });
+    return b;
+  }
+  function unpackTiles(keys, b){
+    const n = keys.length * SAVE_TILE * SAVE_TILE;
+    if (b.length !== n * 2) return false;
+    let lx = 0, lz = 0;
+    eachTileCell(keys, (k, i) => {
+      lx = (lx + b[k]) & 255; lz = (lz + b[n + k]) & 255;
+      if (i >= 0){ px[i] = (lx - 127.5) / 127.5; pz[i] = (lz - 127.5) / 127.5; }
+    });
+    return true;
+  }
+  const toB64 = b => {
+    let bin = '';
+    for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+    return btoa(bin);
+  };
+  const fromB64 = str => {
+    const bin = atob(str), b = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b;
+  };
+  // 圧縮できる環境では圧縮する
+  const canZip = !!(window.CompressionStream && window.DecompressionStream);
+  const zip = (b, mode) => new Response(new Blob([b]).stream().pipeThrough(
+    mode === 'zip' ? new CompressionStream('deflate') : new DecompressionStream('deflate'))).arrayBuffer().then(r => new Uint8Array(r));
+
+  let saveTimer = 0, saveSeq = 0;
+  function saveState(){
+    clearTimeout(saveTimer); saveTimer = 0;
+    store.set('view', JSON.stringify({ azim, elev }));
+    store.set('color', $('color').value);
+    const seq = ++saveSeq, keys = [...dirtyTiles], b = packTiles(keys);   // 今の毛の向きをこの時点で控える
+    const write = (data, enc) => {
+      if (seq !== saveSeq) return;   // 圧縮している間に、もっと新しい保存が始まった
+      const pile = JSON.stringify({ seed: patternSeed, gn: patternGn, tiles: keys, enc, data: toB64(data) });
+      // 容量が足りないときは、描いた模様を優先して残す（画像の保存をあきらめる）
+      if (!store.set('pile', pile) && store.get('image') !== null){
+        store.del('image');
+        store.set('pile', pile);
+      }
+    };
+    if (canZip) zip(b, 'zip').then(d => write(d, 'deflate'), () => write(b, 'raw'));
+    else write(b, 'raw');
+  }
+  function scheduleSave(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveState, SAVE_DELAY * 1000);
+  }
+  // 閉じる・別のアプリに移るときは、待たずにすぐ保存する
+  const flushSave = () => { if (saveTimer) saveState(); };
+  addEventListener('pagehide', flushSave);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flushSave(); });
+
+  // 画像は長い辺を SAVE_IMAGE_PX までに縮め、透過があればPNG、無ければ小さく済むJPEGで保存する
+  function saveImage(im){
+    const k = Math.min(1, SAVE_IMAGE_PX / Math.max(im.width, im.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
+    const ctx = c.getContext('2d');
+    ctx.drawImage(im, 0, 0, c.width, c.height);
+    const d = ctx.getImageData(0, 0, c.width, c.height).data;
+    let alpha = false;
+    for (let i = 3; i < d.length; i += 4) if (d[i] < 255){ alpha = true; break; }
+    const url = alpha ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.9);
+    // 容量を超えて保存できなかったときは、前に選んだ画像が次に出てこないよう消しておく
+    if (!store.set('image', url)) store.del('image');
+  }
+
+  // 最初の模様を付け、保存があれば、なぞって変えた区画を戻す
+  function restorePile(){
+    let st = null;
+    try { st = JSON.parse(store.get('pile')); } catch (e){}
+    const ok = st && st.gn > 0 && Number.isInteger(st.seed) && Array.isArray(st.tiles) && typeof st.data === 'string';
+    patternSeed = ok ? st.seed : (Math.random() * 4294967296) >>> 0;
+    patternGn = ok ? st.gn : gn;
+    const R = patternGn / GRID / 2;
+    if (R > S) buildCarpet(R);   // 保存したときの方が広ければ、その広さに合わせる
+    randomPattern(patternSeed, R);
+    pileDirty = true;
+    requestRender();
+    if (!ok) return;
+    let raw;
+    try { raw = fromB64(st.data); } catch (e){ return; }
+    const bytes = st.enc === 'deflate' ? (canZip ? zip(raw, 'unzip') : Promise.reject()) : Promise.resolve(raw);
+    bytes.then(b => {
+      if (!unpackTiles(st.tiles, b)) return;
+      for (const k of st.tiles) dirtyTiles.add(k);
+      pileDirty = true;
+      requestRender();
+    }).catch(() => {});
+  }
+
+  // 保存した視点・色・画像を戻す
+  function restoreLook(){
+    try {
+      const v = JSON.parse(store.get('view'));
+      if (v && isFinite(v.azim) && isFinite(v.elev)){
+        azim = v.azim;
+        elev = Math.min(ELEV_MAX, Math.max(ELEV_MIN, v.elev));
+        placeCamera(camera, camDist, elev, azim);
+        updateResetBtn();
+      }
+    } catch (e){}
+    const col = store.get('color');
+    if (col && /^#[0-9a-f]{6}$/i.test(col)){
+      $('color').value = col;
+      setPileColor(col);
+    }
+    const img = store.get('image');
+    if (img && img.startsWith('data:image/')){
+      const im = new Image();
+      im.onload = () => setCarpetImage(im, false);
+      im.src = img;
+    }
+    requestRender();
+  }
+
+  // ---------- iOS対策 ----------
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てなぞる操作が奪われるのを防ぐ
+  cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
+  document.addEventListener('touchmove', e => { if (strokes.size || orbits.size) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => {
+    // 共有の画面の文面は選んでコピーできるようにする
+    if (e.target instanceof Node && $('share-text').contains(e.target)) return;
+    e.preventDefault();
+  });
+  // PCの右ドラッグでメニューを出さない（共有の画面ではコピーできるよう残す）
+  document.addEventListener('contextmenu', e => {
+    if (e.target instanceof Element && e.target.closest('#share-view')) return;
+    e.preventDefault();
+  });
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    if (e.target instanceof Element && e.target.closest('#buttons,#tools,#sizeTool,#share,#share-view,#crop-view')) return;   // ボタンの連続タップ・色や画像の選択・共有の画面は止めない
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+
+  resize();
+  restorePile();
+  restoreLook();
+  addEventListener('resize', resize);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

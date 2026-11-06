@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/find-1px/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>1px探し</title>
+<meta name="description" content="どこかにある1pxの点を探すタイム勝負">
+<style>
+  :root{
+    --bg:#efede8;      /* 画面の地。探す範囲の白と区別できる薄いグレー */
+    --card:#ffffff;    /* 探す範囲。点の色は白地前提で決めているので必ず白にする */
+    --fg:#1d1d1f; --sub:#7a766f; --line:#d8d4cc;
+    --accent:#e0533d;  /* はずれ */
+    --ok:#2f8f5b;      /* 見つけた */
+    --chip:#1d1d1f;    /* 「拡大中」などの札 */
+    --panel:rgba(239,237,232,.9);
+    --howto-bg:#1d1d1f; --howto-fg:#fff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg);color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:none;   /* 画面のどこでもピンチ拡大させない（拡大すると1pxが見えてしまうため）。スクロールも不要 */
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #game{position:relative;margin:0 auto;width:100%;max-width:420px;height:100vh;height:100dvh;display:flex;flex-direction:column}
+  /* 上部の数値。小さい見出し＋大きい数字の3列にして、ひと目で読めるようにする */
+  #hud{display:grid;grid-template-columns:repeat(3,1fr);padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 6px}
+  .stat{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .stat small{font-size:11px;color:var(--sub);letter-spacing:.08em}
+  .stat b{font-size:20px;line-height:1.1;font-variant-numeric:tabular-nums}
+  .stat .u{font-size:12px;font-weight:normal;margin-left:1px}
+  #field{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  #title{font-size:20px;font-weight:800;line-height:1.3;letter-spacing:.02em}
+  /* 探す点と同じ色の四角。白に近い色でも見えるよう細い枠線を付ける */
+  #swatch{display:inline-block;width:.6em;height:.6em;margin-right:.25em;vertical-align:.05em;border:1px solid var(--sub);border-radius:2px}
+  /* 「拡大中」「移動中」の札。空のときも高さを残して、出たときに画面がずれないようにする */
+  #hint{height:24px;line-height:24px;padding:0 12px;border-radius:12px;background:var(--chip);color:#fff;
+    font-size:13px;font-weight:bold;letter-spacing:.06em}
+  #hint:empty{visibility:hidden}
+  /* 見出しと重ならないよう、メッセージは探す範囲の下に置く（高さを固定して表示時に画面がずれないようにする） */
+  #msg{min-height:1.4em;line-height:1.4;font-size:15px;font-weight:bold;text-align:center;pointer-events:none}
+  #msg.ok{color:var(--ok)}
+  #msg.ng{color:var(--accent)}
+  /* 探す範囲。枠線は境目を示すため、影は地から浮かせて範囲を分かりやすくするため。
+     角丸は点を置かない端（8px）の内側に収まる大きさにする。image-rendering は点がぼやけないようにするため */
+  #cv{display:block;box-sizing:content-box;background:var(--card);border:1px solid var(--line);border-radius:6px;
+    box-shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.06);touch-action:none;image-rendering:pixelated}
+  #over{position:absolute;inset:0;background:var(--panel);display:flex;align-items:center;justify-content:center;padding:24px}
+  #over[hidden]{display:none}
+  .card{width:100%;max-width:320px;background:var(--card);border-radius:16px;padding:28px 24px 24px;
+    box-shadow:0 12px 40px rgba(0,0,0,.12);display:flex;flex-direction:column;align-items:center;gap:12px}
+  .card h2{margin:0;font-size:22px;font-weight:800}
+  #result{text-align:center;margin-bottom:8px}
+  #result .big{font-size:44px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+  #result .big span{font-size:18px;font-weight:bold;margin-left:2px}
+  #result .subline{margin-top:4px;font-size:15px;color:var(--sub)}
+  .btn{width:100%;min-height:52px;font:inherit;font-size:17px;font-weight:bold;border-radius:12px;
+    border:1px solid var(--fg);background:var(--fg);color:#fff;touch-action:manipulation}
+  .btn.secondary{background:transparent;color:var(--fg);border-color:var(--line)}
+  .btn:focus-visible{outline:2px solid var(--fg);outline-offset:3px}   /* 赤だとエラーに見えるので本文色にする */
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hud">
+    <div class="stat"><small>ステージ</small><b id="stage">1/5</b></div>
+    <div class="stat"><small>タイム</small><b><span id="time">0.0</span><span class="u">秒</span></b></div>
+    <div class="stat"><small>ミス</small><b id="miss">0</b></div>
+  </div>
+  <div id="field">
+    <div id="title"><span id="swatch" role="img" aria-label="この色の点"></span>を見つけろ！</div>
+    <div id="hint" aria-live="polite"></div>
+    <canvas id="cv" aria-label="この中にある1pxの点を探してタップ"></canvas>
+    <div id="msg" aria-live="assertive"></div>
+  </div>
+  <div id="over" hidden>
+    <div class="card">
+      <h2>クリア！</h2>
+      <div id="result" aria-live="polite"></div>
+      <button class="btn" id="retry">もう一回</button>
+      <button class="btn secondary" id="share">共有</button>
+    </div>
+  </div>
+  <section class="howto" data-pos="top-left" hidden>
+    <h2>遊び方</h2>
+    <p>白い範囲のどこかにある1pxの点を探してタップする、全5ステージのタイム勝負です。点の色は黒から始まり、ステージが進むほど白に近づきます。探す色は見出しの四角で確かめられます。5つ全部見つけると、合計タイムとミスの回数が出ます。</p>
+    <h2>操作</h2>
+    <p>点だと思う所をタップします。当たりの範囲は点から半径16pxなので、指で押しても届きます。PC ではクリックで選びます。画面の拡大はできません。</p>
+    <h2>コツ</h2>
+    <p>外すと1回につき5秒が加算されるので、連打すると損をします。同じステージで10秒たつと点の大きさが変わり始め、20秒たつと動き出すので、見つからないときは変化を待つのも手です。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  // ステージごとの点の色（背景は白）。後のステージほど白に近くて見つけにくい
+  const DOT_COLORS = ['#000000', '#808080', '#c0c0c0', '#e0e0e0', '#f0f0f0'];
+  const FIELD_COLOR = '#ffffff';
+  const TAP_R = 16;          // 当たりとみなす半径（CSS px）。指では1pxぴったりは押せないため
+  const MISS_PENALTY = 5;    // 外したときに加算する秒数（連打で探せないようにする）
+  const MARGIN = 8;          // 点を置かない画面端の幅（CSS px）
+  const FOUND_SHOW = 0.7;    // 見つけた点に丸を出して見せる時間（秒）
+  // 探す範囲（CSS px）。端末によらず同じ広さにする。ほぼ全てのスマホに収まる大きさ
+  const FIELD_W = 360, FIELD_H = 480;
+  // 同じ問題でなかなか見つからないときのヒント（そのステージに入ってからの秒数）
+  const PULSE_AFTER = 10;    // この秒数を過ぎると点が大きくなったり小さくなったりする
+  const MOVE_AFTER = 20;     // この秒数を過ぎると点が動き出す（大きさの変化も続く）
+  const MOVE_SPEED = 30;     // 動く速さ（CSS px/秒）
+  const PULSE_MAX = 2;       // 一番大きくなったときの一辺（CSS px）。一番小さいときは1px
+  const PULSE_PERIOD = 1.2;  // 大きさが1往復する秒数
+
+  const $ = id => document.getElementById(id);
+  const cv = $('cv'), ctx = cv.getContext('2d');
+
+  // ---------- 状態 ----------
+  let W = 0, H = 0;          // 探す範囲の大きさ（CSS px）
+  let dpr = 1;               // 1 CSS px あたりの実ピクセル数
+  let mode = 'playing';      // playing / found / over
+  let stage = 0;
+  let dot = {x:0, y:0, vx:0, vy:0};   // 点の左上の位置（CSS px）と動く向き
+  let elapsed = 0;           // 経過秒（見つけた後の表示中は止める）
+  let stageTime = 0;         // 今のステージに入ってからの秒数（はずれの加算は含めない）
+  let penalty = 0;
+  let misses = 0;
+  let foundTimer = 0;
+
+  // ---------- 描画 ----------
+  function resize(){
+    // 解像度は打ち止めにせず端末の倍率そのままで描く（引き伸ばしによるぼやけを防ぐ）
+    dpr = window.devicePixelRatio || 1;
+    // 基本は固定サイズ。画面がそれより小さい場合だけ収まる大きさに縮める
+    // （枠線2px分と、上の見出し・状態表示・下のメッセージ・その間隔の分を引く）
+    const box = $('field');
+    const other = $('title').offsetHeight + $('hint').offsetHeight + $('msg').offsetHeight + 8 * 3;
+    W = Math.max(1, Math.min(FIELD_W, box.clientWidth - 2));
+    H = Math.max(1, Math.min(FIELD_H, box.clientHeight - 2 - other));
+    cv.style.width = W + 'px';
+    cv.style.height = H + 'px';
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    clampDot();
+    draw();
+  }
+
+  // 点を置ける範囲（左上の位置の最小・最大）
+  function dotRange(){
+    return {
+      minX: MARGIN, maxX: Math.max(MARGIN, W - MARGIN - 1),
+      minY: MARGIN, maxY: Math.max(MARGIN, H - MARGIN - 1),
+    };
+  }
+
+  function clampDot(){
+    const r = dotRange();
+    dot.x = Math.min(r.maxX, Math.max(r.minX, dot.x));
+    dot.y = Math.min(r.maxY, Math.max(r.minY, dot.y));
+  }
+
+  // 点の中心（CSS px）
+  function dotCenter(){ return {x: dot.x + 0.5, y: dot.y + 0.5}; }
+
+  // 今の点の一辺（CSS px）。PULSE_AFTER までは1px、その後は1px〜PULSE_MAXを行き来する
+  function dotSize(){
+    if (stageTime < PULSE_AFTER) return 1;
+    const t = (stageTime - PULSE_AFTER) / PULSE_PERIOD;
+    return 1 + (PULSE_MAX - 1) * (0.5 - 0.5 * Math.cos(t * Math.PI * 2));   // 1pxから滑らかに始まる
+  }
+
+  // MOVE_AFTER を過ぎたら点を動かす。範囲の端で跳ね返る
+  function moveDot(dt){
+    if (stageTime < MOVE_AFTER) return;
+    const r = dotRange();
+    dot.x += dot.vx * dt;
+    dot.y += dot.vy * dt;
+    if (dot.x < r.minX) { dot.x = r.minX; dot.vx = Math.abs(dot.vx); }
+    if (dot.x > r.maxX) { dot.x = r.maxX; dot.vx = -Math.abs(dot.vx); }
+    if (dot.y < r.minY) { dot.y = r.minY; dot.vy = Math.abs(dot.vy); }
+    if (dot.y > r.maxY) { dot.y = r.maxY; dot.vy = -Math.abs(dot.vy); }
+  }
+
+  function draw(){
+    // 背景と点は実ピクセル単位で描く。点は「1 CSS px 分」の実ピクセル数を整数に揃えた正方形にし、
+    // 倍率が 1.25 や 2.625 のような端末でも縁がにじまないようにする
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = FIELD_COLOR;
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    const p = dotCenter();
+    const s = Math.max(1, Math.round(dotSize() * dpr));   // 一辺の実ピクセル数（整数）
+    ctx.fillStyle = DOT_COLORS[stage];
+    ctx.fillRect(Math.round(p.x * dpr - s / 2), Math.round(p.y * dpr - s / 2), s, s);
+    if (mode === 'found') {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);   // 丸は CSS px で描く
+      // 見つけた場所を丸で示す
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--ok');
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, TAP_R, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  // ---------- 進行 ----------
+  function newStage(){
+    const r = dotRange();
+    const ang = Math.random() * Math.PI * 2;   // 動き出したときの向き
+    dot = {
+      x: Math.round(r.minX + Math.random() * (r.maxX - r.minX)),   // 整数にして1pxがにじまないようにする
+      y: Math.round(r.minY + Math.random() * (r.maxY - r.minY)),
+      vx: Math.cos(ang) * MOVE_SPEED,
+      vy: Math.sin(ang) * MOVE_SPEED,
+    };
+    stageTime = 0;
+    updateHint();
+    mode = 'playing';
+    $('stage').textContent = (stage + 1) + '/' + DOT_COLORS.length;
+    $('swatch').style.background = DOT_COLORS[stage];   // 見出しの四角を探す点と同じ色にする
+    draw();
+  }
+
+  function start(){
+    stage = 0; elapsed = 0; penalty = 0; misses = 0;
+    $('miss').textContent = '0';
+    $('msg').textContent = '';
+    $('over').hidden = true;
+    document.documentElement.setAttribute('data-howto-hidden', '');
+    newStage();
+  }
+
+  function totalTime(){ return elapsed + penalty; }
+
+  function tap(x, y){
+    if (mode !== 'playing') return;
+    const p = dotCenter();
+    if (Math.hypot(x - p.x, y - p.y) <= TAP_R) {
+      mode = 'found';
+      foundTimer = FOUND_SHOW;
+      $('msg').textContent = '見つけた！';
+      $('msg').className = 'ok';
+      draw();
+    } else {
+      misses++;
+      penalty += MISS_PENALTY;
+      $('miss').textContent = String(misses);
+      $('msg').textContent = 'はずれ +' + MISS_PENALTY + '秒';
+      $('msg').className = 'ng';
+    }
+  }
+
+  function afterFound(){
+    $('msg').textContent = '';
+    if (stage + 1 < DOT_COLORS.length) {
+      stage++;
+      newStage();
+    } else {
+      mode = 'over';
+      $('result').innerHTML = '<div class="big">' + totalTime().toFixed(2) + '<span>秒</span></div>'
+        + '<div class="subline">ミス ' + misses + '回</div>';
+      $('over').hidden = false;
+      document.documentElement.removeAttribute('data-howto-hidden');
+      $('retry').focus({preventScroll:true});
+    }
+  }
+
+  // ---------- ループ ----------
+  // 点が今どう変化しているかを見出しの下に出す
+  function updateHint(){
+    const parts = [];
+    if (stageTime >= PULSE_AFTER) parts.push('拡大中');
+    if (stageTime >= MOVE_AFTER) parts.push('移動中');
+    const text = parts.join('・');
+    if ($('hint').textContent !== text) $('hint').textContent = text;   // 変わったときだけ書き換える（読み上げの連発を防ぐ）
+  }
+
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1/30);
+    last = now;
+    if (mode === 'playing') {
+      elapsed += dt;
+      stageTime += dt;
+      moveDot(dt);
+      updateHint();
+      if (stageTime >= Math.min(MOVE_AFTER, PULSE_AFTER)) draw();   // 変化が始まるまでは描き直さない
+    } else if (mode === 'found') {
+      foundTimer -= dt;
+      if (foundTimer <= 0) afterFound();
+    }
+    $('time').textContent = totalTime().toFixed(1);
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- 入力 ----------
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const r = cv.getBoundingClientRect();
+    tap(e.clientX - r.left - cv.clientLeft, e.clientY - r.top - cv.clientTop);   // 枠線の分を引く
+  });
+
+  $('retry').addEventListener('click', start);
+
+  // PC: 結果画面では Enter / スペースでもう一回
+  document.addEventListener('keydown', e => {
+    if (mode === 'over' && (e.key === 'Enter' || e.key === ' ') && document.activeElement !== $('share')) {
+      e.preventDefault();
+      start();
+    }
+  });
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // 2本指のタッチはピンチ拡大の始まりなので、どこで触れても止める
+  document.addEventListener('touchstart', e => { if (e.target === cv || e.touches.length > 1) e.preventDefault(); }, {passive:false});
+  document.addEventListener('touchmove', e => { if (e.target === cv || e.touches.length > 1) e.preventDefault(); }, {passive:false});
+  // iPhone(Safari)は user-scalable=no を無視してピンチ拡大するので、Safari独自のジェスチャーイベントも止める
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), {passive:false}));
+  // PC: Ctrl+ホイール・トラックパッドのピンチ（どちらも ctrlKey 付きの wheel になる）での拡大を止める
+  document.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, {passive:false});
+  // PC: Ctrl(⌘)+「+」「-」「0」での拡大・縮小を止める
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && ['+', '=', '-', '0', ';'].includes(e.key)) e.preventDefault();
+  });
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるうえ、1pxが見えてしまうため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350 && e.target === cv) e.preventDefault();
+    lastTouchEnd = now;
+  }, {passive:false});
+
+  // ---------- 共有 ----------
+  function shareText(){
+    return 'タイム : ' + totalTime().toFixed(2) + '秒（ミス' + misses + '回）\n'
+      + location.href.split(/[?#]/)[0] + '\n#1px探し';
+  }
+
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    // 1) 共有シートがある環境（スマホなど）: 文面を渡す（画像は付けない）
+    if (navigator.share) {
+      navigator.share({text}).catch(() => {});
+      return;
+    }
+    // 2) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    navigator.clipboard?.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+
+  // ---------- 起動 ----------
+  addEventListener('resize', resize);
+  resize();
+  start();
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

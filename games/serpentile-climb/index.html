@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ja">
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/serpentile-climb/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ヘキサクライム</title>
+<meta name="description" content="タイルをつないで矢印を上へ登らせる">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFECF6; --plate:#DCD7EA; --face:#FDFCFF; --seam:#E2DCF0;
+    --line:#464070; --ink:#2E2A4A; --wall:#8F86B4;
+    --runner:#E4326F; --route:#FF6E9C;
+    --ui:#5A4FCF; --fg:#39325A; --fg-dim:#7B7398;
+    --howto-bg:#EFECF6; --howto-fg:#39325A;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.6;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:420px;margin:0 auto;padding:clamp(12px,3vw,28px)}
+
+  .stage{position:relative}
+  .board{background:var(--plate);border-radius:18px;padding:10px;overflow:hidden}
+  .board svg{display:block;width:100%;height:auto}
+
+  .hud{position:absolute;top:18px;right:20px;display:flex;flex-direction:column;
+    align-items:flex-end;gap:2px;font-family:"IBM Plex Mono",monospace;
+    color:var(--ui);pointer-events:none}
+  .hud .now{font-size:22px;font-weight:600}
+  .hud .best{font-size:11px;letter-spacing:.1em;color:var(--fg-dim)}
+
+  .cell{cursor:pointer;transform-box:fill-box;transform-origin:center;
+    transition:transform .2s cubic-bezier(.33,.02,.16,1);
+    -webkit-tap-highlight-color:transparent}
+  .face{stroke:var(--seam);stroke-width:.75}
+  .link{fill:none;stroke:var(--line);stroke-width:7;stroke-linecap:butt}
+  .cell:hover .face{fill:#EFEBFB}
+  .ghost{fill:none;stroke:var(--route);stroke-width:3;stroke-linecap:round;pointer-events:none}
+  .wall{fill:none;stroke:var(--wall);stroke-width:7;stroke-linecap:round;pointer-events:none}
+  .runner{fill:var(--runner);stroke:var(--ink);stroke-width:2.5;stroke-linejoin:round}
+  #runner{pointer-events:none}
+  @media (prefers-reduced-motion: reduce){ .cell{transition:none} }
+
+  .veil{position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;border-radius:18px;
+    background:rgba(239,236,246,.92);text-align:center;padding:20px;
+    animation:veilIn .28s ease both}
+  .veil.hidden{display:none}
+  @keyframes veilIn{from{opacity:0}to{opacity:1}}
+  @keyframes veilRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .veil h2{animation:veilRise .36s .05s cubic-bezier(.2,.7,.3,1) both;
+    font-size:22px;font-weight:500;margin:0;color:var(--ui)}
+  .veil p{animation:veilRise .36s .12s cubic-bezier(.2,.7,.3,1) both;
+    margin:0;font-size:13px;color:var(--fg-dim)}
+  .veil button{animation:veilRise .36s .19s cubic-bezier(.2,.7,.3,1) both}
+  @media (prefers-reduced-motion: reduce){
+    .veil,.veil h2,.veil p,.veil button{animation:none} }
+  button{font-family:inherit;font-size:15px;font-weight:500;color:#fff;
+    background:var(--ui);border:none;border-radius:12px;padding:12px 28px;cursor:pointer;
+    box-shadow:0 4px 0 #4034A8}
+  button:hover{background:#6A5FDC}
+  button:active{transform:translateY(2px);box-shadow:0 2px 0 #4034A8}
+  /* 上の button の指定がパネルの閉じるボタンに効くのを戻す */
+  .howto-dialog .howto-close{box-shadow:none}
+  .howto-dialog .howto-close:hover{background:transparent}
+  .howto-dialog .howto-close:active{transform:none;box-shadow:none}
+</style>
+
+<div class="wrap">
+  <div class="stage">
+    <div class="board"><svg id="board" role="img" aria-label="Climbing hexagonal tile strip"></svg></div>
+    <div class="hud" aria-live="polite">
+      <div class="now" id="score">0m</div>
+      <div class="best" hidden>BEST <span id="best">0</span></div>
+    </div>
+    <div class="veil" id="veil">
+      <h2 id="veilTitle" hidden></h2>
+      <p id="veilText" hidden></p>
+      <button id="startBtn" type="button">Start</button>
+      <button type="button" data-howto-open>遊び方</button>
+    </div>
+  </div>
+</div>
+
+<section class="howto" hidden data-pos="none">
+  <h2>遊び方</h2>
+  <p>止まらずに進み続ける矢印を、タイルの線で上へ導いて高さを競うゲームです。盤は幅5列の帯で、ゴールはありません。1段登るごとに1mとなり、最も高く登った位置が記録です。矢印は時間とともに速くなり、帯の左右の壁に当たるか、画面の下へ置いていかれると終わります。</p>
+  <h2>操作</h2>
+  <p>タイルをタップすると60度回ります。PC はクリックで同じように回せます。矢印が乗っているタイルも回せますが、そのときは矢印も一緒に回ります。</p>
+  <h2>コツ</h2>
+  <p>ピンクの線は、今のタイルの向きのままで矢印が進む先を10枚先まで示しています。線が壁や下へ向かっていたら、その手前のタイルを回して上へ曲げてください。画面は上にしか動かないので、下る道を選ぶと置いていかれやすくなります。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+
+<script>
+// axial directions: 0 up-right, 1 up, 2 up-left, 3 down-left, 4 down, 5 down-right
+const DIRS=[[1,-1],[0,-1],[-1,0],[-1,1],[0,1],[1,0]];
+const SQ3=Math.sqrt(3), R=38, D=R*SQ3/2, ROW=SQ3*R;
+const W=2;                 // columns -W..W
+const SPEED0=30;           // px per second at the start
+const SPEED_GAIN=0.6;      // px per second gained each second
+const PREVIEW=10;
+const METERS_PER_ROW=1;    // one hex row of climb counted as this many metres
+const FOLLOW=0.70;         // runner sits this far down the viewport
+const VW=2*(1.5*R*W+R), TX=VW/2, VH=Math.round(9.5*ROW);
+const MARGIN=3;            // rows of tiles kept beyond the viewport
+
+function allMatchings(){
+  const out=[];
+  (function go(a,c){
+    if(!a.length){out.push(c.map(p=>p.slice()));return;}
+    const x=a[0];
+    for(let i=1;i<a.length;i++){
+      const y=a[i], rest=a.filter((_,j)=>j!==0&&j!==i);
+      c.push([x,y]); go(rest,c); c.pop();
+    }
+  })([0,1,2,3,4,5],[]);
+  return out;
+}
+const ORIENTATIONS=allMatchings();
+
+const ck=(q,r)=>q+","+r;
+const cellX=q=>TX+1.5*R*q;
+const cellY=(q,r)=>ROW*(r+q/2);
+const rowOf=(q,r)=>r+q/2;
+
+function mid(k){const a=(30+60*k)*Math.PI/180;return [D*Math.cos(a),-D*Math.sin(a)];}
+function vertex(i){const a=i*Math.PI/3;return [R*Math.cos(a),-R*Math.sin(a)];}
+function hexPts(rad){
+  const p=[];
+  for(let i=0;i<6;i++){const a=i*Math.PI/3;p.push((rad*Math.cos(a)).toFixed(2)+","+(-rad*Math.sin(a)).toFixed(2));}
+  return p.join(" ");
+}
+const gapOf=(a,b)=>Math.min(((b-a)%6+6)%6, ((a-b)%6+6)%6);
+const T_ADJ=(R/2)*(4/3)*Math.tan(Math.PI/6);
+const T_SKIP=(1.5*R)*(4/3)*Math.tan(Math.PI/12);
+const LEN=[0,(2*Math.PI/3)*(R/2),(Math.PI/3)*(1.5*R),2*D];
+
+function ctrlPoints(a,b){
+  const A=mid(a), B=mid(b), g=gapOf(a,b);
+  if(g===3) return [A,
+    [A[0]+(B[0]-A[0])/3, A[1]+(B[1]-A[1])/3],
+    [A[0]+2*(B[0]-A[0])/3, A[1]+2*(B[1]-A[1])/3], B];
+  const t=g===1?T_ADJ:T_SKIP, s=1-t/D;
+  return [A,[A[0]*s,A[1]*s],[B[0]*s,B[1]*s],B];
+}
+const fmt=v=>`${v[0].toFixed(2)} ${v[1].toFixed(2)}`;
+function pathD(a,b){
+  const P=ctrlPoints(a,b);
+  return gapOf(a,b)===3 ? `M${fmt(P[0])} L${fmt(P[3])}` : `M${fmt(P[0])} C${fmt(P[1])} ${fmt(P[2])} ${fmt(P[3])}`;
+}
+function pointAt(a,b,u){
+  const P=ctrlPoints(a,b), m=1-u;
+  const c=j=>m*m*m*P[0][j]+3*m*m*u*P[1][j]+3*m*u*u*P[2][j]+u*u*u*P[3][j];
+  return [c(0),c(1)];
+}
+function tangentAt(a,b,u){
+  const P=ctrlPoints(a,b), m=1-u;
+  const c=j=>3*m*m*(P[1][j]-P[0][j])+6*m*u*(P[2][j]-P[1][j])+3*u*u*(P[3][j]-P[2][j]);
+  return [c(0),c(1)];
+}
+function splitAfter(P,u){
+  const L=(A,B)=>[A[0]+(B[0]-A[0])*u, A[1]+(B[1]-A[1])*u];
+  const q0=L(P[0],P[1]), q1=L(P[1],P[2]), q2=L(P[2],P[3]);
+  const r0=L(q0,q1), r1=L(q1,q2);
+  return [L(r0,r1), r1, q2, P[3]];
+}
+
+const board=document.getElementById("board");
+board.setAttribute("viewBox",`0 0 ${VW} ${VH}`);
+board.innerHTML=
+  `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">`+
+  `<stop id="skyTop" offset="0"/><stop id="skyBot" offset="1"/></linearGradient></defs>`+
+  `<rect x="0" y="0" width="${VW}" height="${VH}" fill="url(#sky)"/>`+
+  `<g id="world"><g id="tiles"></g><g id="runner" style="display:none">`+
+  `<path class="runner" d="M11 0 L-6.5 -8.5 L-3 0 L-6.5 8.5 Z"/></g></g>`;
+const world=document.getElementById("world");
+const tileLayer=document.getElementById("tiles");
+const runnerEl=document.getElementById("runner");
+
+// Altitude drives the sky. One full pass takes SKY_CYCLE rows and then repeats,
+// so the colour keeps changing however high you get.
+// Colour is a property of ALTITUDE, not of screen position. One band is
+// SKY_CYCLE rows tall, so climbing carries the bands down past you.
+const SKY_CYCLE=40;
+const BOARD=[
+  [  0,[0x9B,0xE8,0xB0]],
+  [ 10,[0x8F,0xCB,0xFF]],
+  [ 20,[0xFF,0xC4,0x6B]],
+  [ 30,[0xCB,0xA6,0xFF]],
+];
+const SKY=[
+  [  0,[0x2F,0x7A,0x55]],
+  [ 10,[0x2C,0x5F,0xA8]],
+  [ 20,[0xB5,0x65,0x1F]],
+  [ 30,[0x5B,0x3D,0x9E]],
+];
+function rampAt(ramp,rows){
+  const t=((rows%SKY_CYCLE)+SKY_CYCLE)%SKY_CYCLE;
+  let i=0; while(i<ramp.length-1 && ramp[i+1][0]<=t) i++;
+  const a=ramp[i], b=ramp[(i+1)%ramp.length];
+  const span=(b[0]>a[0]?b[0]:b[0]+SKY_CYCLE)-a[0];
+  const f=span?(t-a[0])/span:0;
+  const mix=(x,y)=>"#"+[0,1,2].map(j=>
+    Math.round(x[j]+(y[j]-x[j])*f).toString(16).padStart(2,"0")).join("");
+  return a.slice(1).map((_,k)=>mix(a[k+1],b[k+1]));
+}
+const skyAt=rows=>rampAt(SKY,rows)[0];
+const boardAt=rows=>rampAt(BOARD,rows)[0];
+const altOf=y=>(camY0-y)/ROW;          // world height above the starting line
+// Tiles rotate, so a gradient paint would spin with each one. Every tile takes
+// the colour of its own altitude, so it keeps that colour as it scrolls by.
+function shadeTiles(){
+  for(const [k,c] of cells){
+    const [q,r]=k.split(",").map(Number);
+    const hex=boardAt(altOf(cellY(q,r)));
+    if(c.fillNow!==hex){ c.pos.setAttribute("fill",hex); c.fillNow=hex; }
+  }
+}
+let skyPrev="";
+// The two stops read the altitude at the top and the bottom edge of the screen,
+// so the sky band scrolls with the world instead of sitting still.
+function paintSky(){
+  const top=skyAt(altOf(camY)), bot=skyAt(altOf(camY+VH));
+  const key=top+bot;
+  if(key===skyPrev) return;
+  skyPrev=key;
+  document.getElementById("skyTop").setAttribute("stop-color",top);
+  document.getElementById("skyBot").setAttribute("stop-color",bot);
+}
+
+const cells=new Map();
+let camY=0, camY0=0, runner=null, startRow=0, peakRow=0, elapsed=100;
+let score=0, best=0, phase="title", raf, last;
+
+const inStrip=q=>Math.abs(q)<=W;
+const boardEdge=(k,b)=>((b-cells.get(k).steps)%6+6)%6;
+const tileEdge=(k,e)=>(e+cells.get(k).steps)%6;
+function basePartner(k,b){
+  for(const [x,y] of cells.get(k).base){ if(x===b) return y; if(y===b) return x; }
+  return -1;
+}
+function snapTile(k){
+  const c=cells.get(k);
+  if(!c) return;
+  c.el.style.transition="none";
+  c.el.style.transform=`rotate(${c.steps*60}deg)`;
+  c.el.getBoundingClientRect();
+  c.el.style.transition="";
+}
+function tileMatrix(k){
+  const c=cells.get(k);
+  if(!c) return [1,0,0,1];
+  const m=/matrix\(([^)]+)\)/.exec(getComputedStyle(c.el).transform||"");
+  if(!m) return [1,0,0,1];
+  const v=m[1].split(",").map(Number);
+  return [v[0],v[1],v[2],v[3]];
+}
+
+function makeCell(q,r){
+  const k=ck(q,r);
+  if(cells.has(k)) return cells.get(k);
+  const base=ORIENTATIONS[Math.floor(Math.random()*ORIENTATIONS.length)];
+  const steps=Math.floor(Math.random()*6);
+  const pos=document.createElementNS("http://www.w3.org/2000/svg","g");
+  pos.setAttribute("transform",`translate(${cellX(q).toFixed(2)},${cellY(q,r).toFixed(2)})`);
+  let inner=`<g class="cell" data-k="${k}" style="transform:rotate(${steps*60}deg)">`+
+            `<polygon class="face" points="${hexPts(R)}"/>`;
+  for(const [a,b] of base) inner+=`<path class="link" d="${pathD(a,b)}"/>`;
+  inner+=`<path class="ghost" d=""/></g>`;
+  // side walls do not rotate, so they live outside the rotating group
+  const outward = q===-W ? [2,3] : q===W ? [0,5] : [];
+  for(const kk of outward){
+    const v1=vertex(kk), v2=vertex((kk+1)%6);
+    inner+=`<path class="wall" d="M${fmt(v1)} L${fmt(v2)}"/>`;
+  }
+  pos.innerHTML=inner;
+  tileLayer.appendChild(pos);
+  const rec={base,steps,pos,el:pos.querySelector(".cell"),ghost:pos.querySelector(".ghost"),ghostD:""};
+  cells.set(k,rec);
+  return rec;
+}
+
+function ensureRows(){
+  const top=camY-MARGIN*ROW, bot=camY+VH+MARGIN*ROW;
+  for(let q=-W;q<=W;q++){
+    const r0=Math.ceil(top/ROW-q/2), r1=Math.floor(bot/ROW-q/2);
+    for(let r=r0;r<=r1;r++) makeCell(q,r);
+  }
+  for(const [k,c] of cells){
+    const [q,r]=k.split(",").map(Number);
+    const y=cellY(q,r);
+    if(y<top-ROW || y>bot+ROW){
+      if(runner && runner.cell===k) continue;
+      c.pos.remove(); cells.delete(k);
+    }
+  }
+}
+
+function drawGhost(){
+  const want=new Map();
+  let cell=runner.cell, bIn=runner.bIn, bOut=runner.bOut, u=runner.u;
+  const seen=new Set();
+  for(let n=0;n<PREVIEW;n++){
+    if(seen.has(cell+"|"+bIn)) break;
+    seen.add(cell+"|"+bIn);
+    let P=ctrlPoints(bIn,bOut);
+    if(u>0) P=splitAfter(P,u);
+    const d=`M${fmt(P[0])} C${fmt(P[1])} ${fmt(P[2])} ${fmt(P[3])}`;
+    want.set(cell,(want.get(cell)?want.get(cell)+" ":"")+d);
+    const out=boardEdge(cell,bOut);
+    const [q,r]=cell.split(",").map(Number);
+    const nq=q+DIRS[out][0], nr=r+DIRS[out][1];
+    if(!inStrip(nq)) break;
+    makeCell(nq,nr);
+    cell=ck(nq,nr); u=0;
+    bIn=tileEdge(cell,(out+3)%6);
+    bOut=basePartner(cell,bIn);
+  }
+  for(const [k,c] of cells){
+    const d=want.get(k)||"";
+    if(c.ghostD!==d){ c.ghost.setAttribute("d",d); c.ghostD=d; }
+  }
+}
+
+const segLength=()=>LEN[gapOf(runner.bIn,runner.bOut)];
+
+function runnerWorld(){
+  const [q,r]=runner.cell.split(",").map(Number);
+  const p=pointAt(runner.bIn,runner.bOut,runner.u);
+  const v=tangentAt(runner.bIn,runner.bOut,runner.u);
+  const [a,b,c,d]=tileMatrix(runner.cell);
+  return {
+    x:cellX(q)+a*p[0]+c*p[1], y:cellY(q,r)+b*p[0]+d*p[1],
+    vx:a*v[0]+c*v[1], vy:b*v[0]+d*v[1]
+  };
+}
+function draw(){
+  const w=runnerWorld();
+  camY=Math.min(camY, w.y-VH*FOLLOW);      // the camera only ever rises
+  world.setAttribute("transform",`translate(0,${(-camY).toFixed(2)})`);
+  paintSky();
+  shadeTiles();
+  runnerEl.style.display="";
+  runnerEl.setAttribute("transform",
+    `translate(${w.x.toFixed(2)},${w.y.toFixed(2)}) rotate(${(Math.atan2(w.vy,w.vx)*180/Math.PI).toFixed(2)})`);
+  return w;
+}
+
+function advance(){
+  const [q,r]=runner.cell.split(",").map(Number);
+  snapTile(runner.cell);
+  const out=boardEdge(runner.cell,runner.bOut);
+  const nq=q+DIRS[out][0], nr=r+DIRS[out][1];
+  if(!inStrip(nq)){ gameOver("Hit the wall"); return false; }
+  makeCell(nq,nr);
+  runner.cell=ck(nq,nr);
+  snapTile(runner.cell);
+  runner.bIn=tileEdge(runner.cell,(out+3)%6);
+  runner.bOut=basePartner(runner.cell,runner.bIn);
+  const row=rowOf(nq,nr);
+  if(row<peakRow){
+    peakRow=row;
+    score=Math.floor((startRow-peakRow)*METERS_PER_ROW);
+    document.getElementById("score").textContent=score+"m";
+  }
+  return true;
+}
+
+function frame(ts){
+  if(phase!=="play") return;
+  if(last===null) last=ts;
+  const dt=Math.min((ts-last)/1000,.05); last=ts;
+  elapsed+=dt;
+  let travel=(SPEED0+SPEED_GAIN*elapsed)*dt;
+  while(travel>0){
+    const L=segLength(), rest=(1-runner.u)*L;
+    if(travel<rest){ runner.u+=travel/L; break; }
+    travel-=rest; runner.u=0;
+    if(!advance()) return;
+  }
+  const w=draw();
+  if(w.y-camY>VH){ gameOver("Fell off the bottom"); return; }
+  ensureRows(); drawGhost();
+  raf=requestAnimationFrame(frame);
+}
+
+async function loadBest(){
+  try{
+    const r=await window.storage.get("serpentile:climb");
+    if(r&&r.value){ best=parseInt(r.value,10)||0; showBest(); }
+  }catch(e){}
+}
+async function saveBest(){
+  try{ await window.storage.set("serpentile:climb",String(best)); }catch(e){}
+}
+function showBest(){
+  const el=document.getElementById("best");
+  el.textContent=best+"m";
+  el.parentElement.hidden = best===0;
+  if(phase!=="over") paintTitle();
+}
+function paintTitle(){
+  const vt=document.getElementById("veilTitle"), vx=document.getElementById("veilText");
+  vt.hidden=true;
+  vx.textContent = best>0 ? `Best ${best}m` : "";
+  vx.hidden = best===0;
+}
+
+function gameOver(reason){
+  phase="over";
+  cancelAnimationFrame(raf);
+  const record=score>best;
+  if(record){ best=score; showBest(); saveBest(); }
+  const vt=document.getElementById("veilTitle"), vx=document.getElementById("veilText");
+  vt.hidden=false; vt.textContent=record?"New Record":reason;
+  vx.hidden=false;
+  vx.textContent=record?`${score}m`:`${score}m   Best ${best}m`;
+  document.getElementById("startBtn").textContent="Retry";
+  document.getElementById("veil").classList.remove("hidden");
+}
+
+function start(){
+  for(const [,c] of cells) c.pos.remove();
+  cells.clear();
+  camY=0; score=0; last=null; elapsed=0;
+  document.getElementById("score").textContent="0m";
+  // begin at the bottom of the first screen, entering from below
+  const r0=Math.floor((VH*FOLLOW)/ROW);
+  camY=cellY(0,r0)-VH*FOLLOW;
+  camY0=camY; skyPrev=""; paintSky();
+  ensureRows();
+  const home=ck(0,r0);
+  makeCell(0,r0); snapTile(home);
+  const bIn=tileEdge(home,4);
+  runner={cell:home,bIn,bOut:basePartner(home,bIn),u:0};
+  startRow=peakRow=rowOf(0,r0);
+  draw(); ensureRows(); drawGhost();
+  phase="play";
+  document.getElementById("veil").classList.add("hidden");
+  raf=requestAnimationFrame(frame);
+}
+
+function turn(el){
+  if(phase!=="play") return;
+  const c=cells.get(el.dataset.k);
+  if(!c) return;
+  c.steps+=1;
+  el.style.transform=`rotate(${c.steps*60}deg)`;
+  drawGhost();
+}
+board.addEventListener("click",e=>{
+  const t=e.target.closest(".cell");
+  if(t) turn(t);
+});
+document.getElementById("startBtn").onclick=start;
+
+camY=0; camY0=0; paintSky(); ensureRows(); shadeTiles();
+showBest();
+loadBest();
+</script>
+<script src="../../common/js/howto.js" defer></script>

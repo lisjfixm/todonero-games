@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/draw-roll-race/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ドローレース</title>
+<meta name="description" content="描いた手足で転がって走るレース">
+<style>
+  :root{ --ink:#23262b; --player:#e0413a; --cpu:#3b6ec7; --ground:#2b2f36; --howto-bg:#23262b; --howto-fg:#fff; }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;overflow:hidden;background:#7d8fe8;
+    font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+  #race{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
+  #pad{position:fixed;left:50%;bottom:max(4vh,env(safe-area-inset-bottom));transform:translateX(-50%);
+    width:min(80vw,440px);aspect-ratio:5/3;display:block;
+    background:#fff;border:3px dashed #c5c9d2;border-radius:20px;
+    box-shadow:0 10px 30px rgba(40,50,120,.25);touch-action:none;cursor:crosshair}
+</style>
+</head>
+<body>
+<canvas id="race"></canvas>
+<canvas id="pad" width="300" height="180"></canvas>
+<section class="howto" data-pos="top-right" hidden>
+  <h2>遊び方</h2>
+  <p>手足を描いた人形を転がして、CPU と競走するレースです。先にゴールすると勝ちで次のステージへ進み、CPU に先を越されると同じステージをやり直します。ステージは全部で3つあり、ゴールするとタイムが表示されます。</p>
+  <h2>操作</h2>
+  <p>下の白い枠に線を引くと、描き始めに近い肩か腰に手足が付き、反対側にも同じ形が付いて回り続けます。最初の線を描いた瞬間にレースが始まります。走っている間も描き直せて、同じ関節の前の線は置き換わります。PC ではマウスで描けます。</p>
+  <h2>コツ</h2>
+  <p>階段や溝、水、泥、逆走ベルトには長い脚、トンネルには小さな輪、氷の坂には輪が向いています。上の進行バーで太く白い所が形を変えたい区間です。CPU は回転が遅く、形を変えるのも区間に入って3秒後なので、素早く描き直せば追い抜けます。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+
+<script>
+// ---------- 定数 ----------
+const T = 4;           // 線の太さ（半径）
+const G = 1400;
+const POWER = 2.5;     // モータートルク = POWER × 自重 × 半径
+const WMAX = 12;
+const CPU_SPEED = 0.55;   // CPUの回転上限の倍率（強さ調整）
+const CPU_DELAY = 3.0;   // CPUがポーズを持ち替えるまでの反応時間（秒）
+const E = 0.1;
+const MU = 0.9;
+const START_X = 120;
+const DT = 1 / 240;
+const BUOY = 1.8;      // 浮力（全身が沈んだときの重力比）
+const DRAG = 4;
+const MUD_BUOY = 0.6;  // 泥の浮力（沈む）
+const MUD_DRAG = 9;    // 泥の抵抗      // 水の抵抗（1/s）
+const SCALE = 0.56;    // パッド座標 → ワールド座標
+const VIEW_W = 520;    // 画面に映る横幅（ワールド座標）
+
+// ---------- 人体テンプレート（パッド座標・横向き） ----------
+const HEAD = { x: 150, y: 40, r: 14 };
+const SHOULDER = { x: 150, y: 62 };
+const HIP = { x: 150, y: 110 };
+const TORSO = [{ x: 150, y: 54 }, SHOULDER, HIP];
+const MAX_PER_JOINT = 1;
+
+// @@PHYS_START
+// ---------- 地形（区間プールからレースごとにランダム生成） ----------
+const STEP_H = 40;
+const TUNNEL_H = 74;        // トンネルの天井高（地面から）
+// 区間プール。block: CPUがその手前でポーズを持ち替える（pose: 持ち替え先）
+const POOL = [
+  { type: 'hills',    len: 800, label: '坂道' },
+  { type: 'stairs',   n: 3, h: STEP_H, gap: 100, label: '階段', block: 'long' },
+  { type: 'bumps',    len: 500, amp: 10, period: 36, label: 'でこぼこ' },
+  { type: 'pits',     n: 2, w: 70, d: 30, gap: 120, label: '溝', block: 'long' },
+  { type: 'bigpit',   w: 110, d: 60, label: '大溝', block: 'long' },
+  { type: 'wave',     len: 600, dh: 90, label: '大波' },
+  { type: 'sawtooth', n: 4, len: 90, h: 45, label: 'のこぎり' },
+  { type: 'tunnel',   len: 360, label: 'トンネル', block: 'small' },
+  { type: 'hurdles',  n: 3, h: 26, w: 12, gap: 90, label: 'ハードル', block: 'long' },
+  { type: 'cliff',    dh: 130, label: 'ジャンプ' },
+  { type: 'steep',    len: 220, dh: -110, label: '急坂' },
+  { type: 'water',    len: 720, d: 140, label: '水', block: 'long' },
+  { type: 'wall',     h: 90, label: '壁', block: 'climb' },
+  { type: 'climb',    h: 80, tunnel: 260, label: '天井と壁', block: 'climb' },
+  { type: 'belt',     len: 420, speed: -200, label: '逆走ベルト', block: 'long' },   // 床が後ろへ流れる。回転の速い長い脚が有利
+  { type: 'ice',      len: 520, dh: -140, mu: 0.3, label: '氷' },                    // 滑る登り坂。棒は跳ねて滑落、輪だけが登れる
+  { type: 'mud',      len: 400, d: 60, label: '泥', block: 'long' },                   // 沈む泥。輪は埋まり、長い脚はかき分けて進む
+];
+// 固定3ステージ（区間の並び）
+const STAGES = [
+  ['hills', 'bumps', 'stairs', 'wave', 'belt', 'pits', 'sawtooth', 'hills'],
+  ['bumps', 'hurdles', 'water', 'ice', 'wall', 'stairs', 'bigpit', 'cliff', 'steep'],
+  ['wave', 'tunnel', 'mud', 'sawtooth', 'climb', 'pits', 'water', 'belt', 'stairs', 'hurdles', 'cliff'],
+];
+let stage = 0;
+const TSTEP = 2;
+let HA = [], CE = [], WL = [], SF = [], TP = [], CPL = [], SECTIONS = [], CPU_PLAN = [], FINISH_X = 0;
+function buildCourse(){
+  HA = []; CE = []; WL = []; SF = []; SECTIONS = []; CPU_PLAN = [{ from: 0, pose: 'round' }];
+  const course = [{ type: 'flat', len: 300 }];
+  for (const type of STAGES[stage]){ course.push(POOL.find(c => c.type === type)); course.push({ type: 'flat', len: 90 }); }
+  course.push({ type: 'flat', len: 60 });
+  let x = 0, y = 300;
+  // surf: { belt: ベルト速度(px/s), mu: 摩擦倍率, mud: 泥か }
+  let surf = null;
+  const push = (len, f, ceil, water) => { for (let i = 0; i < len / TSTEP; i++){ HA.push(f(i * TSTEP)); CE.push(ceil ? ceil(i * TSTEP) : -Infinity); WL.push(water === undefined ? Infinity : water); SF.push(surf); } x += len; };
+  const hillF = t => 30 * Math.sin(t / 190) + 12 * Math.sin(t / 80 + 1.3) + 5 * Math.sin(t / 40 + 2.1);
+  for (const c of course){
+    const from = x;
+    if (c.type === 'flat') push(c.len, () => y);
+    else if (c.type === 'hills'){ const L = c.len, y0 = y; push(L, t => y0 + Math.sin(Math.PI * t / L) * hillF(t)); }
+    else if (c.type === 'bumps'){ const y0 = y; push(c.len, t => y0 - c.amp * (1 - Math.cos(t / c.period * Math.PI * 2)) / 2); }
+    else if (c.type === 'wave'){ const y0 = y, L = c.len; push(L, t => y0 - c.dh * (1 - Math.cos(t / L * Math.PI * 2)) / 2); }
+    else if (c.type === 'sawtooth'){ for (let k = 0; k < c.n; k++){ const y0 = y; push(c.len, t => y0 - c.h * t / c.len); } }
+    else if (c.type === 'steep'){ const y0 = y, L = c.len; push(L, t => y0 + c.dh * t / L); y += c.dh; }
+    else if (c.type === 'cliff'){ push(40, () => y); y += c.dh; push(40, () => y); }
+    else if (c.type === 'stairs'){ for (let k = 0; k < c.n; k++){ y -= c.h; push(c.gap, () => y); } const y1 = y; push(300, t => y1 + c.n * c.h * t / 300); y += c.n * c.h; }
+    else if (c.type === 'pits'){ const y0 = y; for (let k = 0; k < c.n; k++){ push(c.gap, () => y0); push(c.w, () => y0 + c.d); } push(c.gap, () => y0); }
+    else if (c.type === 'bigpit'){ const y0 = y; push(80, () => y0); push(c.w, () => y0 + c.d); push(80, () => y0); }
+    else if (c.type === 'tunnel'){ const y0 = y; push(60, () => y0); push(c.len, () => y0, () => y0 - TUNNEL_H); push(60, () => y0); }
+    else if (c.type === 'hurdles'){ const y0 = y; for (let k = 0; k < c.n; k++){ push(c.gap, () => y0); push(c.w, () => y0 - c.h); } push(c.gap, () => y0); }
+    else if (c.type === 'wall'){           // 高い壁：腕か長い脚で登る
+      push(60, () => y); y -= c.h; push(160, () => y); const y1 = y; push(300, t => y1 + c.h * t / 300); y += c.h;
+    }
+    else if (c.type === 'climb'){          // 低い天井のあとに壁：短い脚＋長い腕が必要
+      const y0 = y; push(60, () => y0); push(c.tunnel, () => y0, () => y0 - TUNNEL_H); push(180, () => y0);
+      c.wallX = x;
+      y -= c.h; push(160, () => y); const y1 = y; push(300, t => y1 + c.h * t / 300); y += c.h;
+    }
+    else if (c.type === 'belt'){ surf = { belt: c.speed }; push(c.len, () => y); surf = null; }
+    else if (c.type === 'ice'){ const y0 = y, L = c.len; surf = { mu: c.mu }; push(L, t => y0 + c.dh * t / L); surf = null; y += c.dh; }
+    else if (c.type === 'mud'){ const y0 = y; surf = { mud: true }; push(60, t => y0 + c.d * t / 60, null, y0); push(c.len - 180, () => y0 + c.d, null, y0); push(120, t => y0 + c.d * (1 - t / 120), null, y0); surf = null; }
+    else if (c.type === 'water'){          // 水面は元の地面の高さ、その下がプール
+      const y0 = y, d = c.d;
+      push(60, t => y0 + d * t / 60, null, y0); push(c.len - 360, () => y0 + d, null, y0); push(300, t => y0 + d * (1 - t / 300), null, y0);
+    }
+    if (c.label) SECTIONS.push({ from, to: x, label: c.label, type: c.type });
+    if (c.type === 'climb'){ CPU_PLAN.push({ from: from - 70, pose: 'small' }); CPU_PLAN.push({ from: c.wallX - 100, pose: 'climb' }); CPU_PLAN.push({ from: x + 20, pose: 'round' }); }
+    else if (c.block){ CPU_PLAN.push({ from: from - 70, pose: c.block }); CPU_PLAN.push({ from: x + 20, pose: 'round' }); }
+  }
+  FINISH_X = x;
+  const yEnd = y;
+  push(900, () => yEnd);
+  TP = HA.map((yy, i) => ({ x: i * TSTEP, y: yy }));
+  CPL = CE.map((yy, i) => ({ x: i * TSTEP, y: yy > -Infinity ? yy : -3000 }));   // 天井の点列（無い所は遥か上）
+}
+function terrain(x){
+  const i = Math.max(0, Math.min(HA.length - 1, Math.floor(x / TSTEP)));
+  return HA[i];
+}
+function waterLevel(x){
+  const i = Math.max(0, Math.min(WL.length - 1, Math.floor(x / TSTEP)));
+  return WL[i];
+}
+function surfaceAt(x){
+  const i = Math.max(0, Math.min(SF.length - 1, Math.floor(x / TSTEP)));
+  return SF[i];
+}
+function ceiling(x){
+  const i = Math.max(0, Math.min(CE.length - 1, Math.floor(x / TSTEP)));
+  return CE[i];
+}
+function terrainIndex(x){ return Math.min(Math.max(Math.floor(x / TSTEP), 0), TP.length - 2); }
+buildCourse();
+
+// ---------- 人体 → 物理モデル ----------
+// 胴体＋頭は回転しない本体（並進のみ）。腕・脚はそれぞれ肩・腰を軸に回転する「車輪」。
+function dist(a, b){ return Math.hypot(a.x - b.x, a.y - b.y); }
+function samplePolyline(pts, spacing){
+  const out = [{ ...pts[0] }];
+  let carry = 0;
+  for (let i = 0; i < pts.length - 1; i++){
+    const a = pts[i], b = pts[i + 1], L = dist(a, b);
+    if (L === 0) continue;
+    let d = spacing - carry;
+    while (d <= L){ out.push({ x: a.x + (b.x - a.x) * d / L, y: a.y + (b.y - a.y) * d / L }); d += spacing; }
+    carry = L - (d - spacing);
+  }
+  return out;
+}
+const M_PT = 100;
+function makeBody(limbs, color){
+  // 本体（胴体＋頭）
+  let tp = samplePolyline(TORSO, 9);
+  for (let i = 0; i < 12; i++){ const t = i / 12 * Math.PI * 2; tp.push({ x: HEAD.x + Math.cos(t) * HEAD.r, y: HEAD.y + Math.sin(t) * HEAD.r }); }
+  let cx = 0, cy = 0;
+  for (const p of tp){ cx += p.x; cy += p.y; }
+  cx /= tp.length; cy /= tp.length;
+  const tf = p => ({ x: (p.x - cx) * SCALE, y: (p.y - cy) * SCALE });
+  const torsoPts = tp.map(tf);
+  let m = M_PT * torsoPts.length, rad = 0;
+  for (const p of torsoPts) rad = Math.max(rad, Math.hypot(p.x, p.y) + T);
+  // 関節ごとの車輪
+  const joints = [];
+  for (let [jointPt, strokes] of [[SHOULDER, limbs.arm], [HIP, limbs.leg]]){
+    const o = tf(jointPt);
+    const rel = p => ({ x: (p.x - jointPt.x) * SCALE, y: (p.y - jointPt.y) * SCALE });
+    // 描いた線と、それを関節まわりに180度回した線の2本で左右の手足にする
+    const mirrored = strokes.map(st => st.map(p => ({ x: 2 * jointPt.x - p.x, y: 2 * jointPt.y - p.y })));
+    strokes = strokes.concat(mirrored);
+    let pts = [];
+    for (const st of strokes) pts = pts.concat(samplePolyline(st, 9).map(rel));
+    let I = 0, jr = 0;
+    for (const p of pts){ I += M_PT * (p.x * p.x + p.y * p.y); jr = Math.max(jr, Math.hypot(p.x, p.y)); }
+    I += M_PT * pts.length * T * T / 2;
+    m += M_PT * pts.length;
+    if (pts.length) rad = Math.max(rad, Math.hypot(o.x, o.y) + jr + T);
+    joints.push({ ox: o.x, oy: o.y, pts, lines: strokes.map(st => st.map(rel)), a: 0, w: 0, dir: 1,
+                  I, invI: pts.length ? 1 / I : 0, rad: jr + T, active: pts.length > 0 });
+  }
+  return { torsoPts, torsoLine: TORSO.map(tf), head: { ...tf(HEAD), r: HEAD.r * SCALE }, joints,
+           m, invM: 1 / m, rad, color, speed: 1, x: 0, y: 0, vx: 0, vy: 0 };
+}
+
+function closestOnPolyline(P, px, py){
+  const i0 = terrainIndex(px);
+  let best = Infinity, bx = px, by = 0;
+  for (let i = Math.max(0, i0 - 12); i <= Math.min(P.length - 2, i0 + 12); i++){
+    const a = P[i], b = P[i + 1];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const l2 = dx * dx + dy * dy;
+    let u = l2 > 0 ? ((px - a.x) * dx + (py - a.y) * dy) / l2 : 0;
+    u = Math.max(0, Math.min(1, u));
+    const qx = a.x + dx * u, qy = a.y + dy * u;
+    const d = (px - qx) * (px - qx) + (py - qy) * (py - qy);
+    if (d < best){ best = d; bx = qx; by = qy; }
+  }
+  return { x: bx, y: by, d: Math.sqrt(best) };
+}
+// 天井ブロックの側面付近か（±12サンプル以内に天井があるか）
+function ceilingNear(px){
+  const i0 = terrainIndex(px);
+  for (let i = Math.max(0, i0 - 12); i <= Math.min(CE.length - 1, i0 + 12); i++) if (CE[i] > -Infinity) return true;
+  return false;
+}
+function closestOnTerrain(px, py){
+  const i0 = terrainIndex(px);
+  let best = Infinity, bx = px, by = terrain(px);
+  for (let i = Math.max(0, i0 - 12); i <= Math.min(TP.length - 2, i0 + 12); i++){
+    const a = TP[i], b = TP[i + 1];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const l2 = dx * dx + dy * dy;
+    let u = l2 > 0 ? ((px - a.x) * dx + (py - a.y) * dy) / l2 : 0;
+    u = Math.max(0, Math.min(1, u));
+    const qx = a.x + dx * u, qy = a.y + dy * u;
+    const d = (px - qx) * (px - qx) + (py - qy) * (py - qy);
+    if (d < best){ best = d; bx = qx; by = qy; }
+  }
+  return { x: bx, y: by, d: Math.sqrt(best) };
+}
+
+// 1点の接触処理。j が null なら本体の点（回転なし）、あれば関節 j を軸に回る点
+function applyContact(b, px, py, j, nx, ny, pen, surf){
+  const belt = surf && surf.belt ? surf.belt * b.speed : 0, muF = surf && surf.mu ? surf.mu : 1;   // ベルトは回転上限倍率（CPUの手加減）に合わせて弱める
+  const rx = j ? px - (b.x + j.ox) : 0, ry = j ? py - (b.y + j.oy) : 0;
+  const w = j ? j.w : 0, invI = j ? j.invI : 0;
+  let vpx = b.vx - w * ry, vpy = b.vy + w * rx;
+  const vn = vpx * nx + vpy * ny;
+  if (vn < 0){
+    const rn = rx * ny - ry * nx;
+    const kn = b.invM + rn * rn * invI;
+    const jn = -(1 + E) * vn / kn;
+    b.vx += jn * nx * b.invM; b.vy += jn * ny * b.invM; if (j) j.w += rn * jn * invI;
+    const tx = -ny, ty = nx;
+    const w2 = j ? j.w : 0;
+    vpx = b.vx - w2 * ry; vpy = b.vy + w2 * rx;
+    const vt = (vpx - belt) * tx + vpy * ty;   // ベルトの上では床自体が動く
+    const rt = rx * ty - ry * tx;
+    const kt = b.invM + rt * rt * invI;
+    let jt = -vt / kt;
+    const lim = MU * muF * jn;
+    jt = Math.max(-lim, Math.min(lim, jt));
+    b.vx += jt * tx * b.invM; b.vy += jt * ty * b.invM; if (j) j.w += rt * jt * invI;
+  }
+  const corr = Math.min(pen, 8) * 0.4;
+  b.x += nx * corr; b.y += ny * corr;
+}
+function contact(b, px, py, j){
+  // 天井（トンネル・天井ブロック）：側面にも当たるよう点列で判定
+  const c = ceiling(px);
+  if (py - T - 4 < c || ceilingNear(px)){
+    const inside = py < c;
+    const cp = closestOnPolyline(CPL, px, py);
+    const cpen = inside ? cp.d + T : T - cp.d;
+    if (cpen > 0){
+      let nx, ny;
+      if (cp.d < 1e-6){ nx = 0; ny = 1; }
+      else if (inside){ nx = (cp.x - px) / cp.d; ny = (cp.y - py) / cp.d; }
+      else { nx = (px - cp.x) / cp.d; ny = (py - cp.y) / cp.d; }
+      applyContact(b, px, py, j, nx, ny, cpen);
+    }
+  }
+  // 地面
+  const h = terrain(px);
+  if (py + T + 4 < h) return;               // 地面より十分上なら判定不要
+  const inside = py > h;
+  const cp = closestOnTerrain(px, py);
+  const pen = inside ? cp.d + T : T - cp.d;
+  if (pen <= 0) return;
+  let nx, ny;
+  if (cp.d < 1e-6){ nx = 0; ny = -1; }
+  else if (inside){ nx = (cp.x - px) / cp.d; ny = (cp.y - py) / cp.d; }
+  else { nx = (px - cp.x) / cp.d; ny = (py - cp.y) / cp.d; }
+  applyContact(b, px, py, j, nx, ny, pen, surfaceAt(px));
+}
+function stepBody(b, dt){
+  b.vy += G * dt;
+  b.vx *= 1 - 0.03 * dt;
+  for (const j of b.joints){
+    if (!j.active) continue;
+    if (j.w * j.dir < WMAX * b.speed) j.w += j.dir * POWER * G * b.m * j.rad * j.invI * dt;
+    j.a += j.w * dt;
+  }
+  b.x += b.vx * dt; b.y += b.vy * dt;
+  // 水：沈んだ点ごとに浮力と抵抗（回る手足が水をかくと前に進む）
+  const nPts = b.torsoPts.length + b.joints.reduce((n, j) => n + j.pts.length, 0);
+  const water = (px, py, j) => {
+    if (py < waterLevel(px)) return;
+    const sf = surfaceAt(px), mud = sf && sf.mud;
+    b.vy -= G * (mud ? MUD_BUOY : BUOY) / nPts * dt;
+    const rx = j ? px - (b.x + j.ox) : 0, ry = j ? py - (b.y + j.oy) : 0;
+    const w = j ? j.w : 0;
+    const vpx = b.vx - w * ry, vpy = b.vy + w * rx;
+    const dr = mud ? MUD_DRAG : DRAG;
+    const fx = -dr * M_PT * vpx * dt, fy = -dr * M_PT * vpy * dt;
+    b.vx += fx * b.invM; b.vy += fy * b.invM;
+    if (j) j.w += (rx * fy - ry * fx) * j.invI;
+  };
+  for (const v of b.torsoPts) water(b.x + v.x, b.y + v.y, null);
+  for (const j of b.joints){
+    const c = Math.cos(j.a), s = Math.sin(j.a);
+    for (const v of j.pts) water(b.x + j.ox + v.x * c - v.y * s, b.y + j.oy + v.x * s + v.y * c, j);
+  }
+  for (const v of b.torsoPts) contact(b, b.x + v.x, b.y + v.y, null);
+  for (const j of b.joints){
+    const c = Math.cos(j.a), s = Math.sin(j.a);
+    for (const v of j.pts) contact(b, b.x + j.ox + v.x * c - v.y * s, b.y + j.oy + v.x * s + v.y * c, j);
+  }
+}
+
+// ---------- CPU: 区間に合わせてポーズを変える ----------
+const CPU_ROUND = {   // 半円（180度コピーで輪になる）
+  arm: [[SHOULDER, { x: 176.1, y: 69.0 }, { x: 173.4, y: 75.5 }, { x: 169.1, y: 81.1 }, { x: 163.5, y: 85.4 }, { x: 157.0, y: 88.1 }, { x: 150.0, y: 89.0 }, { x: 143.0, y: 88.1 }, { x: 136.5, y: 85.4 }, { x: 130.9, y: 81.1 }, { x: 126.6, y: 75.5 }, { x: 123.9, y: 69.0 }, { x: 123.0, y: 62.0 }]],
+  leg: [[HIP, { x: 188.6, y: 120.4 }, { x: 184.6, y: 130.0 }, { x: 178.3, y: 138.3 }, { x: 170.0, y: 144.6 }, { x: 160.4, y: 148.6 }, { x: 150.0, y: 150.0 }, { x: 139.6, y: 148.6 }, { x: 130.0, y: 144.6 }, { x: 121.7, y: 138.3 }, { x: 115.4, y: 130.0 }, { x: 111.4, y: 120.4 }, { x: 110.0, y: 110.0 }]],
+};
+const CPU_LONG = {    // 伸ばした脚（180度コピーで十字になる）
+  arm: [],
+  leg: [[HIP, { x: 150, y: 178 }, HIP, { x: 210, y: 110 }]],
+};
+const CPU_SMALL = {   // 小さな輪（トンネル用）
+  arm: [[SHOULDER, { x: 166.6, y: 68.9 }, { x: 162.7, y: 74.7 }, { x: 156.9, y: 78.6 }, { x: 150.0, y: 80.0 }, { x: 143.1, y: 78.6 }, { x: 137.3, y: 74.7 }, { x: 133.4, y: 68.9 }, { x: 132.0, y: 62.0 }]],
+  leg: [[HIP, { x: 172.2, y: 119.2 }, { x: 167.0, y: 127.0 }, { x: 159.2, y: 132.2 }, { x: 150.0, y: 134.0 }, { x: 140.8, y: 132.2 }, { x: 133.0, y: 127.0 }, { x: 127.8, y: 119.2 }, { x: 126.0, y: 110.0 }]],
+};
+const CPU_CLIMB = {   // 短い脚＋長い腕（壁登り用）
+  arm: [[SHOULDER, { x: 250, y: 62 }]],
+  leg: CPU_SMALL.leg,
+};
+const CPU_POSES = { round: CPU_ROUND, long: CPU_LONG, small: CPU_SMALL, climb: CPU_CLIMB };
+function cpuPlanIndex(x){ let k = 0; for (let i = 0; i < CPU_PLAN.length; i++) if (x >= CPU_PLAN[i].from) k = i; return k; }
+function replaceBody(old, limbs, color){
+  const b = makeBody(limbs, color);
+  b.speed = old.speed;
+  b.x = old.x; b.vx = old.vx; b.vy = old.vy;
+  for (let i = 0; i < b.joints.length; i++){ b.joints[i].a = old.joints[i].a; b.joints[i].w = old.joints[i].w; }
+  b.y = Math.min(old.y, terrain(old.x) - b.rad - 1);
+  return b;
+}
+// @@PHYS_END
+
+// ---------- 描画パッド ----------
+const pad = document.getElementById('pad');
+const pctx = pad.getContext('2d');
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let stroke = [], drawing = false;
+const limbs = { arm: [], leg: [] };
+
+function padPos(e){
+  const r = pad.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * pad.width / r.width, y: (e.clientY - r.top) * pad.height / r.height };
+}
+function strokePath(ctx, pts){
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for (const p of pts) ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+}
+function drawPad(){
+  pctx.clearRect(0, 0, pad.width, pad.height);
+  pctx.lineJoin = 'round'; pctx.lineCap = 'round';
+  // テンプレート（頭・胴体・関節）
+  pctx.strokeStyle = css('--ink'); pctx.lineWidth = 4;
+  strokePath(pctx, TORSO);
+  pctx.beginPath(); pctx.arc(HEAD.x, HEAD.y, HEAD.r, 0, Math.PI * 2);
+  pctx.fillStyle = '#fff'; pctx.fill(); pctx.stroke();
+  for (const j of [SHOULDER, HIP]){
+    pctx.beginPath(); pctx.arc(j.x, j.y, 6, 0, Math.PI * 2);
+    pctx.fillStyle = css('--player'); pctx.fill();
+  }
+  // 手足
+  pctx.strokeStyle = css('--player'); pctx.lineWidth = 5;
+  for (const ln of [...limbs.arm, ...limbs.leg]) strokePath(pctx, ln);
+  if (stroke.length >= 2){ pctx.globalAlpha = 0.5; strokePath(pctx, stroke); pctx.globalAlpha = 1; }
+}
+pad.addEventListener('pointerdown', e => {
+  drawing = true; stroke = [padPos(e)]; pad.setPointerCapture(e.pointerId); drawPad();
+});
+pad.addEventListener('pointermove', e => {
+  if (!drawing) return;
+  const p = padPos(e);
+  // 枠の外にいる間は点を追加しない（戻ってきたら最後の点から直線でつながる）
+  if (p.x < 0 || p.y < 0 || p.x > pad.width || p.y > pad.height) return;
+  if (dist(p, stroke[stroke.length - 1]) > 4){ stroke.push(p); drawPad(); }
+});
+function endStroke(){
+  if (!drawing) return;
+  drawing = false;
+  if (stroke.length >= 3){
+    // 描き始めに近い関節に手足として接続（始点を関節へ平行移動）
+    const joint = dist(stroke[0], SHOULDER) <= dist(stroke[0], HIP) ? SHOULDER : HIP;
+    const kind = joint === SHOULDER ? 'arm' : 'leg';
+    const dx = joint.x - stroke[0].x, dy = joint.y - stroke[0].y;
+    const limb = stroke.map(p => ({ x: p.x + dx, y: p.y + dy }));
+    limbs[kind].push(limb);
+    if (limbs[kind].length > MAX_PER_JOINT) limbs[kind].shift();
+    if (racing) player = replaceBody(player, limbs, css('--player'));
+    else if (!result) startRace();                 // リザルト表示中は描いても始めない（ボタンで次へ）
+  }
+  stroke = [];
+  drawPad();
+}
+pad.addEventListener('pointerup', endStroke);
+pad.addEventListener('pointercancel', endStroke);
+
+// ---------- レース ----------
+const race = document.getElementById('race');
+const rctx = race.getContext('2d');
+const hud = {};
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+let racing = false, player = null, cpu = null, cpuPlan = 0, raceTime = 0, lastTs = 0, acc = 0, raf = 0, result = '', cpuDone = false, cpuWait = -1;
+
+function placeAtStart(b){
+  b.x = START_X; b.y = terrain(START_X) - b.rad - 1; b.vx = 0; b.vy = 0;
+}
+function drawBody(ctx, b, alpha){
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(b.x, b.y);
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const line = ln => {
+    ctx.strokeStyle = css('--ink'); ctx.lineWidth = T * 2 + 3; strokePath(ctx, ln);
+    ctx.strokeStyle = b.color; ctx.lineWidth = T * 2; strokePath(ctx, ln);
+  };
+  // 胴体・頭を先に描き、腕・脚を手前に重ねる
+  line(b.torsoLine);
+  ctx.beginPath(); ctx.arc(b.head.x, b.head.y, b.head.r, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.strokeStyle = css('--ink'); ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(b.head.x + b.head.r * 0.45, b.head.y - b.head.r * 0.15, 1.8, 0, Math.PI * 2);
+  ctx.fillStyle = css('--ink'); ctx.fill();
+  for (const j of b.joints){
+    ctx.save(); ctx.translate(j.ox, j.oy); ctx.rotate(j.a);
+    for (const ln of j.lines) line(ln);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+let dpr = 1;
+function resize(){
+  dpr = Math.min(window.devicePixelRatio || 1, 3);
+  race.width = Math.round(window.innerWidth * dpr); race.height = Math.round(window.innerHeight * dpr);
+  render();
+}
+window.addEventListener('resize', resize);
+function render(){
+  const W = race.width, H = race.height;
+  // 空
+  const sky = rctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#5c6fe0'); sky.addColorStop(0.55, '#a9baff'); sky.addColorStop(1, '#e2cffb');
+  rctx.fillStyle = sky; rctx.fillRect(0, 0, W, H);
+  const zoom = W / VIEW_W;
+  const VW = VIEW_W, VH = H / zoom;
+  const px0 = player ? player.x : START_X, py0 = player ? player.y : terrain(START_X) - 40;
+  const camX = Math.max(0, px0 - VW * 0.32);
+  const camY = py0 - VH * 0.38;
+  rctx.save();
+  rctx.scale(zoom, zoom);
+  rctx.translate(-camX, -camY);
+  rctx.lineJoin = 'round';
+  // 地面
+  rctx.beginPath();
+  rctx.moveTo(camX, camY + VH + 10);
+  for (let i = terrainIndex(camX); i < TP.length && TP[i].x <= camX + VW + TSTEP; i++) rctx.lineTo(TP[i].x, TP[i].y);
+  rctx.lineTo(camX + VW + TSTEP, camY + VH + 10); rctx.closePath();
+  rctx.fillStyle = css('--ground'); rctx.fill();
+  // 進行が分かるよう、地面にうっすら縦縞（x方向に周期）
+  rctx.save(); rctx.clip();
+  rctx.fillStyle = 'rgba(255,255,255,0.06)';
+  const SW = 40;
+  for (let sx = Math.floor(camX / (SW * 2)) * SW * 2; sx < camX + VW; sx += SW * 2) rctx.fillRect(sx, camY - 10, SW, VH + 20);
+  rctx.restore();
+  for (const sec of SECTIONS){                      // ベルト・氷の表面
+    if ((sec.type !== 'belt' && sec.type !== 'ice') || sec.to < camX || sec.from > camX + VW) continue;
+    rctx.lineWidth = 6; rctx.lineCap = 'butt';
+    if (sec.type === 'ice'){
+      rctx.strokeStyle = 'rgba(190,235,255,0.95)';
+      rctx.beginPath(); for (let i = terrainIndex(sec.from); i <= terrainIndex(sec.to); i++) rctx.lineTo(TP[i].x, TP[i].y + 1); rctx.stroke();
+    } else {
+      // 流れる向きが分かるよう矢印模様（時間で後ろへ流れる）
+      const off = (raceTime * sec.speed * -1) % 24;
+      rctx.strokeStyle = '#555b66'; rctx.beginPath(); rctx.moveTo(sec.from, terrain(sec.from) + 1); rctx.lineTo(sec.to, terrain(sec.to) + 1); rctx.stroke();
+      rctx.strokeStyle = '#d9dde6'; rctx.lineWidth = 2;
+      for (let sx = sec.from - off; sx < sec.to; sx += 24){ if (sx < sec.from) continue; const gy = terrain(sx); rctx.beginPath(); rctx.moveTo(sx + 5, gy - 2); rctx.lineTo(sx, gy + 2); rctx.lineTo(sx + 5, gy + 6); rctx.stroke(); }
+    }
+  }
+  for (const sec of SECTIONS){                      // トンネルの天井
+    if ((sec.type !== 'tunnel' && sec.type !== 'climb') || sec.to < camX || sec.from > camX + VW) continue;
+    const x0 = sec.from + 60, x1 = sec.type === 'climb' ? x0 + 260 : sec.to - 60, cy = ceiling(x0 + 1);
+    rctx.fillStyle = css('--ground'); rctx.fillRect(x0, camY - 10, x1 - x0, cy - camY + 10);
+  }
+  for (const [gx, label] of [[START_X, 'START'], [FINISH_X, 'GOAL']]){
+    const gy = terrain(gx);
+    rctx.strokeStyle = css('--ink'); rctx.lineWidth = 3;
+    rctx.beginPath(); rctx.moveTo(gx, gy); rctx.lineTo(gx, gy - 110); rctx.stroke();
+    for (let i = 0; i < 6; i++) for (let k = 0; k < 2; k++){
+      rctx.fillStyle = (i + k) % 2 ? '#fff' : css('--ink');
+      rctx.fillRect(gx + k * 8, gy - 110 + i * 8, 8, 8);
+    }
+    rctx.fillStyle = css('--ink'); rctx.font = 'bold 12px sans-serif'; rctx.fillText(label, gx + 20, gy - 96);
+  }
+  if (cpu) drawBody(rctx, cpu, 0.85);
+  if (player) drawBody(rctx, player, 1);
+  for (const sec of SECTIONS){                      // 水・泥（体の上に半透明で重ねる）
+    if ((sec.type !== 'water' && sec.type !== 'mud') || sec.to < camX || sec.from > camX + VW) continue;
+    const wl = waterLevel(sec.from + 1);
+    rctx.beginPath();
+    rctx.moveTo(sec.from, wl);
+    for (let i = terrainIndex(sec.from); i <= terrainIndex(sec.to); i++) rctx.lineTo(TP[i].x, Math.max(TP[i].y, wl));
+    rctx.lineTo(sec.to, wl); rctx.closePath();
+    rctx.fillStyle = sec.type === 'mud' ? 'rgba(120,80,40,0.8)' : 'rgba(70,150,235,0.55)'; rctx.fill();
+    rctx.strokeStyle = 'rgba(255,255,255,0.8)'; rctx.lineWidth = 2;
+    rctx.beginPath(); rctx.moveTo(sec.from, wl); rctx.lineTo(sec.to, wl); rctx.stroke();
+  }
+  rctx.restore();
+  // HUD（CSSピクセル基準）
+  rctx.save();
+  rctx.scale(dpr, dpr);
+  const cw = W / dpr, ch = H / dpr;
+  const bx = 24, by = 22, bw = cw - 48;
+  rctx.strokeStyle = 'rgba(255,255,255,0.9)'; rctx.lineWidth = 2;
+  rctx.beginPath(); rctx.moveTo(bx, by); rctx.lineTo(bx + bw, by); rctx.stroke();
+  for (const sec of SECTIONS){
+    if (!POOL.find(c => c.label === sec.label)?.block) continue;   // 持ち替えが要る区間を目印に
+    const x0 = bx + bw * (sec.from - START_X) / (FINISH_X - START_X), x1 = bx + bw * (sec.to - START_X) / (FINISH_X - START_X);
+    rctx.fillStyle = 'rgba(255,255,255,0.9)'; rctx.fillRect(x0, by - 4, x1 - x0, 8);
+  }
+  for (const [b, col, r] of [[cpu, '--cpu', 5], [player, '--player', 6]]){
+    if (!b) continue;
+    const t = Math.min(Math.max((b.x - START_X) / (FINISH_X - START_X), 0), 1);
+    rctx.fillStyle = css(col);
+    rctx.beginPath(); rctx.arc(bx + bw * t, by, r, 0, Math.PI * 2); rctx.fill();
+  }
+  rctx.fillStyle = '#fff'; rctx.font = 'bold 14px sans-serif'; rctx.textAlign = 'right';
+  rctx.fillText(raceTime.toFixed(1) + ' s', cw - 24, 48); rctx.textAlign = 'left';
+  for (let i = 0; i < STAGES.length; i++){            // ステージ表示（●○○）
+    rctx.beginPath(); rctx.arc(24 + i * 16, 48, 5, 0, Math.PI * 2);
+    rctx.fillStyle = i === stage ? '#fff' : 'rgba(255,255,255,0.35)'; rctx.fill();
+  }
+  if (result){
+    // リザルトパネル
+    const pw = Math.min(cw - 40, 340), ph = 250, px = (cw - pw) / 2, py = ch * 0.12;
+    rctx.fillStyle = 'rgba(255,255,255,0.95)'; rctx.strokeStyle = css('--ink'); rctx.lineWidth = 2;
+    roundRect(rctx, px, py, pw, ph, 18); rctx.fill(); rctx.stroke();
+    rctx.textAlign = 'center'; rctx.textBaseline = 'middle';
+    rctx.fillStyle = result === 'WIN' ? css('--player') : css('--cpu');
+    rctx.font = 'bold 34px sans-serif';
+    rctx.fillText(result === 'WIN' ? 'ゴール！ 勝利' : 'ゴール… 敗北', cw / 2, py + 44);
+    rctx.fillStyle = css('--ink'); rctx.font = '16px sans-serif';
+    rctx.fillText('ステージ ' + (stage + 1) + ' / ' + STAGES.length, cw / 2, py + 88);
+    rctx.font = 'bold 26px sans-serif';
+    rctx.fillText('タイム ' + raceTime.toFixed(2) + ' 秒', cw / 2, py + 122);
+    // ボタン
+    const bw = pw - 48, bh = 40;
+    const mainLabel = result === 'WIN' ? (stage + 1 < STAGES.length ? '次のステージへ' : 'ステージ1に戻る') : 'もう一度';
+    hud.restart = { x: px + 24, y: py + 154, w: bw, h: bh };
+    hud.share = { x: px + 24, y: py + 202, w: bw, h: bh };
+    for (const [k, label, fill, color] of [['restart', mainLabel, css('--ink'), '#fff'], ['share', 'シェア', '#fff', css('--ink')]]){
+      const r = hud[k];
+      rctx.fillStyle = fill; rctx.strokeStyle = css('--ink'); rctx.lineWidth = 2;
+      roundRect(rctx, r.x, r.y, r.w, r.h, 20); rctx.fill(); rctx.stroke();
+      rctx.fillStyle = color; rctx.font = 'bold 16px sans-serif';
+      rctx.fillText(label, r.x + r.w / 2, r.y + r.h / 2 + 1);
+    }
+    rctx.textAlign = 'left'; rctx.textBaseline = 'alphabetic';
+  }
+  rctx.restore();
+}
+function frame(ts){
+  if (!lastTs) lastTs = ts;
+  acc += Math.min((ts - lastTs) / 1000, 0.05); lastTs = ts;
+  while (acc >= DT){
+    stepBody(player, DT); raceTime += DT; acc -= DT;
+    if (!cpuDone){
+      stepBody(cpu, DT);
+      const k = cpuPlanIndex(cpu.x);
+      if (k !== cpuPlan){
+        if (cpuWait < 0) cpuWait = raceTime;                       // 区間に入った時刻
+        if (raceTime - cpuWait >= CPU_DELAY){ cpuPlan = k; cpuWait = -1; cpu = replaceBody(cpu, CPU_POSES[CPU_PLAN[k].pose], css('--cpu')); }
+      }
+      if (cpu.x >= FINISH_X) cpuDone = true;      // 敵がゴールしてもレースは続く
+    }
+    if (player.x >= FINISH_X){ finish(); return; }
+  }
+  render();
+  raf = requestAnimationFrame(frame);
+}
+function finish(){
+  racing = false;
+  document.documentElement.removeAttribute('data-howto-hidden');
+  result = cpuDone ? 'LOSE' : 'WIN';
+  render();
+}
+function startRace(){
+  buildCourse();
+  player = makeBody(limbs, css('--player'));
+  cpu = makeBody(CPU_ROUND, css('--cpu')); cpu.speed = CPU_SPEED; cpuPlan = 0;
+  placeAtStart(player); placeAtStart(cpu);
+  raceTime = 0; lastTs = 0; acc = 0; racing = true; result = ''; cpuDone = false; cpuWait = -1;
+  document.documentElement.setAttribute('data-howto-hidden', '');
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(frame);
+}
+// click で受ける（タッチの pointerdown はユーザー操作扱いにならず、共有シートやXのタブが開かないことがあるため）
+race.addEventListener('click', e => {
+  if (racing || !result) return;
+  const r = race.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  const hit = k => hud[k] && x >= hud[k].x && x <= hud[k].x + hud[k].w && y >= hud[k].y && y <= hud[k].y + hud[k].h;
+  if (hit('share')) shareImage();
+  else if (hit('restart')){ if (result === 'WIN') stage = (stage + 1) % STAGES.length; startRace(); }
+});
+// 完成した人の画像を作ってシェア（共有シートが使えない環境では画面内に画像を表示）
+let sharing = false;
+function shareImage(){
+  if (!player || sharing) return;
+  const c = document.createElement('canvas'); c.width = 720; c.height = 900;
+  const g = c.getContext('2d');
+  const sky = g.createLinearGradient(0, 0, 0, c.height);
+  sky.addColorStop(0, '#5c6fe0'); sky.addColorStop(0.55, '#a9baff'); sky.addColorStop(1, '#e2cffb');
+  g.fillStyle = sky; g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = css('--ground'); g.fillRect(0, c.height * 0.78, c.width, c.height * 0.22);
+  const scale = Math.min(4, 300 / player.rad);
+  const b = { ...player, x: 0, y: 0 };
+  g.save(); g.translate(c.width / 2, c.height * 0.78 - player.rad * scale); g.scale(scale, scale);
+  drawBody(g, b, 1);
+  g.restore();
+  // 同期的に PNG を作る（ユーザー操作の直後に share を呼ぶため）
+  const dataUrl = c.toDataURL('image/png');
+  const bin = atob(dataUrl.split(',')[1]);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const file = new File([bytes], 'runner.png', { type: 'image/png' });
+  // シェア文: 見出し / タイム(秒:1/100秒) / 空行 / このページのURL / ハッシュタグ
+  const cs = Math.round(raceTime * 100);
+  const time = String(Math.floor(cs / 100)).padStart(2, '0') + ':' + String(cs % 100).padStart(2, '0');
+  const head = 'ステージ' + (stage + 1) + (result === 'WIN' ? 'クリア！' : 'に挑戦中！');
+  const text = head + '\nタイム : ' + time + '\n\n' + location.href.split(/[?#]/)[0] + '\n#ドローレース';
+  const intent = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
+  if (navigator.canShare && navigator.canShare({ files: [file] })){
+    // スマホ：OSの共有シートからXを選ぶと画像付きで投稿できる
+    // キャンセル（AbortError）では何もしない。それ以外の失敗は画像を表示
+    sharing = true;
+    navigator.share({ files: [file], text })
+      .catch(err => { if (!err || err.name !== 'AbortError') showImage(dataUrl, intent); })
+      .finally(() => { sharing = false; });
+  } else {
+    // PC：画像をクリップボードにコピーしてXの投稿画面を開く（貼り付けで画像が付く）
+    // ポップアップがブロックされた場合は画像と投稿ボタンを表示する
+    const open = copied => {
+      const w = window.open(intent, '_blank');
+      if (!w || !copied) showImage(dataUrl, intent);
+    };
+    if (navigator.clipboard && window.ClipboardItem){
+      sharing = true;
+      navigator.clipboard.write([new ClipboardItem({ 'image/png': new Blob([bytes], { type: 'image/png' }) })])
+        .then(() => open(true), () => open(false))
+        .finally(() => { sharing = false; });
+    } else {
+      open(false);
+    }
+  }
+}
+// ページ遷移せずに画像を重ねて表示（タップで閉じる。長押し／右クリックで保存）
+function showImage(dataUrl, intent){
+  document.getElementById('share-box')?.remove();      // 重ねて開かない
+  const box = document.createElement('div');
+  box.id = 'share-box';
+  box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center;z-index:10';
+  const img = document.createElement('img');
+  img.src = dataUrl; img.style.cssText = 'max-width:80vw;max-height:70vh;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.4)';
+  box.appendChild(img);
+  if (intent){
+    const a = document.createElement('a');
+    a.href = intent; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Xに投稿';
+    a.style.cssText = 'padding:10px 28px;border-radius:20px;background:#fff;color:#000;font:bold 16px sans-serif;text-decoration:none';
+    box.appendChild(a);
+  }
+  box.addEventListener('pointerdown', e => { if (e.target === box) box.remove(); });
+  document.body.appendChild(box);
+}
+drawPad();
+resize();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

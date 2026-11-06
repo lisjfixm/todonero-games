@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/colorful-bomb-sort/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>カラフル爆弾仕分け</title>
+<meta name="description" content="爆弾を同じ色のエリアへ仕分ける">
+<style>
+  :root{
+    --bg:#0e1015; --bg2:#1d212b; --fg:#f1f2f4; --sub:#9aa0ac;
+    --floor:#2b2f37; --grid:#343943; --frame:#1b1e25; --frame2:#121419;
+    --panel:rgba(22,24,31,.95); --accent:#f1f2f4; --accent-fg:#16181d; --btn:rgba(255,255,255,.1);
+    /* 爆弾の4色：赤・青・白・橙。色覚の違い（1型・2型・3型）があっても見分けやすい組み合わせ。
+       赤と橙は明るさの差で見分けるので、エリアは対角に置く */
+    --c-red:#c62828; --c-blue:#2e86ff; --c-white:#e9e9e9; --c-orange:#ff9800;
+    --cap:#2a2d34; --fuse:#b89a6a; --spark:#ffb020; --boom:#ff7a1a; --smoke:#4a4d55; --scorch:#000000;
+    --howto-bg:#1d212b; --howto-fg:#f1f2f4;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #game{position:fixed;inset:0;overflow:hidden}   /* 画面全体を使う（台の大きさは画面に合わせてカメラで決める） */
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #score{position:absolute;left:0;right:0;top:0;padding-top:calc(env(safe-area-inset-top,0px) + 14px);text-align:center;font-size:60px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--fg);text-shadow:0 3px 10px rgba(0,0,0,.6);pointer-events:none}
+  #score.bump{animation:bump .25s ease-out}
+  @keyframes bump{0%{transform:scale(1.35)}100%{transform:scale(1)}}
+  .hidden{display:none !important}
+  #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}
+  #over .panel{width:min(84%,320px);padding:28px 22px 22px;border-radius:24px;background:var(--panel);text-align:center;box-shadow:0 16px 40px rgba(0,0,0,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  #over:not(.hidden) .panel{animation:pop .3s ease-out}
+  @keyframes pop{0%{transform:scale(.85);opacity:0}100%{transform:scale(1);opacity:1}}
+  #result{margin:0 0 22px;display:flex;align-items:baseline;justify-content:center;gap:6px}
+  #res-num{font-size:68px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  #res-unit{font-size:20px;font-weight:700}
+  button{display:block;width:100%;min-height:50px;margin:10px 0 0;border:0;border-radius:14px;font:inherit;font-size:18px;font-weight:700;color:var(--fg);background:var(--btn);cursor:pointer}
+  #retry{background:var(--accent);color:var(--accent-fg)}
+  .howto-open{width:auto;min-height:0}   /* 上の button の全幅指定を「遊び方」ボタンに効かせない */
+  button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+  #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:5}
+  #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;padding:16px;border-radius:20px;background:var(--panel)}
+  #share-img{display:block;width:100%;height:auto;border-radius:12px}
+  #share-text{white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text;font-size:14px}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="cv"></canvas>
+  <div id="score" aria-live="polite">0</div>
+  <div id="over" class="hidden" role="dialog" aria-label="結果">
+    <div class="panel">
+      <p id="result"><span id="res-num">0</span><span id="res-unit">個 仕分けた</span></p>
+      <button id="retry" type="button">もう一回</button>
+      <button id="share" type="button">共有</button>
+    </div>
+  </div>
+  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+    <div class="panel">
+      <img id="share-img" alt="共有される結果画像">
+      <p id="share-text"></p>
+      <button id="share-close" type="button">閉じる</button>
+    </div>
+  </div>
+  <section class="howto" data-pos="top-left" hidden>
+    <h2>遊び方</h2>
+    <p>中央の十字に落ちてくる爆弾を、同じ色の四隅のエリアへ運んで仕分けるゲームです。仕分けた個数が得点になります。導火線が燃え尽きるか、違う色のエリアに入れると爆発して終わります。時間がたつほど出る間隔と導火線は短くなり、一度に落ちる数も最大4個まで増えます。</p>
+    <h2>操作</h2>
+    <p>爆弾を指でつかんで運び、離すと落ちます。動かした勢いは離したあとも残るので、投げることもできます。指を2本使えば2個を同時に持てます。PC ではマウスのドラッグで操作します。</p>
+    <h2>コツ</h2>
+    <p>導火線の残りが2.5秒を切った爆弾は脈打つので、先に片付けましょう。エリアの境のブロックは投げた爆弾なら越えられますが、勢いが余って違う色に入ると失敗になります。赤と橙は対角にあります。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+
+  // ---------- 定数 ----------
+  const FIELD = 7;            // 床の一辺
+  const NEUTRAL = 1.5;       // 中央の十字（どの色でもない置き場）の半幅。|x| か |z| がこれ未満なら置き場
+  const BOMB_R = 0.36;        // 爆弾の半径
+  const SPAWN_MARGIN = 0.1;   // 爆弾が落ちてくる範囲（中央の十字の置き場全体）を、ブロックや外枠からこれだけ内側にする
+  const SPAWN_HEIGHT = 9;     // 爆弾が出てくる高さ
+  const GRAVITY = 18;         // 重力（m/s²）
+  const STEP = 1 / 120;       // 物理を進める固定の時間刻み（秒）。画面の更新間隔に関係なく同じ動きにする
+  const RESTITUTION = 0.35;   // 床で跳ねる強さ
+  const BOUNCE_MIN = 1.2;     // これより遅い落下速度なら跳ねずに床に乗る（m/s）
+  const BOUNCE_MAX = 2.2;     // 床で跳ね返る速さの上限（m/s）。高く跳ねてブロックを越えないように、跳ねる高さをブロックより低く抑える
+  const KICK_MIN = 0.6;       // 降ってきた爆弾が最初に床に着いたとき転がり出す速さの最小（m/s）
+  const KICK_MAX = 1.6;       // 同じく最大（m/s）
+  const ROLL_FRICTION = 0.6;  // 転がりの減速（m/s²）。大きいほどすぐ止まる
+  const WALL_E = 0.5;         // 床の端・エリアの境界のブロックで跳ね返る強さ
+  const WALL_H = 0.18;        // エリアの境界の低いブロックの高さ（転がる爆弾は越えられず、投げた爆弾は越える）
+  const WALL_T = 0.14;        // 同じく厚さ
+  const HOP_V = 3.0;          // 投げた爆弾がブロックに当たったときに跳び越える上向きの速さ（m/s）
+  const HOP_SPEED = 2.0;      // 同じく、ブロックを越える向きの速さの最小（m/s）。ゆっくり転がっていてもこの速さで越える
+  const BOMB_E = 0.5;         // 爆弾どうしがぶつかったときの跳ね返る強さ
+  const THROW_MAX = 6;        // 離したときに引き継ぐ速さの上限（m/s）
+  const SPIN_THROW = 18;      // 投げた瞬間に与える回転の速さ（rad/s）
+  const SPIN_PER_SPEED = 4;   // 投げた速さ1m/sごとに足す回転の速さ（rad/s）
+  const SPIN_DECAY_AIR = 0.3; // 空中での回転の減り方（1秒あたりの割合）
+  const SPIN_DECAY_GROUND = 3;// 床の上での回転の減り方（1秒あたりの割合）
+  const HOLD_Y = 1.0;         // つかんでいる爆弾の高さ
+  const GRAB_SCALE = 1.8;     // つかめる範囲（爆弾の半径の倍率。指で押さえやすくするため大きめ）
+  const FUSE_START = 9;       // 最初の導火線の長さ（秒）
+  const FUSE_MIN = 4.5;       // 導火線の長さの下限（秒）
+  const FUSE_DEC = 0.06;      // 経過1秒ごとに導火線が短くなる秒数
+  const SPAWN_START = 2.2;    // 最初の出現間隔（秒）
+  const SPAWN_MIN = 1.1;      // 出現間隔の下限（秒）
+  const SPAWN_DEC = 0.018;    // 経過1秒ごとに出現間隔が縮む秒数（約60秒で下限になる）
+  const DROP_MAX = 4;         // 一度に落ちてくる個数の上限
+  const DROP_STEP = 20;       // この秒数ごとに一度に落ちてくる個数が1個増える（1個→最大 DROP_MAX 個）
+  const BLINK_TIME = 2.5;     // 導火線の残りがこの秒数を切ったら脈打ち始める
+  const PULSE = 0.12;         // 脈打つときに大きくなる割合（色は変えない。光らせると白の爆弾と区別できなくなるため）
+  const SORT_TIME = 0.25;     // 仕分けた爆弾が消えるまでの時間（秒）
+  const EXPLODE_TIME = 0.9;   // 爆発してから結果を出すまでの時間（秒）
+  const DOOM_TIME = 1.4;      // 間違えたエリアに入れてから爆発するまでの時間（秒）。この間は操作できない
+  const DOOM_SWELL = 0.3;     // 爆発する直前に爆弾が膨らむ割合
+  const DOOM_JITTER = 0.05;   // 爆発する直前に爆弾が震える幅
+  const DOOM_SPARK = 3;       // 爆発する直前の火の粉の量（ふだんの何倍か）
+  // 見た目
+  const FRAME_W = 0.3;        // 床の外枠の幅
+  const FRAME_H = 0.4;        // 床の外枠の高さ（床面から）
+  const BASE_H = 0.5;         // 台の厚み（床面より下）
+  const POP_TIME = 0.6;       // 仕分けたときに飛び散る粒が消えるまでの時間（秒）
+  const SMOKE_TIME = 1.4;     // 爆発の煙が消えるまでの時間（秒）
+  const SPARK_RATE = 45;      // 導火線の火から1秒に飛ぶ火の粉の数（爆弾1個あたり）
+  const SPARK_LIFE = 0.4;     // 火の粉が消えるまでの時間（秒、これの半分〜1倍でばらつく）
+  const SPARK_SPEED = 1.2;    // 火の粉が飛び出す速さ（m/s）
+  const SPARK_SIZE = 0.09;    // 火の粉の大きさ
+  const SPARK_MAX = 800;      // 同時に出せる火の粉の数の上限
+  const SHAKE = 0.18;         // 爆発で画面が揺れる強さ
+  const SHAKE_TIME = 0.5;     // 画面が揺れる時間（秒）
+  const SHARE_INSTANT = 0.5;  // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+
+  // 色はCSS変数から読む（共有画像の描画と揃えるため）
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const COLOR_KEYS = ['--c-red', '--c-blue', '--c-white', '--c-orange'];   // AREAS と同じ並び（赤と橙が対角になる）
+  // エリアの並び：奥左・奥右・手前左・手前右
+  const AREAS = [
+    { sx:-1, sz:-1 }, { sx:1, sz:-1 }, { sx:-1, sz:1 }, { sx:1, sz:1 }
+  ];
+
+  // 置いた位置のエリア番号（中央の十字なら -1）
+  function areaAt(x, z){
+    if (Math.abs(x) < NEUTRAL || Math.abs(z) < NEUTRAL) return -1;
+    return (z < 0 ? 0 : 2) + (x < 0 ? 0 : 1);
+  }
+
+  // 2Dで爆弾を描く（床のエリアの目印と共有画像で使う）。gloss で光沢を付ける
+  function drawBomb2D(g, x, y, r, color, alpha, gloss){
+    g.save();
+    g.globalAlpha = alpha;
+    g.fillStyle = color;
+    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    if (gloss){
+      const hl = g.createRadialGradient(x - r*0.35, y - r*0.4, 0, x - r*0.35, y - r*0.4, r * 0.95);
+      hl.addColorStop(0, 'rgba(255,255,255,.6)'); hl.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = hl; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+      const sh = g.createRadialGradient(x + r*0.3, y + r*0.45, r*0.2, x + r*0.2, y + r*0.3, r * 1.1);
+      sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.28)');
+      g.fillStyle = sh; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    }
+    g.fillStyle = gloss ? css('--cap') : color;
+    g.fillRect(x - r*0.32, y - r*1.13, r*0.64, r*0.3);
+    g.strokeStyle = gloss ? css('--fuse') : color;
+    g.lineWidth = r * 0.13; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(x, y - r*1.1); g.quadraticCurveTo(x + r*0.1, y - r*1.55, x + r*0.55, y - r*1.6); g.stroke();
+    if (gloss){
+      const sp = g.createRadialGradient(x + r*0.55, y - r*1.6, 0, x + r*0.55, y - r*1.6, r*0.45);
+      sp.addColorStop(0, 'rgba(255,240,200,1)'); sp.addColorStop(0.35, css('--spark')); sp.addColorStop(1, 'rgba(255,160,40,0)');
+      g.fillStyle = sp; g.beginPath(); g.arc(x + r*0.55, y - r*1.6, r*0.45, 0, Math.PI * 2); g.fill();
+    }
+    g.restore();
+  }
+
+  // ---------- three.js ----------
+  const cv = $('cv');
+  const renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true });
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  // 画角を狭めにして遠近の差を減らす（手前と奥で台の幅が変わりにくく、画面いっぱいに大きく映せる）
+  const camera = new THREE.PerspectiveCamera(30, 9/16, 0.1, 200);
+  // CSSの色（sRGB）を three.js の計算用（リニア）に直して使う
+  const col = n => new THREE.Color(css(n)).convertSRGBToLinear();
+  function canvasTexture(c){
+    const t = new THREE.CanvasTexture(c);
+    t.encoding = THREE.sRGBEncoding;
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+
+  // 背景：上から下へのグラデーション
+  {
+    const c = document.createElement('canvas');
+    c.width = 4; c.height = 256;
+    const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 0, 256);
+    gr.addColorStop(0, css('--bg2')); gr.addColorStop(1, css('--bg'));
+    g.fillStyle = gr; g.fillRect(0, 0, 4, 256);
+    scene.background = canvasTexture(c);
+  }
+
+  // 映り込み用の環境（上が明るく下が暗い空間に、照明の板を数枚置いたもの）。艶のある爆弾に光が映る
+  {
+    const env = new THREE.Scene();
+    const sg = new THREE.SphereGeometry(10, 32, 16);
+    const pos = sg.attributes.position, cols = [];
+    for (let i = 0; i < pos.count; i++){
+      const t = pos.getY(i) / 10;   // -1（下）〜 1（上）
+      const v = t > 0 ? 0.12 + 0.2 * t : 0.12 + 0.1 * t;
+      cols.push(v, v, v);
+    }
+    sg.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+    env.add(new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ vertexColors:true, side:THREE.BackSide })));
+    const lightMat = new THREE.MeshBasicMaterial({ color:new THREE.Color(2.5, 2.5, 2.5), side:THREE.DoubleSide });
+    [[-4, 7, 4, 6, 3], [5, 5, -3, 3, 2], [0, 9, -2, 4, 4]].forEach(([x, y, z, w, h]) => {
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), lightMat);
+      p.position.set(x, y, z); p.lookAt(0, 0, 0);
+      env.add(p);
+    });
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(env, 0.04).texture;
+    pmrem.dispose();
+  }
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x30343e, 0.3));
+  // 太陽はほぼ真上から。落ちてくる爆弾の影が落下地点のすぐ近くに出る（強すぎると色が白っぽく飛ぶので控えめ）
+  const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+  sun.position.set(0.8, 12, 1.6);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left:-5.5, right:5.5, top:5.5, bottom:-5.5, near:1, far:30 });
+  sun.shadow.camera.updateProjectionMatrix();
+  sun.shadow.bias = -0.0005;
+  sun.shadow.normalBias = 0.02;
+  scene.add(sun);
+
+  // 台（床・外枠・土台・台の下の影）
+  {
+    const outer = FIELD + FRAME_W * 2;
+    // 床：置き場は方眼、四隅の色のエリアには同じ色の爆弾の目印
+    const N = 1024, u = N / FIELD, P = v => (v + FIELD/2) * u;
+    const c = document.createElement('canvas');
+    c.width = c.height = N;
+    const g = c.getContext('2d');
+    g.fillStyle = css('--floor'); g.fillRect(0, 0, N, N);
+    g.strokeStyle = css('--grid'); g.lineWidth = 2;
+    for (let v = -FIELD/2 + 0.5; v < FIELD/2 - 1e-6; v += 0.5){
+      g.beginPath(); g.moveTo(P(v), 0); g.lineTo(P(v), N); g.stroke();
+      g.beginPath(); g.moveTo(0, P(v)); g.lineTo(N, P(v)); g.stroke();
+    }
+    const size = FIELD/2 - NEUTRAL, S = size * u;
+    AREAS.forEach((a, i) => {
+      const X = P(a.sx > 0 ? NEUTRAL : -FIELD/2), Z = P(a.sz > 0 ? NEUTRAL : -FIELD/2);
+      // エリアはその色を床の色に暗く混ぜて塗り、真ん中に同じ色の爆弾の目印
+      g.globalAlpha = 0.3; g.fillStyle = css(COLOR_KEYS[i]); g.fillRect(X, Z, S, S); g.globalAlpha = 1;
+      const cx = X + S/2, cy = Z + S/2;
+      drawBomb2D(g, cx - S*0.04, cy + S*0.08, S * 0.2, css(COLOR_KEYS[i]), 0.6, false);
+    });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(FIELD, FIELD),
+      // polygonOffset：下の土台より必ず手前に描かせる（遠くから見ると重なって土台が透けて見えるため）
+      new THREE.MeshStandardMaterial({ map:canvasTexture(c), roughness:0.85, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-4 }));
+    floor.rotation.x = -Math.PI/2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const baseMat = new THREE.MeshStandardMaterial({ color:col('--frame2'), roughness:0.8 });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(outer, BASE_H, outer), baseMat);
+    base.position.y = -BASE_H / 2 - 0.05;   // 上面を床から十分下げて、床と重ならないようにする
+    base.receiveShadow = true;
+    scene.add(base);
+
+    // 外枠（爆弾は床の端でここに当たって跳ね返る）
+    const frameMat = new THREE.MeshStandardMaterial({ color:col('--frame'), roughness:0.6 });
+    const fh = FRAME_H + BASE_H;
+    [[0, -1, outer, FRAME_W], [0, 1, outer, FRAME_W], [-1, 0, FRAME_W, FIELD], [1, 0, FRAME_W, FIELD]].forEach(([sx, sz, w, d]) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, fh, d), frameMat);
+      m.position.set(sx * (FIELD + FRAME_W) / 2, fh / 2 - BASE_H, sz * (FIELD + FRAME_W) / 2);
+      m.castShadow = m.receiveShadow = true;
+      scene.add(m);
+    });
+
+    // 台の下にぼんやりした影を敷いて、宙に浮いて見えないようにする
+    const sc = document.createElement('canvas');
+    sc.width = sc.height = 256;
+    const sg = sc.getContext('2d');
+    // ぼかしは shadowBlur で作る（canvas の filter は古い Safari で効かないため）。本体は画面外に描いて影だけ残す
+    sg.shadowColor = 'rgba(0,0,0,.7)';
+    sg.shadowBlur = 36;
+    sg.shadowOffsetX = 1000;
+    sg.fillStyle = '#000';
+    sg.fillRect(48 - 1000, 48, 160, 160);
+    const shadow = new THREE.Mesh(new THREE.PlaneGeometry(outer * 1.6, outer * 1.6),
+      new THREE.MeshBasicMaterial({ map:canvasTexture(sc), transparent:true, depthWrite:false }));
+    shadow.rotation.x = -Math.PI/2;
+    shadow.position.set(0.15, -BASE_H - 0.3, 0.3);
+    scene.add(shadow);
+  }
+
+  // 色のエリアの境界（置き場に面した2辺）に並べる低いブロック。床の上 0〜WALL_H の箱として当たり判定する
+  const walls = [];   // { x0, x1, z0, z1 }
+  {
+    const t = WALL_T / 2, far = FIELD / 2;
+    AREAS.forEach((a, i) => {
+      const mat = new THREE.MeshStandardMaterial({ color:col(COLOR_KEYS[i]), roughness:0.35 });
+      // 奥右（+x, +z）向きで作ってから、エリアの向きに合わせて符号を反転する
+      const boxes = [
+        { x0:NEUTRAL - t, x1:NEUTRAL + t, z0:NEUTRAL - t, z1:far },   // x = NEUTRAL の辺
+        { x0:NEUTRAL - t, x1:far, z0:NEUTRAL - t, z1:NEUTRAL + t }    // z = NEUTRAL の辺
+      ];
+      for (const bx of boxes){
+        const w = {
+          x0: a.sx > 0 ? bx.x0 : -bx.x1, x1: a.sx > 0 ? bx.x1 : -bx.x0,
+          z0: a.sz > 0 ? bx.z0 : -bx.z1, z1: a.sz > 0 ? bx.z1 : -bx.z0
+        };
+        walls.push(w);
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w.x1 - w.x0, WALL_H, w.z1 - w.z0), mat);
+        m.position.set((w.x0 + w.x1) / 2, WALL_H / 2, (w.z0 + w.z1) / 2);
+        m.castShadow = m.receiveShadow = true;
+        scene.add(m);
+      }
+    });
+  }
+
+  // 光の粒のテクスチャ（中心が明るく外側へ消える丸）。火花・閃光に使う
+  const glowTex = (() => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d');
+    const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    return canvasTexture(c);
+  })();
+
+  // 爆弾の部品（形は共有し、点滅させる本体の材質と、短くしていく導火線だけ爆弾ごとに作る）
+  const bodyGeo  = new THREE.SphereGeometry(BOMB_R, 32, 24);
+  const capGeo   = new THREE.CylinderGeometry(0.13, 0.15, 0.1, 24);
+  const ringGeo  = new THREE.TorusGeometry(0.12, 0.022, 8, 24).rotateX(Math.PI / 2);
+  const FUSE_SEG = 20, FUSE_RAD = 6;   // 導火線の分割数（長さ方向・周方向）
+  const fuseCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.02, 0.09, 0), new THREE.Vector3(0.08, 0.17, 0.02),
+    new THREE.Vector3(0.16, 0.21, 0), new THREE.Vector3(0.23, 0.2, -0.02)
+  ]);
+  const fuseGeo  = new THREE.TubeGeometry(fuseCurve, FUSE_SEG, 0.022, FUSE_RAD, false);
+  const sparkGeo = new THREE.SphereGeometry(0.045, 10, 8);
+  const capMat   = new THREE.MeshStandardMaterial({ color:col('--cap'), metalness:0.8, roughness:0.3 });
+  const fuseMat  = new THREE.MeshStandardMaterial({ color:col('--fuse'), roughness:0.9 });
+  const sparkMat = new THREE.MeshBasicMaterial({ color:new THREE.Color(3, 2.4, 1.2), toneMapped:false });
+  const sparkGlowMat = new THREE.SpriteMaterial({ map:glowTex, color:col('--spark'), blending:THREE.AdditiveBlending, transparent:true, depthWrite:false });
+  const BOMB_COLORS = COLOR_KEYS.map(k => col(k));
+  const FUSE_TOP = BOMB_R + 0.07;   // 導火線の根元の高さ（口金の上）
+
+  // ---------- 状態 ----------
+  document.documentElement.setAttribute('data-howto-hidden', '');   // 開始画面が無く、読み込み直後からプレイ中
+  let state = 'play';      // 'play' / 'doom'（間違えたエリアに入れて爆発を待つ間。操作できない）/ 'boom'（爆発の演出中）/ 'over'
+  let score = 0;
+  let elapsed = 0;
+  let spawnTimer = 0.3;
+  let boomT = -1;          // 爆発してからの時間（爆発していなければ -1）
+  let doomBomb = null;     // 間違えたエリアに入れられ、これから爆発する爆弾
+  let doomT = 0;           // 間違えたエリアに入れてからの時間
+  let shakeT = 0;          // 画面の揺れの残り時間
+  const bombs = [];
+  const effects = [];      // 演出（仕分けの粒・爆発の煙など）
+  const scorches = [];     // 床に残る焦げ跡
+  const drags = new Map(); // pointerId → つかんでいる爆弾
+
+  const fuseNow  = () => Math.max(FUSE_MIN, FUSE_START - elapsed * FUSE_DEC);
+  const spawnNow = () => Math.max(SPAWN_MIN, SPAWN_START - elapsed * SPAWN_DEC);
+  const dropNow  = () => Math.min(DROP_MAX, 1 + Math.floor(elapsed / DROP_STEP));
+
+  // 一度に dropNow() 個を、互いに重ならない位置から同時に落とす
+  function spawnGroup(){
+    const n = dropNow();
+    const placed = [];
+    for (let i = 0; i < n; i++){
+      // 中央の十字の置き場のどこかに落とす（縦の帯か横の帯を選び、その中でばらつかせる）。色のエリアやブロックの上には落とさない
+      const arm = NEUTRAL - WALL_T / 2 - BOMB_R - SPAWN_MARGIN;   // 帯の半幅
+      const len = FIELD / 2 - BOMB_R - SPAWN_MARGIN;               // 帯の長さの半分
+      let x = 0, z = 0;
+      for (let t = 0; t < 30; t++){
+        const a = (Math.random() * 2 - 1) * arm, l = (Math.random() * 2 - 1) * len;
+        if (Math.random() < 0.5){ x = a; z = l; } else { x = l; z = a; }
+        if (placed.every(p => Math.hypot(p.x - x, p.z - z) >= BOMB_R * 2.1)) break;
+      }
+      placed.push({ x, z });
+      spawn(x, z);
+    }
+  }
+
+  function spawn(x, z){
+    const color = Math.floor(Math.random() * 4);
+    const g = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({ color:BOMB_COLORS[color], roughness:0.22, metalness:0.05 });
+    const body = new THREE.Mesh(bodyGeo, mat);
+    body.castShadow = true;
+    g.add(body);
+    const cap = new THREE.Mesh(capGeo, capMat);
+    cap.position.y = BOMB_R + 0.01;
+    cap.castShadow = true;
+    const ring = new THREE.Mesh(ringGeo, capMat);
+    ring.position.y = BOMB_R + 0.06;
+    g.add(cap, ring);
+    const holder = new THREE.Group();
+    holder.position.y = FUSE_TOP;
+    const fuse = new THREE.Mesh(fuseGeo.clone(), fuseMat);
+    fuse.castShadow = true;
+    const spark = new THREE.Group();
+    const glow = new THREE.Sprite(sparkGlowMat);
+    glow.scale.setScalar(0.42);
+    const core = new THREE.Mesh(sparkGeo, sparkMat);
+    spark.add(core, glow);
+    holder.add(fuse, spark);
+    g.add(holder);
+    g.rotation.y = Math.random() * Math.PI * 2;
+    scene.add(g);
+    const total = fuseNow();
+    bombs.push({
+      g, mat, fuse, spark, glow, core, color, sparkAcc:0,
+      x, y:SPAWN_HEIGHT, z,
+      vx:0, vy:0, vz:0, tx:0, tz:0, left:total, total, blink:0,
+      kicked:false,   // 最初の着地で転がり出したか
+      thrown:false,   // プレイヤーが投げた（離した）爆弾か。止まるまでブロックを跳び越えられる
+      spin:0, spinAxis:new THREE.Vector3(1, 0, 0),   // 投げたときに与えた回転（転がりの回転とは別に足す）
+      state:'fall', doneT:0   // 'fall'（物理で動く）/ 'held'（つかまれている）/ 'done'（仕分け済み）
+    });
+  }
+
+  function removeBomb(b){
+    scene.remove(b.g);
+    b.mat.dispose();
+    b.fuse.geometry.dispose();
+    const i = bombs.indexOf(b);
+    if (i >= 0) bombs.splice(i, 1);
+  }
+
+  // ---------- 導火線の火の粉 ----------
+  // 全部の爆弾の火の粉を1つの点群でまとめて描く（数が多くても軽いように）。色は加算で重ね、黒にすると見えなくなる
+  const sparks = (() => {
+    const pos = new Float32Array(SPARK_MAX * 3), colr = new Float32Array(SPARK_MAX * 3);
+    const vel = new Float32Array(SPARK_MAX * 3), age = new Float32Array(SPARK_MAX), life = new Float32Array(SPARK_MAX);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colr, 3));
+    const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size:SPARK_SIZE, map:glowTex, vertexColors:true,
+      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending }));
+    pts.frustumCulled = false;
+    scene.add(pts);
+    let next = 0;
+    return {
+      emit(p){
+        const i = next; next = (next + 1) % SPARK_MAX;
+        pos[i*3] = p.x; pos[i*3+1] = p.y; pos[i*3+2] = p.z;
+        // 上向きを中心に、あちこちへ散らす
+        const a = Math.random() * Math.PI * 2, up = 0.3 + Math.random() * 0.9, s = SPARK_SPEED * (0.4 + Math.random() * 0.8);
+        vel[i*3] = Math.cos(a) * s; vel[i*3+1] = up * s; vel[i*3+2] = Math.sin(a) * s;
+        age[i] = 0; life[i] = SPARK_LIFE * (0.5 + Math.random() * 0.5);
+      },
+      update(dt){
+        for (let i = 0; i < SPARK_MAX; i++){
+          if (age[i] >= life[i]){ colr[i*3] = colr[i*3+1] = colr[i*3+2] = 0; continue; }
+          age[i] += dt;
+          vel[i*3+1] -= 4 * dt;   // 少しだけ落ちる
+          pos[i*3] += vel[i*3] * dt; pos[i*3+1] += vel[i*3+1] * dt; pos[i*3+2] += vel[i*3+2] * dt;
+          // 白っぽい黄色 → 橙 → 赤へ変わりながら暗くなって消える
+          const t = Math.min(age[i] / life[i], 1), k = 1 - t;
+          colr[i*3] = 1.6 * k; colr[i*3+1] = (1.3 - 1.0 * t) * k; colr[i*3+2] = (0.6 - 0.6 * t) * k;
+        }
+        geo.attributes.position.needsUpdate = true;
+        geo.attributes.color.needsUpdate = true;
+      },
+      clear(){ age.fill(0); life.fill(0); }
+    };
+  })();
+  const _sp = new THREE.Vector3();
+
+  // ---------- 演出 ----------
+  const unitSphere = new THREE.SphereGeometry(1, 16, 12);
+  const unitBox = new THREE.BoxGeometry(1, 1, 1);
+  const scorchGeo = new THREE.CircleGeometry(1.1, 32).rotateX(-Math.PI / 2);
+  // 爆発の光。最初から置いておく（途中で光を足すと全部の材質の作り直しで一瞬止まるため）
+  const boomLight = new THREE.PointLight(col('--boom'), 0, 9, 2);
+  scene.add(boomLight);
+  // objs を場面に置き、life 秒のあいだ毎フレーム update(進み具合0〜1, dt) を呼び、終わったら片付ける
+  function addEffect(life, objs, update){
+    objs.forEach(o => scene.add(o));
+    effects.push({ t:0, life, objs, update });
+  }
+  function disposeObj(o){
+    scene.remove(o);
+    if (o.material){
+      if (o.material.map && o.material.map !== glowTex) o.material.map.dispose();
+      o.material.dispose();
+    }
+  }
+  function updateEffects(dt){
+    for (const e of effects.slice()){
+      e.t += dt;
+      const p = Math.min(e.t / e.life, 1);
+      e.update(p, dt, e.t);
+      if (p >= 1){
+        e.objs.forEach(disposeObj);
+        effects.splice(effects.indexOf(e), 1);
+      }
+    }
+  }
+  function clearEffects(){
+    effects.forEach(e => e.objs.forEach(disposeObj));
+    effects.length = 0;
+    scorches.forEach(disposeObj);
+    scorches.length = 0;
+  }
+
+  // 飛び散る粒（速度と重力で動き、床で跳ねる）
+  function makeParticles(n, geo, makeMat, x, y, z, spd, up, size){
+    const ps = [];
+    for (let i = 0; i < n; i++){
+      const m = new THREE.Mesh(geo, makeMat(i));
+      const a = Math.random() * Math.PI * 2, s = spd * (0.4 + Math.random() * 0.6);
+      m.position.set(x, y, z);
+      m.userData = { vx:Math.cos(a) * s, vy:up * (0.6 + Math.random() * 0.6), vz:Math.sin(a) * s,
+        size:size * (0.6 + Math.random() * 0.7), rx:(Math.random() - 0.5) * 20, rz:(Math.random() - 0.5) * 20 };
+      m.scale.setScalar(m.userData.size);
+      m.castShadow = true;
+      ps.push(m);
+    }
+    return ps;
+  }
+  function moveParticle(m, dt){
+    const u = m.userData;
+    u.vy -= GRAVITY * dt;
+    m.position.x += u.vx * dt; m.position.y += u.vy * dt; m.position.z += u.vz * dt;
+    if (m.position.y < u.size){ m.position.y = u.size; u.vy = Math.abs(u.vy) * 0.4; u.vx *= 0.7; u.vz *= 0.7; }
+    m.rotation.x += u.rx * dt; m.rotation.z += u.rz * dt;
+  }
+
+  // 仕分けたとき：その色の粒が弾ける
+  function popEffect(x, z, color){
+    const c = BOMB_COLORS[color];
+    const bits = makeParticles(14, unitSphere,
+      () => new THREE.MeshStandardMaterial({ color:c, roughness:0.3 }), x, BOMB_R, z, 2.2, 5, 0.07);
+    addEffect(POP_TIME, bits, (p, dt) => {
+      for (const m of bits){
+        moveParticle(m, dt);
+        m.scale.setScalar(m.userData.size * (1 - p));
+      }
+    });
+  }
+
+  // 爆発：閃光・火の玉・煙・破片・光、床に焦げ跡、画面の揺れ
+  function explodeEffect(x, y, z, color){
+    const flash = new THREE.Mesh(unitSphere, new THREE.MeshBasicMaterial({ color:new THREE.Color(4, 3.4, 2.4),
+      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, toneMapped:false }));
+    const fire = new THREE.Mesh(unitSphere, new THREE.MeshBasicMaterial({ color:col('--boom').multiplyScalar(2.2),
+      transparent:true, depthWrite:false, toneMapped:false }));
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTex, color:col('--boom'),
+      blending:THREE.AdditiveBlending, transparent:true, depthWrite:false }));
+    [flash, fire, glow].forEach(o => o.position.set(x, y, z));
+    boomLight.position.set(x, y + 0.5, z);
+    const smokeCol = col('--smoke');
+    const smoke = [];
+    for (let i = 0; i < 12; i++){
+      const m = new THREE.Mesh(unitSphere, new THREE.MeshStandardMaterial({ color:smokeCol, roughness:1, transparent:true, depthWrite:false }));
+      const a = Math.random() * Math.PI * 2, r = Math.random() * 0.35;
+      m.position.set(x + Math.cos(a) * r, y + Math.random() * 0.3, z + Math.sin(a) * r);
+      m.userData = { vx:Math.cos(a) * (0.6 + Math.random()), vy:1.2 + Math.random() * 1.4, vz:Math.sin(a) * (0.6 + Math.random()),
+        s0:0.25 + Math.random() * 0.2, s1:0.7 + Math.random() * 0.5 };
+      smoke.push(m);
+    }
+    const debris = makeParticles(16, unitBox, i => new THREE.MeshStandardMaterial({
+      color:i % 3 === 0 ? col('--cap') : BOMB_COLORS[color], roughness:0.4, metalness:i % 3 === 0 ? 0.7 : 0 }),
+      x, y, z, 5, 7, 0.09);
+    addEffect(SMOKE_TIME, [flash, fire, glow, ...smoke, ...debris], (p, dt, t) => {
+      const f = Math.min(t / 0.25, 1);
+      flash.scale.setScalar(0.3 + 1.9 * Math.sqrt(f));
+      flash.material.opacity = 1 - f;
+      const q = Math.min(t / 0.6, 1);
+      fire.scale.setScalar(0.5 + 1.3 * Math.sqrt(q));
+      fire.material.opacity = 1 - q;
+      glow.scale.setScalar(6 * (0.5 + 0.5 * q));
+      glow.material.opacity = 1 - q;
+      boomLight.intensity = 5 * Math.max(1 - t / 0.5, 0);
+      for (const m of smoke){
+        const u = m.userData;
+        u.vx *= 1 - 2 * dt; u.vz *= 1 - 2 * dt; u.vy *= 1 - 1.2 * dt;
+        m.position.x += u.vx * dt; m.position.y += u.vy * dt; m.position.z += u.vz * dt;
+        m.scale.setScalar(u.s0 + (u.s1 - u.s0) * Math.sqrt(p));
+        m.material.opacity = 0.85 * (1 - p) * Math.min(t / 0.15, 1);
+      }
+      for (const m of debris){
+        moveParticle(m, dt);
+        if (p > 0.7) m.scale.setScalar(m.userData.size * (1 - p) / 0.3);
+      }
+    });
+    // 焦げ跡（もう一回まで残す）
+    const sc = document.createElement('canvas');
+    sc.width = sc.height = 128;
+    const sg = sc.getContext('2d');
+    const gr = sg.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, css('--scorch')); gr.addColorStop(0.5, 'rgba(26,21,18,.6)'); gr.addColorStop(1, 'rgba(26,21,18,0)');
+    sg.fillStyle = gr; sg.fillRect(0, 0, 128, 128);
+    const scorch = new THREE.Mesh(scorchGeo,
+      new THREE.MeshBasicMaterial({ map:canvasTexture(sc), transparent:true, depthWrite:false }));
+    scorch.position.set(x, 0.015, z);
+    scene.add(scorch);
+    scorches.push(scorch);
+    shakeT = SHAKE_TIME;
+  }
+
+  function explode(b){
+    state = 'boom';
+    drags.clear();
+    explodeEffect(b.x, b.y, b.z, b.color);
+    boomT = 0;
+    doomBomb = null;
+    removeBomb(b);
+  }
+
+  // 間違えたエリアに入れたとき：操作を止め、その爆弾が導火線を一気に燃やして膨らみ、DOOM_TIME 秒後に爆発する
+  function startDoom(b){
+    state = 'doom';
+    doomBomb = b;
+    doomT = 0;
+    b.state = 'doom';
+    b.vx = b.vy = b.vz = 0;
+    b.spin = 0;
+    b.doomRatio = Math.max(b.left / b.total, 0.03);   // 導火線をここから0まで燃やす
+    // つかんでいた爆弾はその場で手を離したことにして落とす
+    for (const o of bombs) if (o.state === 'held'){ o.state = 'fall'; o.vy = 0; o.thrown = true; }
+    drags.clear();
+  }
+
+  function bumpScore(){
+    const el = $('score');
+    el.textContent = score;
+    el.classList.remove('bump');
+    void el.offsetWidth;   // アニメーションを最初からやり直すため
+    el.classList.add('bump');
+  }
+
+  // 床に触れている爆弾が色のエリアにあれば判定する（置いても転がって入っても同じ）。爆発したら true
+  function judge(b){
+    if (state !== 'play') return false;   // 爆発を待っている間は判定しない
+    const a = areaAt(b.x, b.z);
+    if (a < 0) return false;
+    if (a === b.color){
+      b.state = 'done';
+      score++;
+      bumpScore();
+      popEffect(b.x, b.z, b.color);
+      return false;
+    }
+    startDoom(b);
+    return true;
+  }
+
+  // 爆弾どうしの衝突（球どうしとして押し離し、ぶつかった向きの速度を跳ね返す）
+  function collide(){
+    // 爆発を待っている爆弾は動かない壁として扱う（ぶつかった側だけが押し返される）
+    const free = bombs.filter(b => b.state === 'fall' || b.state === 'doom');
+    for (let i = 0; i < free.length; i++){
+      for (let j = i + 1; j < free.length; j++){
+        const a = free[i], b = free[j];
+        let nx = b.x - a.x, ny = b.y - a.y, nz = b.z - a.z;
+        let d = Math.hypot(nx, ny, nz);
+        if (d >= BOMB_R * 2) continue;
+        if (d < 1e-4){ nx = Math.random() - 0.5; ny = 0; nz = Math.random() - 0.5; d = Math.hypot(nx, nz); }
+        nx /= d; ny /= d; nz /= d;
+        // 押し離す・跳ね返す量の分け方（同じ質量なら半分ずつ、片方が動かなければもう片方が全部）
+        const wa = a.state === 'doom' ? 0 : b.state === 'doom' ? 1 : 0.5, wb = 1 - wa;
+        const push = BOMB_R * 2 - d;
+        a.x -= nx * push * wa; a.y -= ny * push * wa; a.z -= nz * push * wa;
+        b.x += nx * push * wb; b.y += ny * push * wb; b.z += nz * push * wb;
+        a.y = Math.max(a.y, BOMB_R); b.y = Math.max(b.y, BOMB_R);
+        const vrel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny + (b.vz - a.vz) * nz;
+        if (vrel >= 0) continue;   // 離れていく向きなら跳ね返さない
+        const jj = -(1 + BOMB_E) * vrel;
+        a.vx -= jj * wa * nx; a.vy -= jj * wa * ny; a.vz -= jj * wa * nz;
+        b.vx += jj * wb * nx; b.vy += jj * wb * ny; b.vz += jj * wb * nz;
+      }
+    }
+    // 押されてはみ出した分を戻す
+    for (const b of free) if (b.state === 'fall' && !b.thrown) keepInCross(b);
+  }
+
+  // 投げていない爆弾は中央の十字の置き場から出さない（ブロックで跳ね返す）。
+  // 跳ねても、ほかの爆弾に押されても、ブロックの高さに関係なく色のエリアには入らない
+  function keepInCross(b){
+    const lim = NEUTRAL - WALL_T / 2 - BOMB_R;   // 帯の中で爆弾の中心が行ける範囲
+    const ax = Math.abs(b.x), az = Math.abs(b.z);
+    if (ax <= lim || az <= lim) return;
+    // はみ出した量が小さい方の向きで、帯の中へ押し戻して跳ね返す
+    if (ax - lim < az - lim){
+      const s = Math.sign(b.x);
+      b.x = s * lim;
+      if (b.vx * s > 0) b.vx = -b.vx * WALL_E;
+    } else {
+      const s = Math.sign(b.z);
+      b.z = s * lim;
+      if (b.vz * s > 0) b.vz = -b.vz * WALL_E;
+    }
+  }
+
+  // 投げた爆弾：ブロックには当たらず、床を転がってブロックに触れたらぴょんと跳び越える（勢いが弱くても越える）
+  function hopWalls(b){
+    if (b.y - BOMB_R > 0.01) return;   // 空中ならそのまま越える
+    for (const w of walls){
+      const cx = Math.max(w.x0, Math.min(w.x1, b.x));
+      const cz = Math.max(w.z0, Math.min(w.z1, b.z));
+      let nx = cx - b.x, nz = cz - b.z;
+      const d = Math.hypot(nx, nz);
+      if (d >= BOMB_R + 0.02 || d < 1e-6) continue;
+      nx /= d; nz /= d;
+      const vn = b.vx * nx + b.vz * nz;   // ブロックへ向かう速さ
+      if (vn <= 0.02) continue;           // ブロックへ向かっていなければ越えない
+      if (vn < HOP_SPEED){ b.vx += (HOP_SPEED - vn) * nx; b.vz += (HOP_SPEED - vn) * nz; }
+      b.vy = Math.max(b.vy, HOP_V);
+      return;
+    }
+  }
+
+  const _axis = new THREE.Vector3(), _rq = new THREE.Quaternion();
+  function step(b, dt){
+    b.vy -= GRAVITY * dt;
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.z += b.vz * dt;
+
+    // 床の端では跳ね返る
+    const lim = FIELD/2 - BOMB_R;
+    if (Math.abs(b.x) > lim){ b.x = Math.sign(b.x) * lim; b.vx = -b.vx * WALL_E; }
+    if (Math.abs(b.z) > lim){ b.z = Math.sign(b.z) * lim; b.vz = -b.vz * WALL_E; }
+
+    if (b.thrown) hopWalls(b); else keepInCross(b);
+
+    // 投げたときの回転（空中ではゆっくり、床の上では早く減る）
+    if (b.spin > 0.01){
+      _rq.setFromAxisAngle(b.spinAxis, b.spin * dt);
+      b.g.quaternion.premultiply(_rq);
+      const onGround = b.y - BOMB_R <= 0.01;
+      b.spin *= Math.exp(-(onGround ? SPIN_DECAY_GROUND : SPIN_DECAY_AIR) * dt);
+    }
+
+    if (b.y > BOMB_R || b.vy > 0){ b.y = Math.max(b.y, BOMB_R); return false; }
+    // 床に触れている
+    b.y = BOMB_R;
+    if (!b.kicked){
+      // 降ってきた爆弾は、最初に床に着いたときにランダムな向きへ転がり出す
+      b.kicked = true;
+      const ang = Math.random() * Math.PI * 2;
+      const sp = KICK_MIN + Math.random() * (KICK_MAX - KICK_MIN);
+      b.vx += Math.cos(ang) * sp;
+      b.vz += Math.sin(ang) * sp;
+    }
+    b.vy = b.vy < -BOUNCE_MIN ? Math.min(-b.vy * RESTITUTION, BOUNCE_MAX) : 0;
+    // 転がりの減速
+    const sp = Math.hypot(b.vx, b.vz);
+    if (sp > 0){
+      const k = Math.max(sp - ROLL_FRICTION * dt, 0) / sp;
+      b.vx *= k; b.vz *= k;
+      // 滑らずに転がる回転（進む向きと上向きに直交する軸まわり）
+      if (sp > 1e-3){
+        _axis.set(b.vz, 0, -b.vx).normalize();
+        _rq.setFromAxisAngle(_axis, sp * dt / BOMB_R);
+        b.g.quaternion.premultiply(_rq);
+      }
+    }
+    // 投げた爆弾も、床で止まったら普通の爆弾に戻る（その後はブロックで止められる）
+    if (b.thrown && b.vy === 0 && Math.hypot(b.vx, b.vz) < 0.05) b.thrown = false;
+    return judge(b);
+  }
+
+  function update(dt){
+    // 間違えたエリアに入れた後：新しい爆弾は落とさず、導火線も止め、ほかの爆弾の動きだけ続けて、時間が来たら爆発
+    if (state === 'doom'){
+      doomT += dt;
+      for (const b of bombs.slice()){
+        if (b.state === 'done'){
+          b.doneT += dt;
+          if (b.doneT >= SORT_TIME) removeBomb(b);
+        } else if (b.state === 'fall') step(b, dt);
+      }
+      collide();
+      if (doomT >= DOOM_TIME) explode(doomBomb);
+      return;
+    }
+    elapsed += dt;
+    spawnTimer -= dt;
+    if (spawnTimer <= 0){ spawnGroup(); spawnTimer = spawnNow(); }
+
+    for (const b of bombs.slice()){
+      if (b.state === 'done'){
+        b.doneT += dt;
+        if (b.doneT >= SORT_TIME) removeBomb(b);
+        continue;
+      }
+      b.left -= dt;
+      if (b.left <= 0){ explode(b); return; }
+
+      if (b.state === 'held'){
+        const k = 1 - Math.exp(-25 * dt);
+        const px = b.x, pz = b.z;
+        b.x += (b.tx - b.x) * k;
+        b.z += (b.tz - b.z) * k;
+        b.y += (HOLD_Y - b.y) * k;
+        // 離したときに引き継ぐ速さ（動かした速さをならして持っておく）
+        const s = 1 - Math.exp(-20 * dt);
+        b.vx += ((b.x - px) / dt - b.vx) * s;
+        b.vz += ((b.z - pz) / dt - b.vz) * s;
+      } else if (b.state === 'fall'){
+        if (step(b, dt)) return;
+      }
+    }
+    collide();
+  }
+
+  // 見た目を状態に合わせる
+  function updateVisuals(dt){
+    for (const b of bombs){
+      b.g.position.set(b.x, b.y, b.z);
+      const doom = b.state === 'doom';
+      const dp = doom ? Math.min(doomT / DOOM_TIME, 1) : 0;   // 爆発までの進み具合
+      // 危ないことは色を変えずに大きさの脈打ちで見せる（光らせると白の爆弾と見分けがつかなくなるため）
+      if (doom){
+        // どんどん速く脈打ちながら膨らみ、震える
+        b.blink += dt * (6 + 18 * dp);
+        const pulse = Math.max(Math.sin(b.blink * Math.PI * 2), 0);
+        b.g.scale.setScalar(1 + DOOM_SWELL * dp * dp + PULSE * pulse);
+        const j = DOOM_JITTER * dp;
+        b.g.position.x += (Math.random() * 2 - 1) * j;
+        b.g.position.z += (Math.random() * 2 - 1) * j;
+      }
+      // 導火線を根元側だけ残して短くし、火花をその先端に置く（爆発を待つ爆弾は一気に燃え尽きる）
+      const ratio = Math.max(doom ? b.doomRatio * (1 - dp) : b.left / b.total, 0.03);
+      const seg = Math.max(1, Math.ceil(FUSE_SEG * ratio));
+      b.fuse.geometry.setDrawRange(0, seg * FUSE_RAD * 6);
+      b.spark.position.copy(fuseCurve.getPointAt(seg / FUSE_SEG));
+      // 火：光の大きさと明るさをちらつかせ、先端から火の粉を飛ばす（ゲーム中で、仕分け前の爆弾だけ）
+      if (b.state !== 'done' && (state === 'play' || state === 'doom')){
+        b.glow.scale.setScalar((0.32 + Math.random() * 0.2) * (doom ? 1.6 : 1));
+        b.core.scale.setScalar(0.8 + Math.random() * 0.5);
+        b.sparkAcc += SPARK_RATE * (doom ? DOOM_SPARK : 1) * dt;
+        if (b.sparkAcc >= 1){
+          b.g.updateMatrixWorld(true);
+          b.spark.getWorldPosition(_sp);
+          for (; b.sparkAcc >= 1; b.sparkAcc--) sparks.emit(_sp);
+        }
+      }
+      if (b.state === 'done'){
+        const s = Math.max(1 - b.doneT / SORT_TIME, 0.001);
+        b.g.scale.setScalar(s);
+      } else if (!doom && b.left < BLINK_TIME){
+        // 残りが少ないほど速く脈打つ
+        b.blink += dt * (4 + 10 * (1 - b.left / BLINK_TIME));
+        b.g.scale.setScalar(1 + PULSE * Math.max(Math.sin(b.blink * Math.PI * 2), 0));
+      } else if (!doom){
+        b.g.scale.setScalar(1);
+      }
+    }
+    sparks.update(dt);
+    updateEffects(dt);
+    if (boomT >= 0){
+      boomT += dt;
+      if (boomT >= EXPLODE_TIME && state === 'boom') showOver();
+    }
+    // 爆発で画面を揺らす（だんだん弱く）
+    camera.position.copy(camBase);
+    if (shakeT > 0){
+      shakeT = Math.max(shakeT - dt, 0);
+      const a = SHAKE * shakeT / SHAKE_TIME;
+      camera.position.x += (Math.random() * 2 - 1) * a;
+      camera.position.y += (Math.random() * 2 - 1) * a;
+      camera.position.z += (Math.random() * 2 - 1) * a;
+    }
+  }
+
+  // ---------- 画面サイズとカメラ ----------
+  const VIEW_DIR = new THREE.Vector3(0, 0.86, 0.51).normalize();  // 斜め上から見下ろす
+  const LOOK = new THREE.Vector3(0, 0, 0.2);
+  const camBase = new THREE.Vector3();   // 揺れていないときのカメラの位置
+  function placeCamera(d){
+    camera.position.copy(LOOK).addScaledVector(VIEW_DIR, d);
+    camera.lookAt(LOOK);
+    camera.updateMatrixWorld();
+  }
+  // 台（外枠の上端まで）が画面いっぱいに収まる距離を探す（上側はスコア表示のぶんだけ空ける）
+  const SCORE_SPACE = 90;   // 画面上端からスコア表示の下までの高さ（px）
+  function fitCamera(H){
+    const h = FIELD / 2 + FRAME_W;
+    const pts = [];
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) pts.push(new THREE.Vector3(sx*h, FRAME_H, sz*h));
+    const top = 1 - 2 * SCORE_SPACE / H;
+    const v = new THREE.Vector3();
+    let lo = 3, hi = 150;
+    for (let i = 0; i < 30; i++){
+      const d = (lo + hi) / 2;
+      placeCamera(d);
+      const ok = pts.every(p => {
+        v.copy(p).project(camera);
+        return Math.abs(v.x) <= 0.98 && v.y >= -0.97 && v.y <= top;
+      });
+      if (ok) hi = d; else lo = d;
+    }
+    placeCamera(hi);
+    camBase.copy(camera.position);
+    // 見える範囲の前後を必要な分だけに絞る（広すぎると奥行きの精度が落ちて、重なった面がちらつく）
+    camera.near = Math.max(0.5, hi - 16);
+    camera.far = hi + 16;
+    camera.updateProjectionMatrix();
+  }
+  function resize(){
+    const W = $('game').clientWidth, H = $('game').clientHeight;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(W, H, false);
+    camera.aspect = W / H;
+    camera.updateProjectionMatrix();
+    fitCamera(H);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  // ---------- 入力（Pointer Events。マルチタッチで複数つかめる）----------
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  const holdPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -HOLD_Y);
+  const hit = new THREE.Vector3(), center = new THREE.Vector3();
+  function setRay(e){
+    const r = cv.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+  }
+  function setTarget(b){
+    if (!raycaster.ray.intersectPlane(holdPlane, hit)) return;
+    const lim = FIELD/2 - BOMB_R;
+    b.tx = Math.max(-lim, Math.min(lim, hit.x));
+    b.tz = Math.max(-lim, Math.min(lim, hit.z));
+  }
+
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (state !== 'play') return;
+    setRay(e);
+    let best = null, bestD = BOMB_R * GRAB_SCALE;
+    for (const b of bombs){
+      if (b.state !== 'fall') continue;
+      const d = raycaster.ray.distanceToPoint(center.set(b.x, b.y, b.z));
+      if (d < bestD){ bestD = d; best = b; }
+    }
+    if (!best) return;
+    best.state = 'held';
+    best.vx = best.vy = best.vz = 0;
+    best.spin = 0;
+    best.kicked = true;   // 一度つかんだ爆弾は、離した後に勝手に転がり出さない（動かした勢いだけで転がる）
+    drags.set(e.pointerId, best);
+    cv.setPointerCapture(e.pointerId);
+    setTarget(best);
+  });
+  cv.addEventListener('pointermove', e => {
+    const b = drags.get(e.pointerId);
+    if (!b) return;
+    setRay(e);
+    setTarget(b);
+  });
+  const release = e => {
+    const b = drags.get(e.pointerId);
+    if (!b) return;
+    drags.delete(e.pointerId);
+    if (b.state === 'held'){
+      // 離した所から落とす。動かしていた勢いはそのまま引き継ぐ
+      b.state = 'fall';
+      b.vy = 0;
+      b.thrown = true;
+      const sp = Math.hypot(b.vx, b.vz);
+      if (sp > THROW_MAX){ b.vx *= THROW_MAX / sp; b.vz *= THROW_MAX / sp; }
+      // 投げた瞬間に回転を与える（投げた向きに前転する軸。ほぼ動かしていなければ向きはランダム）
+      const v = Math.hypot(b.vx, b.vz);
+      if (v > 0.05) b.spinAxis.set(b.vz, 0, -b.vx).normalize();
+      else { const a = Math.random() * Math.PI * 2; b.spinAxis.set(Math.cos(a), 0, Math.sin(a)); }
+      b.spin = SPIN_THROW + SPIN_PER_SPEED * Math.min(v, THROW_MAX);
+    }
+  };
+  cv.addEventListener('pointerup', release);
+  cv.addEventListener('pointercancel', release);
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
+  document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive:false });
+  document.addEventListener('selectstart', e => {
+    if (e.target instanceof Element && e.target.closest('#share-text')) return;
+    if (e.target.parentElement && e.target.parentElement.closest('#share-text')) return;
+    e.preventDefault();
+  });
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    // ボタンは click で動かしているので除外する（止めると続けて押したときにボタンが反応しない）
+    if (e.target instanceof Element && e.target.closest('button')) return;
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+
+  // ---------- 結果 ----------
+  function showOver(){
+    state = 'over';
+    document.documentElement.removeAttribute('data-howto-hidden');
+    $('res-num').textContent = score;
+    $('over').classList.remove('hidden');
+    $('retry').focus({ preventScroll:true });
+  }
+
+  function restart(){
+    for (const b of bombs.slice()) removeBomb(b);
+    clearEffects();
+    sparks.clear();
+    boomT = -1; shakeT = 0; boomLight.intensity = 0;
+    doomBomb = null; doomT = 0;
+    drags.clear();
+    score = 0; elapsed = 0; spawnTimer = 0.3;
+    $('score').textContent = '0';
+    $('over').classList.add('hidden');
+    state = 'play';
+    document.documentElement.setAttribute('data-howto-hidden', '');
+  }
+  $('retry').addEventListener('click', restart);
+  $('retry').addEventListener('pointerdown', e => e.stopPropagation());
+
+  document.addEventListener('keydown', e => {
+    if (!$('share-view').classList.contains('hidden')){
+      if (e.key === 'Escape') closeShareView();
+      return;   // 共有の画面を出している間は結果画面のキー操作を止める
+    }
+    if (state === 'over' && (e.key === ' ' || e.key === 'Enter')){
+      e.preventDefault();
+      restart();
+    }
+  });
+
+  // ---------- 共有 ----------
+  function shareText(){
+    return 'カラフル爆弾を' + score + '個仕分けた！\n'
+      + location.href.split(/[?#]/)[0] + '\n#カラフル爆弾仕分け';
+  }
+  // 結果画像を描く（色はCSS変数から読む）
+  function resultCanvas(){
+    const c = document.createElement('canvas');
+    c.width = 600; c.height = 600;
+    const g = c.getContext('2d');
+    const bg = g.createLinearGradient(0, 0, 0, 600);
+    bg.addColorStop(0, css('--bg2')); bg.addColorStop(1, css('--bg'));
+    g.fillStyle = bg;
+    g.fillRect(0, 0, 600, 600);
+    const font = '"Hiragino Sans","Noto Sans JP",system-ui,sans-serif';
+    COLOR_KEYS.forEach((k, i) => drawBomb2D(g, 165 + i * 90, 165, 32, css(k), 1, true));
+    g.fillStyle = css('--fg');
+    g.textAlign = 'center';
+    g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 10; g.shadowOffsetY = 2;
+    g.font = 'bold 40px ' + font;
+    g.fillText('カラフル爆弾仕分け', 300, 275);
+    g.font = '800 120px ' + font;
+    const unit = '個 仕分けた';
+    const numW = g.measureText(String(score)).width;
+    g.font = 'bold 36px ' + font;
+    const unitW = g.measureText(unit).width;
+    const x0 = 300 - (numW + 10 + unitW) / 2;
+    g.textAlign = 'left';
+    g.font = '800 120px ' + font;
+    g.fillText(String(score), x0, 450);
+    g.font = 'bold 36px ' + font;
+    g.fillText(unit, x0 + numW + 10, 450);
+    return c;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(c){
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type:'image/png' });
+  }
+
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const text = shareText();
+    const c = resultCanvas();
+    const file = resultImageFile(c);
+    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    const fallback = () => {
+      if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
+      $('share-img').src = c.toDataURL('image/png');
+      $('share-text').textContent = text;
+      $('share-view').classList.remove('hidden');
+      $('share-close').focus({ preventScroll:true });
+    };
+    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
+    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    const shareStart = performance.now();
+    const failed = err => {
+      const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
+      if (!err || err.name !== 'AbortError' || instant) fallback();
+    };
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files:[file] })){
+      navigator.share({ text, files:[file] }).catch(failed);
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share){
+      navigator.share({ text }).catch(failed);
+      return;
+    }
+    fallback();
+  });
+  function closeShareView(){
+    $('share-view').classList.add('hidden');
+    $('share').focus({ preventScroll:true });
+  }
+  $('share-close').addEventListener('click', closeShareView);
+  $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
+
+  // ---------- ループ ----------
+  let last = performance.now();
+  let acc = 0;   // まだ進めていない物理の時間
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1/30);
+    last = now;
+    // 物理は固定の時間刻みで進め、描画だけ画面の更新に合わせる
+    const running = () => state === 'play' || state === 'doom';
+    if (running()){
+      acc += dt;
+      while (acc >= STEP && running()){ update(STEP); acc -= STEP; }
+    } else acc = 0;
+    updateVisuals(dt);
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

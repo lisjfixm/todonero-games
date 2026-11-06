@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/soft-poop-fall/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>うんこ図鑑</title>
+<meta name="description" content="うんこを積んで珍しい種類を集める">
+<style>
+  :root{--howto-bg:#fff;--howto-fg:#5c5560}
+  *{margin:0;padding:0;box-sizing:border-box}
+  .howto-dialog{margin:auto}
+  html,body{height:100%}
+  body{
+    background:#eceaec;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;touch-action:none;
+    -webkit-user-select:none;user-select:none;
+  }
+  #cv{
+    display:block;
+    width:min(100vw, calc(100vh * 480 / 720));
+    height:auto;aspect-ratio:480/720;
+    background:#ffffff;
+    box-shadow:0 0 0 1px rgba(150,110,135,.25), 0 18px 60px rgba(120,80,105,.32);
+    cursor:crosshair;
+  }
+  #cv:focus-visible{outline:3px solid #ff9ec2;outline-offset:3px}
+  #wrap{position:relative;display:inline-block;line-height:0}
+  #tools{position:absolute;top:14px;right:14px;display:flex;flex-wrap:wrap;justify-content:flex-end;max-width:170px;gap:8px}
+  #flush, #book, #howtoBtn{
+    font:600 15px/1 'Hiragino Maru Gothic ProN','Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+    color:#5c5560;background:#fff;
+    border:2px solid #ded7dd;border-radius:999px;
+    padding:10px 20px;cursor:pointer;
+  }
+  #flush:hover, #book:hover, #howtoBtn:hover{background:#fbf7fa;border-color:#c9bfc7}
+  #flush:active, #book:active, #howtoBtn:active{transform:translateY(1px)}
+  #flush:disabled{opacity:.4;cursor:default}
+  #dex{
+    position:absolute;inset:0;background:rgba(255,255,255,.95);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Hiragino Maru Gothic ProN','Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+  }
+  #dex[hidden]{display:none}
+  #dex .inner{width:94%;max-width:440px;text-align:center;line-height:1.5}
+  #dex h2{font-size:20px;color:#5c5560;margin-bottom:14px}
+  #grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px 2px;margin-bottom:14px}
+  #grid .cell{font-size:9px;color:#5c5560;line-height:1.3}
+  #grid .cell.unknown{color:#b3adb1}
+  #grid canvas{display:block;margin:0 auto 4px}
+  #grid .rb canvas{animation:hue 4s linear infinite}
+  #grid .num{font-weight:700;font-size:11px}
+  #grid .rate{font-size:9px;color:#a9a2a7}
+  @keyframes hue{ from{filter:hue-rotate(0deg)} to{filter:hue-rotate(360deg)} }
+  #book{position:relative}
+  #book.noti::after{
+    content:'';position:absolute;top:-4px;right:-4px;
+    width:11px;height:11px;border-radius:50%;
+    background:#ff4d6d;border:2px solid #fff;
+  }
+  #pop{
+    position:absolute;top:22%;left:50%;transform:translateX(-50%);
+    background:#fff;border:2px solid #ded7dd;border-radius:18px;
+    padding:14px 26px 12px;text-align:center;
+    font-family:'Hiragino Maru Gothic ProN','Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+    color:#5c5560;pointer-events:none;line-height:1.4;
+    animation:pop .35s cubic-bezier(.2,1.5,.4,1);
+  }
+  #pop[hidden]{display:none}
+  #pop .ttl{font-size:12px;color:#ff4d6d;font-weight:700;letter-spacing:.08em}
+  #pop .nm{font-size:15px;font-weight:700}
+  #pop canvas{display:block;width:80px;height:80px;margin:2px auto}
+  @keyframes pop{ from{opacity:0;transform:translateX(-50%) scale(.7)} to{opacity:1;transform:translateX(-50%) scale(1)} }
+  #dexClose{
+    font:600 14px/1 'Hiragino Maru Gothic ProN','Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+    color:#5c5560;background:#fff;border:2px solid #ded7dd;border-radius:999px;
+    padding:9px 22px;cursor:pointer;
+  }
+  #count{
+    position:absolute;top:14px;left:20px;
+    font:700 22px/1.6 'Hiragino Maru Gothic ProN','Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+    color:#5c5560;pointer-events:none;
+  }
+
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="480" height="720" tabindex="0" aria-label="ソフトボディのうんちが落ちてくる画面"></canvas>
+  <div id="count" aria-live="polite">0個</div>
+  <div id="tools">
+    <button id="book" type="button">図鑑</button>
+    <button id="flush" type="button">流す</button>
+    <button id="howtoBtn" type="button" data-howto-open>遊び方</button>
+  </div>
+  <div id="pop" hidden>
+    <div class="ttl">はじめて発見！</div>
+    <canvas id="popIcon" width="120" height="120"></canvas>
+    <div class="nm"></div>
+  </div>
+  <div id="dex" hidden>
+    <div class="inner">
+      <h2>うんこ図鑑</h2>
+      <div id="grid"></div>
+      <button id="dexClose" type="button">とじる</button>
+    </div>
+  </div>
+<section class="howto" data-pos="none" hidden>
+  <h2>遊び方</h2>
+  <p>タップした位置の上から、やわらかいうんこが落ちてきて積み重なっていくおもちゃです。勝ち負けや時間制限はなく、落とした数だけカウントが増えます。5色の通常の種類に加えて、でかめ、顔つき、ゴールデンなど17の特殊な種類が低い確率で混ざり、はじめて出ると図鑑に載ります。</p>
+  <h2>操作</h2>
+  <p>何もない所をタップすると1個落ち、うんこを押さえてドラッグすると掴んで動かせます。「流す」で全部を排水口へ吸い込み、「図鑑」で種類と出現率を確認できます。PC はマウスで同じように遊べ、スペースキーか Enter でも落とせます。</p>
+  <h2>楽しみ方</h2>
+  <p>流れている途中のものも、掴めば助け出せます。かたい、やわらかい、重いなど、動きの違う種類もあります。いちばん珍しい「めちゃくちゃでかい」の出現率は0.05%です。カウントと図鑑はこのブラウザに保存されます。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+</div>
+<script>
+/* ============================================================
+   1. 形状：巻きグソのシルエット
+   ============================================================ */
+const N_OUT = 48;
+
+// 参考シルエットの輪郭。角丸矩形3つ + 円チェーン（先端）のユニオンで組んだ形を
+// 参考画像のマスクに対してIoU最大化でフィットさせ、表面を等間隔に72点で焼き込んだもの
+const BASE = [
+  [0.7415,0.2437], [0.7241,0.3434], [0.6725,0.4295], [0.5935,0.4914],
+  [0.4975,0.5210], [0.3711,0.5229], [0.2322,0.5229], [0.0933,0.5229],
+  [-0.0456,0.5229], [-0.1844,0.5229], [-0.3233,0.5229], [-0.4601,0.5229],
+  [-0.5614,0.5047], [-0.6471,0.4525], [-0.7084,0.3731], [-0.7372,0.2769],
+  [-0.7310,0.1749], [-0.6898,0.0833], [-0.6186,0.0126], [-0.5618,-0.0320],
+  [-0.5588,-0.1351], [-0.5276,-0.2340], [-0.4657,-0.3170], [-0.3853,-0.3725],
+  [-0.3452,-0.4473], [-0.3094,-0.5245], [-0.2725,-0.6138], [-0.1995,-0.6866],
+  [-0.0946,-0.7554], [-0.0052,-0.8041], [0.0584,-0.8416], [0.1047,-0.8771],
+  [0.1622,-0.8691], [0.1637,-0.8111], [0.1319,-0.7616], [0.1003,-0.6929],
+  [0.1186,-0.6390], [0.1693,-0.5714], [0.2570,-0.5441], [0.3370,-0.4833],
+  [0.3906,-0.3969], [0.4433,-0.3401], [0.5144,-0.2647], [0.5567,-0.1701],
+  [0.5665,-0.0588], [0.5934,-0.0040], [0.6725,0.0580], [0.7241,0.1441],
+];
+// くびれ線（参考画像から実測した位置・二次ベジェの始点/制御点/終点）
+const CREASES = [
+  [[-0.2285,-0.3689], [0.0021,-0.2765], [0.2328,-0.3745]],
+  [[-0.4193,0.0315], [0.0021,0.1554], [0.4236,0.0357]],
+];
+// ハイライト（各段の右側に沿う円弧。輪郭に収まるよう内側へ寄せてある）
+const SHINES = [
+  [[0.0226,-0.6461], [0.1557,-0.5481], [0.1232,-0.4501]],
+  [[0.3822,-0.3031], [0.5485,-0.1701], [0.4872,-0.0371]],
+  [[0.5537,0.0819], [0.7156,0.2289], [0.5848,0.3759]],
+];
+
+// 指定パレット。個体ごとにここからランダムで1色選ぶ
+const PALETTE = ['#FCE4D8', '#FBD87F', '#FF82A9', '#B5F8FE', '#10FFCB'];
+// 種族テーブル。抽選・描画・図鑑はすべてここから引く
+// rate を持つものが特殊個体。持たないものは残りの確率から均等に出る
+const GOLD = { h: 45, s: 95, l: 57 };
+const SPECIES = [
+  { name: 'シェルピンク',       col: 0, icon: 0.74 },
+  { name: 'レモンイエロー',     col: 1, icon: 0.74 },
+  { name: 'ネオンピンク',       col: 2, icon: 0.74 },
+  { name: 'アイスブルー',       col: 3, icon: 0.74 },
+  { name: 'ミントグリーン',     col: 4, icon: 0.74 },
+  { name: 'でかめ',             col: 2, scale: 1.5,  rate: 0.0045, icon: 0.86 },
+  { name: 'ちいさめ',           col: 2, scale: 0.4,  rate: 0.0045, icon: 0.46 },
+  { name: '顔つき',             col: 1, face: true,  rate: 0.004, icon: 0.74 },
+  { name: 'みずたま',           col: 3, dots: true,  rate: 0.003, icon: 0.74 },
+  { name: 'しましま',           col: 1, stripes: true, rate: 0.003, icon: 0.74 },
+  { name: 'ふたご',             col: 2, count: 2,   rate: 0.003, icon: 0.44 },
+  { name: 'やわらかい',         hsl: { h: 285, s: 78, l: 82 }, beta: 0.006, rate: 0.003, icon: 0.74 },
+  { name: 'かたい',             hsl: { h: 210, s: 22, l: 58 }, beta: 0.30,  rate: 0.003, icon: 0.74 },
+  { name: 'ぷるぷる',           hsl: { h: 100, s: 72, l: 74 }, wobble: true, rate: 0.0025, icon: 0.74 },
+  { name: '重い',               hsl: { h: 25,  s: 32, l: 36 }, mass: 4,     rate: 0.0025, icon: 0.74 },
+  { name: 'かなりデカめ',       col: 2, scale: 2.2,  rate: 0.002, icon: 0.96 },
+  { name: 'レインボー',         col: 2, rainbow: true, rate: 0.002, icon: 0.74 },
+  { name: 'ソフトクリーム',     col: 2, tip: true,   rate: 0.0015, icon: 0.74 },
+  { name: 'みつご',             col: 4, count: 3,   rate: 0.0012, icon: 0.36 },
+  { name: 'ゴールデン',         gold: true,          rate: 0.001, icon: 0.74 },
+  { name: 'メタリック',         hsl: { h: 214, s: 14, l: 74 }, metal: true, rate: 0.0008, icon: 0.74 },
+  { name: 'めちゃくちゃでかい', col: 2, scale: 3.0,  rate: 0.0005, icon: 1.00 },
+];
+function speciesColor(sp){
+  return sp.gold ? GOLD : sp.hsl ? sp.hsl : PALETTE_HSL[sp.col];
+}
+const SPECIAL = SPECIES.map((sp, i) => i).filter(i => SPECIES[i].rate);
+const NORMAL  = SPECIES.map((sp, i) => i).filter(i => !SPECIES[i].rate);
+// 通常色は「特殊を全部外した残り」を均等に分ける
+const NORMAL_RATE = (1 - SPECIAL.reduce((a, i) => a + SPECIES[i].rate, 0)) / NORMAL.length;
+function rateOf(i){ return SPECIES[i].rate || NORMAL_RATE; }
+// 図鑑の記録をブラウザに保存する。種族名をキーにするので、
+// 種族の追加や並べ替えをしても既存の記録は壊れない
+const SAVE_KEY = 'unko-dex-v1';
+function loadDex(){
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data && typeof data.dropped === 'number') dropped = data.dropped;
+    if (data && data.found) SPECIES.forEach((sp, i) => {
+      const v = data.found[sp.name];
+      if (typeof v === 'number' && v >= 0) found[i] = v;
+    });
+  } catch (e) { /* 使えない環境では記録なしで動かす */ }
+}
+let saveTimer = 0;
+function saveDex(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      const f = {};
+      SPECIES.forEach((sp, i) => { if (found[i]) f[sp.name] = found[i]; });
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ dropped, found: f }));
+    } catch (e) { /* 保存できなくても動作は続ける */ }
+  }, 600);
+}
+
+// 通常カラーは最初から登録済み。特殊種族だけ発見が必要
+function isKnown(i){ return !SPECIES[i].rate || found[i] > 0; }
+function rateText(i){
+  const r = rateOf(i) * 100;
+  return (r >= 1 ? r.toFixed(1) : r.toFixed(2)) + '%';
+}
+const found = SPECIES.map(() => 0);
+
+// 抽選：特殊を先に判定し、外れたら通常色から均等に
+function rollSpecies(){
+  let r = Math.random();
+  for (const i of SPECIAL){
+    if (r < SPECIES[i].rate) return i;
+    r -= SPECIES[i].rate;
+  }
+  return NORMAL[(Math.random()*NORMAL.length)|0];
+}
+const PALETTE_HSL = PALETTE.map(hex => {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n>>16)/255, g = ((n>>8)&255)/255, b = (n&255)/255;
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx-mn;
+  const l = (mx+mn)/2;
+  let h = 0, sat = 0;
+  if (d > 1e-6){
+    sat = d / (1 - Math.abs(2*l - 1));
+    h = mx === r ? ((g-b)/d + (g<b ? 6 : 0)) : mx === g ? (b-r)/d + 2 : (r-g)/d + 4;
+    h *= 60;
+  }
+  return { h, s: sat*100, l: l*100 };
+});
+
+/* ============================================================
+   2. ソフトボディ物理（XPBD）
+      外周ばね + 中心への放射ばね + 面積保存
+   ============================================================ */
+const GRAVITY = 1500;
+const DRAG = 1.6;          // 空気抵抗（終端速度 ≒ 940px/s）
+const SUBSTEPS = 4;
+const ITER = 2;
+const SOFT = { edge: 3e-5, area: 3e-2, beta: 0.02 };
+
+class SoftPoop {
+  constructor(x, y, size, vx, spin){
+    this.size = size;
+    this.n = N_OUT;
+    this.pts = [];
+    this.rest = [];
+    for (const o of BASE){
+      const ox = o[0]*size, oy = o[1]*size;
+      this.rest.push([ox, oy]);
+      this.pts.push({ x:x+ox, y:y+oy, px:0, py:0, vx:vx - spin*oy, vy:spin*ox, w:1 });
+    }
+    this.pts.push({ x, y, px:0, py:0, vx, vy:0, w:0.4 });     // 中心の質点
+
+    const P = this.pts;
+    this.cons = [];
+    for (let i = 0; i < N_OUT; i++){
+      const j = (i+1) % N_OUT;
+      this.cons.push([i, j, Math.hypot(P[j].x-P[i].x, P[j].y-P[i].y), SOFT.edge]);
+    }
+    // シェイプマッチング用の基準形（中心の質点も含めた重心基準）
+    let rcx = 0, rcy = 0;
+    for (const r of this.rest){ rcx += r[0]; rcy += r[1]; }
+    rcx /= (N_OUT + 1); rcy /= (N_OUT + 1);
+    this.restSM = this.rest.map(r => [r[0]-rcx, r[1]-rcy]);
+    this.restSM.push([-rcx, -rcy]);
+    this.restArea = this.area();
+    this.Aqq = this.buildAqq();
+    this.bb = { x0:0, y0:0, x1:0, y1:0 };
+    this.col = PALETTE_HSL[(Math.random()*PALETTE_HSL.length)|0];
+    this.asleep = false;
+    this.sleepT = 0;
+    this.flush = false;
+    this.group = 0;
+    this.rainbow = false;
+    this.phase = 0;
+    this.face = false;
+    this.species = 0;
+    this.sp = SPECIES[0];
+    this.beta = 0;
+    this.wobble = false;
+    this.motion = 99;   // 生成直後は必ず起きている
+    this.pc = { x, y };
+    this.prg = 0;
+    this.alpha = 1;
+    this.updateBB();
+  }
+  buildAqq(){
+    let a=0,b=0,c=0,d=0;
+    for (const r of this.rest){ a+=r[0]*r[0]; b+=r[0]*r[1]; c+=r[1]*r[0]; d+=r[1]*r[1]; }
+    const det = a*d - b*c || 1e-9;
+    return [ d/det, -b/det, -c/det, a/det ];
+  }
+  area(){
+    const P = this.pts; let A = 0;
+    for (let i = 0; i < this.n; i++){ const p=P[i], q=P[(i+1)%this.n]; A += p.x*q.y - q.x*p.y; }
+    return A*0.5;
+  }
+  centroid(){
+    const P = this.pts; let x=0,y=0;
+    for (let i=0;i<this.n;i++){ x+=P[i].x; y+=P[i].y; }
+    return { x:x/this.n, y:y/this.n };
+  }
+  // 変形勾配 A = Apq・Aqq⁻¹（模様を本体と一緒に歪ませる）
+  deform(){
+    const c = this.centroid();
+    let a=0,b=0,d=0,e=0;
+    for (let i = 0; i < this.n; i++){
+      const r = this.rest[i];
+      const qx = this.pts[i].x - c.x, qy = this.pts[i].y - c.y;
+      a += qx*r[0]; b += qx*r[1]; d += qy*r[0]; e += qy*r[1];
+    }
+    const M = this.Aqq;
+    return { c, m:[ a*M[0]+b*M[2], a*M[1]+b*M[3], d*M[0]+e*M[2], d*M[1]+e*M[3] ] };
+  }
+  updateBB(){
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    for (let i=0;i<this.n;i++){
+      const p=this.pts[i];
+      if(p.x<x0)x0=p.x; if(p.x>x1)x1=p.x;
+      if(p.y<y0)y0=p.y; if(p.y>y1)y1=p.y;
+    }
+    this.bb = { x0, y0, x1, y1 };
+  }
+  predict(dt){
+    const dg = this.wobble ? DRAG*0.25 : DRAG;   // ぷるぷるは減衰を弱めて揺れ続けさせる
+    for (const p of this.pts){
+      p.vy += GRAVITY*dt;
+      p.vx *= 1 - dg*dt; p.vy *= 1 - dg*dt;
+      p.px = p.x; p.py = p.y;
+      p.x += p.vx*dt; p.y += p.vy*dt;
+    }
+  }
+  solve(dt){
+    for (let k = 0; k < ITER; k++){ this.solveDist(dt); this.solveArea(dt); }
+    this.shapeMatch(this.beta || SOFT.beta);
+  }
+  // 基準形を最適回転で当てはめ、その位置へ引き戻す（くびれや先端の形状記憶）
+  shapeMatch(beta){
+    const P = this.pts, m = P.length;
+    let cx = 0, cy = 0;
+    for (let i = 0; i < m; i++){ cx += P[i].x; cy += P[i].y; }
+    cx /= m; cy /= m;
+    let sc = 0, ss = 0;
+    for (let i = 0; i < m; i++){
+      const r = this.restSM[i];
+      const qx = P[i].x - cx, qy = P[i].y - cy;
+      sc += r[0]*qx + r[1]*qy;
+      ss += r[0]*qy - r[1]*qx;
+    }
+    const L = Math.hypot(sc, ss);
+    if (L < 1e-9) return;
+    const co = sc/L, si = ss/L;
+    for (let i = 0; i < m; i++){
+      const r = this.restSM[i];
+      P[i].x += (cx + co*r[0] - si*r[1] - P[i].x) * beta;
+      P[i].y += (cy + si*r[0] + co*r[1] - P[i].y) * beta;
+    }
+  }
+  finish(dt){
+    for (const p of this.pts){ p.vx = (p.x-p.px)/dt; p.vy = (p.y-p.py)/dt; }
+  }
+  solveDist(dt){
+    const P = this.pts, a2 = dt*dt;
+    for (const c of this.cons){
+      const a = P[c[0]], b = P[c[1]];
+      const dx = b.x-a.x, dy = b.y-a.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 1e-9) continue;
+      const lam = -(d - c[2]) / (a.w + b.w + c[3]/a2);
+      const ux = dx/d, uy = dy/d;
+      a.x -= lam*a.w*ux; a.y -= lam*a.w*uy;
+      b.x += lam*b.w*ux; b.y += lam*b.w*uy;
+    }
+  }
+  solveArea(dt){
+    const P = this.pts, n = this.n;
+    const C = this.area() - this.restArea;
+    let sum = 0;
+    const gx = new Array(n), gy = new Array(n);
+    for (let i = 0; i < n; i++){
+      const pn = P[(i+1)%n], pp = P[(i-1+n)%n];
+      const ax = 0.5*(pn.y - pp.y), ay = 0.5*(pp.x - pn.x);
+      gx[i]=ax; gy[i]=ay;
+      sum += P[i].w*(ax*ax + ay*ay);
+    }
+    const lam = -C / (sum + SOFT.area/(dt*dt));
+    for (let i = 0; i < n; i++){ P[i].x += lam*P[i].w*gx[i]; P[i].y += lam*P[i].w*gy[i]; }
+  }
+  collideWorld(w){
+    const floor = this.flush ? Infinity : w.floor;   // 流されている個体だけ床を抜ける
+    for (const p of this.pts){
+      if (p.y > floor){ p.y = w.floor; if (p.vy > 0) p.vy *= this.wobble ? -0.5 : -0.18; p.vx *= 0.75; }
+      if (p.x < w.left ){ p.x = w.left;  if (p.vx < 0) p.vx *= -0.35; p.vy *= 0.94; }
+      if (p.x > w.right){ p.x = w.right; if (p.vx > 0) p.vx *= -0.35; p.vy *= 0.94; }
+    }
+  }
+}
+
+// うんち同士の押し出し（Aの粒子をBの内部から出す）
+function inPoly(B, x, y){
+  let c = false;
+  const P = B.pts, n = B.n;
+  for (let i = 0, j = n-1; i < n; j = i++){
+    if ((P[i].y > y) !== (P[j].y > y) &&
+        x < (P[j].x - P[i].x) * (y - P[i].y) / (P[j].y - P[i].y) + P[i].x) c = !c;
+  }
+  return c;
+}
+function pushOut(A, B, moveB){
+  const bb = B.bb, n = B.n;
+  let deepest = 0;
+  // 深く重なると「最も近い辺」が内側を向いてしまい分離できないので、
+  // 一定より深い場合は重心どうしを結ぶ向きへ逃がす
+  const deep = 0.25 * A.size;
+  let sx = (A.bb.x0+A.bb.x1)/2 - (bb.x0+bb.x1)/2;
+  let sy = (A.bb.y0+A.bb.y1)/2 - (bb.y0+bb.y1)/2;
+  const sl = Math.hypot(sx, sy);
+  if (sl < 1e-6){ sx = 0; sy = -1; } else { sx /= sl; sy /= sl; }
+  for (let k = 0; k < A.n; k++){
+    const p = A.pts[k];
+    if (p.x < bb.x0 || p.x > bb.x1 || p.y < bb.y0 || p.y > bb.y1) continue;
+    if (!inPoly(B, p.x, p.y)) continue;
+    let best = 1e18, bx = 0, by = 0, bi = 0, bt = 0;
+    for (let i = 0; i < n; i++){
+      const a = B.pts[i], b = B.pts[(i+1)%n];
+      const ex = b.x-a.x, ey = b.y-a.y;
+      const L2 = ex*ex + ey*ey || 1e-9;
+      let t = ((p.x-a.x)*ex + (p.y-a.y)*ey) / L2;
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      const qx = a.x + ex*t, qy = a.y + ey*t;
+      const dd = (p.x-qx)*(p.x-qx) + (p.y-qy)*(p.y-qy);
+      if (dd < best){ best = dd; bx = qx; by = qy; bi = i; bt = t; }
+    }
+    let dx = bx - p.x, dy = by - p.y;
+    const d = Math.hypot(dx, dy);
+    if (d > deepest) deepest = d;
+    // 深すぎる場合は向きだけ重心方向に変える
+    if (d > deep){ dx = sx*d; dy = sy*d; }
+    // 補正量はそのまま速度に変換されるので、1サブステップあたりの移動量を制限する
+    const cap = 0.05 * A.size;
+    if (d > cap){ const k = cap/d; dx *= k; dy *= k; }
+    if (moveB){
+      // 質量比で押し分ける（重い個体は動かず相手を潰す）
+      const a = B.pts[bi], b = B.pts[(bi+1)%n];
+      const wB = a.w*(1-bt) + b.w*bt;
+      const sum = p.w + wB || 1;
+      const fa = p.w/sum, fb = wB/sum;
+      p.x += dx*fa; p.y += dy*fa;
+      a.x -= dx*fb*(1-bt); a.y -= dy*fb*(1-bt);
+      b.x -= dx*fb*bt;     b.y -= dy*fb*bt;
+    } else {
+      p.x += dx; p.y += dy;          // 眠っている相手は動かない壁として扱う
+    }
+  }
+  return deepest;
+}
+
+/* ============================================================
+   3. 画面
+   ============================================================ */
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = 480, H = 720, FLOOR = 690;
+// 動きが止まったものは計算対象から外す（積み上がった山はほぼ静止しているため）
+// 接触部の粒子は微振動が残るので、速度ではなく体全体の動き（重心と外接矩形の変化）で判定する
+const SLEEP_M = 0.30;    // 1フレームあたりの動きがこれ未満の状態が
+const SLEEP_T = 0.6;     // この秒数続いたら眠る
+const WAKE_PEN = 4.0;    // これ以上めり込まれたら起きる（積み荷で潰れた接触では起こさない）
+const WORLD = { floor: FLOOR, left: 14, right: W-14 };
+const bodies = [];
+
+// 眠っている体は毎フレーム描き直さず、専用レイヤーに焼いて使い回す
+const layer = document.createElement('canvas');
+const lctx = layer.getContext('2d');
+let layerDirty = true;
+
+function fitDPR(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W*dpr; cv.height = H*dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  layer.width = W*dpr; layer.height = H*dpr;
+  lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  layerDirty = true;
+}
+fitDPR();
+addEventListener('resize', fitDPR);
+
+let groupSeq = 0;
+const BASE_SIZE = 66;   // 通常サイズ（幅98px）。種族の scale はこれに掛かる
+let dropped = 0;   // 出したうんこの総数
+function drop(x){
+  const idx = rainbowNext ? SPECIES.findIndex(sp => sp.rainbow) : rollSpecies();
+  rainbowNext = false;
+  const sp = SPECIES[idx];
+  const n = sp.count || 1;
+  // ふたご・みつごは同じ色でまとめて落とす
+  const groupCol = sp.face ? PALETTE_HSL[(Math.random()*PALETTE_HSL.length)|0] : speciesColor(sp);
+
+  const group = n > 1 ? ++groupSeq : 0;
+  const sibs = [];
+  for (let k = 0; k < n; k++){
+    dropped++;
+    const size = BASE_SIZE * (sp.scale || 1);   // 大きさは種族で決まる（通常は固定）
+    const hw = 0.75*size, hh = 0.72*size;
+    // ふたご・みつごは輪郭が少し重なる間隔で並べ、あとで連結する
+    const spread = n > 1 ? (k - (n-1)/2) * 1.30 * size : 0;
+    const px = Math.max(WORLD.left + hw, Math.min(WORLD.right - hw, x + spread));
+    // 連続で出したときに重なった状態で生まれないよう、ぶつかる相手がいれば上へずらす
+    let py = -0.75*size - 40;
+    for (let t = 0; t < 8; t++){
+      let moved = false;
+      for (const o of bodies){
+        if (o.flush) continue;                    // 流れている途中のものは避け先に数えない
+        if (group && o.group === group) continue; // 兄弟同士は避け合わない
+        if (o.bb.x1 < px-hw || px+hw < o.bb.x0) continue;
+        if (o.bb.y1 < py-hh || py+hh < o.bb.y0) continue;
+        py = o.bb.y0 - hh - 8;
+        moved = true;
+      }
+      if (!moved) break;
+    }
+    const b = new SoftPoop(px, py, size, (Math.random()-0.5)*40, (Math.random()-0.5)*0.35);
+    b.species = idx;
+    b.sp = sp;
+    b.col = groupCol;
+    if (sp.rainbow){ b.rainbow = true; b.phase = Math.random()*360; }   // 個体ごとに色相をずらす
+    if (sp.face) b.face = true;
+    if (sp.beta) b.beta = sp.beta;
+    if (sp.wobble) b.wobble = true;
+    if (sp.mass) for (const q of b.pts) q.w /= sp.mass;
+    b.group = group;
+    if (sibs.length) linkBodies(sibs[sibs.length-1], b);   // 直前の兄弟と連結
+    sibs.push(b);
+    bodies.push(b);
+  }
+  const isNew = !!sp.rate && found[idx] === 0;    // 通常カラーは通知しない
+  found[idx]++;
+  saveDex();
+  if (isNew) notifyNew(idx);
+  if (!dexEl.hidden) refreshDex();
+}
+
+// ふたご・みつごの連結。体をまたぐ距離拘束でくっつけたままにする
+const joints = [];
+function linkBodies(A, B){
+  const pairs = [];
+  for (let i = 0; i < A.n; i++)
+    for (let j = 0; j < B.n; j++)
+      pairs.push([Math.hypot(A.pts[i].x - B.pts[j].x, A.pts[i].y - B.pts[j].y), i, j]);
+  pairs.sort((a, b) => a[0] - b[0]);
+  const usedA = new Set(), usedB = new Set();
+  let n = 0;
+  for (const [d, i, j] of pairs){
+    if (n >= 3) break;
+    if (usedA.has(i) || usedB.has(j)) continue;
+    usedA.add(i); usedB.add(j);
+    joints.push({ A, B, i, j, rest: Math.max(d, 1), c: 5e-6 });
+    n++;
+  }
+}
+function solveJoints(dt){
+  const a2 = dt*dt;
+  for (const jt of joints){
+    const A = jt.A, B = jt.B;
+    if (A.asleep && B.asleep) continue;
+    const a = A.pts[jt.i], b = B.pts[jt.j];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const d = Math.hypot(dx, dy);
+    if (d < 1e-9) continue;
+    const wa = A.asleep ? 0 : a.w, wb = B.asleep ? 0 : b.w;
+    if (wa + wb === 0) continue;
+    const lam = -(d - jt.rest) / (wa + wb + jt.c/a2);
+    const ux = dx/d, uy = dy/d;
+    a.x -= lam*wa*ux; a.y -= lam*wa*uy;
+    b.x += lam*wb*ux; b.y += lam*wb*uy;
+  }
+}
+// 連結相手が動いているのに片方だけ眠ると引きずられるので起こす。
+// ただし相手も静止しかけているだけなら起こさない（起こし合って永久に眠れなくなる）
+function syncJointSleep(){
+  for (const jt of joints){
+    if (jt.A.asleep && !jt.B.asleep && jt.B.motion > SLEEP_M) wake(jt.A);
+    else if (jt.B.asleep && !jt.A.asleep && jt.A.motion > SLEEP_M) wake(jt.B);
+  }
+}
+
+// 眠っているものを起こす。真上や周囲に載っているものも一緒に起こす
+function wake(b){
+  if (b.asleep) layerDirty = true;
+  b.asleep = false; b.sleepT = 0;
+  b.motion = SLEEP_M * 4;   // 起床直後の減衰に時間をかけない（すぐ再び眠れるように）
+}
+
+// 流す：床を抜いて、画面下中央の排水口へ吸い込む
+const DRAIN = { x: W/2, y: H + 120 };
+// ボタンを押した時点にあった個体にだけ印を付ける（モードにしないので、後から出したものは流されない）
+function startFlush(){
+  for (const b of bodies){
+    if (b.flush) continue;
+    b.flush = true;
+    if (grab && grab.body === b) grab = null;
+    wake(b);
+  }
+}
+function applyFlush(dt){
+  let any = false;
+  for (const b of bodies){
+    if (!b.flush) continue;
+    any = true;
+    b.sleepT = 0; b.motion = 99;
+    const cx = (b.bb.x0 + b.bb.x1)/2, cy = (b.bb.y0 + b.bb.y1)/2;
+    let dx = DRAIN.x - cx, dy = DRAIN.y - cy;
+    const d = Math.hypot(dx, dy) || 1;
+    // 重力を打ち消し、排水口へ渦を描いて吸い込む
+    const ax = dx/d*1250 + (-dy/d)*900;
+    const ay = dy/d*1250 + ( dx/d)*900 - GRAVITY;
+    for (const p of b.pts){ p.vx += ax*dt; p.vy += ay*dt; }
+  }
+  if (!any) return;
+  for (let i = bodies.length-1; i >= 0; i--){
+    if (bodies[i].flush && bodies[i].bb.y0 > H + 60){
+      const gone = bodies.splice(i, 1)[0];
+      for (let j = joints.length-1; j >= 0; j--)
+        if (joints[j].A === gone || joints[j].B === gone) joints.splice(j, 1);
+      layerDirty = true;
+    }
+  }
+}
+
+// 掴んでいる粒子をポインタへ追従させる
+let grab = null;
+function applyGrab(){
+  if (!grab) return;
+  if (grab.body.asleep) wake(grab.body);   // 眠ったまま動かすと物理を素通りしてしまう
+  const b = grab.body, cap = 0.15 * b.size;
+  for (const g of grab.pts){
+    const p = b.pts[g.i];
+    let dx = grab.x + g.dx - p.x, dy = grab.y + g.dy - p.y;
+    const d = Math.hypot(dx, dy);
+    if (d < 1e-6) continue;
+    const move = Math.min(d * 0.5 * g.w, cap);
+    p.x += dx/d*move; p.y += dy/d*move;
+  }
+  // 速く振り回しても壁を抜けないよう、掴んでいる体の速度に上限をかける
+  for (const p of b.pts){
+    const v = Math.hypot(p.vx, p.vy);
+    if (v > 2000){ p.vx *= 2000/v; p.vy *= 2000/v; }
+  }
+}
+// 指定座標にある体を拾う（手前に描かれているものを優先）
+function pickBody(x, y){
+  for (let i = bodies.length-1; i >= 0; i--){
+    const b = bodies[i];
+    if (x < b.bb.x0 || x > b.bb.x1 || y < b.bb.y0 || y > b.bb.y1) continue;
+    if (inPoly(b, x, y)) return b;
+  }
+  return null;
+}
+
+function step(dt){
+  applyFlush(dt);
+  const sdt = dt / SUBSTEPS;
+  for (let s = 0; s < SUBSTEPS; s++){
+    for (const b of bodies) if (!b.asleep) b.predict(sdt);
+    for (const b of bodies) if (!b.asleep) b.solve(sdt);
+    solveJoints(sdt);
+    applyGrab();
+    for (const b of bodies) if (!b.asleep) b.updateBB();
+    for (let i = 0; i < bodies.length; i++){
+      const A = bodies[i];
+      for (let j = i+1; j < bodies.length; j++){
+        const B = bodies[j];
+        if (A.asleep && B.asleep) continue;
+        if (A.group && A.group === B.group) continue;      // 連結している同士は押し合わない
+        if (A.bb.x1 < B.bb.x0 || B.bb.x1 < A.bb.x0 || A.bb.y1 < B.bb.y0 || B.bb.y1 < A.bb.y0) continue;
+        const pa = A.asleep ? 0 : pushOut(A, B, !B.asleep);
+        const pb = B.asleep ? 0 : pushOut(B, A, !A.asleep);
+        // めり込まれた本人だけを起こす。周りへは次のフレーム以降に自然に伝播する
+        if (B.asleep && pa > WAKE_PEN) wake(B);
+        if (A.asleep && pb > WAKE_PEN) wake(A);
+      }
+    }
+    for (const b of bodies) if (!b.asleep) b.finish(sdt);
+    for (const b of bodies) if (!b.asleep) b.collideWorld(WORLD);
+  }
+  // 静止判定
+  for (const b of bodies){
+    if (b.asleep) continue;
+    if (grab && grab.body === b){ b.sleepT = 0; b.motion = 99; continue; }   // 掴んでいる間は眠らせない
+    const c = b.centroid();
+    let rg = 0;
+    for (let i = 0; i < b.n; i++){
+      const dx = b.pts[i].x - c.x, dy = b.pts[i].y - c.y;
+      rg += dx*dx + dy*dy;
+    }
+    rg = Math.sqrt(rg / b.n);
+    const m = Math.hypot(c.x - b.pc.x, c.y - b.pc.y) + 2*Math.abs(rg - b.prg);
+    b.pc = c; b.prg = rg;
+    b.motion = b.motion*0.85 + m*0.15;
+    if (b.motion < SLEEP_M){
+      b.sleepT += dt;
+      if (b.sleepT > SLEEP_T){
+        b.asleep = true;
+        layerDirty = true;
+        for (const p of b.pts){ p.vx = 0; p.vy = 0; }
+      }
+    } else b.sleepT = 0;
+  }
+  syncJointSleep();
+}
+
+/* ---- 描画 ---- */
+// 顔（輪郭と同じローカル座標系で定義。本体では変形込み、図鑑では等倍で描く）
+const FACE = { ex: 0.20, ey: -0.20, eyeR: 0.075, pupR: 0.034, my: -0.02, mR: 0.10 };
+// 模様（すべて輪郭と同じローカル座標。本体からはみ出す分はクリップで切る）
+const DOTS = [[-0.40,0.28],[-0.05,0.33],[0.34,0.26],[-0.24,0.02],[0.16,0.05],[0.46,0.06],
+              [-0.02,-0.22],[-0.26,-0.30],[0.20,-0.26],[-0.14,-0.48],[0.06,-0.55]];
+const DOT_R = 0.075;
+const STRIPES = [-0.62, -0.36, -0.10, 0.16, 0.42];
+
+// 模様・先端の白・金属光沢（本体と図鑑で共用。map は ローカル座標→画面座標）
+function drawDeco(g, sp, map, k, tone, C){
+  if (sp.dots){
+    g.fillStyle = tone(Math.min(C.l + 22, 97), -20, 0.92);
+    for (const d of DOTS){
+      const q = map(d[0], d[1]);
+      g.beginPath(); g.ellipse(q[0], q[1], DOT_R*k, DOT_R*k, 0, 0, 6.2832); g.fill();
+    }
+  }
+  if (sp.stripes){
+    g.strokeStyle = tone(Math.max(C.l - 26, 20), 12, 0.85);
+    g.lineWidth = 0.11*k; g.lineCap = 'butt';
+    for (const y of STRIPES){
+      const a = map(-0.85, y), b2 = map(0.85, y);
+      g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b2[0], b2[1]); g.stroke();
+    }
+  }
+  if (sp.tip){
+    // 先端だけ白く（ソフトクリーム）
+    const top = map(0, -0.90), mid = map(0, -0.16);
+    const gr = g.createLinearGradient(top[0], top[1], mid[0], mid[1]);
+    gr.addColorStop(0,   'rgba(255,255,255,.96)');
+    gr.addColorStop(0.55,'rgba(255,255,255,.75)');
+    gr.addColorStop(1,   'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    const a = map(-1.2, -1.2), b2 = map(1.2, 0.2);
+    g.fillRect(Math.min(a[0],b2[0]), Math.min(a[1],b2[1]), Math.abs(b2[0]-a[0]), Math.abs(b2[1]-a[1]));
+  }
+}
+function drawFace(g, map, k){
+  const ink = 'rgba(56,38,48,.88)';
+  for (const sx of [-1, 1]){
+    const e = map(sx*FACE.ex, FACE.ey);
+    g.beginPath(); g.ellipse(e[0], e[1], FACE.eyeR*k, FACE.eyeR*k*1.05, 0, 0, 6.2832);
+    g.fillStyle = '#fffdf8'; g.fill();
+    g.strokeStyle = ink; g.lineWidth = Math.max(1, 0.012*k); g.stroke();
+    const q = map(sx*FACE.ex + sx*0.008, FACE.ey + 0.022);
+    g.beginPath(); g.ellipse(q[0], q[1], FACE.pupR*k, FACE.pupR*k, 0, 0, 6.2832);
+    g.fillStyle = ink; g.fill();
+  }
+  const m = map(0, FACE.my);
+  g.beginPath(); g.arc(m[0], m[1], FACE.mR*k, 0.16*Math.PI, 0.84*Math.PI);
+  g.strokeStyle = ink; g.lineWidth = Math.max(1.4, 0.026*k); g.lineCap = 'round'; g.stroke();
+}
+let tNow = 0;                       // 虹色アニメーション用の経過秒（loopで更新）
+function drawPoop(b, ctx){
+  const P = b.pts, n = b.n;
+  const D = b.deform(), m = D.m;
+  const T = (ox, oy) => [ D.c.x + m[0]*ox + m[1]*oy, D.c.y + m[2]*ox + m[3]*oy ];
+  const s = b.size;
+
+  ctx.save();
+  ctx.globalAlpha = b.alpha;
+
+  // 影
+  const h = Math.max(0, Math.min(1, 1 - (FLOOR - b.bb.y1) / 240));
+  ctx.globalAlpha = b.alpha * 0.30 * h;
+  ctx.fillStyle = '#b5b0b4';
+  ctx.beginPath();
+  ctx.ellipse(D.c.x, FLOOR + 3, (b.bb.x1-b.bb.x0)*0.5*h + 6, 7*h + 2, 0, 0, 6.2832);
+  ctx.fill();
+  ctx.globalAlpha = b.alpha;
+
+  // 本体
+  ctx.beginPath();
+  ctx.moveTo(P[0].x, P[0].y);
+  for (let i = 1; i < n; i++) ctx.lineTo(P[i].x, P[i].y);
+  ctx.closePath();
+  // パレット色を基準に、上を明るく下を暗く。白背景でも輪郭が沈まないよう暗側は上限を設ける
+  // 虹色の個体は時間で色相を回し、体の中でも色相をずらして虹に見せる
+  const RB = b.rainbow;
+  const C = RB ? { h: (tNow*90 + b.phase) % 360, s: 95, l: 66 } : b.col;
+  const tone = (dl, ds, a, dh) => `hsla(${C.h + (RB ? (dh || 0) : 0)}, ${Math.max(0, Math.min(100, C.s + ds))}%, ${Math.max(6, Math.min(97, dl))}%, ${a})`;
+  const metal = b.sp.metal;
+  const lTop  = Math.min(C.l + (metal ? 22 : 9), 97);
+  const lBot  = Math.min(C.l - (metal ? 34 : 13), 76);
+  const lLine = Math.min(C.l - 22, 58);
+  const g = ctx.createLinearGradient(b.bb.x0, b.bb.y0, b.bb.x1, b.bb.y1);
+  g.addColorStop(0,   tone(lTop, -6, 1, 0));
+  g.addColorStop(0.5, tone(C.l, 0, 1, 55));
+  g.addColorStop(1,   tone(lBot, 6, 1, 110));
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = tone(lLine, 10, 1, 55);
+  ctx.stroke();
+
+  // くびれ線とハイライト（本体からはみ出さないようクリップして描く）
+  ctx.save();
+  ctx.clip();
+  ctx.lineCap = 'round';
+  const stroke = (curves, width) => {
+    ctx.lineWidth = width;
+    for (const q of curves){
+      const a = T(q[0][0]*s, q[0][1]*s);
+      const c = T(q[1][0]*s, q[1][1]*s);
+      const e = T(q[2][0]*s, q[2][1]*s);
+      ctx.beginPath();
+      ctx.moveTo(a[0], a[1]);
+      ctx.quadraticCurveTo(c[0], c[1], e[0], e[1]);
+      ctx.stroke();
+    }
+  };
+  const map = (x, y) => T(x*s, y*s);
+  drawDeco(ctx, b.sp, map, s, (dl, ds, a) => tone(dl, ds, a, 55), C);
+  ctx.strokeStyle = tone(lLine + 4, 8, 0.7, 55);
+  stroke(CREASES, Math.max(1.2, 0.045*s));
+  // メタリックはハイライトを白く太くして金属質にする
+  const shineW = b.sp.metal ? Math.max(2.4, 0.10*s) : Math.max(1.6, 0.063*s);
+  ctx.strokeStyle = b.sp.metal ? 'rgba(255,255,255,.95)' : tone(Math.min(C.l + 13, 97), -8, 0.8, 25);
+  stroke(SHINES, shineW);
+  if (b.face) drawFace(ctx, map, s);
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawRoom(){
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#fbfafb'; ctx.fillRect(0, FLOOR, W, H-FLOOR);
+  ctx.fillStyle = 'rgba(160,150,158,.28)'; ctx.fillRect(0, FLOOR-1, W, 2);
+}
+
+// 説明文は常に出したままにして、積もったうんこに隠れていく
+function drawHint(){
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(150,150,155,.9)';
+  ctx.font = "600 17px 'Hiragino Maru Gothic ProN','Hiragino Sans','Yu Gothic',system-ui,sans-serif";
+  ctx.fillText('タップした位置にうんこを落とす', W/2, H/2 - 14);
+  ctx.fillText('ドラッグでうんこを掴む', W/2, H/2 + 14);
+  ctx.restore();
+}
+
+function draw(){
+  if (layerDirty){
+    lctx.clearRect(0, 0, W, H);
+    for (const b of bodies) if (b.asleep && !b.rainbow) drawPoop(b, lctx);
+    layerDirty = false;
+  }
+  drawRoom();
+  drawHint();                                   // うんこより先に描いて、下敷きにする
+  ctx.drawImage(layer, 0, 0, W, H);
+  for (const b of bodies) if (!b.asleep || b.rainbow) drawPoop(b, ctx);
+  const on = bodies.length > 0;
+  if (flushBtn.disabled === on) flushBtn.disabled = !on;
+  if (shownCount !== dropped){ shownCount = dropped; countEl.textContent = dropped + '個'; }
+}
+
+/* ---- 図鑑 ---- */
+// 図鑑用アイコン（本体と同じ輪郭・くびれ線・ハイライトを縮小して描く）
+const ICON_BB = (() => {
+  let x0=1e9, y0=1e9, x1=-1e9, y1=-1e9;
+  for (const p of BASE){ x0=Math.min(x0,p[0]); x1=Math.max(x1,p[0]); y0=Math.min(y0,p[1]); y1=Math.max(y1,p[1]); }
+  return { x0, y0, x1, y1, w: x1-x0, h: y1-y0, cx: (x0+x1)/2, cy: (y0+y1)/2 };
+})();
+function drawIcon(g, sp, W2, H2, known){
+  if (sp.count){                     // ふたご・みつごは並べて描く
+    g.clearRect(0, 0, W2, H2);
+    const n = sp.count, w2 = W2/n;
+    for (let i = 0; i < n; i++){
+      g.save();
+      g.translate((i - (n-1)/2) * w2 * 0.82, 0);
+      drawIcon1(g, sp, W2, H2, known);
+      g.restore();
+    }
+    return;
+  }
+  drawIcon1(g, sp, W2, H2, known);
+}
+function drawIcon1(g, sp, W2, H2, known){
+  // 輪郭は重心基準で作ってあるので、アイコンでは外接矩形の中心に合わせる（先端が切れないように）
+  // 大きさの種族は icon 倍率で大小がわかるようにする
+  const s = Math.min(W2/(ICON_BB.w*1.08), H2/(ICON_BB.h*1.08)) * (sp.icon || 0.8);
+  const ox = W2/2, oy = H2/2;
+  const P = (x, y) => [ox + (x-ICON_BB.cx)*s, oy + (y-ICON_BB.cy)*s];
+  const C = !known ? { h: 0, s: 0, l: 84 }
+          : sp.rainbow ? { h: 300, s: 95, l: 66 }
+          : speciesColor(sp);
+  const tone = (dl, ds, a) => `hsla(${C.h}, ${Math.max(0,Math.min(100,C.s+ds))}%, ${Math.max(6,Math.min(97,dl))}%, ${a})`;
+  const lTop = Math.min(C.l + (sp.metal ? 22 : 9), 97);
+  const lBot = Math.min(C.l - (sp.metal ? 34 : 13), 76);
+  const lLine = Math.min(C.l-22, 58);
+  if (!sp.count) g.clearRect(0, 0, W2, H2);
+  g.beginPath();
+  const a0 = P(BASE[0][0], BASE[0][1]);
+  g.moveTo(a0[0], a0[1]);
+  for (let i = 1; i < BASE.length; i++){ const q = P(BASE[i][0], BASE[i][1]); g.lineTo(q[0], q[1]); }
+  g.closePath();
+  const gr = g.createLinearGradient(ox-ICON_BB.w*s/2, oy-ICON_BB.h*s/2, ox+ICON_BB.w*s/2, oy+ICON_BB.h*s/2);
+  gr.addColorStop(0, tone(lTop, -6, 1)); gr.addColorStop(0.5, tone(C.l, 0, 1)); gr.addColorStop(1, tone(lBot, 6, 1));
+  g.fillStyle = gr; g.fill();
+  g.lineJoin = 'round'; g.lineWidth = 2; g.strokeStyle = tone(lLine, 10, 1); g.stroke();
+  g.save(); g.clip(); g.lineCap = 'round';
+  const stroke = (curves, w, style) => {
+    g.strokeStyle = style; g.lineWidth = w;
+    for (const q of curves){
+      const a = P(q[0][0], q[0][1]), c = P(q[1][0], q[1][1]), e = P(q[2][0], q[2][1]);
+      g.beginPath(); g.moveTo(a[0], a[1]); g.quadraticCurveTo(c[0], c[1], e[0], e[1]); g.stroke();
+    }
+  };
+  if (known) drawDeco(g, sp, P, s, tone, C);
+  stroke(CREASES, Math.max(1, 0.045*s), tone(lLine+4, 8, 0.7));
+  stroke(SHINES, Math.max(1.2, sp.metal ? 0.10*s : 0.063*s),
+         known && sp.metal ? 'rgba(255,255,255,.95)' : tone(Math.min(C.l+13, 97), -8, 0.8));
+  if (sp.face && known) drawFace(g, P, s);
+  g.restore();
+}
+
+loadDex();
+const gridEl = document.getElementById('grid');
+const dexEl = document.getElementById('dex');
+const cells = SPECIES.map(sp => {
+  const cell = document.createElement('div');
+  cell.className = 'cell' + (sp.rainbow ? ' rb' : '');
+  const c = document.createElement('canvas');
+  c.width = 96; c.height = 96; c.style.width = '52px'; c.style.height = '52px';
+  const label = document.createElement('div');
+  const num = document.createElement('div');
+  num.className = 'num';
+  const rate = document.createElement('div');
+  rate.className = 'rate';
+  cell.append(c, label, num, rate);
+  gridEl.append(cell);
+  return { cell, g: c.getContext('2d'), label, num, rate };
+});
+function refreshDex(){
+  SPECIES.forEach((sp, i) => {
+    const known = isKnown(i);
+    cells[i].cell.classList.toggle('unknown', !known);
+    cells[i].label.textContent = known ? sp.name : '???';
+    cells[i].num.textContent = known ? found[i] + '個' : '—';
+    cells[i].rate.textContent = rateText(i);
+    drawIcon(cells[i].g, sp, 96, 96, known);
+  });
+}
+// 未登録の種族が出たときの通知
+const bookBtn = document.getElementById('book');
+const popEl = document.getElementById('pop');
+const popIcon = document.getElementById('popIcon').getContext('2d');
+const popName = popEl.querySelector('.nm');
+let popTimer = 0;
+function notifyNew(i){
+  bookBtn.classList.add('noti');
+  popName.textContent = SPECIES[i].name;
+  drawIcon(popIcon, SPECIES[i], 120, 120, true);
+  popEl.hidden = true;                 // アニメーションを付け直すため一度消す
+  void popEl.offsetWidth;
+  popEl.hidden = false;
+  clearTimeout(popTimer);
+  popTimer = setTimeout(() => { popEl.hidden = true; }, 2600);
+}
+
+bookBtn.addEventListener('click', () => {
+  refreshDex();
+  dexEl.hidden = false;
+  bookBtn.classList.remove('noti');
+});
+document.getElementById('dexClose').addEventListener('click', () => { dexEl.hidden = true; });
+dexEl.addEventListener('click', e => { if (e.target === dexEl) dexEl.hidden = true; });
+
+/* ---- 入力 ---- */
+function toCanvas(e){
+  const r = cv.getBoundingClientRect();
+  return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H };
+}
+cv.addEventListener('pointerdown', e => {
+  const q = toCanvas(e);
+  const hit = pickBody(q.x, q.y);
+  if (hit){
+    // 掴んだ位置の近くの粒子だけを掴む（体全体は柔らかいまま引っ張られる）
+    cv.setPointerCapture?.(e.pointerId);
+    // 掴んだ点に近いほど強く追従する重みを全粒子に持たせる
+    grab = { id: e.pointerId, body: hit, x: q.x, y: q.y, pts: [] };
+    const r = 0.6 * hit.size;
+    for (let i = 0; i < hit.pts.length; i++){
+      const p = hit.pts[i];
+      const t = Math.hypot(p.x - q.x, p.y - q.y) / r;
+      grab.pts.push({ i, dx: p.x - q.x, dy: p.y - q.y, w: 1/(1 + t*t) });
+    }
+    hit.flush = false;          // 流れている途中でも掴めば助かる
+    wake(hit);
+    cv.style.cursor = 'grabbing';
+  } else {
+    drop(q.x);
+  }
+  cv.focus();
+});
+cv.addEventListener('pointermove', e => {
+  if (grab && e.pointerId === grab.id){
+    const q = toCanvas(e);
+    grab.x = q.x; grab.y = q.y;
+  } else {
+    const q = toCanvas(e);
+    cv.style.cursor = pickBody(q.x, q.y) ? 'grab' : 'crosshair';
+  }
+});
+for (const ev of ['pointerup', 'pointercancel']){
+  cv.addEventListener(ev, e => {
+    if (grab && e.pointerId === grab.id){ grab = null; cv.style.cursor = 'crosshair'; }
+  });
+}
+const countEl = document.getElementById('count');
+
+// デバッグ用：コナミコマンド（↑↑↓↓←→←→BA）を入力すると、次に出す1個だけ虹色になる
+const KONAMI = ['arrowup','arrowup','arrowdown','arrowdown','arrowleft','arrowright','arrowleft','arrowright','b','a'];
+let konamiAt = 0;
+let rainbowNext = false;
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === KONAMI[konamiAt]) konamiAt++;
+  else konamiAt = (k === KONAMI[0]) ? 1 : 0;
+  if (konamiAt === KONAMI.length){
+    konamiAt = 0;
+    rainbowNext = true;
+  }
+});
+
+addEventListener('keydown', e => {
+  if (e.key === ' ' || e.key === 'Enter'){ drop(60 + Math.random()*(W-120)); e.preventDefault(); }
+  if (e.key === 'c' || e.key === 'C'){ bodies.length = 0; joints.length = 0; layerDirty = true; }
+});
+
+let shownCount = -1;
+const flushBtn = document.getElementById('flush');
+flushBtn.addEventListener('click', () => { startFlush(); cv.focus(); });
+
+// タブを閉じる・隠すタイミングでも取りこぼさないよう書き出す
+addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
+addEventListener('pagehide', flushSave);
+function flushSave(){
+  clearTimeout(saveTimer);
+  try {
+    const f = {};
+    SPECIES.forEach((sp, i) => { if (found[i]) f[sp.name] = found[i]; });
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ dropped, found: f }));
+  } catch (e) {}
+}
+
+/* ---- ループ ---- */
+let last = performance.now(), acc = 0;
+function loop(now){
+  tNow = now / 1000;
+  acc += Math.min((now - last)/1000, 0.25);
+  last = now;
+  let guard = 0;
+  while (acc >= 1/60 && guard++ < 4){ step(1/60); acc -= 1/60; }
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

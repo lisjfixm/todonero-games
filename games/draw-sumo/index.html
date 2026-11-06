@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/draw-sumo/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ドロースモー</title>
+<meta name="description" content="描いた手足で相手を押し出す相撲">
+<style>
+  :root{ --ink:#23262b; --player:#e0413a; --cpu:#3b6ec7; --ground:#2b2f36; --howto-bg:#23262b; --howto-fg:#fff; }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;overflow:hidden;background:#7d8fe8;
+    font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+  #race{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
+  #pad{position:fixed;left:50%;bottom:max(4vh,env(safe-area-inset-bottom));transform:translateX(-50%);
+    width:min(80vw,440px);aspect-ratio:5/3;display:block;
+    background:#fff;border:3px dashed #c5c9d2;border-radius:20px;
+    box-shadow:0 10px 30px rgba(40,50,120,.25);touch-action:none;cursor:crosshair}
+</style>
+</head>
+<body>
+<canvas id="race"></canvas>
+<canvas id="pad" width="300" height="180"></canvas>
+<section class="howto" data-pos="top-right" hidden>
+  <h2>遊び方</h2>
+  <p>手足を描いた人形を CPU とぶつけ合い、相手を土俵から落とす相撲ゲームです。勝つと連勝数が増えて次の土俵へ進み、負けると連勝が途切れて同じ土俵でやり直します。土俵は平ら、中央が高い、相手側が一段高い、滑る、細かい凹凸、シーソーの6種類です。</p>
+  <h2>操作</h2>
+  <p>下の白い枠に線を引くと、描き始めに近い肩か腰に手足が付きます。中央の点線より右なら手前、左なら奥の手足になるので、肩と腰に2本ずつ描けます。線を描くと取組が始まり、掛け声の間は構えて待ちます。取組中も描き直せます。PC ではマウスで描けます。</p>
+  <h2>コツ</h2>
+  <p>手足は常に相手の方へ向かって回り続けます。体の重さは線の長さに関係なく一定なので、長く描いても重くはなりません。CPU は回転が遅めですが、2.5秒ごとに形を変えてくるので、土俵の形に合わせて描き直しましょう。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+
+<script>
+// ---------- 定数 ----------
+const T = 4;            // 線の太さ（半径）
+const G = 1400;
+const POWER = 2.5;      // モータートルク = POWER × 自重 × 半径
+const WMAX = 12;
+const E = 0.1;          // 地面との反発
+const MU = 0.9;         // 地面との摩擦
+const E_BODY = 0.05;    // 体同士の反発
+const MU_BODY = 0.5;    // 体同士の摩擦
+const DT = 1 / 240;
+const SCALE = 0.56;     // パッド座標 → ワールド座標
+const VIEW_W = 700;     // 画面に映る横幅（ワールド座標）。土俵の幅に関係なく固定（落ちたキャラも映る）
+const CPU_SPEED = 0.7;  // CPUの回転上限の倍率（強さ調整）
+const CPU_DELAY = 2.5;  // CPUがポーズを持ち替える間隔（秒）
+const READY_TIME = 2.2;  // 「はっけよーい」で構えている時間（秒）
+const SLOW_RATE = 0.25; // 決着後のスロー再生の速さ
+const SLOW_TIME = 0.25; // スロー再生する長さ（ゲーム内秒。実時間では SLOW_TIME / SLOW_RATE = 1秒）
+const RING_L = 0, RING_R = 336, RING_Y = 300;   // 土俵（この外に落ちたら負け）
+const RING_C = (RING_L + RING_R) / 2;
+const BUOY = 1.8, DRAG = 4;                       // 水の浮力・抵抗
+const START_P = RING_C - 62, START_C = RING_C + 62;
+
+// ---------- 人体テンプレート（パッド座標・横向き） ----------
+const HEAD = { x: 150, y: 40, r: 14 };
+const SHOULDER = { x: 150, y: 62 };
+const HIP = { x: 150, y: 110 };
+const TORSO = [{ x: 150, y: 54 }, SHOULDER, HIP];
+
+// ---------- 地形：土俵（両端は崖）。ステージごとに形が変わる ----------
+const TSTEP = 2, X0 = -800, X1 = 1400;
+const STAGES = [
+  { f: () => 0 },
+  { f: x => -36 * Math.max(0, 1 - Math.abs(x - RING_C) / 150) },   // 中央がゆるやかに高い
+  { f: x => x > RING_C ? -45 : 0 },                                // 相手側が一段高い
+  { f: () => 0, mu: 0.25 },                                        // 滑る
+  { f: x => -8 * (1 - Math.cos(x / 22 * Math.PI * 2)) },           // 細かい凹凸
+  { f: () => 0, seesaw: true },                                    // 中央のヒンジで傾くシーソー
+];
+const SEESAW_I = 9e7;      // シーソーの慣性モーメント
+const SEESAW_MAX = 0.3;   // 傾きの上限（rad）
+const SEESAW_DAMP = 2.2;   // 傾きの減衰
+let seeA = 0, seeW = 0;    // シーソーの角度・角速度
+
+let stage = 0, HA = [], TP = [], MUF = [], WL = [];
+function buildArena(){
+  const st = STAGES[stage];
+  HA = []; MUF = []; WL = [];
+  for (let x = X0; x <= X1; x += TSTEP){
+    const inRing = x >= RING_L && x <= RING_R;
+    const tilt = st.seesaw ? (x - RING_C) * Math.tan(seeA) : 0;
+    HA.push(inRing ? RING_Y + st.f(x) + tilt : RING_Y + 500);
+    MUF.push(st.mu || 1);
+    WL.push(Infinity);
+  }
+  TP = HA.map((y, i) => ({ x: X0 + i * TSTEP, y }));
+}
+// 乗っている重さの偏りでシーソーを傾ける
+function stepSeesaw(dt){
+  if (!STAGES[stage].seesaw) return;
+  let torque = 0;
+  for (const b of [player, cpu]){
+    if (!b) continue;
+    const r = b.x - RING_C;
+    if (Math.abs(r) > (RING_R - RING_L) / 2 + 20) continue;
+    if (b.y > terrain(b.x) + 10) continue;               // 板から離れていたら効かない
+    torque += r * b.m * G * 0.045;
+  }
+  torque -= seeA * SEESAW_I * 9;                          // 水平に戻ろうとする復元力
+  seeW += torque / SEESAW_I * dt;
+  seeW *= 1 - SEESAW_DAMP * dt;
+  seeA = Math.max(-SEESAW_MAX, Math.min(SEESAW_MAX, seeA + seeW * dt));
+  if (Math.abs(seeA) === SEESAW_MAX) seeW = 0;
+  buildArena();
+}
+function idx(x){ return Math.max(0, Math.min(HA.length - 1, Math.floor((x - X0) / TSTEP))); }
+function terrainIndex(x){ return Math.min(idx(x), TP.length - 2); }
+function terrain(x){ return HA[idx(x)]; }
+function muAt(x){ return MUF[idx(x)]; }
+function waterLevel(x){ return WL[idx(x)]; }
+buildArena();
+
+// ---------- 人体 → 物理モデル ----------
+// 胴体＋頭は回転しない本体（並進のみ）。腕・脚は肩・腰を軸に回る「車輪」。
+function dist(a, b){ return Math.hypot(a.x - b.x, a.y - b.y); }
+function samplePolyline(pts, spacing){
+  const out = [{ ...pts[0] }];
+  let carry = 0;
+  for (let i = 0; i < pts.length - 1; i++){
+    const a = pts[i], b = pts[i + 1], L = dist(a, b);
+    if (L === 0) continue;
+    let d = spacing - carry;
+    while (d <= L){ out.push({ x: a.x + (b.x - a.x) * d / L, y: a.y + (b.y - a.y) * d / L }); d += spacing; }
+    carry = L - (d - spacing);
+  }
+  return out;
+}
+const M_PT = 100;
+const BODY_MASS = 12000;   // 全員同じ質量
+// facing: +1 右向き（右へ進む）、-1 左向き（左へ進む）。手足は facing に合わせて左右反転し回転方向も反転
+function makeBody(limbs, color, facing){
+  let tp = samplePolyline(TORSO, 9);
+  for (let i = 0; i < 12; i++){ const t = i / 12 * Math.PI * 2; tp.push({ x: HEAD.x + Math.cos(t) * HEAD.r, y: HEAD.y + Math.sin(t) * HEAD.r }); }
+  let cx = 0, cy = 0;
+  for (const p of tp){ cx += p.x; cy += p.y; }
+  cx /= tp.length; cy /= tp.length;
+  const tf = p => ({ x: (p.x - cx) * SCALE, y: (p.y - cy) * SCALE });
+  const torsoPts = tp.map(tf);
+  let m = M_PT * torsoPts.length, rad = 0;
+  for (const p of torsoPts) rad = Math.max(rad, Math.hypot(p.x, p.y) + T);
+  const joints = [];
+  for (const [jointPt, limb] of [[SHOULDER, limbs.arm], [HIP, limbs.leg]]){
+    const o = tf(jointPt);
+    const rel = p => ({ x: (p.x - jointPt.x) * SCALE * facing, y: (p.y - jointPt.y) * SCALE });
+    // 手前（front）と奥（back）を別々の手足として持つ
+    const frontLines = (limb.front ? [limb.front] : []).map(st => st.map(rel));
+    const backLines = (limb.back ? [limb.back] : []).map(st => st.map(rel));
+    let pts = [];
+    for (const st of [limb.front, limb.back]) if (st) pts = pts.concat(samplePolyline(st, 9).map(rel));
+    let I = 0, jr = 0;
+    for (const p of pts){ I += M_PT * (p.x * p.x + p.y * p.y); jr = Math.max(jr, Math.hypot(p.x, p.y)); }
+    I += M_PT * pts.length * T * T / 2;
+    m += M_PT * pts.length;
+    if (pts.length) rad = Math.max(rad, Math.hypot(o.x, o.y) + jr + T);
+    joints.push({ ox: o.x, oy: o.y, pts, frontLines, backLines, lines: frontLines.concat(backLines),
+                  a: 0, w: 0, dir: facing,
+                  I, invI: pts.length ? 1 / I : 0, rad: jr + T, active: pts.length > 0 });
+  }
+  // 質量は形によらず一定（線の長さで有利にならない）。慣性モーメントも同じ比率で揃える
+  const K = BODY_MASS / m; m = BODY_MASS;
+  for (const j of joints){ j.I *= K; j.invI = j.pts.length ? 1 / j.I : 0; }
+  const head = { ...tf(HEAD), r: HEAD.r * SCALE };
+  return { torsoPts, torsoLine: TORSO.map(tf), head, joints, facing,
+           m, invM: 1 / m, rad, color, speed: 1, x: 0, y: 0, vx: 0, vy: 0 };
+}
+
+function closestOnPolyline(P, i0, px, py){
+  let best = Infinity, bx = px, by = 0;
+  for (let i = Math.max(0, i0 - 12); i <= Math.min(P.length - 2, i0 + 12); i++){
+    const a = P[i], b = P[i + 1];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const l2 = dx * dx + dy * dy;
+    let u = l2 > 0 ? ((px - a.x) * dx + (py - a.y) * dy) / l2 : 0;
+    u = Math.max(0, Math.min(1, u));
+    const qx = a.x + dx * u, qy = a.y + dy * u;
+    const d = (px - qx) * (px - qx) + (py - qy) * (py - qy);
+    if (d < best){ best = d; bx = qx; by = qy; }
+  }
+  return { x: bx, y: by, d: Math.sqrt(best) };
+}
+
+// 地面との1点接触
+function applyContact(b, px, py, j, nx, ny, pen){
+  const muF = muAt(px);
+  const rx = j ? px - (b.x + j.ox) : 0, ry = j ? py - (b.y + j.oy) : 0;
+  const w = j ? j.w : 0, invI = j ? j.invI : 0;
+  let vpx = b.vx - w * ry, vpy = b.vy + w * rx;
+  const vn = vpx * nx + vpy * ny;
+  if (vn < 0){
+    const rn = rx * ny - ry * nx;
+    const kn = b.invM + rn * rn * invI;
+    const jn = -(1 + E) * vn / kn;
+    b.vx += jn * nx * b.invM; b.vy += jn * ny * b.invM; if (j) j.w += rn * jn * invI;
+    const tx = -ny, ty = nx;
+    const w2 = j ? j.w : 0;
+    vpx = b.vx - w2 * ry; vpy = b.vy + w2 * rx;
+    const vt = vpx * tx + vpy * ty;
+    const rt = rx * ty - ry * tx;
+    const kt = b.invM + rt * rt * invI;
+    let jt = -vt / kt;
+    const lim = MU * muF * jn;
+    jt = Math.max(-lim, Math.min(lim, jt));
+    b.vx += jt * tx * b.invM; b.vy += jt * ty * b.invM; if (j) j.w += rt * jt * invI;
+  }
+  const corr = Math.min(pen, 8) * 0.4;
+  b.x += nx * corr; b.y += ny * corr;
+}
+function contact(b, px, py, j){
+  const h = terrain(px);
+  if (py + T + 4 < h) return;
+  const inside = py > h;
+  const cp = closestOnPolyline(TP, terrainIndex(px), px, py);
+  const pen = inside ? cp.d + T : T - cp.d;
+  if (pen <= 0) return;
+  let nx, ny;
+  if (cp.d < 1e-6){ nx = 0; ny = -1; }
+  else if (inside){ nx = (cp.x - px) / cp.d; ny = (cp.y - py) / cp.d; }
+  else { nx = (px - cp.x) / cp.d; ny = (py - cp.y) / cp.d; }
+  applyContact(b, px, py, j, nx, ny, pen);
+}
+
+// ワールド座標の点と線分（体同士の当たり用）
+function worldPoints(b){
+  const out = [];
+  for (const v of b.torsoPts) out.push({ x: b.x + v.x, y: b.y + v.y, j: null });
+  for (const j of b.joints){
+    const c = Math.cos(j.a), s = Math.sin(j.a);
+    for (const v of j.pts) out.push({ x: b.x + j.ox + v.x * c - v.y * s, y: b.y + j.oy + v.x * s + v.y * c, j });
+  }
+  return out;
+}
+function worldSegments(b){
+  const out = [];
+  const addLine = (pts, j) => { for (let i = 0; i < pts.length - 1; i++) out.push({ ax: pts[i].x, ay: pts[i].y, bx: pts[i + 1].x, by: pts[i + 1].y, j }); };
+  addLine(b.torsoLine.map(p => ({ x: b.x + p.x, y: b.y + p.y })), null);
+  const hp = [];
+  for (let i = 0; i <= 12; i++){ const t = i / 12 * Math.PI * 2; hp.push({ x: b.x + b.head.x + Math.cos(t) * b.head.r, y: b.y + b.head.y + Math.sin(t) * b.head.r }); }
+  addLine(hp, null);
+  for (const j of b.joints){
+    const c = Math.cos(j.a), s = Math.sin(j.a);
+    for (const ln of j.lines) addLine(ln.map(v => ({ x: b.x + j.ox + v.x * c - v.y * s, y: b.y + j.oy + v.x * s + v.y * c })), j);
+  }
+  return out;
+}
+function pointVel(b, px, py, j){
+  const rx = j ? px - (b.x + j.ox) : 0, ry = j ? py - (b.y + j.oy) : 0;
+  const w = j ? j.w : 0;
+  return { vx: b.vx - w * ry, vy: b.vy + w * rx, rx, ry };
+}
+// A の点と B の線分の接触
+function collideBodies(A, B){
+  const pts = worldPoints(A), segs = worldSegments(B);
+  const R2 = (2 * T) * (2 * T);
+  for (const p of pts){
+    for (const sg of segs){
+      const dx = sg.bx - sg.ax, dy = sg.by - sg.ay;
+      const l2 = dx * dx + dy * dy;
+      let u = l2 > 0 ? ((p.x - sg.ax) * dx + (p.y - sg.ay) * dy) / l2 : 0;
+      u = Math.max(0, Math.min(1, u));
+      const qx = sg.ax + dx * u, qy = sg.ay + dy * u;
+      const d2 = (p.x - qx) * (p.x - qx) + (p.y - qy) * (p.y - qy);
+      if (d2 >= R2 || d2 < 1e-8) continue;
+      const d = Math.sqrt(d2), nx = (p.x - qx) / d, ny = (p.y - qy) / d, pen = 2 * T - d;
+      const va = pointVel(A, p.x, p.y, p.j), vb = pointVel(B, qx, qy, sg.j);
+      const invIa = p.j ? p.j.invI : 0, invIb = sg.j ? sg.j.invI : 0;
+      let vrx = va.vx - vb.vx, vry = va.vy - vb.vy;
+      const vn = vrx * nx + vry * ny;
+      if (vn < 0){
+        const rna = va.rx * ny - va.ry * nx, rnb = vb.rx * ny - vb.ry * nx;
+        const k = A.invM + B.invM + rna * rna * invIa + rnb * rnb * invIb;
+        const jn = -(1 + E_BODY) * vn / k;
+        A.vx += jn * nx * A.invM; A.vy += jn * ny * A.invM; if (p.j) p.j.w += rna * jn * invIa;
+        B.vx -= jn * nx * B.invM; B.vy -= jn * ny * B.invM; if (sg.j) sg.j.w -= rnb * jn * invIb;
+        const tx = -ny, ty = nx;
+        const va2 = pointVel(A, p.x, p.y, p.j), vb2 = pointVel(B, qx, qy, sg.j);
+        const vt = (va2.vx - vb2.vx) * tx + (va2.vy - vb2.vy) * ty;
+        const rta = va.rx * ty - va.ry * tx, rtb = vb.rx * ty - vb.ry * tx;
+        const kt = A.invM + B.invM + rta * rta * invIa + rtb * rtb * invIb;
+        let jt = -vt / kt;
+        const lim = MU_BODY * jn;
+        jt = Math.max(-lim, Math.min(lim, jt));
+        A.vx += jt * tx * A.invM; A.vy += jt * ty * A.invM; if (p.j) p.j.w += rta * jt * invIa;
+        B.vx -= jt * tx * B.invM; B.vy -= jt * ty * B.invM; if (sg.j) sg.j.w -= rtb * jt * invIb;
+      }
+      const corr = Math.min(pen, 6) * 0.2;
+      A.x += nx * corr; A.y += ny * corr; B.x -= nx * corr; B.y -= ny * corr;
+    }
+  }
+}
+
+function stepBody(b, dt){
+  b.vy += G * dt;
+  b.vx *= 1 - 0.03 * dt;
+  for (const j of b.joints){
+    if (!j.active) continue;
+    if (j.w * j.dir < WMAX * b.speed) j.w += j.dir * POWER * G * b.m * j.rad * j.invI * dt;
+    j.a += j.w * dt;
+  }
+  b.x += b.vx * dt; b.y += b.vy * dt;
+  // 水：沈んだ点ごとに浮力と抵抗
+  const nPts = b.torsoPts.length + b.joints.reduce((n, j) => n + j.pts.length, 0);
+  const water = (px, py, j) => {
+    if (py < waterLevel(px)) return;
+    b.vy -= G * BUOY / nPts * dt;
+    const rx = j ? px - (b.x + j.ox) : 0, ry = j ? py - (b.y + j.oy) : 0;
+    const w = j ? j.w : 0;
+    const vpx = b.vx - w * ry, vpy = b.vy + w * rx;
+    const fx = -DRAG * (b.m / nPts) * vpx * dt, fy = -DRAG * (b.m / nPts) * vpy * dt;
+    b.vx += fx * b.invM; b.vy += fy * b.invM;
+    if (j) j.w += (rx * fy - ry * fx) * j.invI;
+  };
+  for (const v of b.torsoPts) water(b.x + v.x, b.y + v.y, null);
+  for (const j of b.joints){
+    const c = Math.cos(j.a), s = Math.sin(j.a);
+    for (const v of j.pts) water(b.x + j.ox + v.x * c - v.y * s, b.y + j.oy + v.x * s + v.y * c, j);
+  }
+  for (const v of b.torsoPts) contact(b, b.x + v.x, b.y + v.y, null);
+  for (const j of b.joints){
+    const c = Math.cos(j.a), s = Math.sin(j.a);
+    for (const v of j.pts) contact(b, b.x + j.ox + v.x * c - v.y * s, b.y + j.oy + v.x * s + v.y * c, j);
+  }
+}
+function replaceBody(old, limbs, color, facing){
+  const b = makeBody(limbs, color, facing);
+  b.x = old.x; b.vx = old.vx; b.vy = old.vy; b.speed = old.speed;
+  for (let i = 0; i < b.joints.length; i++){ b.joints[i].a = old.joints[i].a; b.joints[i].w = old.joints[i].w; }
+  b.y = Math.min(old.y, terrain(old.x) - b.rad - 1);
+  return b;
+}
+
+// ---------- CPUのポーズ（数秒ごとに持ち替える） ----------
+const arc = (j, r, n) => Array.from({ length: n }, (_, i) => ({ x: j.x + Math.cos((i + 1) / n * Math.PI) * r, y: j.y + Math.sin((i + 1) / n * Math.PI) * r }));
+// 手描きっぽい歪んだ半円（180度コピーでいびつな輪になる）
+const wobbly = (j, r, n, amp) => Array.from({ length: n }, (_, i) => {
+  const t = (i + 1) / n * Math.PI, rr = r * (1 + amp * (Math.sin(t * 3.1 + 0.7) * 0.6 + Math.sin(t * 5.3 + 2.1) * 0.4));
+  return { x: j.x + Math.cos(t) * rr, y: j.y + Math.sin(t) * rr };
+});
+const mirror = (st, j) => st.map(p => ({ x: 2 * j.x - p.x, y: 2 * j.y - p.y }));
+const limb = (st, j) => st ? { front: st, back: mirror(st, j) } : { front: null, back: null };
+const CPU_POSES = [
+  { arm: limb([SHOULDER, { x: 200, y: 70 }], SHOULDER),               leg: limb([HIP, { x: 150, y: 178 }, HIP, { x: 210, y: 110 }], HIP) },
+  { arm: limb([SHOULDER, ...wobbly(SHOULDER, 30, 8, 0.2)], SHOULDER), leg: limb([HIP, ...wobbly(HIP, 42, 12, 0.22)], HIP) },
+  { arm: limb([SHOULDER, { x: 215, y: 62 }], SHOULDER),               leg: limb([HIP, { x: 150, y: 176 }], HIP) },
+  { arm: limb(null, SHOULDER),                                        leg: limb([HIP, { x: 175, y: 160 }, { x: 150, y: 182 }, { x: 122, y: 150 }], HIP) },
+];
+
+// ---------- 描画パッド ----------
+const pad = document.getElementById('pad');
+const pctx = pad.getContext('2d');
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let stroke = [], drawing = false;
+const limbs = { arm: { front: null, back: null }, leg: { front: null, back: null } };
+
+function padPos(e){
+  const r = pad.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * pad.width / r.width, y: (e.clientY - r.top) * pad.height / r.height };
+}
+function strokePath(ctx, pts){
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for (const p of pts) ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+}
+function drawPad(){
+  pctx.clearRect(0, 0, pad.width, pad.height);
+  pctx.lineJoin = 'round'; pctx.lineCap = 'round';
+  pctx.strokeStyle = css('--ink'); pctx.lineWidth = 4;
+  strokePath(pctx, TORSO);
+  pctx.beginPath(); pctx.arc(HEAD.x, HEAD.y, HEAD.r, 0, Math.PI * 2);
+  pctx.fillStyle = '#fff'; pctx.fill(); pctx.stroke();
+  for (const j of [SHOULDER, HIP]){
+    pctx.beginPath(); pctx.arc(j.x, j.y, 6, 0, Math.PI * 2);
+    pctx.fillStyle = css('--player'); pctx.fill();
+  }
+  // 中央の点線（右＝手前、左＝奥）
+  pctx.save();
+  pctx.setLineDash([6, 6]); pctx.strokeStyle = '#b9bec8'; pctx.lineWidth = 2;
+  pctx.beginPath(); pctx.moveTo(SHOULDER.x, 6); pctx.lineTo(SHOULDER.x, pad.height - 6); pctx.stroke();
+  pctx.restore();
+  pctx.lineWidth = 5;
+  for (const [side, col] of [['back', '#f3a9a5'], ['front', css('--player')]]){
+    pctx.strokeStyle = col;
+    for (const k of ['arm', 'leg']) if (limbs[k][side]) strokePath(pctx, limbs[k][side]);
+  }
+  if (stroke.length >= 2){ pctx.globalAlpha = 0.5; strokePath(pctx, stroke); pctx.globalAlpha = 1; }
+}
+pad.addEventListener('pointerdown', e => {
+  drawing = true; stroke = [padPos(e)]; pad.setPointerCapture(e.pointerId); drawPad();
+});
+pad.addEventListener('pointermove', e => {
+  if (!drawing) return;
+  const p = padPos(e);
+  if (p.x < 0 || p.y < 0 || p.x > pad.width || p.y > pad.height) return;   // 枠外は無視（戻れば直線でつながる）
+  if (dist(p, stroke[stroke.length - 1]) > 4){
+    stroke.push(p); drawPad();
+  }
+});
+// 描き始めに近い関節へ接続して手足にする
+function applyStroke(){
+  const joint = dist(stroke[0], SHOULDER) <= dist(stroke[0], HIP) ? SHOULDER : HIP;
+  const kind = joint === SHOULDER ? 'arm' : 'leg';
+  // 中央の点線より右に描けば手前の手足、左なら奥の手足
+  let mx = 0; for (const p of stroke) mx += p.x; mx /= stroke.length;
+  const side = mx >= SHOULDER.x ? 'front' : 'back';
+  const dx = joint.x - stroke[0].x, dy = joint.y - stroke[0].y;
+  limbs[kind][side] = stroke.map(p => ({ x: p.x + dx, y: p.y + dy }));
+}
+function endStroke(){
+  if (!drawing) return;
+  drawing = false;
+  if (stroke.length >= 3){
+    applyStroke();
+    if (fighting) player = replaceBody(player, limbs, css('--player'), player.facing);   // 仕切り中もその場で差し替わる
+    else startBout();
+  }
+  stroke = [];
+  drawPad();
+}
+pad.addEventListener('pointerup', endStroke);
+pad.addEventListener('pointercancel', endStroke);
+
+// ---------- 取組 ----------
+const race = document.getElementById('race');
+const rctx = race.getContext('2d');
+const hud = {};
+let stepCount = 0, pending = '', slowLeft = 0, ready = 0, callText = '', streak = 0;
+let fighting = false, player = null, cpu = null, boutTime = 0, lastTs = 0, acc = 0, raf = 0, result = '', cpuTimer = 0, cpuPose = 0;
+let dpr = 1;
+function resize(){
+  dpr = Math.min(window.devicePixelRatio || 1, 3);
+  race.width = Math.round(window.innerWidth * dpr); race.height = Math.round(window.innerHeight * dpr);
+  render();
+}
+window.addEventListener('resize', resize);
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function placeAt(b, x){ b.x = x; b.y = terrain(x) - b.rad - 1; b.vx = 0; b.vy = 0; }
+
+function drawBody(ctx, b, alpha){
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(b.x, b.y);
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const line = ln => {
+    ctx.strokeStyle = css('--ink'); ctx.lineWidth = T * 2 + 3; strokePath(ctx, ln);
+    ctx.strokeStyle = b.color; ctx.lineWidth = T * 2; strokePath(ctx, ln);
+  };
+  for (const j of b.joints){                       // 奥の手足は体の後ろ
+    ctx.save(); ctx.translate(j.ox, j.oy); ctx.rotate(j.a);
+    ctx.globalAlpha = alpha * 0.55;
+    for (const ln of j.backLines) line(ln);
+    ctx.restore();
+  }
+  ctx.globalAlpha = alpha;
+  line(b.torsoLine);
+  ctx.beginPath(); ctx.arc(b.head.x, b.head.y, b.head.r, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.strokeStyle = css('--ink'); ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(b.head.x + b.head.r * 0.45 * b.facing, b.head.y - b.head.r * 0.15, 1.8, 0, Math.PI * 2);
+  ctx.fillStyle = css('--ink'); ctx.fill();
+  for (const j of b.joints){                       // 手前の手足は体の前
+    ctx.save(); ctx.translate(j.ox, j.oy); ctx.rotate(j.a);
+    for (const ln of j.frontLines) line(ln);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function render(){
+  const W = race.width, H = race.height;
+  const sky = rctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#5c6fe0'); sky.addColorStop(0.55, '#a9baff'); sky.addColorStop(1, '#e2cffb');
+  rctx.fillStyle = sky; rctx.fillRect(0, 0, W, H);
+  const zoom = W / VIEW_W;
+  const VW = VIEW_W, VH = H / zoom;
+  const camX = (RING_L + RING_R) / 2 - VW / 2;
+  const camY = RING_Y - VH * 0.45;
+  rctx.save();
+  rctx.scale(zoom, zoom);
+  rctx.translate(-camX, -camY);
+  // 土俵（地形に沿って塗る）
+  const st = STAGES[stage];
+  rctx.beginPath();
+  rctx.moveTo(RING_L, camY + VH + 20);
+  for (let i = terrainIndex(RING_L); i <= terrainIndex(RING_R); i++) rctx.lineTo(TP[i].x, TP[i].y);
+  rctx.lineTo(RING_R, camY + VH + 20); rctx.closePath();
+  rctx.fillStyle = css('--ground'); rctx.fill();
+  rctx.save(); rctx.clip();
+  rctx.fillStyle = 'rgba(255,255,255,0.06)';
+  for (let sx = RING_L; sx < RING_R; sx += 80) rctx.fillRect(sx, RING_Y - 200, 40, 900);
+  rctx.restore();
+  rctx.strokeStyle = st.mu ? 'rgba(190,235,255,0.95)' : '#fff'; rctx.lineWidth = st.mu ? 6 : 3;
+  rctx.beginPath(); for (let i = terrainIndex(RING_L); i <= terrainIndex(RING_R); i++) rctx.lineTo(TP[i].x, TP[i].y + 1.5); rctx.stroke();
+  if (cpu) drawBody(rctx, cpu, 1);
+  if (player) drawBody(rctx, player, 1);
+  if (player){                                     // 自キャラの上に「You」
+    rctx.font = 'bold 14px sans-serif'; rctx.textAlign = 'center'; rctx.textBaseline = 'alphabetic';
+    rctx.lineWidth = 3; rctx.strokeStyle = 'rgba(0,0,0,0.45)'; rctx.fillStyle = '#fff';
+    const ty = player.y - player.rad - 8;
+    rctx.strokeText('You', player.x, ty); rctx.fillText('You', player.x, ty);
+    rctx.textAlign = 'left';
+  }
+  if (st.seesaw){                                  // 中央のヒンジ
+    rctx.fillStyle = '#8a9099';
+    rctx.beginPath(); rctx.moveTo(RING_C - 16, RING_Y + 46); rctx.lineTo(RING_C + 16, RING_Y + 46); rctx.lineTo(RING_C, RING_Y + 6); rctx.closePath(); rctx.fill();
+    rctx.fillStyle = '#fff';
+    rctx.beginPath(); rctx.arc(RING_C, RING_Y + 4, 5, 0, Math.PI * 2); rctx.fill();
+  }
+  rctx.restore();
+  // HUD
+  rctx.save();
+  rctx.scale(dpr, dpr);
+  const cw = W / dpr, ch = H / dpr;
+  if (streak > 0){                                 // 勝ち数（2つ以上で連勝表示）
+    const label = streak === 1 ? '1勝' : streak + ' 連勝中';
+    rctx.font = 'bold 16px sans-serif'; rctx.textAlign = 'left'; rctx.textBaseline = 'alphabetic';
+    rctx.lineWidth = 3; rctx.strokeStyle = 'rgba(0,0,0,0.45)'; rctx.fillStyle = '#fff';
+    rctx.strokeText(label, 24, 40); rctx.fillText(label, 24, 40);
+  }
+  if (callText){                                   // 仕切りの掛け声
+    rctx.textAlign = 'center'; rctx.textBaseline = 'middle';
+    rctx.font = 'bold ' + Math.round(Math.min(cw * 0.13, 68)) + 'px sans-serif';
+    rctx.lineWidth = 8; rctx.lineJoin = 'round';
+    rctx.strokeStyle = '#fff'; rctx.fillStyle = css('--ink');
+    rctx.strokeText(callText, cw / 2, ch * 0.28); rctx.fillText(callText, cw / 2, ch * 0.28);
+    rctx.textAlign = 'left'; rctx.textBaseline = 'alphabetic';
+  }
+  if (result){
+    const pw = Math.min(cw - 40, 340), ph = 210, px = (cw - pw) / 2, py = ch * 0.3;
+    rctx.fillStyle = 'rgba(255,255,255,0.95)'; rctx.strokeStyle = css('--ink'); rctx.lineWidth = 2;
+    roundRect(rctx, px, py, pw, ph, 18); rctx.fill(); rctx.stroke();
+    rctx.textAlign = 'center'; rctx.textBaseline = 'middle';
+    rctx.fillStyle = result === 'WIN' ? css('--player') : css('--cpu');
+    rctx.font = 'bold 34px sans-serif';
+    rctx.fillText(result === 'WIN' ? '勝ち' : '負け', cw / 2, py + 48);
+    if (result === 'WIN'){
+      rctx.fillStyle = css('--ink'); rctx.font = 'bold 18px sans-serif';
+      rctx.fillText(streak === 1 ? '1勝' : streak + ' 連勝中', cw / 2, py + 82);
+    }
+    hud.restart = { x: px + 24, y: py + 100, w: pw - 48, h: 40 };
+    hud.share = { x: px + 24, y: py + 148, w: pw - 48, h: 40 };
+    for (const [k, label, fill, color] of [['restart', result === 'WIN' ? 'つぎへ' : 'もういっかい', css('--ink'), '#fff'],
+                                           ['share', 'Xでシェア', '#fff', css('--ink')]]){
+      const r = hud[k];
+      rctx.fillStyle = fill; rctx.strokeStyle = css('--ink'); rctx.lineWidth = 2;
+      roundRect(rctx, r.x, r.y, r.w, r.h, 20); rctx.fill(); rctx.stroke();
+      rctx.fillStyle = color; rctx.font = 'bold 16px sans-serif';
+      rctx.fillText(label, r.x + r.w / 2, r.y + r.h / 2 + 1);
+    }
+    rctx.textAlign = 'left'; rctx.textBaseline = 'alphabetic';
+  }
+  rctx.restore();
+}
+function out(b){ return b.y > RING_Y + 120; }   // 勝敗は高さだけで判定（土俵から落ちたら負け）
+function frame(ts){
+  if (!lastTs) lastTs = ts;
+  // 決着後はスロー再生（SLOW_RATE 倍速）で少し見せてからダイアログ
+  const rate = pending ? SLOW_RATE : 1;
+  const dtReal = Math.min((ts - lastTs) / 1000, 0.05); lastTs = ts;
+  if (ready > 0){                                   // 仕切り：物理は止めて構えたまま待つ
+    ready -= dtReal;
+    callText = ready > 0.6 ? 'はっけよーい' : 'のこった！';
+    if (ready <= 0){ callText = ''; acc = 0; }
+    render();
+    raf = requestAnimationFrame(frame);
+    return;
+  }
+  acc += dtReal * rate;
+  while (acc >= DT){
+    // 常に相手の方を向いて押す（乗り越えて反対側に出ても向き直る）
+    stepSeesaw(DT);
+    face(player, cpu); face(cpu, player);
+    stepBody(player, DT); stepBody(cpu, DT);
+    // 処理順で有利不利が出ないよう、毎ステップ順番を入れ替える
+    if (stepCount++ % 2){ collideBodies(player, cpu); collideBodies(cpu, player); } else { collideBodies(cpu, player); collideBodies(player, cpu); }
+    boutTime += DT; acc -= DT;
+    cpuTimer += DT;
+    if (!pending && !result && cpuTimer >= CPU_DELAY){ cpuTimer = 0; cpuPose = (cpuPose + 1) % CPU_POSES.length; cpu = replaceBody(cpu, CPU_POSES[cpuPose], css('--cpu'), -1); }
+    if (result){
+      // 決着後も物理は動かし続ける（ダイアログの裏で落ちていく）
+    } else if (pending){
+      slowLeft -= DT;
+      if (slowLeft <= 0) finish(pending);
+    } else {
+      const po = out(player), co = out(cpu);
+      if (po || co){ pending = po && !co ? 'LOSE' : 'WIN'; slowLeft = SLOW_TIME; }
+    }
+  }
+  render();
+  raf = requestAnimationFrame(frame);
+}
+function face(b, other){
+  if (Math.abs(other.x - b.x) < 12) return;          // 真上・真下付近では向きを変えない
+  const f = other.x > b.x ? 1 : -1;
+  if (f === b.facing) return;
+  b.facing = f;
+  for (const j of b.joints) j.dir = f;
+}
+function finish(r){ fighting = false; result = r; pending = ''; streak = r === 'WIN' ? streak + 1 : 0;
+  document.documentElement.removeAttribute('data-howto-hidden'); }
+function startBout(){
+  document.documentElement.setAttribute('data-howto-hidden', '');
+  seeA = 0; seeW = 0;
+  buildArena();
+  player = makeBody(limbs, css('--player'), 1);
+  cpuPose = Math.floor(Math.random() * CPU_POSES.length);
+  cpu = makeBody(CPU_POSES[cpuPose], css('--cpu'), -1); cpu.speed = CPU_SPEED;
+  placeAt(player, START_P); placeAt(cpu, START_C);
+  boutTime = 0; lastTs = 0; acc = 0; cpuTimer = 0; fighting = true; result = ''; pending = ''; slowLeft = 0;
+  ready = READY_TIME; callText = 'はっけよーい';
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(frame);
+}
+race.addEventListener('pointerdown', e => {
+  if (fighting || !result) return;
+  const r = race.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  const hit = k => hud[k] && x >= hud[k].x && x <= hud[k].x + hud[k].w && y >= hud[k].y && y <= hud[k].y + hud[k].h;
+  if (hit('share')) shareImage();
+  else if (hit('restart')){ if (result === 'WIN') stage = (stage + 1) % STAGES.length; startBout(); }
+});
+// 完成したキャラの画像を作ってXでシェア
+function shareImage(){
+  if (!player) return;
+  const c = document.createElement('canvas'); c.width = 720; c.height = 900;
+  const g = c.getContext('2d');
+  const sky = g.createLinearGradient(0, 0, 0, c.height);
+  sky.addColorStop(0, '#5c6fe0'); sky.addColorStop(0.55, '#a9baff'); sky.addColorStop(1, '#e2cffb');
+  g.fillStyle = sky; g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = css('--ground'); g.fillRect(0, c.height * 0.78, c.width, c.height * 0.22);
+  const scale = Math.min(4, 300 / player.rad);
+  const b = { ...player, x: 0, y: 0 };
+  g.save(); g.translate(c.width / 2, c.height * 0.78 - player.rad * scale); g.scale(scale, scale);
+  drawBody(g, b, 1);
+  g.restore();
+  const dataUrl = c.toDataURL('image/png');
+  const bin = atob(dataUrl.split(',')[1]);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const file = new File([bytes], 'sumo.png', { type: 'image/png' });
+  const text = (result === 'WIN' ? (streak === 1 ? '1勝\n' : streak + '連勝中\n') : '') + location.href + '\n#DrawSumo';
+  const openIntent = () => window.open('https://x.com/intent/post?text=' + encodeURIComponent(text), '_blank');
+  const copyImage = () => (navigator.clipboard && window.ClipboardItem)
+    ? navigator.clipboard.write([new ClipboardItem({ 'image/png': new Blob([bytes], { type: 'image/png' }) })])
+    : Promise.reject();
+  // 1) 画像ごと共有ダイアログ（スマホ・対応PC）
+  if (navigator.canShare && navigator.canShare({ files: [file] })){
+    navigator.share({ files: [file], text }).catch(() => {});
+    return;
+  }
+  // 2) 画像は非対応でも共有ダイアログが使えるPC（Chrome 128+ / macOS Safari など）
+  //    画像はクリップボードに入れてから本文だけ共有ダイアログへ（貼り付けで画像を添付できる）
+  if (navigator.share){
+    copyImage().catch(() => {}).finally(() => {
+      navigator.share({ text }).catch(() => { showImage(dataUrl); openIntent(); });
+    });
+    return;
+  }
+  // 3) 共有ダイアログが無い環境（Firefox など）は X の投稿画面を開く
+  copyImage().then(openIntent).catch(() => { showImage(dataUrl); openIntent(); });
+}
+// ページ遷移せずに画像を重ねて表示（タップで閉じる。長押し／右クリックで保存）
+function showImage(dataUrl){
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10';
+  const img = document.createElement('img');
+  img.src = dataUrl; img.style.cssText = 'max-width:80vw;max-height:80vh;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.4)';
+  box.appendChild(img);
+  box.addEventListener('pointerdown', e => { if (e.target === box) box.remove(); });
+  document.body.appendChild(box);
+}
+drawPad();
+resize();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

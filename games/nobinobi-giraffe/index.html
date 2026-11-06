@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/nobinobi-giraffe/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ノビノビ・ジラフ</title>
+<meta name="description" content="キリンの首を伸ばして高さを競う">
+<style>
+  :root {
+    --bg: #2b2b2e;               /* 画面の外側 */
+    --fg: #f2f0ea;               /* オーバーレイの文字 */
+    --sky: #cfe3ee;              /* 地上の空（キャンバス描画前の下地） */
+    --hud: #2f3a3f;              /* 明るい空の上の HUD 文字 */
+    --hud-night: #e8eef2;        /* 暗い空の上の HUD 文字 */
+    --panel: rgba(20, 24, 26, 0.78);
+    --howto-bg: #1b1f23;         /* 遊び方パネルの背景 */
+    --howto-fg: #f2f0ea;
+    --focus: #ffd45e;
+    --share-bg: #1b1f23;         /* 共有画像の背景 */
+    --g-body: #e0ae4b;           /* キリンの体 */
+    --g-dark: #c28f2c;           /* 角・耳・奥の脚 */
+    --g-spot: #9c6b2f;           /* 模様 */
+    --g-light: #f0c86d;          /* 顔のハイライト */
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  /* iOS の長押し（虫眼鏡・テキスト選択・コールアウト）を止める */
+  html, body, #wrap, canvas, .overlay {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  body {
+    margin: 0;
+    height: 100vh;
+    height: 100dvh;              /* モバイルのアドレスバーで高さが狂わないように */
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  #wrap {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    height: 100%;
+    background: var(--sky);
+    touch-action: none;
+  }
+  canvas { display: block; }
+  #cv { width: 100%; height: 100%; }
+  [hidden] { display: none !important; }
+
+  #hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) calc(env(safe-area-inset-right, 0px) + 14px) 10px calc(env(safe-area-inset-left, 0px) + 14px);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    color: var(--hud);
+    pointer-events: none;
+  }
+  #len { font-size: 22px; font-weight: 600; }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    overflow-y: auto;            /* 縦長の結果画像がはみ出したらスクロールする */
+    padding: calc(env(safe-area-inset-top, 0px) + 24px) 24px calc(env(safe-area-inset-bottom, 0px) + 24px);
+    text-align: center;
+    background: var(--panel);
+    color: var(--fg);
+  }
+  .overlay > .inner {
+    margin: auto;                /* 収まるときは中央、はみ出すときは上端から */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .overlay h1 { margin: 0; font-size: 26px; font-weight: 600; }
+  .overlay p { margin: 0; font-size: 14px; line-height: 1.7; max-width: 24em; }
+  .overlay .score { font-size: 34px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  #trail {
+    width: 152px;
+    height: 236px;   /* 結果の長さに応じて JS で変える */
+    border: 1px solid rgba(242, 240, 234, 0.35);
+    background: rgba(0, 0, 0, 0.5);
+  }
+  #shareMsg { font-size: 12px; opacity: 0.75; min-height: 1.2em; margin: 0; }
+  #startHint { opacity: 0.8; }
+  button {
+    font: inherit;
+    font-size: 15px;
+    min-height: 44px;            /* 指で押せる大きさ */
+    padding: 10px 24px;
+    border: 1px solid var(--fg);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--fg);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* 共有できない環境向け：結果画像を重ねて表示し、長押し／右クリックで保存してもらう */
+  #imgOverlay { z-index: 2; background: rgba(10, 12, 14, 0.92); }
+  #imgOverlay img {
+    display: block;
+    max-width: 100%;
+    max-height: 70vh;
+    max-height: 70dvh;
+    -webkit-touch-callout: default;   /* 長押しで「画像を保存」を出す */
+    -webkit-user-select: auto;
+    user-select: auto;
+  }
+</style>
+</head>
+<body>
+
+<div id="wrap">
+  <canvas id="cv"></canvas>
+  <div id="hud">
+    <div>
+      <div id="len">0 m</div>
+    </div>
+  </div>
+
+  <div class="overlay" id="startOverlay">
+    <div class="inner">
+      <h1>ノビノビ・ジラフ</h1>
+      <p id="startHint">タップでスタート</p>
+    </div>
+  </div>
+
+  <div class="overlay" id="overOverlay" hidden>
+    <div class="inner">
+      <h1 id="rankTitle">普通キリン</h1>
+      <canvas id="trail"></canvas>
+      <div class="score" id="finalLen">0 m</div>
+      <p id="resultNote"></p>
+      <button id="shareBtn">結果を共有</button>
+      <p id="shareMsg" aria-live="polite"></p>
+      <button id="retryBtn">もう一度</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="imgOverlay" hidden>
+    <div class="inner">
+      <img id="shareImg" alt="結果画像">
+      <p>長押し／右クリックで画像を保存できます</p>
+      <button id="postBtn">X にポスト</button>
+      <button id="imgCloseBtn">閉じる</button>
+    </div>
+  </div>
+
+  <section class="howto" data-pos="top-right" hidden>
+    <h2>遊び方</h2>
+    <p>キリンの首を上へ伸ばし、届いた高さを競うゲームです。首は自動で伸び続け、障害物にぶつかるか体力が尽きると終わります。長さに応じて子キリンから銀河級キリンまでの称号がつき、自己ベストはこのブラウザに保存されます。</p>
+    <h2>操作</h2>
+    <p>タップで始まります。画面に置いた指の左右の位置で首の向きが決まり、端に寄せるほど大きく傾きます。PC はマウスを動かすか、左右の矢印キーで操作します。</p>
+    <h2>コツ</h2>
+    <p>体力は毎秒減り続けるので、りんごを取って25回復します。金のりんごは50回復し、6秒間は速さが2倍で障害物を壊せます。長さに入るのは高さだけで、横に振った分は入りません。通路の左右の壁に触れても終わりません。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- 定数 ----------
+  const DW = 360;                     // 横幅＝通路の幅（design unit）
+  const HALF = DW / 2;
+  const WALL = 7;
+  const ROW = 170;
+  const HEAD_R = 11;
+  const NECK_W = 18;
+  const NECK_BASE = 58;                // 首の付け根（肩）の高さ
+  const HEAD_DRAW = 1.35;              // 顔の描画倍率（当たり判定 HEAD_R は変えない）
+  const SMILE_TIME = 1.1;              // りんごを食べた後に笑顔でいる秒数
+  const STEP = 5;
+  const MAXA = 72 * Math.PI / 180;
+  const SLEW = 6.5;
+  const KEY_RATE = 2.4;
+  const APPLE_R = 9;
+  const PICK_R = HEAD_R + APPLE_R + 4;
+  const INV_TIME = 6;
+  const INV_SPEED = 2;
+  const HP_MAX = 100;
+  const HP_DRAIN0 = 6.5, HP_DRAIN1 = 10;
+  const HP_APPLE = 25, HP_GOLD = 50;
+  const PATH_STEP = 25;
+  const SHAKE_HIT = 6, SHAKE_MAX = 11, SHAKE_DECAY = 22;
+  const SPACE_FROM = 5000, SPACE_TO = 11000;   // 星・宇宙化する高度
+  const DEATH_HOLD = 0.85;                      // 死亡演出の長さ(秒)
+
+  // ゲーム内の長さ（len / 10）→ 実際の長さ(m) の対応表。間は対数で補間する。
+  // 背景の変化と合わせてある：400〜500 で雲を抜け、500 で成層圏（空が暗くなり地球のふちが見える）、
+  // 1100 で宇宙（空が真っ黒になる）
+  const SCALE = [
+    [0,    2],
+    [100,  5],
+    [180,  7],
+    [260,  10],
+    [330,  16],
+    [400,  634],
+    [450,  3776],
+    [500,  1e4],
+    [800,  5e4],
+    [1100, 1e5],
+    [1900, 3.844e8],
+    [2500, 1.496e11],
+    [3200, 4.5e12],
+    [4200, 3.97e16],
+    [5500, 9.4607e20]
+  ];
+
+  // 称号。実際の長さ(m)がこの値未満ならその称号
+  const RANKS = [
+    [5,        "子キリン"],           // 大人のキリンの背丈 約5m
+    [7,        "普通キリン"],
+    [10,       "のっぽキリン"],
+    [16,       "電柱級キリン"],       // 電柱 10〜16m
+    [634,      "高層ビル級キリン"],   // 東京スカイツリー 634m
+    [3776,     "山級キリン"],         // 富士山 3776m
+    [1e4,      "雲上キリン"],         // 雲はおおむね 10km まで
+    [5e4,      "成層圏キリン"],       // 成層圏 10〜50km
+    [1e5,      "中間圏キリン"],       // 宇宙との境界 100km
+    [3.844e8,  "軌道級キリン"],       // 月まで 約38万km
+    [1.496e11, "月まで届くキリン"],   // 太陽まで 約1.5億km
+    [4.5e12,   "太陽まで届くキリン"], // 海王星まで 約45億km
+    [3.97e16,  "太陽系級キリン"],     // いちばん近い恒星まで 約4.2光年
+    [9.4607e20, "恒星間キリン"],     // 銀河の直径 約10万光年
+    [Infinity, "銀河級キリン"]
+  ];
+
+  // 高度ごとの空の色
+  const SKY_STOPS = [
+    [0,     [207, 227, 238]],
+    [1200,  [176, 212, 234]],
+    [3000,  [132, 181, 223]],
+    [5000,  [ 86, 133, 197]],
+    [7000,  [ 48,  81, 148]],
+    [9000,  [ 24,  40,  85]],
+    [11000, [  9,  12,  28]],
+    [99999, [  6,   8,  20]]
+  ];
+
+  const GRASS = "#a9c184", GRASS_DK = "#8fac6b";
+  const HILL_FAR = "#9db08a", HILL_NEAR = "#89a075";
+  const ROCK_SKY = [139, 140, 135], ROCK_SPACE = [150, 156, 178];
+
+  const WALL_SKY = [110, 118, 112], WALL_SPACE = [96, 102, 126];
+  // キリンの色は CSS 変数から読む（本編・結果・共有画像で同じ色を使うため）
+  const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const G_BODY = cssVar("--g-body"), G_DARK = cssVar("--g-dark"), G_SPOT = cssVar("--g-spot"), G_LIGHT = cssVar("--g-light");
+  const MOVER_SKY = [86, 88, 92], MOVER_SPACE = [92, 96, 116];   // 動く岩（通常の岩より暗い石）
+
+  // ---------- DOM ----------
+  const $ = id => document.getElementById(id);
+  const cv = $("cv");
+  const ctx = cv.getContext("2d");
+  const trailCv = $("trail");
+  const trailCtx = trailCv.getContext("2d");
+  const wrap = $("wrap");
+  const hud = $("hud");
+  const hudLen = $("len");
+  const startOverlay = $("startOverlay");
+  const overOverlay = $("overOverlay");
+  const rankTitle = $("rankTitle");
+  const finalLen = $("finalLen");
+  const resultNote = $("resultNote");
+  const shareMsg = $("shareMsg");
+  const shareBtn = $("shareBtn");
+  const retryBtn = $("retryBtn");
+  const imgOverlay = $("imgOverlay");
+  const shareImg = $("shareImg");
+
+  let W = 360, H = 640, scale = 1, viewH = 640;
+
+  function resize() {
+    const r = wrap.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);   // モバイルで無駄に重くしない
+    W = Math.max(1, r.width);
+    H = Math.max(1, r.height);
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    scale = W / DW;
+    viewH = H / scale;
+    if (state !== "play") draw();
+  }
+  window.addEventListener("resize", resize);
+
+  // ---------- ユーティリティ ----------
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function hash2(x, y) {
+    let h = Math.imul(x, 374761393) + Math.imul(y, 668265263);
+    h = Math.imul(h ^ h >>> 13, 1274126177);
+    return (h ^ h >>> 16) >>> 0;
+  }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function obsX(o) { return o.t === 2 ? o.x + o.amp * Math.sin(gameT * o.sp + o.ph) : o.x; }
+  function mix(c1, c2, t) {
+    return "rgb(" + Math.round(c1[0] + (c2[0] - c1[0]) * t) + "," +
+                    Math.round(c1[1] + (c2[1] - c1[1]) * t) + "," +
+                    Math.round(c1[2] + (c2[2] - c1[2]) * t) + ")";
+  }
+  function skyAt(alt) {
+    for (let i = 1; i < SKY_STOPS.length; i++) {
+      if (alt <= SKY_STOPS[i][0]) {
+        const a = SKY_STOPS[i - 1], b = SKY_STOPS[i];
+        const t = (alt - a[0]) / (b[0] - a[0]);
+        return [a[1][0] + (b[1][0] - a[1][0]) * t,
+                a[1][1] + (b[1][1] - a[1][1]) * t,
+                a[1][2] + (b[1][2] - a[1][2]) * t];
+      }
+    }
+    return SKY_STOPS[SKY_STOPS.length - 1][1];
+  }
+  function rgb(c) { return "rgb(" + (c[0] | 0) + "," + (c[1] | 0) + "," + (c[2] | 0) + ")"; }
+  function polyOf(rnd, n, lo, hi) {
+    const p = [];
+    for (let k = 0; k < n; k++) {
+      const a = k / n * 6.283 + (rnd() - 0.5) * 0.5;
+      const rr = lo + rnd() * (hi - lo);
+      p.push([Math.cos(a) * rr, Math.sin(a) * rr]);
+    }
+    return p;
+  }
+
+  // ---------- ステージのシード ----------
+  let runSeed = 1;
+  let phA = 1.3, phB = 4.1, phC = 2.2;
+  let frA = 0.55, frB = 0.29, frC = 1.05;
+
+  function newStage() {
+    runSeed = (Math.random() * 0xFFFFFFFF) >>> 0;
+    const r = mulberry32(runSeed);
+    phA = r() * 6.283; phB = r() * 6.283; phC = r() * 6.283;
+    frA = 0.45 + r() * 0.22;
+    frB = 0.22 + r() * 0.14;
+    frC = 0.85 + r() * 0.40;
+  }
+
+  function pathX(i) {
+    const d = Math.min(1, i / 45);
+    const amp = (HALF - 50) * (0.5 + 0.55 * d);
+    const w = 1 + 0.35 * d;
+    let v = 0.6 * Math.sin(i * frA + phA) + 0.4 * Math.sin(i * frB + phB) + 0.35 * d * Math.sin(i * frC + phC);
+    v = amp * v / w;
+    const lim = HALF - 42;
+    return clamp(v, -lim, lim);
+  }
+
+  // ---------- 行の生成 ----------
+  const rowCache = new Map();
+  const taken = new Set();
+  const smashed = new Set();
+
+  function hitsObs(obs, x, y, margin) {
+    for (let i = 0; i < obs.length; i++) {
+      const o = obs[i];
+      if (o.t === 0) {
+        if (Math.hypot(x - o.x, y - o.y) < o.r + margin) return true;
+      } else if (o.t === 2) {
+        if (Math.abs(y - o.y) < o.r + margin && Math.abs(x - o.x) < o.amp + o.r + margin) return true;
+      } else if (x > o.x - margin && x < o.x + o.w + margin && y > o.y - margin && y < o.y + o.h + margin) return true;
+    }
+    return false;
+  }
+
+  function craterSet(rnd) {
+    return [[rnd() * 1.1 - 0.55, rnd() * 1.1 - 0.55, 0.14 + rnd() * 0.13],
+            [rnd() * 1.1 - 0.55, rnd() * 1.1 - 0.55, 0.10 + rnd() * 0.12],
+            [rnd() * 1.1 - 0.55, rnd() * 1.1 - 0.55, 0.08 + rnd() * 0.10]];
+  }
+  // 往復する岩。x は中心で、実際の位置は obsX() が返す
+  function makeMover(rnd, x, y, r, amp) {
+    return { t: 2, x: x, y: y, r: r, amp: amp,
+             sp: 1.0 + rnd() * 0.9, ph: rnd() * 6.283,
+             spin: (rnd() < 0.5 ? -1 : 1) * (0.8 + rnd() * 0.8),
+             poly: polyOf(rnd, 9, 0.82, 1.1), craters: craterSet(rnd) };
+  }
+  function makeRock(rnd, x, y, r) {
+    return { t: 0, x: x, y: y, r: r, spin: (rnd() - 0.5) * 1.1, poly: polyOf(rnd, 9, 0.82, 1.1),
+             craters: craterSet(rnd) };
+  }
+  function makeBar(rnd, x, y, w, h) {
+    return { t: 1, x: x, y: y, w: w, h: h,
+             knots: [0.2 + rnd() * 0.2, 0.55 + rnd() * 0.3],
+             grain: [0.3 + rnd() * 0.15, 0.62 + rnd() * 0.2] };
+  }
+
+  function getRow(ry) {
+    const c = rowCache.get(ry);
+    if (c) return c;
+    const obs = [], apples = [];
+    if (ry >= 2) {
+      const rnd = mulberry32(hash2(ry, 9187 ^ runSeed));
+      const d = Math.min(1, ry / 45);
+      const blk = Math.floor(ry / 3);
+      const hasApple = (ry % 3) === (hash2(blk, 5 ^ runSeed) % 3);
+      const isGold = hasApple && ry > 4 && (hash2(blk, 31 ^ runSeed) >>> 8) % 11 === 0;
+
+      const oy = ry * ROW + 55 + rnd() * 20;
+      const px = pathX(oy / ROW);
+      const gapW = 160 - 82 * d - (isGold ? 10 : 0);
+      const p = rnd();
+
+      if (p < 0.05) {
+        // 息継ぎ
+      } else if (p < 0.52) {
+        const lw = (px - gapW / 2) - (-HALF);
+        if (lw > 8) obs.push(makeBar(rnd, -HALF, oy, lw, 15));
+        const rx = px + gapW / 2;
+        if (HALF - rx > 8) obs.push(makeBar(rnd, rx, oy, HALF - rx, 15));
+      } else if (p < 0.82) {
+        const rr = 20 + rnd() * 14;
+        const lcx = px - gapW / 2 - rr, rcx = px + gapW / 2 + rr;
+        if (lcx > -HALF - rr * 0.6) obs.push(makeRock(rnd, lcx, oy, rr));
+        if (rcx < HALF + rr * 0.6) obs.push(makeRock(rnd, rcx, oy, rr));
+      } else {
+        const rr2 = 24 + rnd() * 16;
+        const side = rnd() < 0.5 ? -1 : 1;
+        obs.push(makeRock(rnd, clamp(px + side * (gapW / 2 + rr2 + 6), -HALF + rr2 * 0.4, HALF - rr2 * 0.4), oy, rr2));
+      }
+
+      let extra = 0;
+      if (d > 0.12 && rnd() < 0.35 + 0.4 * d) extra = 1;
+      if (d > 0.5 && rnd() < 0.5 * d) extra = 2;
+      for (let e = 0; e < extra; e++) {
+        const hy = oy + 48 + e * 46 + rnd() * 30;
+        const hr = 16 + rnd() * (12 + 8 * d);
+        const hx = pathX(hy / ROW) + (rnd() < 0.5 ? -1 : 1) * (gapW / 2 + hr + 6 + rnd() * 26);
+        if (hx > -HALF + hr && hx < HALF - hr) obs.push(makeRock(rnd, hx, hy, hr));
+      }
+
+      // 動く障害物（りんごの無い行だけ。通り道の上を横切る）
+      if (!hasApple && d > 0.25 && rnd() < 0.25 + 0.4 * d) {
+        const my = oy + 85 + rnd() * 45;
+        const mr = 18 + rnd() * 10;
+        const amp = 55 + rnd() * 35;
+        const lim = HALF - amp - mr - 10;
+        const mcx = clamp(pathX(my / ROW), -lim, lim);
+        obs.push(makeMover(rnd, mcx, my, mr, amp));
+      }
+
+      if (hasApple) {
+        const ay = oy + 80 + rnd() * 30;
+        const base = pathX(ay / ROW);
+        const off = isGold
+          ? (rnd() < 0.5 ? -1 : 1) * (70 + rnd() * 30)
+          : (rnd() < 0.55 ? 0 : (rnd() < 0.5 ? -1 : 1) * (35 + rnd() * 35));
+        let ax = clamp(base + off, -HALF + 26, HALF - 26);
+        if (hitsObs(obs, ax, ay, 30)) ax = clamp(base, -HALF + 26, HALF - 26);
+        if (!hitsObs(obs, ax, ay, 26)) apples.push({ id: ry + ":a", x: ax, y: ay, gold: isGold });
+      }
+    }
+    for (let oi = 0; oi < obs.length; oi++) obs[oi].id = ry + ":" + oi;
+    const row = { obs: obs, apples: apples };
+    if (rowCache.size > 400) rowCache.clear();
+    rowCache.set(ry, row);
+    return row;
+  }
+
+  // ---------- 状態 ----------
+  let state = "title";
+
+  // 最高記録（最長の首）だけをブラウザに保存する（使えない環境ではその回だけ保持）
+  const BEST_KEY = "nobinobiGiraffe.best";
+  const OLD_BEST_KEY = "giraffe_neck_best_m";   // 以前のキー。既存の記録を引き継ぐために読む
+  let bestM = 0;
+  try {
+    bestM = parseInt(localStorage.getItem(BEST_KEY), 10) ||
+            parseInt(localStorage.getItem(OLD_BEST_KEY), 10) || 0;
+  } catch (e) {}
+  function saveBest() { try { localStorage.setItem(BEST_KEY, String(bestM)); } catch (e) {} }
+
+  let head, neck, spots, path;
+  let camY = 0, spotAcc = 0, gameT = 0, shake = 0;
+  let len = 0, inv = 0, hp = HP_MAX, smile = 0, hpFlash = 0, glow = 0, glowGold = false;
+  const debris = [], parts = [], rings = [], flashes = [];
+  let deathT = 0, deathReason = "";
+
+  function reset() {
+    newStage();
+    head = { x: 0, y: 80, a: 0 };
+    neck = [{ x: 0, y: NECK_BASE }, { x: 0, y: 80 }];
+    path = [{ x: 0, y: NECK_BASE }, { x: 0, y: 80 }];
+    spots = [];
+    debris.length = 0; parts.length = 0; rings.length = 0; flashes.length = 0;
+    spotAcc = 0; gameT = 0; shake = 0;
+    camY = 0;
+    len = 80 - NECK_BASE; inv = 0; hp = HP_MAX; smile = 0; hpFlash = 0; glow = 0;
+    deathT = 0;
+    aimA = 0; keyDir = 0; pointerDown = false;
+    taken.clear(); smashed.clear(); rowCache.clear();
+    hudLen.textContent = lenText(len / 10);
+  }
+
+
+  // ---------- 入力 ----------
+  let aimA = 0, keyDir = 0, pointerDown = false;
+
+  function angleFromX(clientX) {
+    const r = cv.getBoundingClientRect();
+    const u = clamp((clientX - r.left) / r.width, 0, 1);
+    return (u - 0.5) * 2 * MAXA;
+  }
+  cv.addEventListener("touchstart", function (e) { e.preventDefault(); }, { passive: false });
+  cv.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });
+  cv.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+  wrap.addEventListener("pointerdown", function (e) {
+    if (state === "title") start();
+    pointerDown = true;
+    aimA = angleFromX(e.clientX);
+  });
+  wrap.addEventListener("pointermove", function (e) {
+    if (pointerDown || (e.pointerType === "mouse" && e.buttons === 0)) aimA = angleFromX(e.clientX);
+  });
+  function release() { pointerDown = false; }
+  window.addEventListener("pointerup", release);
+  window.addEventListener("pointercancel", release);
+
+  // iOS で文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  document.addEventListener("selectstart", function (e) { e.preventDefault(); });
+
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener("touchend", function (e) {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowLeft") { keyDir = -1; e.preventDefault(); }
+    else if (e.key === "ArrowRight") { keyDir = 1; e.preventDefault(); }
+    else if (e.key === "Escape" && !imgOverlay.hidden) closeImage();
+    else if (e.key === "Enter" || e.key === " ") {
+      // フォーカス中のボタンは click に任せる（二重に start しないように）
+      if (e.target instanceof HTMLButtonElement) return;
+      if (state === "title" || (state === "over" && imgOverlay.hidden)) { e.preventDefault(); start(); }
+    }
+  });
+  window.addEventListener("keyup", function (e) {
+    if (e.key === "ArrowLeft" && keyDir === -1) keyDir = 0;
+    if (e.key === "ArrowRight" && keyDir === 1) keyDir = 0;
+  });
+
+  retryBtn.addEventListener("click", start);
+  shareBtn.addEventListener("click", doShare);
+  $("postBtn").addEventListener("click", function () { window.open(shareIntent(), "_blank"); });
+  $("imgCloseBtn").addEventListener("click", closeImage);
+  imgOverlay.addEventListener("click", function (e) {
+    if (e.target === imgOverlay || e.target === imgOverlay.firstElementChild) closeImage();   // 画像の外をタップで閉じる
+  });
+  // ボタンや画像表示の上の pointerdown は背景（ゲーム操作）に伝えない
+  [shareBtn, retryBtn, imgOverlay].forEach(function (el) {
+    el.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+  });
+
+  function start() {
+    reset();
+    startOverlay.hidden = true;
+    overOverlay.hidden = true;
+    closeImage();
+    state = "play";
+    document.documentElement.setAttribute('data-howto-hidden', '');
+    last = 0;
+  }
+
+  // ---------- 演出 ----------
+  function burst(x, y, n, col, sp, size) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * 6.283, s = sp * (0.35 + Math.random() * 0.8);
+      parts.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+                   g: 380, r: size * (0.5 + Math.random() * 0.8),
+                   life: 0.45 + Math.random() * 0.4, max: 0.85, col: col });
+    }
+    if (parts.length > 220) parts.splice(0, parts.length - 220);
+  }
+  // 重力なしでゆっくり漂う粒（きらめき用）
+  function sparkle(x, y, n, col, sp, size, life) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * 6.283, s = sp * (0.3 + Math.random() * 0.9);
+      parts.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s + 40,
+                   g: -50, drag: 2.2, r: size * (0.5 + Math.random() * 0.8),
+                   life: life * (0.7 + Math.random() * 0.5), max: life * 1.2, col: col });
+    }
+    if (parts.length > 220) parts.splice(0, parts.length - 220);
+  }
+  function ring(x, y, r1, col, w, delay, dur) {
+    const d = dur || 0.38;
+    rings.push({ x: x, y: y, r0: 4, r1: r1, life: d, max: d,
+                 col: col, w: w, wait: delay || 0 });
+  }
+  // 中心から広がって消える塗りつぶしの光
+  function flash(x, y, r, col, dur) {
+    const d = dur || 0.3;
+    flashes.push({ x: x, y: y, r: r, life: d, max: d, col: col });
+  }
+
+  // りんご取得の演出：光→白リング→色リング（少し遅らせて2枚）→飛び散る粒→漂うきらめき
+  function appleFx(x, y, gold) {
+    hpFlash = 0.6;
+    glow = 0.55; glowGold = !!gold;
+    if (gold) {
+      shake = Math.min(SHAKE_MAX, shake + 5);
+      flash(x, y, 52, "255,244,190", 0.32);
+      ring(x, y, 48, "255,255,255", 6, 0, 0.3);
+      ring(x, y, 96, "255,214,96", 7, 0.08, 0.5);
+      ring(x, y, 142, "255,255,255", 3, 0.2, 0.55);
+      burst(x, y, 30, "246,206,90", 330, 4.6);
+      burst(x, y, 12, "255,255,255", 260, 3.6);
+      sparkle(x, y, 24, "255,232,140", 135, 3.4, 1.4);
+    } else {
+      flash(x, y, 36, "226,255,214", 0.28);
+      ring(x, y, 38, "255,255,255", 5, 0, 0.28);
+      ring(x, y, 84, "96,214,84", 6, 0.07, 0.46);
+      ring(x, y, 124, "255,255,255", 2.5, 0.18, 0.5);
+      burst(x, y, 22, "110,212,98", 260, 3.8);
+      burst(x, y, 10, "214,74,62", 220, 3.2);   // りんごの果皮
+      sparkle(x, y, 18, "190,245,170", 110, 2.8, 1.2);
+    }
+  }
+
+  function smash(o) {
+    smashed.add(o.id);
+    shake = Math.min(SHAKE_MAX, shake + SHAKE_HIT);
+    const cx = o.t === 1 ? o.x + o.w / 2 : obsX(o);
+    const cy = o.t === 1 ? o.y + o.h / 2 : o.y;
+    const pieces = [];
+    if (o.t !== 1) {
+      pieces.push({ t: 0, r: o.r, poly: o.poly, x: obsX(o), y: o.y });
+    } else {
+      const pw = o.w / 3;
+      for (let i = 0; i < 3; i++) pieces.push({ t: 1, w: pw, h: o.h, x: o.x + pw * (i + 0.5), y: o.y + o.h / 2 });
+    }
+    for (let k = 0; k < pieces.length; k++) {
+      const p = pieces[k];
+      const dx = p.x - head.x, dy = p.y - head.y;
+      const l = Math.hypot(dx, dy) || 1;
+      const sp = 240 + Math.random() * 200;
+      p.vx = dx / l * sp + (Math.random() - 0.5) * 100;
+      p.vy = dy / l * sp * 0.5 + 150 + Math.random() * 110;
+      p.rot = 0;
+      p.vrot = (Math.random() - 0.5) * 10;
+      p.life = 1.1;
+      debris.push(p);
+    }
+    if (debris.length > 48) debris.splice(0, debris.length - 48);
+    burst(cx, cy, 12, "170,172,166", 260, 3.4);
+    ring(cx, cy, 46, "255,255,255", 3);
+  }
+
+  function updateFx(dt) {
+    let i, p;
+    for (i = debris.length - 1; i >= 0; i--) {
+      p = debris[i];
+      p.life -= dt;
+      if (p.life <= 0) { debris.splice(i, 1); continue; }
+      p.vy -= 520 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vrot * dt;
+    }
+    for (i = parts.length - 1; i >= 0; i--) {
+      p = parts[i];
+      p.life -= dt;
+      if (p.life <= 0) { parts.splice(i, 1); continue; }
+      p.vy -= p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.drag) { const k = Math.max(0, 1 - p.drag * dt); p.vx *= k; p.vy *= k; }
+    }
+    for (i = rings.length - 1; i >= 0; i--) {
+      p = rings[i];
+      if (p.wait > 0) { p.wait -= dt; continue; }
+      p.life -= dt;
+      if (p.life <= 0) rings.splice(i, 1);
+    }
+    for (i = flashes.length - 1; i >= 0; i--) {
+      flashes[i].life -= dt;
+      if (flashes[i].life <= 0) flashes.splice(i, 1);
+    }
+    if (hpFlash > 0) hpFlash = Math.max(0, hpFlash - dt);
+    if (glow > 0) glow = Math.max(0, glow - dt);
+    shake = Math.max(0, shake - SHAKE_DECAY * dt);
+  }
+
+  // ---------- 更新 ----------
+  function update(dt) {
+    gameT += dt;
+    const d = Math.min(1, len / 9000);
+    let v = 165 + 120 * d;
+
+    if (inv > 0) { inv = Math.max(0, inv - dt); v *= INV_SPEED; }
+    if (smile > 0) smile = Math.max(0, smile - dt);
+
+    hp -= (HP_DRAIN0 + (HP_DRAIN1 - HP_DRAIN0) * d) * dt;
+    if (hp <= 0) { hp = 0; return die("力尽きた"); }
+
+    if (keyDir !== 0) aimA = clamp(aimA + keyDir * KEY_RATE * dt, -MAXA, MAXA);
+    const da = aimA - head.a;
+    const maxStep = SLEW * dt;
+    head.a += clamp(da, -maxStep, maxStep);
+
+    const py0 = head.y;
+    head.x += Math.sin(head.a) * v * dt;
+    head.y += Math.cos(head.a) * v * dt;
+    head.x = clamp(head.x, -HALF + WALL + HEAD_R, HALF - WALL - HEAD_R);
+    len += head.y - py0;   // スコアは到達した高さ（横に振った分は数えない）
+
+    const prev = neck[neck.length - 1];
+    const seg = Math.hypot(head.x - prev.x, head.y - prev.y);
+    if (seg >= STEP) {
+      neck.push({ x: head.x, y: head.y });
+      spotAcc += seg;
+      if (spotAcc > 30) {
+        spotAcc = 0;
+        const off = (2 + Math.random() * 3.5) * (Math.random() < 0.5 ? -1 : 1);
+        const sr = 4 + Math.random() * 2.5;
+        spots.push({
+          x: head.x + Math.cos(head.a) * off,
+          y: head.y - Math.sin(head.a) * off,
+          r: sr, poly: polyOf(Math.random, 6, 0.7, 1.15)
+        });
+      }
+    }
+    const pl = path[path.length - 1];
+    if (Math.hypot(head.x - pl.x, head.y - pl.y) >= PATH_STEP) path.push({ x: head.x, y: head.y });
+
+    camY = head.y - viewH * 0.3;
+    const cut = camY - 40;
+    while (neck.length > 2 && neck[1].y < cut) neck.shift();
+    while (spots.length && spots[0].y < cut) spots.shift();
+
+    const ry = Math.floor(head.y / ROW);
+    for (let r = ry - 1; r <= ry + 1; r++) {
+      const row = getRow(r);
+      for (let a = 0; a < row.apples.length; a++) {
+        const ap = row.apples[a];
+        if (taken.has(ap.id)) continue;
+        if (Math.hypot(head.x - ap.x, head.y - ap.y) < PICK_R) {
+          taken.add(ap.id);
+          smile = SMILE_TIME;
+          if (ap.gold) { inv = INV_TIME; hp = Math.min(HP_MAX, hp + HP_GOLD); }
+          else { hp = Math.min(HP_MAX, hp + HP_APPLE); }
+          appleFx(ap.x, ap.y, ap.gold);
+        }
+      }
+      for (let i = 0; i < row.obs.length; i++) {
+        const o = row.obs[i];
+        if (smashed.has(o.id)) continue;
+        let hit;
+        if (o.t === 0 || o.t === 2) {
+          hit = Math.hypot(head.x - obsX(o), head.y - o.y) < o.r + HEAD_R;
+        } else {
+          const qx = clamp(head.x, o.x, o.x + o.w), qy = clamp(head.y, o.y, o.y + o.h);
+          const dx = head.x - qx, dy = head.y - qy;
+          hit = dx * dx + dy * dy < HEAD_R * HEAD_R;
+        }
+        if (!hit) continue;
+        if (inv > 0) smash(o);
+        else return die("ぶつかった");
+      }
+    }
+
+    updateFx(dt);
+    hudLen.textContent = lenText(len / 10);
+  }
+
+  // ゲーム内の長さ → 実際の長さ(m)
+  function realM(g) {
+    let i = 1;
+    while (i < SCALE.length - 1 && g > SCALE[i][0]) i++;   // 最後の区間より先はその傾きで延ばす
+    const a = SCALE[i - 1], b = SCALE[i];
+    const t = (g - a[0]) / (b[0] - a[0]);
+    return a[1] * Math.pow(b[1] / a[1], t);
+  }
+  const LY = 9.4607e15;   // 1光年(m)
+  function fmtNum(v) { return v < 10 ? v.toFixed(1) : Math.floor(v).toLocaleString("ja-JP"); }
+  // 実際の長さを読みやすい単位で表す（m → km → 万km → 億km → 兆km → 光年）
+  function fmtLen(m) {
+    if (m < 1000) return fmtNum(m) + " m";
+    const km = m / 1000;
+    if (km < 1e4) return fmtNum(km) + " km";
+    if (km < 1e8) return fmtNum(km / 1e4) + "万 km";
+    if (km < 1e12) return fmtNum(km / 1e8) + "億 km";
+    if (m < LY) return fmtNum(km / 1e12) + "兆 km";
+    const ly = m / LY;
+    if (ly < 1e4) return fmtNum(ly) + " 光年";
+    if (ly < 1e8) return fmtNum(ly / 1e4) + "万 光年";
+    return fmtNum(ly / 1e8) + "億 光年";
+  }
+  function lenText(g) { return fmtLen(realM(g)); }
+
+  function rankOf(m) {
+    for (let i = 0; i < RANKS.length; i++) if (m < RANKS[i][0]) return RANKS[i][1];
+    return RANKS[RANKS.length - 1][1];
+  }
+
+  function die(reason) {
+    if (state !== "play") return;
+    state = "dying";
+    deathReason = reason;
+    deathT = DEATH_HOLD;
+    shake = SHAKE_MAX;
+    if (reason === "力尽きた") {
+      burst(head.x, head.y, 16, "190,190,185", 170, 3.2);
+      ring(head.x, head.y, 70, "220,220,215", 3);
+    } else {
+      burst(head.x, head.y, 20, "224,174,75", 300, 3.6);
+      burst(head.x, head.y, 10, "170,172,166", 220, 3.0);
+      ring(head.x, head.y, 80, "255,255,255", 4);
+    }
+  }
+
+  function showResult() {
+    state = "over";
+    document.documentElement.removeAttribute('data-howto-hidden');
+    path.push({ x: head.x, y: head.y });
+    const m = Math.floor(len / 10);   // 自己ベストはゲーム内の長さで保存する（以前の記録と互換）
+    rankTitle.textContent = rankOf(realM(len / 10));
+    finalLen.textContent = lenText(len / 10);
+    if (m > bestM) {
+      bestM = m;
+      saveBest();
+      resultNote.textContent = "自己ベスト更新";
+    } else {
+      resultNote.textContent = "ベスト " + lenText(bestM);
+    }
+    overOverlay.hidden = false;
+    drawTrail();
+    shareMsg.textContent = "";
+    shareImage = makeShareImage();
+  }
+
+  // ---------- 結果のキリン ----------
+  function trailHeightPx() {
+    const m = Math.floor(len / 10);
+    const wrapH = wrap.getBoundingClientRect().height || 640;
+    const minH = 120, maxH = clamp(wrapH * 2.2, 420, 1200);   // 画面より縦長になってもよい
+    const t = clamp(Math.log(1 + m / 40) / Math.log(1 + 5000 / 40), 0, 1);
+    return Math.round(minH + (maxH - minH) * t);
+  }
+
+  // 首の軌跡をキリンの姿として描く。k は全体の拡大率（共有画像用に大きく描ける）
+  function paintGiraffe(g, cw, ch, k) {
+    let maxY = 0, i;
+    for (i = 0; i < path.length; i++) if (path[i].y > maxY) maxY = path[i].y;
+    if (maxY < 1) maxY = 1;
+
+    const padX = 14 * k, padTop = 20 * k, padBottom = 26 * k;
+    const bodyU = 0.62 * k;                        // 胴体の描画倍率
+    const groundY = ch - padBottom;
+    // 首は胴体の肩（首とつながる部分の少し内側）から描き始める。
+    // 胴体は固定の大きさなので、首の縦の縮尺を「肩〜上端」に合わせないと付け根が浮いたり地面に潜ったりする
+    const shoulderY = groundY - 80 * bodyU;
+    const span = Math.max(1, maxY - NECK_BASE);
+    function tx(x) { return padX + (x + HALF) / DW * (cw - padX * 2); }
+    function ty(y) { return shoulderY - (y - NECK_BASE) / span * (shoulderY - padTop); }
+    const bx = tx(0);
+
+    g.strokeStyle = "rgba(169, 193, 132, 0.85)";
+    g.lineWidth = 1 * k;
+    g.beginPath(); g.moveTo(0, groundY + 0.5 * k); g.lineTo(cw, groundY + 0.5 * k); g.stroke();
+
+    const pts = [];
+    for (i = 0; i < path.length; i++) {
+      const q = { x: tx(path[i].x), y: ty(path[i].y) };
+      if (!pts.length) { pts.push(q); continue; }
+      const lp = pts[pts.length - 1];
+      if (Math.hypot(q.x - lp.x, q.y - lp.y) >= 1.2 * k) pts.push(q);
+    }
+    if (pts.length < 2) pts.push({ x: bx, y: shoulderY - 2 * k });
+
+    const n = pts.length, baseW = 10 * k, tipW = 6 * k;
+    function halfW(idx) { return (baseW + (tipW - baseW) * (idx / (n - 1))) / 2; }
+    function normalAt(idx) {
+      const a = pts[Math.max(0, idx - 1)], b = pts[Math.min(n - 1, idx + 1)];
+      const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
+      return { x: -dy / l, y: dx / l };
+    }
+
+    g.fillStyle = G_BODY;
+    g.beginPath();
+    for (i = 0; i < n; i++) { const nv = normalAt(i), w = halfW(i); g.lineTo(pts[i].x + nv.x * w, pts[i].y + nv.y * w); }
+    for (i = n - 1; i >= 0; i--) { const n2 = normalAt(i), w2 = halfW(i); g.lineTo(pts[i].x - n2.x * w2, pts[i].y - n2.y * w2); }
+    g.closePath(); g.fill();
+
+    g.fillStyle = G_SPOT;
+    let acc = 0, side = 1;
+    for (i = 1; i < n; i++) {
+      acc += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+      if (acc < 9 * k) continue;
+      acc = 0; side = -side;
+      const n3 = normalAt(i), hw = halfW(i);
+      g.beginPath();
+      g.arc(pts[i].x + n3.x * hw * 0.42 * side, pts[i].y + n3.y * hw * 0.42 * side, hw * 0.5, 0, Math.PI * 2);
+      g.fill();
+    }
+
+    giraffeBody(g, bx, groundY, bodyU);
+
+    const pe = pts[n - 1], pp = pts[Math.max(0, n - 2)];
+    g.save();
+    g.translate(pe.x, pe.y);
+    g.rotate(Math.atan2(pe.y - pp.y, pe.x - pp.x));
+    g.scale(0.69 * k, 0.69 * k);
+    headShape(g, G_BODY, G_SPOT, G_DARK, G_LIGHT);
+    g.restore();
+  }
+
+  function drawTrail() {
+    trailCv.style.height = trailHeightPx() + "px";
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);   // モバイルで無駄に重くしない
+    const cw = trailCv.clientWidth || 152, ch = trailCv.clientHeight || 236;
+    trailCv.width = Math.round(cw * dpr);
+    trailCv.height = Math.round(ch * dpr);
+    trailCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    trailCtx.clearRect(0, 0, cw, ch);
+    paintGiraffe(trailCtx, cw, ch, 1);
+  }
+
+  // ---------- 共有 ----------
+  const SHARE_W = 540, SHARE_MAX_H = 2400;
+  const SHARE_FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif';
+  let shareImage = null;   // { dataUrl, bytes }。結果画面を出すときに作っておく
+
+  function buildShareCanvas() {
+    const k = SHARE_W / 152;
+    const titleH = 96, footH = 120;
+    let gH = Math.round(trailHeightPx() * k);
+    if (titleH + gH + footH > SHARE_MAX_H) gH = SHARE_MAX_H - titleH - footH;
+    const c = document.createElement("canvas");
+    c.width = SHARE_W;
+    c.height = titleH + gH + footH;
+    const g = c.getContext("2d");
+    g.fillStyle = cssVar("--share-bg");
+    g.fillRect(0, 0, c.width, c.height);
+    g.textAlign = "center";
+    g.fillStyle = cssVar("--fg");
+    g.font = "600 40px " + SHARE_FONT;
+    g.fillText(rankTitle.textContent, SHARE_W / 2, 62);
+    g.save();
+    g.translate(0, titleH);
+    g.beginPath(); g.rect(0, 0, SHARE_W, gH); g.clip();
+    paintGiraffe(g, SHARE_W, gH, k);
+    g.restore();
+    g.fillStyle = cssVar("--fg");
+    g.font = "600 56px " + SHARE_FONT;
+    g.fillText(finalLen.textContent, SHARE_W / 2, titleH + gH + 76);
+    return c;
+  }
+
+  // 画像は同期的に作る（toBlob の非同期コールバックを挟むと navigator.share がブロックされる）
+  function makeShareImage() {
+    try {
+      const dataUrl = buildShareCanvas().toDataURL("image/png");
+      const bin = atob(dataUrl.split(",")[1]);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return { dataUrl: dataUrl, bytes: bytes };
+    } catch (e) { return null; }
+  }
+
+  function shareText() {
+    return "キリンの首が " + finalLen.textContent + " まで伸びた！\n称号：" + rankTitle.textContent + "\n\n" +
+           location.href.split(/[?#]/)[0] + "\n#ノビノビジラフ";
+  }
+  // スマホで x.com を開くと X アプリ内ブラウザで開いて投稿できないので、旧ドメインを使う
+  function shareIntent() {
+    return "https://twitter.com/intent/tweet?text=" + encodeURIComponent(shareText());
+  }
+
+  // 共有できない環境向け：画像を重ねて表示し、手動で保存・投稿してもらう
+  function showImage(dataUrl) {
+    shareImg.src = dataUrl;
+    imgOverlay.hidden = false;
+    imgOverlay.scrollTop = 0;
+  }
+  function closeImage() {
+    // 閉じるボタンにフォーカスがあったら共有ボタンへ戻す（隠れた要素にフォーカスを残さない）
+    if (imgOverlay.contains(document.activeElement)) shareBtn.focus();
+    imgOverlay.hidden = true;
+    shareImg.removeAttribute("src");
+  }
+
+  function doShare() {
+    shareMsg.textContent = "";
+    if (!shareImage) shareImage = makeShareImage();
+    const img = shareImage;
+    if (!img) { shareMsg.textContent = "画像を作成できませんでした"; return; }
+    const text = shareText();
+    const intent = shareIntent();
+    let file = null;
+    try { file = new File([img.bytes], "nobinobi-giraffe.png", { type: "image/png" }); } catch (e) {}
+    const copyImage = function () {
+      try {
+        if (navigator.clipboard && window.ClipboardItem) {
+          return navigator.clipboard.write([new ClipboardItem({ "image/png": new Blob([img.bytes], { type: "image/png" }) })]);
+        }
+      } catch (e) {}
+      return Promise.reject(new Error("clipboard"));
+    };
+
+    // 1) スマホ・対応PC: OS の共有シートに画像ごと渡す
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], text: text }).catch(function (err) {
+        if (!err || err.name !== "AbortError") showImage(img.dataUrl);
+      });
+      return;
+    }
+    // 2) 共有シートはあるが画像は渡せない: 画像はクリップボードに入れ、本文だけ共有シートへ
+    if (navigator.share) {
+      copyImage().then(function () {
+        shareMsg.textContent = "画像をコピーしました。投稿画面で貼り付けてください";
+      }, function () {}).finally(function () {
+        navigator.share({ text: text }).catch(function (err) {
+          if (!err || err.name !== "AbortError") showImage(img.dataUrl);
+        });
+      });
+      return;
+    }
+    // 3) 共有シートが無い: 画像をコピーして X の投稿画面を開く
+    // 4) それも失敗: 画像を重ねて表示して手動保存してもらう
+    copyImage().then(function () {
+      shareMsg.textContent = "画像をコピーしました。投稿画面で貼り付けてください";
+      window.open(intent, "_blank");
+    }, function () { showImage(img.dataUrl); });
+  }
+
+  // ---------- 色 ----------
+  function rainbow(y, l) {
+    let h = (y * 1.1 + gameT * 200) % 360;
+    if (h < 0) h += 360;
+    return "hsl(" + h.toFixed(0) + ",85%," + l + "%)";
+  }
+  function spaceT() { return clamp((camY - SPACE_FROM) / (SPACE_TO - SPACE_FROM), 0, 1); }
+  function cloudAlpha(y) {
+    if (y < 300) return 0.22 + y / 300 * 0.2;
+    if (y < 1200) return 0.42 + (y - 300) / 900 * 0.18;
+    if (y < 4000) return 0.6;
+    if (y < 5000) return 0.6 * (1 - (y - 4000) / 1000);   // 実際の 634m〜10km で雲を抜ける
+    return 0;
+  }
+
+  // ---------- 描画 ----------
+  function sx(x) { return (x + HALF) * scale; }
+  function sy(y) { return H - (y - camY) * scale; }
+  function syp(y, f) { return H - (y - camY * f) * scale; }
+
+  function draw() {
+    const st = head ? spaceT() : 0;
+    const bottom = head ? camY : 0, top = bottom + viewH;
+
+    // 空
+    const gr = ctx.createLinearGradient(0, 0, 0, H);
+    gr.addColorStop(0, rgb(skyAt(top)));
+    gr.addColorStop(1, rgb(skyAt(bottom)));
+    ctx.fillStyle = gr;
+    ctx.fillRect(0, 0, W, H);
+    const lum = skyAt(bottom);
+    hud.style.color = (lum[0] + lum[1] + lum[2]) / 3 < 120 ? "var(--hud-night)" : "var(--hud)";
+    if (!head) return;
+
+    ctx.save();
+    if (shake > 0) {
+      ctx.translate((Math.random() - 0.5) * 2 * shake * scale, (Math.random() - 0.5) * 2 * shake * scale);
+    }
+
+    drawStars(st);
+    drawLimb(st);
+    drawHills();
+    drawClouds();
+    drawGround();
+    drawObstacles(st);
+    drawDebris(st);
+
+    drawNeck();
+    if (bottom < 160) drawBody();   // 首の付け根を胴で隠すため、首より後に描く
+    drawHeadInWorld();
+    drawGauges();
+    drawParts();
+
+    ctx.restore();
+
+    // 壁
+    ctx.fillStyle = mix(WALL_SKY, WALL_SPACE, st);
+    ctx.fillRect(0, 0, WALL * scale, H);
+    ctx.fillRect(W - WALL * scale, 0, WALL * scale, H);
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.fillRect(WALL * scale, 0, 2 * scale, H);
+    ctx.fillRect(W - (WALL + 2) * scale, 0, 2 * scale, H);
+  }
+
+  // 地平線（地球のふち）の形。星の隠面判定にも使う
+  function limbGeom(st) {
+    const top = H * (1.06 - 0.34 * st);
+    const R = W * (3.4 - 1.5 * st);
+    return { top: top, R: R, cx: W / 2, cy: top + R };
+  }
+
+  function drawStars(st) {
+    if (st <= 0) return;
+    const lg = st > 0.02 ? limbGeom(st) : null;
+    const g = 60, bottom = camY * 0.75, top = bottom + viewH;   // 視差ぶんずらした帯で生成する
+    ctx.fillStyle = "#ffffff";
+    for (let px = -HALF; px < HALF + g; px += g) {
+      for (let py = Math.floor(bottom / g) * g; py < top + g; py += g) {
+        const h = hash2(px, py);
+        const jx = ((h & 255) / 255 - 0.5) * g * 0.9;
+        const jy = (((h >> 8) & 255) / 255 - 0.5) * g * 0.9;
+        const ssx = sx(px + jx), ssy = syp(py + jy, 0.75);
+        if (lg && Math.hypot(ssx - lg.cx, ssy - lg.cy) < lg.R + 6) continue;  // 地球の裏は描かない
+        const sz = (1 + ((h >> 16) & 3) * 0.6) * st;
+        ctx.globalAlpha = st * (0.3 + ((h >> 20) & 15) / 15 * 0.7);
+        ctx.fillRect(ssx - sz / 2, ssy - sz / 2, sz, sz);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // 高いところから見た地平線のカーブ
+  function drawLimb(st) {
+    if (st <= 0.02) return;
+    const t = st;
+    const lg = limbGeom(st);
+    const R = lg.R, cxp = lg.cx, cyp = lg.cy;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, t * 1.6);
+    ctx.beginPath();
+    ctx.arc(cxp, cyp, R + 10 * scale, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(140, 195, 235, 0.5)";
+    ctx.lineWidth = 9 * scale;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cxp, cyp, R, 0, Math.PI * 2);
+    ctx.fillStyle = "#1d3b5c";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cxp, cyp, R - 1, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(190, 225, 245, 0.75)";
+    ctx.lineWidth = 2.5 * scale;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawHills() {
+    if (camY > 2800) return;
+    const fade = clamp(1 - camY / 2800, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = fade;
+    hillBand(0.07, 235, HILL_FAR, 3);
+    hillBand(0.14, 165, HILL_NEAR, 7);
+    ctx.restore();
+  }
+  function hillBand(f, peak, col, salt) {
+    const base = syp(0, f);
+    if (base < -40) return;
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(0, H + 4);
+    ctx.lineTo(0, base - peak * 0.45 * scale);
+    const n = 5, stepx = W / n;
+    for (let i = 0; i < n; i++) {
+      const h1 = hash2(i + salt, 77 ^ runSeed);
+      const hgt = (0.45 + (h1 & 255) / 255 * 0.55) * peak;
+      ctx.quadraticCurveTo(stepx * (i + 0.5), base - hgt * scale, stepx * (i + 1), base - peak * 0.4 * scale * (0.6 + ((h1 >> 8) & 255) / 255 * 0.7));
+    }
+    ctx.lineTo(W, H + 4);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawClouds() {
+    const f = 0.55;
+    const al = cloudAlpha(camY);
+    if (al <= 0.01) return;
+    const band = 330;
+    const lo = camY * f - band, hi = camY * f + viewH + band;
+    ctx.save();
+    for (let cy = Math.floor(lo / band) * band; cy < hi; cy += band) {
+      const h = hash2(Math.round(cy / band), 421 ^ runSeed);
+      if ((h & 3) === 0) continue;
+      const cnt = 1 + ((h >> 2) & 1);
+      for (let k = 0; k < cnt; k++) {
+        const hh = hash2(Math.round(cy / band) * 7 + k, 913 ^ runSeed);
+        const cxw = -HALF - 40 + ((hh & 1023) / 1023) * (DW + 80);
+        const cyw = cy + ((hh >> 10) & 255) / 255 * band * 0.8;
+        const sc = 0.75 + ((hh >> 18) & 255) / 255 * 0.8;
+        ctx.globalAlpha = al * (0.75 + ((hh >> 26) & 15) / 15 * 0.25);
+        cloudAt(sx(cxw), syp(cyw, f), sc);
+      }
+    }
+    ctx.restore();
+  }
+  function cloudAt(x, y, s) {
+    const u = 26 * scale * s;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.ellipse(x, y, u * 1.5, u * 0.62, 0, 0, Math.PI * 2);
+    ctx.ellipse(x - u * 0.8, y + u * 0.12, u * 0.8, u * 0.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + u * 0.55, y - u * 0.2, u * 0.85, u * 0.62, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + u * 1.2, y + u * 0.15, u * 0.6, u * 0.42, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawGround() {
+    if (camY >= 40) return;
+    const gy = sy(0);
+    ctx.fillStyle = GRASS;
+    ctx.fillRect(0, gy, W, H - gy + 4);
+    ctx.fillStyle = GRASS_DK;
+    ctx.fillRect(0, gy, W, 4 * scale);
+    ctx.strokeStyle = GRASS_DK;
+    ctx.lineWidth = 1.6 * scale;
+    ctx.lineCap = "round";
+    for (let i = 0; i < 14; i++) {
+      const h = hash2(i, 55 ^ runSeed);
+      const gx = (h & 1023) / 1023 * W;
+      const gh = (5 + ((h >> 10) & 7)) * scale;
+      ctx.beginPath();
+      ctx.moveTo(gx, gy + 5 * scale);
+      ctx.lineTo(gx + ((h >> 14) & 3) * scale - 1.5 * scale, gy + 5 * scale - gh);
+      ctx.stroke();
+    }
+  }
+
+  function drawObstacles(st) {
+    const rockCol = mix(ROCK_SKY, ROCK_SPACE, st);
+    const bottom = camY, top = camY + viewH;
+    const r0 = Math.floor(bottom / ROW), r1 = Math.floor(top / ROW) + 1;
+    for (let r = r0; r <= r1; r++) {
+      const row = getRow(r);
+      for (let i = 0; i < row.obs.length; i++) {
+        const o = row.obs[i];
+        if (smashed.has(o.id)) continue;
+        if (o.t === 2) drawMover(obsX(o), o.y, o.r, gameT * o.spin, st);
+        else if (o.t === 0) drawRock(o.x, o.y, o.r, o.poly, o.craters, rockCol, st, gameT * o.spin);
+        else drawBar(o, rockCol);
+      }
+      for (let a = 0; a < row.apples.length; a++) {
+        const ap = row.apples[a];
+        if (!taken.has(ap.id)) drawApple(ap);
+      }
+    }
+  }
+
+  function rockPath(g, x, y, r, poly, sc) {
+    g.beginPath();
+    for (let i = 0; i < poly.length; i++) {
+      const px = x + poly[i][0] * r * sc, py = y + poly[i][1] * r * sc;
+      if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
+    }
+    g.closePath();
+  }
+
+  function drawRock(wx, wy, r, poly, craters, col, st, rot) {
+    const x = sx(wx), y = sy(wy), rr = r * scale;
+    ctx.save();
+    if (rot) { ctx.translate(x, y); ctx.rotate(rot); ctx.translate(-x, -y); }
+    rockPath(ctx, x, y, rr, poly, 1);
+    ctx.fillStyle = col;
+    ctx.fill();
+    // 上面の明るい部分
+    ctx.save();
+    ctx.clip();
+    ctx.fillStyle = "rgba(255,255,255,0.16)";
+    ctx.beginPath();
+    ctx.ellipse(x - rr * 0.2, y - rr * 0.45, rr * 0.85, rr * 0.5, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,0.20)";
+    ctx.beginPath();
+    ctx.ellipse(x + rr * 0.25, y + rr * 0.55, rr * 0.8, rr * 0.45, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    if (craters && st > 0.05) {
+      ctx.fillStyle = "rgba(0,0,0," + (0.18 * st).toFixed(3) + ")";
+      for (let c = 0; c < craters.length; c++) {
+        ctx.beginPath();
+        ctx.arc(x + craters[c][0] * rr, y + craters[c][1] * rr, craters[c][2] * rr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+    ctx.strokeStyle = "rgba(0,0,0,0.28)";
+    ctx.lineWidth = 1.4 * scale;
+    rockPath(ctx, x, y, rr, poly, 1);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 動く岩。素材は同じ石だが、トゲのある輪郭と暗い色で見分けられるようにする
+  function drawMover(wx, wy, r, rot, st) {
+    const x = sx(wx), y = sy(wy), rr = r * scale;
+    const col = mix(MOVER_SKY, MOVER_SPACE, st);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    const n = 9;
+    function shape() {
+      ctx.beginPath();
+      for (let i = 0; i < n * 2; i++) {
+        const a = i / (n * 2) * Math.PI * 2;
+        const rad = (i % 2 === 0 ? 1 : 0.66) * rr;
+        const px = Math.cos(a) * rad, py = Math.sin(a) * rad;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    }
+    ctx.fillStyle = col;
+    shape(); ctx.fill();
+    ctx.save();
+    shape(); ctx.clip();
+    ctx.fillStyle = "rgba(255,255,255,0.15)";
+    ctx.beginPath(); ctx.ellipse(-rr * 0.2, -rr * 0.45, rr * 0.8, rr * 0.5, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,0.22)";
+    ctx.beginPath(); ctx.ellipse(rr * 0.25, rr * 0.5, rr * 0.75, rr * 0.45, 0.2, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.lineWidth = 1.6 * scale;
+    ctx.lineJoin = "round";
+    shape(); ctx.stroke();
+    ctx.restore();
+  }
+
+  // 石板（もとは木の梁）。岩と同じ石の質感で描く
+  function drawBar(o, col) {
+    const x = sx(o.x), y = sy(o.y + o.h), w = o.w * scale, h = o.h * scale;
+    const rad = Math.min(h / 2, 5 * scale);
+    function shape() {
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x, y, w, h, rad); else ctx.rect(x, y, w, h);
+    }
+    ctx.fillStyle = col;
+    shape(); ctx.fill();
+    ctx.save();
+    shape(); ctx.clip();
+    ctx.fillStyle = "rgba(255,255,255,0.17)";
+    ctx.fillRect(x, y, w, h * 0.34);
+    ctx.fillStyle = "rgba(0,0,0,0.22)";
+    ctx.fillRect(x, y + h * 0.66, w, h * 0.34);
+    ctx.strokeStyle = "rgba(0,0,0,0.26)";
+    ctx.lineWidth = 1.3 * scale;
+    for (let k = 0; k < o.grain.length; k++) {
+      const cx0 = x + w * o.grain[k];
+      ctx.beginPath();
+      ctx.moveTo(cx0, y - 1);
+      ctx.lineTo(cx0 + 3.5 * scale, y + h + 1);
+      ctx.stroke();
+    }
+    ctx.restore();
+    ctx.strokeStyle = "rgba(0,0,0,0.28)";
+    ctx.lineWidth = 1.4 * scale;
+    shape(); ctx.stroke();
+  }
+
+  // 黄金のりんごの後光ときらめき
+  function goldAura(x, y, r, seed) {
+    const pulse = 0.5 + 0.5 * Math.sin(gameT * 2.6 + seed * 0.05);
+    const rad = r * (2.2 + 0.5 * pulse);
+    const g = ctx.createRadialGradient(x, y, r * 0.4, x, y, rad);
+    g.addColorStop(0, "rgba(255,216,112,0.55)");
+    g.addColorStop(0.55, "rgba(255,198,72,0.22)");
+    g.addColorStop(1, "rgba(255,190,60,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
+  }
+  function goldSparkles(x, y, r, seed) {
+    ctx.fillStyle = "#fff4c8";
+    for (let i = 0; i < 4; i++) {
+      const a = gameT * 1.2 + i * 1.5708 + seed * 0.07;
+      const dist = r * (2.05 + 0.3 * Math.sin(gameT * 3 + i));
+      const px = x + Math.cos(a) * dist, py = y + Math.sin(a) * dist;
+      const sz = r * 0.45 * (0.5 + 0.5 * Math.sin(gameT * 5 + i * 2.1));
+      if (sz < 0.4) continue;
+      ctx.beginPath();
+      ctx.moveTo(px, py - sz);
+      ctx.quadraticCurveTo(px + sz * 0.18, py - sz * 0.18, px + sz, py);
+      ctx.quadraticCurveTo(px + sz * 0.18, py + sz * 0.18, px, py + sz);
+      ctx.quadraticCurveTo(px - sz * 0.18, py + sz * 0.18, px - sz, py);
+      ctx.quadraticCurveTo(px - sz * 0.18, py - sz * 0.18, px, py - sz);
+      ctx.fill();
+    }
+  }
+
+  function drawApple(ap) {
+    const x = sx(ap.x), y = sy(ap.y), r = APPLE_R * scale;
+    if (ap.gold) goldAura(x, y, r, ap.x + ap.y);
+    ctx.fillStyle = ap.gold ? "#f2c033" : "#d0402f";
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.33, y - r * 0.38, r * 0.3, r * 0.2, -0.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = ap.gold ? "#8a6a12" : "#4d7a33";
+    ctx.lineWidth = 2 * scale;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x, y - r * 0.8);
+    ctx.lineTo(x + r * 0.35, y - r * 1.7);
+    ctx.stroke();
+    ctx.fillStyle = ap.gold ? "#c9a52c" : "#5c8f3c";
+    ctx.beginPath();
+    ctx.ellipse(x + r * 0.75, y - r * 1.5, r * 0.42, r * 0.22, -0.5, 0, Math.PI * 2);
+    ctx.fill();
+    if (ap.gold) goldSparkles(x, y, r, ap.x + ap.y);
+  }
+
+  function drawDebris(st) {
+    const rockCol = mix(ROCK_SKY, ROCK_SPACE, st);
+    for (let i = 0; i < debris.length; i++) {
+      const p = debris[i];
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, p.life / 0.45);
+      ctx.translate(sx(p.x), sy(p.y));
+      ctx.rotate(-p.rot);
+      ctx.scale(scale, scale);
+      if (p.t === 0) {
+        ctx.fillStyle = rockCol;
+        if (p.poly) {
+          ctx.beginPath();
+          for (let k = 0; k < p.poly.length; k++) {
+            const vx = p.poly[k][0] * p.r, vy = p.poly[k][1] * p.r;
+            if (k === 0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
+          }
+          ctx.closePath();
+        } else {
+          ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+        }
+        ctx.fill();
+      } else {
+        ctx.fillStyle = rockCol;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawParts() {
+    let i, p;
+    for (i = 0; i < parts.length; i++) {
+      p = parts[i];
+      ctx.globalAlpha = clamp(p.life / p.max, 0, 1);
+      ctx.fillStyle = "rgb(" + p.col + ")";
+      ctx.beginPath();
+      ctx.arc(sx(p.x), sy(p.y), p.r * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (i = 0; i < flashes.length; i++) {
+      p = flashes[i];
+      const ft = 1 - p.life / p.max;
+      ctx.globalAlpha = (1 - ft) * (1 - ft) * 0.8;
+      ctx.fillStyle = "rgb(" + p.col + ")";
+      ctx.beginPath();
+      ctx.arc(sx(p.x), sy(p.y), p.r * (0.35 + ft * 0.95) * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (i = 0; i < rings.length; i++) {
+      p = rings[i];
+      if (p.wait > 0) continue;
+      const t = 1 - p.life / p.max;
+      ctx.globalAlpha = (1 - t) * 0.85;
+      ctx.strokeStyle = "rgb(" + p.col + ")";
+      ctx.lineWidth = p.w * scale * (1 - t * 0.6);
+      ctx.beginPath();
+      ctx.arc(sx(p.x), sy(p.y), (p.r0 + (p.r1 - p.r0) * t) * scale, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---------- キリン ----------
+  // 横向きの胴体。u は「設計単位→px」の倍率、(baseX, groundPy) は首の付け根の真下＝地面
+  function giraffeBody(g, baseX, groundPy, u) {
+    function X(x) { return baseX + x * u; }
+    function Y(y) { return groundPy - y * u; }
+
+    // 尻尾（胴より奥）
+    g.strokeStyle = G_DARK;
+    g.lineWidth = 2.6 * u;
+    g.lineCap = "round";
+    g.beginPath();
+    g.moveTo(X(-51), Y(60));
+    g.quadraticCurveTo(X(-60), Y(50), X(-58), Y(34));
+    g.stroke();
+    g.fillStyle = G_SPOT;
+    g.beginPath();
+    g.ellipse(X(-58), Y(31), 3.4 * u, 5 * u, 0, 0, Math.PI * 2);
+    g.fill();
+
+    // 奥側の脚
+    g.fillStyle = G_DARK;
+    g.fillRect(X(-44), Y(42), 8 * u, 42 * u);
+    g.fillRect(X(-15), Y(42), 8 * u, 42 * u);
+    g.fillStyle = "#7d5820";
+    g.fillRect(X(-44), Y(5), 8 * u, 5 * u);
+    g.fillRect(X(-15), Y(5), 8 * u, 5 * u);
+
+    // 胴（尻→腹→肩）
+    g.fillStyle = G_BODY;
+    g.beginPath(); g.ellipse(X(-42), Y(53), 12 * u, 14 * u, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(X(-21), Y(56), 26 * u, 16 * u, -0.10, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(X(0), Y(58), 14 * u, 18 * u, 0.06, 0, Math.PI * 2); g.fill();
+
+    // 肩から首へつながる部分（首の付け根を隠して太さをつなぐ）
+    g.beginPath();
+    g.moveTo(X(-11), Y(86));
+    g.quadraticCurveTo(X(-17), Y(70), X(-26), Y(57));
+    g.lineTo(X(18), Y(52));
+    g.quadraticCurveTo(X(15), Y(70), X(11), Y(86));
+    g.closePath();
+    g.fill();
+
+    // 胴の模様
+    g.fillStyle = G_SPOT;
+    const bs = [[-34, 62, 6], [-21, 52, 7], [-11, 64, 5.5], [-40, 47, 4.6], [-26, 66, 4.6], [-6, 50, 4.6]];
+    for (let i = 0; i < bs.length; i++) {
+      g.beginPath();
+      g.ellipse(X(bs[i][0]), Y(bs[i][1]), bs[i][2] * u, bs[i][2] * 0.85 * u, 0.3, 0, Math.PI * 2);
+      g.fill();
+    }
+
+    // 手前の脚
+    g.fillStyle = G_BODY;
+    g.fillRect(X(-35), Y(45), 9 * u, 45 * u);
+    g.fillRect(X(-1), Y(45), 9 * u, 45 * u);
+    g.fillStyle = "#8a6224";
+    g.fillRect(X(-35), Y(5), 9 * u, 5 * u);
+    g.fillRect(X(-1), Y(5), 9 * u, 5 * u);
+  }
+
+  function drawBody() {
+    giraffeBody(ctx, sx(0), sy(0), scale);
+  }
+
+  function neckNormal(i) {
+    const a = neck[Math.max(0, i - 1)], b = neck[Math.min(neck.length - 1, i + 1)];
+    const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
+    return { x: -dy / l, y: dx / l };
+  }
+
+  function drawNeck() {
+    const rb = inv > 0;
+    let k;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    // たてがみ（首の背側）
+    ctx.strokeStyle = rb ? rainbow(head.y + 180, 38) : "#8a6224";
+    ctx.lineWidth = 5 * scale;
+    ctx.beginPath();
+    for (k = 0; k < neck.length; k++) {
+      const nv = neckNormal(k);
+      const mx = neck[k].x + nv.x * NECK_W * 0.44, my = neck[k].y + nv.y * NECK_W * 0.44;
+      if (k === 0) ctx.moveTo(sx(mx), sy(my)); else ctx.lineTo(sx(mx), sy(my));
+    }
+    ctx.stroke();
+
+    // 本体＋ハイライト
+    if (rb) {
+      for (k = 1; k < neck.length; k++) {
+        ctx.strokeStyle = rainbow(neck[k].y, 55);
+        ctx.lineWidth = NECK_W * scale;
+        ctx.beginPath();
+        ctx.moveTo(sx(neck[k - 1].x), sy(neck[k - 1].y));
+        ctx.lineTo(sx(neck[k].x), sy(neck[k].y));
+        ctx.stroke();
+      }
+      ctx.strokeStyle = rainbow(head.y, 55);
+      ctx.lineWidth = NECK_W * scale;
+      ctx.beginPath();
+      ctx.moveTo(sx(neck[neck.length - 1].x), sy(neck[neck.length - 1].y));
+      ctx.lineTo(sx(head.x), sy(head.y));
+      ctx.stroke();
+    } else {
+      neckPath();
+      ctx.strokeStyle = G_BODY;
+      ctx.lineWidth = NECK_W * scale;
+      ctx.stroke();
+    }
+
+    // 模様
+    ctx.fillStyle = rb ? rainbow(head.y + 70, 32) : G_SPOT;
+    for (let s = 0; s < spots.length; s++) {
+      const p = spots[s];
+      if (rb) ctx.fillStyle = rainbow(p.y + 70, 32);
+      const rr = p.r * scale;
+      ctx.beginPath();
+      for (let v = 0; v < p.poly.length; v++) {
+        const vx = sx(p.x) + p.poly[v][0] * rr, vy = sy(p.y) + p.poly[v][1] * rr;
+        if (v === 0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  function neckPath() {
+    ctx.beginPath();
+    ctx.moveTo(sx(neck[0].x), sy(neck[0].y));
+    for (let k = 1; k < neck.length; k++) ctx.lineTo(sx(neck[k].x), sy(neck[k].y));
+    ctx.lineTo(sx(head.x), sy(head.y));
+  }
+
+  // 顔（ローカル座標：+x が進行方向）
+  function headShape(g, body, spot, dark, light, happy) {
+    // 耳
+    g.fillStyle = dark;
+    g.beginPath();
+    g.ellipse(-10, -7, 8, 4, -0.55, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = spot;
+    g.beginPath();
+    g.ellipse(-10.5, -7.5, 5, 2.3, -0.55, 0, Math.PI * 2);
+    g.fill();
+    // 角
+    g.strokeStyle = dark;
+    g.lineWidth = 3.2;
+    g.lineCap = "round";
+    g.beginPath();
+    g.moveTo(-5, -7); g.lineTo(-7.5, -16.5);
+    g.moveTo(1.5, -8); g.lineTo(0.5, -17.5);
+    g.stroke();
+    g.fillStyle = spot;
+    g.beginPath(); g.arc(-7.5, -17.5, 2.7, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(0.5, -18.5, 2.7, 0, Math.PI * 2); g.fill();
+    // 頭
+    g.fillStyle = body;
+    g.beginPath(); g.ellipse(0, 0, 12.5, 10, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = light;
+    g.beginPath(); g.ellipse(-1, -3, 9.5, 5.5, -0.1, 0, Math.PI * 2); g.fill();
+    // 鼻先
+    g.fillStyle = body;
+    g.beginPath(); g.ellipse(13.5, 1.5, 9.5, 6.8, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = light;
+    g.beginPath(); g.ellipse(14.5, -0.5, 7.5, 3.8, 0, 0, Math.PI * 2); g.fill();
+    // 口もと（笑顔のときは口角を上げる）
+    g.lineCap = "round";
+    if (happy) {
+      g.strokeStyle = "rgba(60,44,20,0.8)";
+      g.lineWidth = 1.7;
+      g.beginPath();
+      g.moveTo(13.5, 2.0);
+      g.quadraticCurveTo(18, 7.8, 22.2, 1.2);
+      g.stroke();
+    } else {
+      g.strokeStyle = "rgba(60,44,20,0.5)";
+      g.lineWidth = 1.2;
+      g.beginPath();
+      g.moveTo(15, 5); g.lineTo(21, 4);
+      g.stroke();
+    }
+    // 目（笑顔のときは細める）
+    if (happy) {
+      g.strokeStyle = "#3a2d1c";
+      g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(-0.8, -2.4);
+      g.quadraticCurveTo(2, -6.8, 4.8, -2.4);
+      g.stroke();
+    } else {
+      g.fillStyle = "#3a2d1c";
+      g.beginPath(); g.arc(2, -4, 2.8, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#ffffff";
+      g.beginPath(); g.arc(2.9, -5, 1.1, 0, Math.PI * 2); g.fill();
+    }
+    // 鼻
+    g.fillStyle = "#3a2d1c";
+    g.beginPath(); g.ellipse(20, 0, 1.6, 1.1, 0.3, 0, Math.PI * 2); g.fill();
+  }
+
+  function drawHeadInWorld() {
+    const rb = inv > 0;
+    if (glow > 0) {                          // 食べた直後、頭のまわりが光る
+      const gt = glow / 0.55;
+      const gr = (HEAD_R * HEAD_DRAW + 6 + 16 * (1 - gt)) * scale;
+      const gg = ctx.createRadialGradient(sx(head.x), sy(head.y), gr * 0.35,
+                                        sx(head.x), sy(head.y), gr);
+      const gc = glowGold ? "255,226,120" : "150,240,130";
+      gg.addColorStop(0, "rgba(" + gc + "," + (0.55 * gt).toFixed(3) + ")");
+      gg.addColorStop(1, "rgba(" + gc + ",0)");
+      ctx.fillStyle = gg;
+      ctx.beginPath();
+      ctx.arc(sx(head.x), sy(head.y), gr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.save();
+    ctx.translate(sx(head.x), sy(head.y));
+    ctx.rotate(head.a - Math.PI / 2);
+    ctx.scale(scale * HEAD_DRAW, scale * HEAD_DRAW);
+    headShape(ctx,
+      rb ? rainbow(head.y, 58) : G_BODY,
+      rb ? rainbow(head.y + 70, 32) : G_SPOT,
+      rb ? rainbow(head.y + 180, 40) : G_DARK,
+      rb ? rainbow(head.y - 40, 72) : G_LIGHT,
+      smile > 0);
+    ctx.restore();
+  }
+
+  function gaugeAt(up, t, col) {
+    const gw = 44 * scale, gh = 5 * scale;
+    const gx0 = sx(head.x) - gw / 2, gy0 = sy(head.y) - up * scale;
+    ctx.fillStyle = "rgba(20, 24, 26, 0.55)";
+    ctx.fillRect(gx0 - 1.5, gy0 - 1.5, gw + 3, gh + 3);
+    ctx.fillStyle = col;
+    ctx.fillRect(gx0, gy0, gw * clamp(t, 0, 1), gh);
+  }
+
+  function drawGauges() {
+    const t = clamp(hp / HP_MAX, 0, 1);
+    gaugeAt(44, t, t > 0.5 ? "#4f9d4a" : (t > 0.25 ? "#d3a129" : "#c8452f"));
+    if (hpFlash > 0) {                       // 回復した直後はバーを白く光らせる
+      const gw = 44 * scale, gh = 5 * scale;
+      const gx0 = sx(head.x) - gw / 2, gy0 = sy(head.y) - 44 * scale;
+      ctx.globalAlpha = Math.min(1, hpFlash / 0.5) * 0.85;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(gx0, gy0, gw * t, gh);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5 * scale;
+      ctx.strokeRect(gx0 - 1.5, gy0 - 1.5, gw + 3, gh + 3);
+      ctx.globalAlpha = 1;
+    }
+    if (inv > 0) gaugeAt(56, inv / INV_TIME, rainbow(head.y + 120, 62));
+  }
+
+  // ---------- ループ ----------
+  let last = 0;
+  function loop(t) {
+    if (!last) last = t;
+    const dt = Math.min(0.05, (t - last) / 1000);
+    last = t;
+    if (state === "play") update(dt);
+    else if (state === "dying") {
+      gameT += dt;
+      updateFx(dt);
+      deathT -= dt;
+      if (deathT <= 0) showResult();
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  document.addEventListener("visibilitychange", function () { last = 0; });
+
+  reset();
+  resize();
+  requestAnimationFrame(loop);
+})();
+</script>
+
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/synthwave-stg/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>SynthwaveSTG</title>
+<meta name="description" content="夕日のグリッドを飛ぶ3Dシューティング">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{--howto-bg:#12002b;--howto-fg:#fff}
+  html,body{margin:0;height:100%;background:#12002b;overflow:hidden;font-family:"Press Start 2P","DotGothic16",monospace;color:#fff;touch-action:none;user-select:none}
+  canvas{display:block}
+  body{display:flex;align-items:center;justify-content:center;height:100vh;height:100dvh}
+  #game{position:relative;width:100%;height:100%;overflow:hidden;isolation:isolate}
+  @media (orientation:landscape){
+    #game{width:auto;height:100%;aspect-ratio:9/16}
+  }
+  #hud{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;font-size:14px;color:#ffe86b;text-shadow:2px 2px 0 #ff3fa4;pointer-events:none}
+  #hp span{display:inline-block;width:12px;height:12px;margin-right:6px;background:#3dfcff;box-shadow:2px 2px 0 #12002b}
+  #hp span.off{background:transparent;box-shadow:none;border:2px solid rgba(61,252,255,.4)}
+  #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(18,0,43,.55);text-align:center;padding:12px;box-sizing:border-box}
+  #overlay h1{font-size:clamp(14px,4vh,28px);font-size:clamp(14px,4dvh,28px);max-width:100%;overflow-wrap:anywhere;margin:0 0 14px;color:#ffe86b;text-shadow:3px 3px 0 #ff3fa4,6px 6px 0 #12002b}
+  #overlay p{margin:6px 0;font-size:10px;line-height:1.8;opacity:.9}
+  #overlay .go{margin-top:18px;padding:14px 28px;border:3px solid #3dfcff;color:#12002b;font:inherit;font-size:12px;background:#3dfcff;box-shadow:4px 4px 0 #ff3fa4;cursor:pointer}
+  #overlay .go:focus-visible{outline:2px solid #ffe86b;outline-offset:4px}
+  .hidden{display:none!important}
+  #sound{position:absolute;right:14px;bottom:14px;z-index:2;min-height:44px;padding:8px 12px;border:1px solid #3dfcff;background:#12002bcc;color:#3dfcff;font:inherit;font-size:10px;cursor:pointer}
+  #sound:focus-visible{outline:2px solid #ffe86b;outline-offset:3px}
+</style>
+</head>
+<body>
+<div id="game">
+<div id="hud"><div id="score">0</div><div id="hp"></div></div>
+<button id="sound" type="button" aria-label="効果音" aria-pressed="true">SE ON</button>
+<div id="overlay">
+  <h1>SynthwaveSTG</h1>
+  <p id="msg">矢印 / WASD で移動　ショットは自動</p>
+  <p>スマホはドラッグで移動</p>
+  <button class="go" id="start">スタート</button>
+  <button class="go" type="button" data-howto-open>遊び方</button>
+</div>
+<section class="howto" data-pos="none" hidden>
+  <h2>遊び方</h2>
+  <p>夕日のグリッドの上を奥へ飛び続ける3Dシューティングです。ショットは自動で出るので、自機を動かして敵に当てながら、敵や敵弾、壁を避けます。ライフは3つで、ぶつかるたびに減り、なくなると終了です。スコアは飛んでいるだけで増え、敵を倒すと100点から500点が加わります。速度は少しずつ上がります。</p>
+  <h2>操作</h2>
+  <p>画面をドラッグすると、指の動きに合わせて自機が上下左右に動きます。PC は矢印キーか WASD でも動かせます。</p>
+  <h2>コツ</h2>
+  <p>弾を撃つ三角の敵は1発で倒せて300点、地上の砲台は3発必要で500点です。低い壁は高度を上げれば越えられ、高い壁は左右によけます。壁は敵の弾も止めます。当たったあとは約1.5秒無敵です。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const soundButton=document.getElementById('sound');
+let audioContext=null,audioMaster=null,audioBus=null,noiseBuffer=null,soundEnabled=true,audioVoices=0;
+async function enableAudio(){
+  if(!soundEnabled)return;
+  try{
+    if(!audioContext){
+      const AudioEngine=window.AudioContext||window.webkitAudioContext;
+      if(!AudioEngine)return;
+      audioContext=new AudioEngine();
+      audioMaster=audioContext.createGain();audioMaster.gain.value=.22;
+      audioBus=audioContext.createGain();audioBus.connect(audioMaster);
+      const reverb=audioContext.createConvolver(),wet=audioContext.createGain();
+      const impulse=audioContext.createBuffer(2,Math.floor(audioContext.sampleRate*.38),audioContext.sampleRate);
+      for(let channel=0;channel<2;channel++){
+        const tail=impulse.getChannelData(channel);
+        for(let index=0;index<tail.length;index++){
+          const time=index/audioContext.sampleRate;
+          tail[index]=time<.018?0:(Math.random()*2-1)*Math.exp(-time*19)*.3;
+        }
+      }
+      reverb.buffer=impulse;wet.gain.value=.13;
+      audioBus.connect(reverb);reverb.connect(wet);wet.connect(audioMaster);
+      const limiter=audioContext.createDynamicsCompressor();
+      limiter.threshold.value=-16;limiter.knee.value=12;limiter.ratio.value=8;
+      audioMaster.connect(limiter);limiter.connect(audioContext.destination);
+      noiseBuffer=audioContext.createBuffer(1,audioContext.sampleRate,audioContext.sampleRate);
+      const samples=noiseBuffer.getChannelData(0);
+      for(let index=0;index<samples.length;index++)samples[index]=Math.random()*2-1;
+    }
+    if(audioContext.state==='suspended')await audioContext.resume();
+  }catch{}
+}
+function soundVoice(wave,frequency,endFrequency,duration,volume,delay=0,options={}){
+  if(!soundEnabled||!audioContext||audioContext.state!=='running'||document.hidden||audioVoices>=64)return;
+  const start=audioContext.currentTime+delay;
+  const envelope=audioContext.createGain();
+  const attack=options.attack||.003;
+  envelope.gain.setValueAtTime(.0001,start);
+  envelope.gain.exponentialRampToValueAtTime(volume,start+attack);
+  envelope.gain.exponentialRampToValueAtTime(volume*.22,start+duration*.4);
+  envelope.gain.exponentialRampToValueAtTime(.0001,start+duration);
+  const panner=audioContext.createStereoPanner();panner.pan.value=options.pan||0;
+  envelope.connect(panner);panner.connect(audioBus);
+  let source;
+  const filter=audioContext.createBiquadFilter();
+  filter.type=options.filter||'lowpass';filter.Q.value=options.resonance||.7;
+  if(wave==='noise'){
+    source=audioContext.createBufferSource();source.buffer=noiseBuffer;source.loop=true;
+    filter.frequency.setValueAtTime(frequency,start);
+    filter.frequency.exponentialRampToValueAtTime(endFrequency,start+duration);
+  }else{
+    source=audioContext.createOscillator();source.type=wave;
+    source.frequency.setValueAtTime(frequency,start);
+    source.frequency.exponentialRampToValueAtTime(endFrequency,start+duration*(options.sweep||.65));
+    filter.frequency.setValueAtTime(options.cutoff||5000,start);
+    filter.frequency.exponentialRampToValueAtTime(options.endCutoff||800,start+duration);
+  }
+  source.connect(filter);filter.connect(envelope);
+  audioVoices++;
+  source.onended=()=>{source.disconnect();filter.disconnect();envelope.disconnect();panner.disconnect();audioVoices--;};
+  if(wave==='noise')source.start(start,Math.random()*.5);else source.start(start);
+  source.stop(start+duration+.01);
+}
+function playSound(kind,position=null){
+  if(kind==='shot'&&audioVoices>32)return;
+  const pan=position?Math.max(-.75,Math.min(.75,position.x/5.5*.75)):0;
+  const voice=(wave,frequency,endFrequency,duration,volume,delay=0,options={})=>soundVoice(wave,frequency,endFrequency,duration,volume,delay,{pan,...options});
+  switch(kind){
+    case 'shot':
+      voice('noise',6500,1900,.025,.13,0,{filter:'bandpass'});
+      voice('sawtooth',1450,280,.105,.15,0,{cutoff:3800,endCutoff:600,resonance:1.4});
+      voice('sine',240,90,.08,.25);break;
+    case 'enemy':
+      voice('square',640,170,.2,.17,0,{cutoff:2400,endCutoff:450,resonance:2});
+      voice('triangle',970,250,.16,.16,.015);
+      voice('noise',3800,1200,.045,.12,0,{filter:'bandpass'});break;
+    case 'turret':
+      voice('noise',7200,450,.12,.75);
+      voice('sine',180,38,.42,.95,0,{sweep:.25});
+      voice('triangle',95,42,.28,.38,.018);
+      voice('noise',900,130,.55,.45,.025);break;
+    case 'impact':
+      voice('noise',6400,900,.1,.4,0,{filter:'bandpass'});
+      voice('triangle',1250,420,.12,.28);
+      voice('sine',1840,780,.09,.1,.008);break;
+    case 'destroy':
+      voice('noise',8000,400,.17,.75);
+      voice('sine',155,32,.55,.85,0,{sweep:.3});
+      voice('noise',1900,90,.8,.65,.025);
+      voice('noise',4200,600,.16,.22,.08,{filter:'bandpass'});
+      voice('noise',2700,350,.22,.16,.17,{filter:'bandpass'});break;
+    case 'damage':
+      voice('noise',5200,250,.3,.8);
+      voice('sawtooth',145,45,.35,.38,0,{cutoff:1700,endCutoff:250});
+      voice('sine',85,32,.5,.8);
+      voice('square',740,480,.11,.17,.12,{cutoff:2200});
+      voice('square',740,480,.11,.13,.28,{cutoff:2200});break;
+    case 'start':
+      [220,330,440,660].forEach((frequency,index)=>{
+        voice('triangle',frequency,frequency,.3,.32,index*.075);
+        voice('sine',frequency*2,frequency*2,.22,.12,index*.075);
+      });break;
+    case 'over':
+      [330,261.63,196,110].forEach((frequency,index)=>{
+        voice('triangle',frequency,frequency*.97,.6,.34,index*.2);
+        voice('sine',frequency*.5,frequency*.48,.65,.3,index*.2);
+      });break;
+  }
+}
+soundButton.onclick=()=>{
+  soundEnabled=!soundEnabled;
+  soundButton.textContent=soundEnabled?'SE ON':'SE OFF';
+  soundButton.setAttribute('aria-pressed',String(soundEnabled));
+  if(audioMaster)audioMaster.gain.setTargetAtTime(soundEnabled?.22:0,audioContext.currentTime,.015);
+  if(soundEnabled)void enableAudio();
+};
+// ---------- 基本セットアップ ----------
+const game=document.getElementById('game');
+const W=()=>game.getBoundingClientRect().width,H=()=>game.getBoundingClientRect().height;
+const RETRO_W=640; // 内部解像度の横幅（大きくすると精細に）
+const COLOR_BITS=5; // 1チャンネルの階調ビット数（N64の16bitカラー相当）
+const renderer=new THREE.WebGLRenderer({antialias:false});
+const rt=new THREE.WebGLRenderTarget(2,2,{minFilter:THREE.NearestFilter,magFilter:THREE.NearestFilter});
+const lin={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter};
+const rtA=new THREE.WebGLRenderTarget(2,2,lin),rtB=new THREE.WebGLRenderTarget(2,2,lin);
+const RES=new THREE.Vector2(2,2),BRES=new THREE.Vector2(2,2),DISPLAY_RES=new THREE.Vector2(2,2);
+function fitRenderer(){
+  const rw=RETRO_W,rh=Math.round(RETRO_W*H()/W());
+  renderer.setPixelRatio(window.devicePixelRatio||1);
+  renderer.setSize(W(),H(),false);
+  renderer.getDrawingBufferSize(DISPLAY_RES);
+  rt.setSize(rw,rh);RES.set(rw,rh);
+  const bw=Math.ceil(rw/4),bh=Math.ceil(rh/4);rtA.setSize(bw,bh);rtB.setSize(bw,bh);BRES.set(bw,bh);
+  renderer.domElement.style.width=W()+'px';
+  renderer.domElement.style.height=H()+'px';
+}
+fitRenderer();
+renderer.domElement.style.imageRendering='auto';
+game.prepend(renderer.domElement);
+
+// 頂点スナップ（低解像度の画素グリッドに頂点を吸着させる）
+const SNAP_DIV=1.; // 大きいほど頂点の揺れが強い（PS1らしさ）
+const SNAP_GLSL=`
+  vec2 ndc=gl_Position.xy/gl_Position.w;
+  vec2 hres=uRes*.5/SNAP_DIV;
+  ndc=floor(ndc*hres+.5)/hres;
+  gl_Position.xy=ndc*gl_Position.w;`.replace('SNAP_DIV',SNAP_DIV.toFixed(1));
+function snap(mat){
+  mat.onBeforeCompile=s=>{
+    s.uniforms.uRes={value:RES};
+    s.vertexShader=s.vertexShader.replace('void main() {','uniform vec2 uRes;\nvoid main() {')
+      .replace('#include <project_vertex>','#include <project_vertex>\n'+SNAP_GLSL);
+  };
+  return mat;
+}
+
+// ブルーム（明部抽出→1/4解像度でぼかし）
+const BLOOM_STRENGTH=1.0,BLOOM_THRESHOLD=.8;
+const quadVS=`varying vec2 u;void main(){u=uv;gl_Position=vec4(position.xy,0.,1.);}`;
+const brightMat=new THREE.ShaderMaterial({uniforms:{t:{value:rt.texture},th:{value:BLOOM_THRESHOLD}},vertexShader:quadVS,
+  fragmentShader:`varying vec2 u;uniform sampler2D t;uniform float th;void main(){vec3 c=texture2D(t,u).rgb;float l=max(c.r,max(c.g,c.b));gl_FragColor=vec4(c*smoothstep(th,th+.3,l),1.);}`});
+const blurMat=new THREE.ShaderMaterial({uniforms:{t:{value:null},dir:{value:new THREE.Vector2(1,0)}},vertexShader:quadVS,
+  fragmentShader:`varying vec2 u;uniform sampler2D t;uniform vec2 dir;
+  void main(){vec3 c=texture2D(t,u).rgb*.227;
+    c+=(texture2D(t,u+dir*1.38).rgb+texture2D(t,u-dir*1.38).rgb)*.316;
+    c+=(texture2D(t,u+dir*3.23).rgb+texture2D(t,u-dir*3.23).rgb)*.07;
+    gl_FragColor=vec4(c,1.);}`});
+const quadScene=new THREE.Scene(),quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),brightMat);quadScene.add(quad);
+function pass(mat,target){quad.material=mat;renderer.setRenderTarget(target);renderer.render(quadScene,postCam);}
+
+// ポストプロセス：ディザ＋色数削減＋ブラウン管
+const postScene=new THREE.Scene(),postCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+const postMat=new THREE.ShaderMaterial({
+  uniforms:{t:{value:rt.texture},bloom:{value:rtA.texture},bs:{value:BLOOM_STRENGTH},res:{value:RES},displayRes:{value:DISPLAY_RES},levels:{value:(1<<COLOR_BITS)-1}},
+  vertexShader:quadVS,
+  fragmentShader:`varying vec2 u;uniform sampler2D t;uniform sampler2D bloom;uniform float bs;uniform vec2 res;uniform vec2 displayRes;uniform float levels;
+  float b2(vec2 p){return 2.*p.x+3.*p.y-4.*p.x*p.y;}
+  float bayer(vec2 p){vec2 q=floor(p);vec2 a=mod(q,2.),b=mod(floor(q*.5),2.);return (4.*b2(a)+b2(b))/16.;}
+  vec2 curve(vec2 p){p=p*2.-1.;p*=1.+dot(p,p)*vec2(.09,.13);return p*.5+.5;}
+  void main(){
+    vec2 q=curve(u);
+    if(q.x<0.||q.x>1.||q.y<0.||q.y>1.){gl_FragColor=vec4(0.,0.,.01,1.);return;}
+    float ab=.0012;
+    vec3 c=vec3(texture2D(t,q+vec2(ab,0.)).r,texture2D(t,q).g,texture2D(t,q-vec2(ab,0.)).b);
+    c+=texture2D(bloom,q).rgb*bs;
+    float d=bayer(q*res)-.5;
+    c=floor(c*levels+d)/levels;
+    float scan=.9+.1*cos(q.y*displayRes.y*2.094395);
+    c*=scan;
+    float m=mod(gl_FragCoord.x,3.);
+    c*=vec3(m<1.?1.1:.92,m>=1.&&m<2.?1.1:.92,m>=2.?1.1:.92);
+    vec2 v=q*(1.-q);
+    c*=pow(v.x*v.y*24.,.25);
+    gl_FragColor=vec4(c,1.);}`});
+postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),postMat));
+const FRAME_INTERVAL=1000/60;
+let lastDraw=null;
+function drawFrame(now){
+  if(lastDraw!==null&&now-lastDraw<FRAME_INTERVAL)return;
+  lastDraw=lastDraw===null?now:now-(now-lastDraw)%FRAME_INTERVAL;
+  updateGroundShadows();
+  renderer.setRenderTarget(rt);renderer.render(scene,cam);
+  pass(brightMat,rtA);
+  blurMat.uniforms.t.value=rtA.texture;blurMat.uniforms.dir.value.set(1/BRES.x,0);pass(blurMat,rtB);
+  blurMat.uniforms.t.value=rtB.texture;blurMat.uniforms.dir.value.set(0,1/BRES.y);pass(blurMat,rtA);
+  renderer.setRenderTarget(null);renderer.render(postScene,postCam);
+}
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0x1a0040,40,140);
+const cam=new THREE.PerspectiveCamera(60,W()/H(),0.1,400);
+cam.position.set(0,2.2,6);
+cam.lookAt(0,1.5,-30);
+
+// ---------- 背景：空・太陽・レインボー・山 ----------
+const sky=new THREE.Mesh(new THREE.PlaneGeometry(600,320),new THREE.ShaderMaterial({
+  uniforms:{},fog:false,depthWrite:false,
+  vertexShader:`varying vec2 u;void main(){u=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+  fragmentShader:`varying vec2 u;
+  float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5);}
+  void main(){
+    vec3 top=vec3(.02,0.,.07),mid=vec3(.16,.02,.28),low=vec3(.42,.1,.32);
+    vec3 c=mix(mid,top,smoothstep(.45,1.,u.y));
+    c=mix(low,c,smoothstep(.36,.6,u.y));
+    gl_FragColor=vec4(c,1.);}`}));
+sky.position.set(0,90,-300);scene.add(sky);
+
+const sun=new THREE.Mesh(new THREE.CircleGeometry(46,64),new THREE.ShaderMaterial({
+  uniforms:{},fog:false,transparent:true,depthWrite:false,
+  vertexShader:`varying vec2 u;void main(){u=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+  fragmentShader:`varying vec2 u;void main(){
+    vec3 c=mix(vec3(.7,.15,.42),vec3(.85,.7,.25),smoothstep(.25,.95,u.y));
+    float stripe=step(.5,fract(u.y*7.))*smoothstep(.5,.2,u.y);
+    float a=1.-stripe*smoothstep(.55,.15,u.y)*.9;
+    gl_FragColor=vec4(c,a);}`}));
+sun.position.set(0,36,-290);scene.add(sun);
+
+
+
+// ---------- 左右の山（グリッドと同期して流れる） ----------
+const MTN_LEN=200,mountains=[];
+function mountainGeo(side){
+  const g=new THREE.PlaneGeometry(70,MTN_LEN,12,40);
+  g.rotateX(-Math.PI/2);
+  const p=g.attributes.position;
+  for(let i=0;i<p.count;i++){
+    const x=p.getX(i),z=p.getZ(i);
+    const inner=side>0?x+35:35-x;           // 内側の縁で0、外側で1
+    const t=THREE.MathUtils.clamp(inner/70,0,1);
+    const k=Math.PI*2/MTN_LEN;
+    const n=Math.sin(z*k*3+x*.15)*.6+Math.sin(z*k*5+x*.37+1.3)*.4;
+    const hgt=Math.pow(t,1.4)*(14+n*12)+Math.max(0,n)*t*10;
+    p.setY(i,hgt);
+  }
+  g.computeVertexNormals();return g;
+}
+function makeMountain(side,z){
+  const geo=mountainGeo(side);
+  const fill=new THREE.Mesh(geo,snap(new THREE.MeshBasicMaterial({color:0x120026,polygonOffset:true,polygonOffsetFactor:1})));
+  const wire=new THREE.LineSegments(new THREE.WireframeGeometry(geo),snap(new THREE.LineBasicMaterial({color:0x3dfcff,transparent:true,opacity:.3})));
+  const grp=new THREE.Group();grp.add(fill,wire);
+  grp.position.set(side*41,0,z);scene.add(grp);mountains.push(grp);
+}
+for(const side of[-1,1])for(let i=0;i<3;i++)makeMountain(side,-MTN_LEN*i);
+
+// ---------- 流れるグリッド ----------
+const gridMat=new THREE.ShaderMaterial({
+  uniforms:{off:{value:0}},fog:false,
+  extensions:{derivatives:true},
+  vertexShader:`varying vec2 u;varying float d;void main(){u=uv;vec4 mv=modelViewMatrix*vec4(position,1.);d=-mv.z;gl_Position=projectionMatrix*mv;}`,
+  fragmentShader:`varying vec2 u;varying float d;uniform float off;
+  void main(){
+    vec2 g=vec2(u.x*20.,u.y*50.+off);
+    vec2 f=abs(fract(g)-.5);
+    vec2 w=fwidth(g)*1.2;
+    float line=1.-smoothstep(0.,w.y+.03,f.y);
+    float fade=smoothstep(220.,20.,d);
+    vec3 base=vec3(.07,0.,.14);
+    vec3 cyan=vec3(.24,.99,1.);
+    vec3 c=base+cyan*line*.55;
+    c=mix(vec3(.05,.0,.12),c,fade);
+    gl_FragColor=vec4(c,1.);}`});
+const grid=new THREE.Mesh(new THREE.PlaneGeometry(160,400),gridMat);
+grid.rotation.x=-Math.PI/2;grid.position.set(0,0,-150);scene.add(grid);
+const horizon=new THREE.Mesh(new THREE.PlaneGeometry(600,1.2),new THREE.MeshBasicMaterial({color:0x1a8a92,fog:false}));
+horizon.position.set(0,.3,-260);scene.add(horizon);
+
+// ---------- 自機 ----------
+const cyan=0x3dfcff,pink=0xff3fa4,yellow=0xffe86b;
+const player=new THREE.Group();
+const shipGeo=new THREE.ConeGeometry(.45,1.6,3);
+shipGeo.rotateX(-Math.PI/2);
+const shipMesh=new THREE.Mesh(shipGeo,snap(new THREE.MeshBasicMaterial({color:0x140030})));
+shipMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(shipGeo),snap(new THREE.LineBasicMaterial({color:cyan}))));
+player.add(shipMesh);
+player.position.set(0,1.5,0);scene.add(player);
+const BOUND={x:5.5,ymin:.5,ymax:4.5};
+function fitMovementBounds(){
+  const halfWidth=(BOUND.x*.75+.55)/.75;
+  cam.position.z=player.position.z+6;
+  cam.fov=THREE.MathUtils.radToDeg(2*Math.atan(halfWidth/(6*cam.aspect)));
+  cam.updateProjectionMatrix();
+  grid.scale.x=BOUND.x*2/160;
+  for(const mountain of mountains)mountain.position.x=Math.sign(mountain.position.x)*(35+BOUND.x);
+  player.position.x=THREE.MathUtils.clamp(player.position.x,-BOUND.x,BOUND.x);
+  cam.position.x=player.position.x*.25;
+  cam.lookAt(cam.position.x,1.5,-30);
+}
+fitMovementBounds();
+
+// ---------- 照準（緑の四角） ----------
+const RET_SIZE=.7,RET_Z=-40;
+const SHOT_RANGE=-50; // 自弾が消える距離（照準より少し先）
+const retPts=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([x,y])=>new THREE.Vector3(x*RET_SIZE,y*RET_SIZE,0));
+const reticle=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(retPts),snap(new THREE.LineBasicMaterial({color:0x39ff6a})));
+reticle.position.z=RET_Z;scene.add(reticle);
+
+// ---------- 弾・敵 ----------
+const shots=[],enemies=[],eshots=[],pops=[],walls=[];
+const groundShadows=new Map();
+const shadowGeo=new THREE.CircleGeometry(1,16);
+shadowGeo.rotateX(-Math.PI/2);
+const shadowMat=new THREE.MeshBasicMaterial({color:0x000008,transparent:true,opacity:.8,depthWrite:false});
+function updateGroundShadows(){
+  const owners=new Set([player,...enemies]);
+  for(const [owner,shadow] of groundShadows){
+    if(!owners.has(owner)){scene.remove(shadow);groundShadows.delete(owner);}
+  }
+  for(const owner of owners){
+    let shadow=groundShadows.get(owner);
+    if(!shadow){
+      shadow=new THREE.Mesh(shadowGeo,shadowMat);
+      shadow.scale.set(owner===player?.55:.9,1,owner===player?.85:.9);
+      scene.add(shadow);groundShadows.set(owner,shadow);
+    }
+    shadow.position.set(owner.position.x,.025,owner.position.z);
+  }
+}
+const shotGeo=new THREE.BoxGeometry(.12,.12,1.2),shotMat=snap(new THREE.MeshBasicMaterial({color:yellow}));
+const eshotGeo=new THREE.SphereGeometry(.3,8,8),eshotMat=snap(new THREE.MeshBasicMaterial({color:0xff7038}));
+const enemyKinds=[
+  {geo:new THREE.OctahedronGeometry(.8),hp:1,pts:100,shoot:false,col:0xffb347,fill:0x9c3918},
+  {geo:new THREE.ConeGeometry(.9,1.6,3),hp:1,pts:300,shoot:true,col:0xff6450,fill:0xa32318},
+  {geo:new THREE.BoxGeometry(1.4,1.2,1.4),hp:3,pts:500,shoot:true,col:0xffd36a,fill:0x9c571c},
+];
+const barrelGeo=new THREE.BoxGeometry(.3,.3,1.4);
+barrelGeo.translate(0,0,.7);
+function makeEnemy(z,turret=false){
+  const k=enemyKinds[turret?2:Math.random()<.6?0:1];
+  const g=new THREE.Group();
+  const core=new THREE.Mesh(k.geo,snap(new THREE.MeshBasicMaterial({color:k.fill})));
+  core.add(new THREE.LineSegments(new THREE.EdgesGeometry(k.geo),snap(new THREE.LineBasicMaterial({color:k.col}))));
+  g.add(core);
+  g.position.set((Math.random()*2-1)*(turret?BOUND.x-.8:BOUND.x),turret?.6:BOUND.ymin+Math.random()*(BOUND.ymax-BOUND.ymin),z);
+  g.userData={hp:k.hp,pts:k.pts,shoot:k.shoot,turret,cd:1+Math.random()*1.5,drift:turret?0:(Math.random()*2-1)*1.5,spin:turret?0:Math.random()*2+1};
+  if(turret){
+    const barrel=new THREE.Mesh(barrelGeo,snap(new THREE.MeshBasicMaterial({color:k.col})));
+    barrel.position.y=.45;g.add(barrel);g.userData.barrel=barrel;
+  }
+  scene.add(g);enemies.push(g);
+}
+const wallGeo=new THREE.BoxGeometry(1,1,1),wallEdges=new THREE.EdgesGeometry(wallGeo);
+const wallMat=snap(new THREE.MeshBasicMaterial({color:0x32102e}));
+const wallWireMat=snap(new THREE.LineBasicMaterial({color:0xffe86b}));
+function makeWall(){
+  const wall=new THREE.Mesh(wallGeo,wallMat);
+  wall.add(new THREE.LineSegments(wallEdges,wallWireMat));
+  const width=BOUND.x*.65,height=Math.random()<.5?3:6;
+  wall.scale.set(width,height,1.6);
+  wall.position.set((Math.floor(Math.random()*3)-1)*BOUND.x*.65,height/2,-110);
+  wall.userData.collided=false;
+  scene.add(wall);walls.push(wall);
+}
+function crossesWall(wall,position,previousZ,radius){
+  return Math.abs(position.x-wall.position.x)<wall.scale.x/2+radius
+    &&Math.abs(position.y-wall.position.y)<wall.scale.y/2+radius
+    &&Math.min(position.z,previousZ)<=wall.position.z+wall.scale.z/2+radius
+    &&Math.max(position.z,previousZ)>=wall.position.z-wall.scale.z/2-radius;
+}
+function pop(pos,col){
+  const g=new THREE.Group();
+  for(let i=0;i<8;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(.15,.15,.15),new THREE.MeshBasicMaterial({color:col}));
+    m.userData.v=new THREE.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(14);g.add(m);}
+  g.position.copy(pos);g.userData.t=0;scene.add(g);pops.push(g);
+}
+
+// ---------- 入力 ----------
+const keys={};
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key===' ')e.preventDefault();});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+let touch=null;
+const cv=renderer.domElement;
+cv.addEventListener('pointerdown',e=>{touch={x:e.clientX,y:e.clientY,px:player.position.x,py:player.position.y};});
+cv.addEventListener('pointermove',e=>{if(!touch)return;
+  const k=12/Math.min(W(),H());
+  player.position.x=touch.px+(e.clientX-touch.x)*k;
+  player.position.y=touch.py-(e.clientY-touch.y)*k;});
+addEventListener('pointerup',()=>touch=null);
+addEventListener('pointercancel',()=>touch=null);
+
+// ---------- ゲーム状態 ----------
+const hudScore=document.getElementById('score'),hudHp=document.getElementById('hp');
+const overlay=document.getElementById('overlay'),msg=document.getElementById('msg'),startBtn=document.getElementById('start');
+let running=false,score=0,hp=3,speed=22,dist=0,spawnT=0,fireT=0,inv=0,last=0,wallT=2,turretT=4;
+function drawHp(){hudHp.innerHTML=[0,1,2].map(i=>`<span class="${i<hp?'':'off'}"></span>`).join('');}
+function reset(){
+  [...shots,...enemies,...eshots,...pops,...walls].forEach(o=>scene.remove(o));
+  shots.length=enemies.length=eshots.length=pops.length=walls.length=0;
+  score=0;hp=3;speed=22;dist=0;spawnT=0;fireT=0;inv=0;
+  wallT=2;turretT=4;
+  player.position.set(0,1.5,0);drawHp();hudScore.textContent='0';
+}
+startBtn.onclick=()=>{void enableAudio().then(()=>playSound('start'));reset();overlay.classList.add('hidden');running=true;last=performance.now();};
+function gameOver(){
+  running=false;
+  playSound('over');
+  document.querySelector('#overlay h1').textContent='GAME OVER';
+  msg.textContent=`スコア ${Math.floor(score)}`;
+  startBtn.textContent='もう一度';
+  overlay.classList.remove('hidden');
+}
+function hit(){
+  if(inv>0)return;
+  playSound('damage');
+  hp--;drawHp();inv=1.5;pop(player.position,cyan);
+  if(hp<=0)gameOver();
+}
+
+// ---------- ループ ----------
+function loop(now){
+  requestAnimationFrame(loop);
+  const dt=Math.min((now-last)/1000,.05);last=now;
+  if(!running){drawFrame(now);return;}
+
+  // 進行
+  speed+=dt*.35;dist+=speed*dt;score+=speed*dt*.5;
+  gridMat.uniforms.off.value=(gridMat.uniforms.off.value+speed*dt*.125)%1;
+  for(const m of mountains){m.position.z+=speed*dt;if(m.position.z>MTN_LEN)m.position.z-=MTN_LEN*3;}
+  hudScore.textContent=Math.floor(score);
+
+  // 自機移動
+  const mv=8*dt;
+  if(keys['arrowleft']||keys['a'])player.position.x-=mv;
+  if(keys['arrowright']||keys['d'])player.position.x+=mv;
+  if(keys['arrowup']||keys['w'])player.position.y+=mv;
+  if(keys['arrowdown']||keys['s'])player.position.y-=mv;
+  player.position.x=THREE.MathUtils.clamp(player.position.x,-BOUND.x,BOUND.x);
+  player.position.y=THREE.MathUtils.clamp(player.position.y,BOUND.ymin,BOUND.ymax);
+  player.rotation.z=THREE.MathUtils.lerp(player.rotation.z,-(player.position.x/BOUND.x)*.5,.15);
+  reticle.position.x=player.position.x;reticle.position.y=player.position.y;
+  cam.position.x=player.position.x*.25;cam.position.y=2.2+(player.position.y-1.5)*.15;
+  if(inv>0){inv-=dt;player.visible=Math.floor(inv*12)%2===0;}else player.visible=true;
+
+  wallT-=dt;turretT-=dt;
+  if(wallT<=0){makeWall();wallT=4+Math.random()*2;}
+  if(turretT<=0){makeEnemy(-110,true);turretT=5+Math.random()*2;}
+  for(let index=walls.length-1;index>=0;index--){
+    const wall=walls[index],advance=speed*dt;
+    wall.position.z+=advance;
+    if(!wall.userData.collided&&crossesWall(wall,player.position,player.position.z+advance,.45)){
+      wall.userData.collided=true;hit();
+    }
+    if(wall.position.z>8){scene.remove(wall);walls.splice(index,1);}
+  }
+
+  // 射撃
+  fireT-=dt;
+  if(fireT<=0){fireT=.16;
+    playSound('shot',player.position);
+    const s=new THREE.Mesh(shotGeo,shotMat);s.position.copy(player.position);s.position.z-=1;scene.add(s);shots.push(s);}
+  for(let i=shots.length-1;i>=0;i--){const s=shots[i],previousZ=s.position.z;s.position.z-=60*dt;
+    if(s.position.z<SHOT_RANGE||walls.some(wall=>crossesWall(wall,s.position,previousZ+speed*dt,.12))){scene.remove(s);shots.splice(i,1);}}
+
+  // 出現
+  spawnT-=dt;
+  if(spawnT<=0){spawnT=Math.max(.35,1.1-dist*.0015);makeEnemy(-110);}
+
+  // 敵
+  for(let i=enemies.length-1;i>=0;i--){const e=enemies[i],u=e.userData;
+    e.position.z+=(u.turret?speed:speed*.6+6)*dt;
+    e.position.x=THREE.MathUtils.clamp(e.position.x+u.drift*dt,-BOUND.x,BOUND.x);
+    e.rotation.x+=u.spin*dt;e.rotation.y+=u.spin*.7*dt;
+    if(u.turret){scene.updateMatrixWorld(true);u.barrel.lookAt(player.position);}
+    if(u.shoot&&e.position.z>-70&&(!u.turret||e.position.z<-2)){u.cd-=dt;if(u.cd<=0){u.cd=u.turret?1.2:1.6;
+      playSound(u.turret?'turret':'enemy',e.position);
+      const b=new THREE.Mesh(eshotGeo,eshotMat);b.position.copy(e.position);
+      if(u.turret){u.barrel.updateWorldMatrix(true,false);b.position.set(0,0,1.4);u.barrel.localToWorld(b.position);}
+      b.userData.v=player.position.clone().sub(b.position).normalize().multiplyScalar(26);scene.add(b);eshots.push(b);}}
+    // 自弾ヒット
+    for(let j=shots.length-1;j>=0;j--){const s=shots[j];
+      if(Math.abs(s.position.z-e.position.z)<1.2&&s.position.distanceTo(e.position)<1.1){
+        scene.remove(s);shots.splice(j,1);u.hp--;
+        playSound(u.hp<=0?'destroy':'impact',e.position);
+        if(u.hp<=0){score+=u.pts;pop(e.position,e.children[0].children[0].material.color.getHex());scene.remove(e);enemies.splice(i,1);break;}}}
+    if(!enemies.includes(e))continue;
+    if(e.position.distanceTo(player.position)<1.1){hit();pop(e.position,pink);scene.remove(e);enemies.splice(i,1);continue;}
+    if(e.position.z>8){scene.remove(e);enemies.splice(i,1);}
+  }
+  // 敵弾
+  for(let i=eshots.length-1;i>=0;i--){const b=eshots[i],previousZ=b.position.z;b.position.addScaledVector(b.userData.v,dt);
+    if(walls.some(wall=>crossesWall(wall,b.position,previousZ+speed*dt,.3))){scene.remove(b);eshots.splice(i,1);continue;}
+    if(b.position.distanceTo(player.position)<.7){hit();scene.remove(b);eshots.splice(i,1);continue;}
+    if(b.position.z>8||b.position.z<-130){scene.remove(b);eshots.splice(i,1);}}
+  // 爆散
+  for(let i=pops.length-1;i>=0;i--){const p=pops[i];p.userData.t+=dt;
+    p.children.forEach(m=>{m.position.addScaledVector(m.userData.v,dt);m.material.opacity=1-p.userData.t*2;m.material.transparent=true;});
+    if(p.userData.t>.5){scene.remove(p);pops.splice(i,1);}}
+
+  drawFrame(now);
+}
+new ResizeObserver(()=>{fitRenderer();cam.aspect=W()/H();cam.updateProjectionMatrix();fitMovementBounds();}).observe(game);
+requestAnimationFrame(t=>{last=t;loop(t);});
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

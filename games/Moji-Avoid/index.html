@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/Moji-Avoid/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>文字爆散アボイド</title>
+<meta name="description" content="入力した文字を自機にして弾をよける">
+<style>
+  :root{
+    --bg:#f7f6f3;
+    --fg:#092237;
+    --sub:#7c7a78;
+    --line:#dedcd7;
+    --panel:#ffffff;
+    --howto-bg:var(--panel); --howto-fg:var(--fg);
+    --veil:rgba(247,246,243,0.9);
+    --bullet:#e0701a;
+    --halo:#f08a24;       /* 後光の色。明るい背景でも光に見えるよう暖色にする */
+    --halo-gain:3;        /* 後光の濃さの倍率。明るい背景では薄く見えるので濃くする */
+    --shadow:0 18px 40px -28px rgba(20,18,16,0.55);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#101114;
+      --fg:#edebe6;
+      --sub:#8a8a93;
+      --line:#2a2c31;
+      --panel:#17181c;
+      --veil:rgba(16,17,20,0.9);
+      --bullet:#f5903c;
+      --halo:#edebe6;
+      --halo-gain:1;
+      --shadow:0 18px 40px -28px rgba(0,0,0,0.9);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#101114;
+    --fg:#edebe6;
+    --sub:#8a8a93;
+    --line:#2a2c31;
+    --panel:#17181c;
+    --veil:rgba(16,17,20,0.9);
+    --bullet:#f5903c;
+    --halo:#edebe6;
+    --halo-gain:1;
+    --shadow:0 18px 40px -28px rgba(0,0,0,0.9);
+  }
+
+  html,body{height:100%;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;}
+  body{
+    touch-action:manipulation;          /* ダブルタップ拡大を殺す */
+    margin:0;
+    background:var(--bg);
+    color:var(--fg);
+    overflow:hidden;
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    /* 長押しでルーペ・コールアウト・選択が出ないようにする（入力欄のみ除外） */
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+    overscroll-behavior:none;
+  }
+  #txt{
+    -webkit-touch-callout:default;
+    -webkit-user-select:text;
+    user-select:text;
+  }
+  /* プレイ領域は一定サイズ。画面が広い時は中央に置く */
+  #stage{
+    position:fixed;inset:0;margin:auto;
+    width:min(100vw, 420px);
+    height:min(100vh, 780px);
+    height:min(100dvh, 780px);
+    box-sizing:border-box;
+  }
+  /* 枠線は周りに余白がある広い画面でだけ引く（スマホでは画面いっぱいに見せる） */
+  @media (min-width:421px){ #stage{border:1px solid var(--line);} }
+  #cv{display:block;width:100%;height:100%;touch-action:none;}
+
+
+  #overlay{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    padding:16px;
+    background:var(--veil);
+  }
+  #overlay[hidden]{display:none;}
+  #overlay.result{
+    background:transparent;
+    align-items:flex-end;
+    padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px));
+  }
+
+  #panel{
+    width:100%;max-width:340px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    box-shadow:var(--shadow);
+    padding:20px 20px 14px;
+    display:flex;flex-direction:column;gap:16px;
+  }
+
+
+  #msg{
+    margin:0;
+    font-size:13px;
+    line-height:1.5;
+    color:var(--fg);
+    letter-spacing:.03em;
+    font-variant-numeric:tabular-nums;
+    text-wrap:balance;
+  }
+  #msg:empty{display:none;}
+  #nojs{margin:0;font-size:12px;line-height:1.6;color:var(--sub);}
+
+  .row{display:flex;gap:10px;align-items:flex-end;}
+  .btns{align-items:stretch;}
+  #txt{
+    flex:1 1 auto;min-width:0;
+    font:inherit;font-size:17px;
+    letter-spacing:.06em;
+    padding:6px 2px;
+    color:var(--fg);
+    background:transparent;
+    border:0;
+    border-bottom:1px solid var(--line);
+    border-radius:0;
+  }
+  #txt::placeholder{color:var(--sub);opacity:1;letter-spacing:.06em;}
+  #txt:focus{outline:none;border-bottom-color:var(--bullet);}
+
+  /* 指で押すボタンは44px角を下限にする */
+  #start,#share,#rand,#howtoBtn{
+    flex:0 0 auto;
+    min-height:44px;min-width:44px;
+    font:inherit;font-size:13px;
+    letter-spacing:.14em;
+    padding:10px 18px;
+    border-radius:0;
+    cursor:pointer;
+  }
+  /* 主ボタンは横幅いっぱい。結果画面では「共有」と半分ずつ */
+  #start,#share{flex:1 1 0;min-height:48px;}
+  #start{font-size:14px;font-weight:600;}
+  #rand,#howtoBtn{padding:10px 12px;font-size:12px;letter-spacing:.1em;}
+  #start{color:var(--panel);background:var(--bullet);border:1px solid var(--bullet);}
+  #share,#rand,#howtoBtn{color:var(--fg);background:transparent;border:1px solid var(--line);}
+  #share:hover,#rand:hover,#howtoBtn:hover{border-color:var(--fg);}
+  #start:hover{filter:brightness(1.08);}
+  /* 押したことが指でも分かるようにする */
+  #start:active{filter:brightness(.88);}
+  #share:active,#rand:active,#howtoBtn:active{background:var(--line);}
+  #share[hidden]{display:none;}
+  #txt:focus-visible{outline:none;border-bottom-width:2px;border-bottom-color:var(--bullet);}
+  #start:focus-visible,#share:focus-visible,#rand:focus-visible,#howtoBtn:focus-visible{outline:2px solid var(--bullet);outline-offset:3px;}
+
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="overlay">
+    <div id="panel">
+      <p id="msg"></p>
+      <p id="nojs">JavaScriptが動いていません。このビューアではゲームを実行できないので、Safariなどのブラウザで開いてください。</p>
+      <div class="row">
+        <input id="txt" type="text" enterkeyhint="go" aria-label="自機にする文字">
+        <button id="rand" type="button">ランダム</button>
+      </div>
+      <div class="row btns">
+        <button id="howtoBtn" type="button" data-howto-open>遊び方</button>
+        <button id="share" type="button" hidden>共有</button>
+        <button id="start" type="button">スタート</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="howto" hidden data-pos="none">
+  <h2>遊び方</h2>
+  <p>入力した文字がそのまま自機になり、全方位から飛んでくる弾をよけるゲームです。使える文字は12文字までで、ランダムのボタンでお題を選ぶこともできます。弾が来るのは開始時の1回だけで、当たった弾の数だけ文字の画が吹き飛びます。弾がすべて過ぎるか文字が全部壊れると終わり、残った文字を大きく表示します。</p>
+  <h2>操作</h2>
+  <p>画面のどこかに指を置いてドラッグすると、指の動いた分だけ文字が動きます。PC ではマウスのドラッグのほか、矢印キーや WASD でも動かせます。</p>
+  <h2>コツ</h2>
+  <p>弾は開始時の文字の位置をめがけて集まるので、すぐに中央を離れると当たりにくくなります。速く動かすと文字列は進む向きへ傾き、当たり判定も一緒に回ります。画の多い文字ほど弾の数が増えます。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+
+<script>
+(() => {
+  'use strict';
+
+  const FONT_STACK = "'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic','Noto Sans JP',system-ui,sans-serif";
+
+  // JSが動いていればこの注意書きは消える（動いていなければ画面に残る）
+  const nojs = document.getElementById('nojs');
+  if (nojs && nojs.parentNode) nojs.parentNode.removeChild(nojs);
+
+  const stage = document.getElementById('stage');
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const overlay = document.getElementById('overlay');
+  const msg = document.getElementById('msg');
+  const txt = document.getElementById('txt');
+  const startBtn = document.getElementById('start');
+  const shareBtn = document.getElementById('share');
+  const randBtn = document.getElementById('rand');
+
+  // ボタンの配線は最初に済ませる。関数宣言は巻き上げられるので、
+  // 以降のどこかで例外が出ても入力とボタンは生きたままになる。
+  startBtn.addEventListener('click', function(){ startGame(); });
+  randBtn.addEventListener('click', function(){ pickWord(); });
+  shareBtn.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
+  shareBtn.addEventListener('click', function(){ shareResult(); });
+  txt.addEventListener('keydown', function(e){ if (e.key === 'Enter') startGame(); });
+
+  // 不具合の切り分け用：読み込み時のエラーを画面に出す
+  window.addEventListener('error', function(e){
+    if (!msg) return;
+    msg.textContent = 'エラー: ' + (e.message || '') + ' @' + (e.lineno || '?');
+  });
+
+  const SAMPLE_WORDS = [
+    'ロケット','ミサイル','ペンギン','サボテン','タピオカ','パンケーキ',
+    'ハンバーグ','カブトムシ','ドラゴン','オムライス','ピラミッド','シャンプー',
+    'コロッケ','マヨネーズ','ダンゴムシ','スパゲッティ','ラーメン','クレヨン',
+    'イルカ','カメラ','ジュース','チョコレート','アイスクリーム','キリン',
+    'トランペット','ヘリコプター','ブルドーザー','パトカー','ロボット','サーカス',
+    'ソフトクリーム','タンバリン','メロンパン','ハリネズミ','カンガルー','ビスケット',
+    'テントウムシ','かたつむり','たけのこ','おにぎり','ひまわり','あんぱん',
+    'たいやき','はなび','かみなり','そろばん','くらげ','きのこ',
+    'とうふ','みずたまり'
+  ];
+
+  // ランダムボタン：カタカナ語を入れ替える
+  function pickWord(){
+    let w = txt.value;
+    for (let i = 0; i < 12 && w === txt.value; i++){
+      w = SAMPLE_WORDS[Math.floor(Math.random() * SAMPLE_WORDS.length)];
+    }
+    txt.value = w;
+    msg.textContent = '';
+  }
+
+  // 入力欄の初期値。ここで入れておけば、以降で何かあっても空欄にならない
+  pickWord();
+
+
+  let W = 0, H = 0;
+  let state = 'title';
+  let body = null;
+  let bullets = [];
+  let debris = [];
+  let impacts = [];   // 着弾の輪
+  let sparks = [];    // 着弾の細片
+  let elapsed = 0;
+  const spawnTimer = 0;
+  let shake = 0;
+  let keys = Object.create(null);
+  let drag = null;
+
+  function bgColor(){
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    return v || '#ffffff';
+  }
+
+  function fgColor(){
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--fg').trim();
+    return v || '#092237';
+  }
+
+  // #rrggbb → rgba()
+  function hexA(hex, a){
+    let h = hex.replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    const n = parseInt(h, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+
+  // 後光：ゆっくり逆回転する二層の光条＋にじみ
+  let haloSpin = 0;
+
+  // 光条をひと束
+  function drawRayLayer(pa, color, inner, R, n, spin, wf, lenBase, lenVar, a0, a1, phase){
+    const step = Math.PI * 2 / n;
+    for (let i = 0; i < n; i++){
+      const a = i * step + spin;
+      const len = R * (lenBase + lenVar * Math.sin(i * 2.399 + phase));
+      const w = step * wf;
+      const rg = ctx.createLinearGradient(Math.cos(a) * inner, Math.sin(a) * inner,
+                                        Math.cos(a) * len, Math.sin(a) * len);
+      rg.addColorStop(0, hexA(color, Math.min(1, a0 * pa)));
+      rg.addColorStop(0.6, hexA(color, Math.min(1, a1 * pa)));
+      rg.addColorStop(1, hexA(color, 0));
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a - w * 0.35) * inner, Math.sin(a - w * 0.35) * inner);
+      ctx.lineTo(Math.cos(a - w) * len, Math.sin(a - w) * len);
+      ctx.lineTo(Math.cos(a + w) * len, Math.sin(a + w) * len);
+      ctx.lineTo(Math.cos(a + w * 0.35) * inner, Math.sin(a + w * 0.35) * inner);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  function drawHalo(p, color){
+    // 残った文字の見た目の大きさに合わせる（全部残っているときは従来と同じ大きさ）
+    const base = aliveHalf() * body.scale * body.haloK;
+    const R = base * (1.25 + 0.45 * p);
+    const inner = base * 0.72;
+    // 後光も残った文字の中心に置く（回転中でもずれないよう向きを反映）
+    const c = aliveCenter();
+    const ca = Math.cos(body.angle), sa = Math.sin(body.angle);
+    ctx.save();
+    const sc = body.scale;
+    ctx.translate(body.x + (c.x * ca - c.y * sa) * sc, body.y + (c.x * sa + c.y * ca) * sc);
+    const pa = p * haloGain();   // 濃さ（大きさの変化には p をそのまま使う）
+
+    // 文字の背後は素のまま、外周だけをにじませる
+    const g = ctx.createRadialGradient(0, 0, inner * 0.55, 0, 0, R * 1.2);
+    g.addColorStop(0, hexA(color, 0));
+    g.addColorStop(0.32, hexA(color, 0.07 * pa));
+    g.addColorStop(0.62, hexA(color, 0.04 * pa));
+    g.addColorStop(1, hexA(color, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(0, 0, R * 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 外側：太く長い光条がゆっくり回る
+    drawRayLayer(pa, color, inner, R * 1.18, 12, -haloSpin * 0.17, 0.30, 0.86, 0.14, 0.16, 0.07, 0);
+    // 内側：細かい光条が逆向きに回る
+    drawRayLayer(pa, color, inner, R, 40, haloSpin * 0.33, 0.13, 0.88, 0.12, 0.22, 0.09, 1.7);
+
+    // 内周のふちを薄く光らせる
+    const ring = ctx.createRadialGradient(0, 0, inner * 0.82, 0, 0, inner * 1.3);
+    ring.addColorStop(0, hexA(color, 0));
+    ring.addColorStop(0.5, hexA(color, 0.13 * pa));
+    ring.addColorStop(1, hexA(color, 0));
+    ctx.fillStyle = ring;
+    ctx.beginPath();
+    ctx.arc(0, 0, inner * 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function haloGain(){
+    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--halo-gain'));
+    return v > 0 ? v : 1;
+  }
+
+  function haloColor(){
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--halo').trim();
+    return v || fgColor();
+  }
+
+  function bulletColor(){
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--bullet').trim();
+    return v || '#e0701a';
+  }
+
+  function resize(){
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = stage.clientWidth;
+    H = stage.clientHeight;
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (body){
+      if (state === 'over') placeResult();
+      else clampBody();
+    }
+  }
+  window.addEventListener('resize', resize);
+
+  /* ---------- 文字を「画」に分解する ---------- */
+
+  // 文字を「分離している単位」に分ける。つながっている塊がそのまま1パーツ。
+  // 推定は一切していないので、環境や字によって結果が崩れることはない。
+  function computeParts(alive, cols, rows){
+    let n = cols * rows, i;
+    let ink = 0;
+    for (i = 0; i < n; i++) if (alive[i]) ink++;
+    if (!ink) return { partOf: new Int32Array(n).fill(-1), parts: [], ink: 0 };
+
+    const comp = new Int32Array(n).fill(-1);
+    const stack = [];
+    const groups = [];
+    for (i = 0; i < n; i++){
+      if (!alive[i] || comp[i] >= 0) continue;
+      const id = groups.length;
+      const cells = [];
+      stack.length = 0;
+      stack.push(i);
+      comp[i] = id;
+      while (stack.length){
+        const cur = stack.pop();
+        cells.push(cur);
+        const cr = (cur / cols) | 0, cc = cur - cr * cols;
+        for (let dr = -1; dr <= 1; dr++){
+          for (let dc = -1; dc <= 1; dc++){
+            const nr = cr + dr, nc = cc + dc;
+            if (nr < 0 || nc < 0 || nr >= rows || nc >= cols) continue;
+            const ni = nr * cols + nc;
+            if (alive[ni] && comp[ni] < 0){ comp[ni] = id; stack.push(ni); }
+          }
+        }
+      }
+      groups.push(cells);
+    }
+
+    // ごく小さな粒（アンチエイリアスの飛び）は近い塊に寄せる
+    let keep = [], drop = [];
+    const minSize = Math.max(12, Math.round(ink * 0.01));
+    for (i = 0; i < groups.length; i++) (groups[i].length >= minSize ? keep : drop).push(groups[i]);
+    if (!keep.length){ keep = groups; drop = []; }
+    for (i = 0; i < drop.length; i++){
+      const cellsD = drop[i];
+      let cx = 0, cy = 0, t;
+      for (t = 0; t < cellsD.length; t++){ cx += cellsD[t] % cols; cy += (cellsD[t] / cols) | 0; }
+      cx /= cellsD.length; cy /= cellsD.length;
+      let best = 0, bestD = Infinity;
+      for (let g = 0; g < keep.length; g++){
+        let kx = 0, ky = 0;
+        for (t = 0; t < keep[g].length; t++){ kx += keep[g][t] % cols; ky += (keep[g][t] / cols) | 0; }
+        kx /= keep[g].length; ky /= keep[g].length;
+        const d = (kx - cx) * (kx - cx) + (ky - cy) * (ky - cy);
+        if (d < bestD){ bestD = d; best = g; }
+      }
+      for (t = 0; t < cellsD.length; t++) keep[best].push(cellsD[t]);
+    }
+
+    const partOf = new Int32Array(n).fill(-1);
+    for (i = 0; i < keep.length; i++) for (let j = 0; j < keep[i].length; j++) partOf[keep[i][j]] = i;
+    return { partOf: partOf, parts: keep, ink: ink };
+  }
+
+  function buildBody(text, viewW, viewH){
+    const chars = Array.from(String(text)).filter(function(ch){ return ch.trim().length > 0; }).slice(0, 12);
+    if (!chars.length) return null;
+
+    // 画の分け方が文字数で変わらないよう、解析は常に同じ解像度（1em = 40セル）で行い、
+    // 表示サイズはそこから拡大縮小するだけにする。
+    const ANA = 480, CELL_A = 6;
+    const fontSize = Math.round(Math.max(34, Math.min(120, (Math.min(viewW, viewH) * 0.74) / chars.length)) * 0.5);
+    const k = fontSize / ANA;
+    const cell = CELL_A * k;   // 表示上のセル1つの大きさ
+
+    const anaFont = ANA + 'px ' + FONT_STACK;
+    const dispFont = fontSize + 'px ' + FONT_STACK;
+    const meas = document.createElement('canvas').getContext('2d');
+    meas.font = anaFont;
+    const color = fgColor();
+
+    const items = [];
+    let cursor = 0;
+    const gap = Math.round(fontSize * 0.06);
+
+    for (let i = 0; i < chars.length; i++){
+      const ch = chars[i];
+      const m = meas.measureText(ch);
+      const asc = m.actualBoundingBoxAscent, desc = m.actualBoundingBoxDescent;
+      const left = m.actualBoundingBoxLeft, right = m.actualBoundingBoxRight;
+      if (!isFinite(asc) || !isFinite(desc) || !isFinite(left) || !isFinite(right)) continue;
+
+      const padA = CELL_A * 2;
+      const wA = Math.ceil(left + right) + padA * 2;
+      const hA = Math.ceil(asc + desc) + padA * 2;
+      if (wA <= padA * 2 + 1 || hA <= padA * 2 + 1) continue;
+
+      // 解析用ラスタ（常に同じ大きさ）
+      const acvs = document.createElement('canvas');
+      acvs.width = wA; acvs.height = hA;
+      const acx = acvs.getContext('2d');
+      acx.font = anaFont;
+      acx.textBaseline = 'alphabetic';
+      acx.fillStyle = '#000';
+      acx.fillText(ch, padA + left, padA + asc);
+
+      const img = acx.getImageData(0, 0, wA, hA).data;
+      const cols = Math.ceil(wA / CELL_A), rows = Math.ceil(hA / CELL_A);
+      const alive = new Uint8Array(cols * rows);
+      let aliveCount = 0;
+      for (let ry = 0; ry < rows; ry++){
+        for (let rx = 0; rx < cols; rx++){
+          let sum = 0, cnt = 0;
+          const yEnd = Math.min(hA, (ry + 1) * CELL_A), xEnd = Math.min(wA, (rx + 1) * CELL_A);
+          for (let y = ry * CELL_A; y < yEnd; y++){
+            for (let x = rx * CELL_A; x < xEnd; x++){ sum += img[(y * wA + x) * 4 + 3]; cnt++; }
+          }
+          if (cnt && sum / cnt > 110){ alive[ry * cols + rx] = 1; aliveCount++; }
+        }
+      }
+      if (!aliveCount) continue;
+
+      const seg = computeParts(alive, cols, rows);
+
+      // 表示用（解析ラスタを縮小して使う。消す位置と完全に一致させるため）
+      const w = Math.max(1, Math.round(wA * k)), h = Math.max(1, Math.round(hA * k));
+      const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+      const pw = Math.max(1, Math.round(w * dpr)), phh = Math.max(1, Math.round(h * dpr));
+      const cvs = document.createElement('canvas');
+      cvs.width = pw; cvs.height = phh;
+      const cx = cvs.getContext('2d');
+
+      const item = {
+        ch: ch, canvas: cvs, cx: cx,
+        ana: acvs, acx: acx,
+        anaW: wA, anaH: hA, cellA: CELL_A, dpr: dpr,
+        w: w, h: h, cols: cols, rows: rows, cell: cell,
+        alive: alive, aliveCount: aliveCount,
+        partOf: seg.partOf, parts: seg.parts,
+        x: cursor, top: -(padA + asc) * k
+      };
+      refreshSheets(item);
+      items.push(item);
+      cursor += w + gap;
+    }
+
+    if (!items.length) return null;
+
+    const totalW = cursor - gap;
+    let minTop = Infinity, maxBot = -Infinity;
+    items.forEach(function(it){
+      minTop = Math.min(minTop, it.top);
+      maxBot = Math.max(maxBot, it.top + it.h);
+    });
+    const totalH = maxBot - minTop;
+
+    let totalCells = 0, totalParts = 0;
+    items.forEach(function(it){
+      it.offsetX = it.x - totalW / 2;
+      it.offsetY = it.top - (minTop + totalH / 2);
+      totalCells += it.aliveCount;
+      totalParts += it.parts.length;
+    });
+
+    return {
+      chars: items,
+      halfW: totalW / 2, halfH: totalH / 2,
+      x: viewW / 2, y: viewH / 2,
+      angle: 0, prevX: viewW / 2, prevY: viewH / 2,
+      aliveCells: totalCells,
+      alivePartCount: totalParts,
+      totalParts: totalParts,
+      cell: cell
+    };
+  }
+
+  /* ---------- ゲーム進行 ---------- */
+
+  // 残っている塗りの範囲（ローカル座標）を求め直す。移動制限を見た目と一致させるため。
+  function recalcBounds(){
+    if (!body) return;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (let i = 0; i < body.chars.length; i++){
+      const ch = body.chars[i];
+      if (!ch.aliveCount) continue;
+      let mnC = Infinity, mxC = -Infinity, mnR = Infinity, mxR = -Infinity;
+      for (let j = 0; j < ch.alive.length; j++){
+        if (!ch.alive[j]) continue;
+        const c = j % ch.cols, r = (j / ch.cols) | 0;
+        if (c < mnC) mnC = c;
+        if (c > mxC) mxC = c;
+        if (r < mnR) mnR = r;
+        if (r > mxR) mxR = r;
+      }
+      if (mxC < 0) continue;
+      x0 = Math.min(x0, ch.offsetX + mnC * ch.cell);
+      x1 = Math.max(x1, ch.offsetX + (mxC + 1) * ch.cell);
+      y0 = Math.min(y0, ch.offsetY + mnR * ch.cell);
+      y1 = Math.max(y1, ch.offsetY + (mxR + 1) * ch.cell);
+    }
+    if (x0 === Infinity){ x0 = y0 = -1; x1 = y1 = 1; }
+    body.bx0 = x0; body.bx1 = x1; body.by0 = y0; body.by1 = y1;
+  }
+
+  function clampBody(){
+    if (!body) return;
+    if (body.bx0 === undefined) recalcBounds();
+    const c = Math.cos(body.angle), s = Math.sin(body.angle);
+    const pts = [[body.bx0, body.by0], [body.bx1, body.by0], [body.bx0, body.by1], [body.bx1, body.by1]];
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (let i = 0; i < 4; i++){
+      const px = pts[i][0] * c - pts[i][1] * s;
+      const py = pts[i][0] * s + pts[i][1] * c;
+      if (px < minX) minX = px;
+      if (px > maxX) maxX = px;
+      if (py < minY) minY = py;
+      if (py > maxY) maxY = py;
+    }
+    if (maxX - minX < W) body.x = Math.max(-minX, Math.min(W - maxX, body.x));
+    else body.x = W / 2 - (minX + maxX) / 2;
+    if (maxY - minY < H) body.y = Math.max(-minY, Math.min(H - maxY, body.y));
+    else body.y = H / 2 - (minY + maxY) / 2;
+  }
+
+  function startGame(){
+    const t = txt.value.trim();
+    if (!t){
+      msg.textContent = '文字を入力してください。';
+      return;
+    }
+    beginGame(t);
+  }
+
+  let lastWord = '';
+
+  // 開始直後に出す合図
+  const CUE_TEXT = 'よけろ！';
+  const CUE_TIME = 1.0;
+  let cue = 0;
+
+  function drawCue(){
+    const t = 1 - cue / CUE_TIME;              // 0→1
+    const appear = Math.min(1, t / 0.12);      // 入り
+    const fade = t > 0.6 ? 1 - (t - 0.6) / 0.4 : 1;
+    const a = appear * fade;
+    if (a <= 0) return;
+    const size = Math.min(40, W * 0.09);
+    ctx.save();
+    ctx.translate(W / 2, H * 0.26);
+    ctx.scale(1 + (1 - appear) * 0.25, 1 + (1 - appear) * 0.25);
+    ctx.globalAlpha = a;
+    ctx.font = '700 ' + size + 'px ' + FONT_STACK;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.letterSpacing = '0.12em';
+    ctx.fillStyle = bulletColor();
+    ctx.fillText(CUE_TEXT, 0, 0);
+    ctx.restore();
+  }
+
+  function beginGame(text){
+    const b = buildBody(text, W, H);
+    if (!b){
+      msg.textContent = '表示できる文字を入力してください。';
+      return;
+    }
+    // 実際に使われた文字（上限で切り詰め・描画できない文字を除外した結果）を入力欄にも反映
+    const used = b.chars.map(function(c){ return c.ch; }).join('');
+    txt.value = used;
+    lastWord = used;
+    shareBtn.hidden = true;
+    body = b;
+    body.x = W / 2;
+    body.y = H / 2;
+    body.angle = 0;
+    body.prevX = body.x;
+    body.prevY = body.y;
+    bullets = [];
+    debris = [];
+    impacts = [];
+    sparks = [];
+    elapsed = 0;
+    cue = CUE_TIME;
+    shake = 0;
+    drag = null;
+    keys = Object.create(null);   // 開始前に押されていたキーを持ち越さない
+    state = 'playing';
+    overlay.classList.remove('result');
+    overlay.hidden = true;
+    recalcBounds();
+    body.scale = 1;
+    body.targetScale = 1;
+    body.fullHalf = aliveHalf();                                   // 無傷のときの大きさ（拡大の基準）
+    body.haloK = Math.max(body.halfW, body.halfH) / body.fullHalf; // 後光の大きさを従来に合わせる係数
+    clampBody();
+    spawnWave();
+  }
+
+  // 弾が通り過ぎたら、文字を正しい向きに戻して後光を出す
+  let endT = 0;
+  let ENDING_TIME = 1.1;
+
+  function beginEnding(){
+    if (state !== 'playing') return;
+    state = 'ending';
+    endT = 0;
+    drag = null;
+    // 全部壊れた場合は見せるものがないので、後光なしで短く終える
+    ENDING_TIME = body.alivePartCount > 0 ? 1.1 : 0.55;
+    body.targetScale = resultScale();
+    if (body.targetScale > 1) rebuildSheets(body.targetScale);
+  }
+
+  // ---------- リザルトでの拡大 ----------
+  const RESULT_MARGIN = 24;     // 拡大した文字と画面の左右端との最小のすき間（px）
+  const RESULT_MAX_H = 0.34;    // 拡大した文字の高さの上限（画面の高さに対する割合）
+
+  // 残っている塗りの縦横のうち大きい方の半分（ローカル座標）
+  function aliveHalf(){
+    return Math.max(body.bx1 - body.bx0, body.by1 - body.by0) / 2;
+  }
+
+  // 残った文字を、無傷のときの大きさまで拡大する倍率。
+  // 画面からはみ出さず、解析ラスタの解像度を超えて粗くならない範囲に収める
+  function resultScale(){
+    if (body.alivePartCount <= 0) return 1;
+    const rw = body.bx1 - body.bx0, rh = body.by1 - body.by0;
+    if (!(rw > 0 && rh > 0)) return 1;
+    let sc = body.fullHalf / aliveHalf();
+    sc = Math.min(sc, (W - RESULT_MARGIN * 2) / rw, (H * RESULT_MAX_H) / rh);
+    for (let i = 0; i < body.chars.length; i++){
+      const ch = body.chars[i];
+      if (ch.aliveCount) sc = Math.min(sc, ch.anaW / (ch.w * ch.dpr));
+    }
+    return Math.max(1, sc);
+  }
+
+  // 拡大しても粗くならないよう、表示用の絵を倍率に合わせた解像度で作り直す
+  function rebuildSheets(sc){
+    for (let i = 0; i < body.chars.length; i++){
+      const ch = body.chars[i];
+      if (!ch.aliveCount) continue;
+      const pw = Math.max(1, Math.round(ch.w * ch.dpr * sc)), ph = Math.max(1, Math.round(ch.h * ch.dpr * sc));
+      ch.canvas.width = pw; ch.canvas.height = ph;
+      refreshSheets(ch);
+    }
+  }
+
+  // 残った文字の中心が画面中央に来る位置
+  function resultPos(){
+    const c = aliveCenter();
+    return { x: W / 2 - c.x * body.scale, y: H / 2 - c.y * body.scale };
+  }
+
+  function placeResult(){
+    const t = resultPos();
+    body.x = t.x;
+    body.y = t.y;
+  }
+
+  // 残っている塗りの中心（ローカル座標）。壊れた分を除いた見た目の中心にする
+  function aliveCenter(){
+    return { x: (body.bx0 + body.bx1) / 2, y: (body.by0 + body.by1) / 2 };
+  }
+
+  function updateEnding(dt){
+    endT += dt;
+    const k = Math.min(1, dt * 6);
+    // 残った文字を拡大しつつ、その中心が画面中央に来る位置へ寄せる
+    body.angle += (0 - body.angle) * k;
+    body.scale += (body.targetScale - body.scale) * k;
+    const t = resultPos();
+    body.x += (t.x - body.x) * k;
+    body.y += (t.y - body.y) * k;
+    if (endT >= ENDING_TIME){
+      body.angle = 0;
+      body.scale = body.targetScale;
+      placeResult();
+      finishEnding();
+    }
+  }
+
+  function haloProgress(){
+    if (!body || body.alivePartCount <= 0) return 0;
+    if (state === 'ending') return Math.max(0, Math.min(1, (endT - 0.25) / 0.6));
+    return state === 'over' ? 1 : 0;
+  }
+
+  function finishEnding(){
+    state = 'over';
+    msg.textContent = '';
+    startBtn.textContent = 'もう一度';
+    shareBtn.hidden = false;
+    shareBtn.textContent = '共有';
+    overlay.classList.add('result');
+    overlay.hidden = false;
+  }
+
+  // 共有文面：見出し（成績）→URL→ハッシュタグ
+  // 1パーツでも残れば「守り切った」、全部爆散したら「守りきれなかった」
+  function shareText(){
+    const url = location.href.split(/[?#]/)[0];
+    const kept = body.alivePartCount > 0;
+    const head = '「' + lastWord + '」を' + (kept ? '守り切った！' : '守りきれなかった...');
+    return head + '\n' + url + '\n#MojiAvoid';
+  }
+
+  // ---------- 共有画像 ----------
+  const SHARE_W = 1200, SHARE_H = 675;   // 共有画像の大きさ（Xのタイムラインで切れない16:9の横長）
+  const SHARE_FIT_W = 0.8;               // 残った文字を収める幅（画像の幅に対する割合）
+  const SHARE_FIT_H = 0.6;               // 残った文字を収める高さ（画像の高さに対する割合）
+
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 背景色の上に、残った文字だけを中央に描く（後光は載せない）
+  function resultImageFile(){
+    try {
+      const out = document.createElement('canvas');
+      out.width = SHARE_W; out.height = SHARE_H;
+      const g = out.getContext('2d');
+      g.fillStyle = bgColor();
+      g.fillRect(0, 0, SHARE_W, SHARE_H);
+      drawShareText(g);
+      const bin = atob(out.toDataURL('image/png').split(',')[1]);   // toBlob の非同期コールバックは避ける
+      const buf = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+      return new File([buf], 'Moji-Avoid.png', { type: 'image/png' });
+    } catch (e){ return null; }
+  }
+
+  // 残った文字を共有画像の中央に描く。粗くならないよう解析ラスタ（高解像度）から描く
+  function drawShareText(g){
+    if (!body || body.alivePartCount <= 0) return;
+    const rw = body.bx1 - body.bx0, rh = body.by1 - body.by0;
+    if (!(rw > 0 && rh > 0)) return;
+    let sc = Math.min(SHARE_W * SHARE_FIT_W / rw, SHARE_H * SHARE_FIT_H / rh);
+    for (let i = 0; i < body.chars.length; i++){
+      const ch = body.chars[i];
+      if (ch.aliveCount) sc = Math.min(sc, ch.anaW / ch.w);   // 解析ラスタより拡大しない
+    }
+    const c = aliveCenter();
+    const color = fgColor();
+    g.save();
+    g.translate(SHARE_W / 2 - c.x * sc, SHARE_H / 2 - c.y * sc);
+    g.scale(sc, sc);
+    for (let i = 0; i < body.chars.length; i++){
+      const ch = body.chars[i];
+      if (!ch.aliveCount) continue;
+      // 解析ラスタは黒一色なので文字色に塗り替えてから置く
+      const tmp = document.createElement('canvas');
+      tmp.width = ch.anaW; tmp.height = ch.anaH;
+      const tx = tmp.getContext('2d');
+      tx.drawImage(ch.ana, 0, 0);
+      tx.globalCompositeOperation = 'source-in';
+      tx.fillStyle = color;
+      tx.fillRect(0, 0, ch.anaW, ch.anaH);
+      g.drawImage(tmp, ch.offsetX, ch.offsetY, ch.w, ch.h);
+    }
+    g.restore();
+  }
+
+  function shareResult(){
+    const text = shareText();
+    // 全部爆散したときは画像に描くものがないので、文章だけを共有する
+    const file = body.alivePartCount > 0 ? resultImageFile() : null;
+    // 1) 画像を渡せる共有シート：文面＋結果画像
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })){
+      navigator.share({ text: text, files: [file] }).catch(function(){});
+      return;
+    }
+    // 2) 画像を渡せない共有シート：文面のみ
+    if (navigator.share){
+      navigator.share({ text: text }).catch(function(){});
+      return;
+    }
+    // 3) 共有シートがない環境：コピーしてボタンの文言で知らせる
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        shareBtn.textContent = 'コピーしました';
+        setTimeout(function(){ shareBtn.textContent = '共有'; }, 1500);
+      }, function(){});
+    }
+  }
+
+  // 弾数はパーツ数に比例させる（パーツ1つにつき1.125発、3〜45発）
+  function waveCount(){
+    return Math.max(6, Math.min(90, Math.round(body.totalParts * 2.25)));
+  }
+
+  // 開始時に全方位から一斉に撃ち込む（これ1回だけ）
+  function spawnWave(){
+    const radius = Math.hypot(W, H) * 0.6;
+    const n = waveCount();
+    for (let i = 0; i < n; i++){
+      const a = (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 0.08;
+      const x = body.x + Math.cos(a) * radius;
+      const y = body.y + Math.sin(a) * radius;
+      const ang = Math.atan2(body.y - y, body.x - x) + (Math.random() - 0.5) * 0.28;
+      const sp = 240 + Math.random() * 280;
+      bullets.push({ x: x, y: y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, r: 6 });
+    }
+  }
+
+  function hitTest(b){
+    const ca = Math.cos(body.angle), sa = Math.sin(body.angle);
+    const rx = b.x - body.x, ry = b.y - body.y;
+    const bx = rx * ca + ry * sa, by = -rx * sa + ry * ca;   // 回転を打ち消した位置
+    for (let i = 0; i < body.chars.length; i++){
+      const ch = body.chars[i];
+      if (!ch.aliveCount) continue;
+      const lx = bx - ch.offsetX, ly = by - ch.offsetY;
+      if (lx < -b.r || ly < -b.r || lx > ch.w + b.r || ly > ch.h + b.r) continue;
+      const cs = ch.cell;
+      const c0 = Math.max(0, Math.floor((lx - b.r) / cs)), c1 = Math.min(ch.cols - 1, Math.floor((lx + b.r) / cs));
+      const r0 = Math.max(0, Math.floor((ly - b.r) / cs)), r1 = Math.min(ch.rows - 1, Math.floor((ly + b.r) / cs));
+      const reach = b.r + cs * 0.6, reach2 = reach * reach;
+      let bestIdx = -1, bestD = Infinity;
+      for (let r = r0; r <= r1; r++){
+        for (let c = c0; c <= c1; c++){
+          const idx = r * ch.cols + c;
+          if (!ch.alive[idx]) continue;
+          const px = (c + 0.5) * cs - lx, py = (r + 0.5) * cs - ly;
+          const d = px * px + py * py;
+          if (d < reach2 && d < bestD){ bestD = d; bestIdx = idx; }
+        }
+      }
+      if (bestIdx >= 0) return { ch: ch, idx: bestIdx };
+    }
+    return null;
+  }
+
+  // 吹き飛ぶ一画を、その形のまま切り出して1枚の破片にする
+  // 解析ラスタ（正）から表示用キャンバスを作り直す
+  function refreshSheets(ch){
+    const pw = ch.canvas.width, ph = ch.canvas.height;
+    ch.cx.clearRect(0, 0, pw, ph);
+    ch.cx.drawImage(ch.ana, 0, 0, ch.anaW, ch.anaH, 0, 0, pw, ph);
+    ch.cx.save();
+    ch.cx.globalCompositeOperation = 'source-in';
+    ch.cx.fillStyle = fgColor();
+    ch.cx.fillRect(0, 0, pw, ph);
+    ch.cx.restore();
+  }
+
+  function makeChunk(ch, cells, src){
+    let cs = ch.cell, i, c, r;
+    let minC = Infinity, maxC = -Infinity, minR = Infinity, maxR = -Infinity;
+    for (i = 0; i < cells.length; i++){
+      c = cells[i] % ch.cols; r = (cells[i] / ch.cols) | 0;
+      if (c < minC) minC = c;
+      if (c > maxC) maxC = c;
+      if (r < minR) minR = r;
+      if (r > maxR) maxR = r;
+    }
+    const x0 = minC * cs, y0 = minR * cs;
+    const w = (maxC - minC + 1) * cs, h = (maxR - minR + 1) * cs;
+    const dpr = ch.dpr || 1;
+    const cvs = document.createElement('canvas');
+    cvs.width = Math.max(1, Math.round(w * dpr));
+    cvs.height = Math.max(1, Math.round(h * dpr));
+    const cc = cvs.getContext('2d');
+    cc.scale(dpr, dpr);
+    cc.drawImage(src, x0 * dpr, y0 * dpr, w * dpr, h * dpr, 0, 0, w, h);
+    cc.globalCompositeOperation = 'destination-in';
+    cc.beginPath();
+    for (i = 0; i < cells.length; i++){
+      c = cells[i] % ch.cols; r = (cells[i] / ch.cols) | 0;
+      const mx = Math.floor(c * cs), my = Math.floor(r * cs);
+      cc.rect(mx - x0, my - y0, Math.ceil(c * cs + cs) - mx, Math.ceil(r * cs + cs) - my);
+    }
+    cc.fill();
+    return { canvas: cvs, x0: x0, y0: y0, w: w, h: h };
+  }
+
+  function destroyPart(ch, idx, b){
+    const pid = ch.partOf[idx];
+    if (pid < 0) return;
+    const all = ch.parts[pid];
+    const cells = [];
+    for (let i = 0; i < all.length; i++) if (ch.alive[all[i]]) cells.push(all[i]);
+    if (!cells.length) return;
+
+    const cs = ch.cell;
+    const rc = Math.cos(body.angle), rs = Math.sin(body.angle);
+
+    // 消す範囲は「パーツのセル＋周囲の非インクセル」。
+    // そうしないと縁のアンチエイリアスが細い線として残り、画が取れたように見えない。
+    const area = [];
+    const seen = new Set();
+    for (let i = 0; i < cells.length; i++){
+      const cell = cells[i];
+      const cc = cell % ch.cols, cr = (cell / ch.cols) | 0;
+      for (let dr = -2; dr <= 2; dr++){
+        for (let dc = -2; dc <= 2; dc++){
+          const nr = cr + dr, ncn = cc + dc;
+          if (nr < 0 || ncn < 0 || nr >= ch.rows || ncn >= ch.cols) continue;
+          const ni = nr * ch.cols + ncn;
+          if (ni !== cell && ch.alive[ni]) continue; // 他の画は削らない
+          if (seen.has(ni)) continue;
+          seen.add(ni);
+          area.push(ni);
+        }
+      }
+    }
+
+    const chunk = makeChunk(ch, area, ch.canvas);
+
+    const ca = ch.cellA;
+    ch.acx.save();
+    ch.acx.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < area.length; i++){
+      const ex = (area[i] % ch.cols) * ca, ey = ((area[i] / ch.cols) | 0) * ca;
+      ch.acx.fillRect(ex, ey, ca, ca);
+    }
+    ch.acx.restore();
+    for (let i = 0; i < cells.length; i++) ch.alive[cells[i]] = 0;
+    refreshSheets(ch);
+
+    const clx = ch.offsetX + chunk.x0 + chunk.w / 2;
+    const cly = ch.offsetY + chunk.y0 + chunk.h / 2;
+    const cxw = body.x + clx * rc - cly * rs;
+    const cyw = body.y + clx * rs + cly * rc;
+    const dx = cxw - b.x, dy = cyw - b.y;
+    const len = Math.hypot(dx, dy) || 1;
+
+    // 小さい破片ほど速く大きく回る。弾の勢いも受け継ぐ
+    const bulletSp = Math.hypot(b.vx, b.vy);
+    const mass = Math.max(0.35, Math.min(1.6, Math.sqrt(cells.length) / 9));
+    const sp = (120 + bulletSp * 0.35 + Math.random() * 120) / mass;
+    debris.push({
+      canvas: chunk.canvas, w: chunk.w, h: chunk.h,
+      x: cxw, y: cyw,
+      vx: (dx / len) * sp + b.vx * 0.32 + (Math.random() - 0.5) * 70,
+      vy: (dy / len) * sp + b.vy * 0.32 - 150,
+      rot: body.angle, vr: (Math.random() - 0.5) * 11 / mass
+    });
+    if (debris.length > 80) debris.shift();
+
+    // 着弾の輪と細片
+    impacts.push({ x: b.x, y: b.y, t: 0, life: 0.34, r0: b.r * 1.1, r1: b.r * 6.5 });
+    if (impacts.length > 12) impacts.shift();
+    const sparkN = 5 + Math.round(Math.min(7, cells.length / 22));
+    const baseA = Math.atan2(dy, dx);
+    for (let q = 0; q < sparkN; q++){
+      const sa = baseA + (Math.random() - 0.5) * 2.4;
+      const ss = 210 + Math.random() * 320;
+      sparks.push({
+        x: b.x, y: b.y,
+        vx: Math.cos(sa) * ss + b.vx * 0.12,
+        vy: Math.sin(sa) * ss + b.vy * 0.12,
+        life: 0.22 + Math.random() * 0.22,
+        size: Math.max(2.4, ch.cell * (1.1 + Math.random() * 1.4))
+      });
+    }
+    if (sparks.length > 120) sparks.splice(0, sparks.length - 120);
+
+    ch.aliveCount -= cells.length;
+    body.aliveCells -= cells.length;
+    body.alivePartCount--;
+    recalcBounds();
+    shake = Math.min(18, shake + 5 + Math.min(9, cells.length / 16));
+  }
+
+  function update(dt){
+    elapsed += dt;
+
+    let mx = 0, my = 0;
+    if (keys['arrowleft'] || keys['a']) mx -= 1;
+    if (keys['arrowright'] || keys['d']) mx += 1;
+    if (keys['arrowup'] || keys['w']) my -= 1;
+    if (keys['arrowdown'] || keys['s']) my += 1;
+    if (mx || my){
+      const len = Math.hypot(mx, my);
+      body.x += (mx / len) * 460 * dt;
+      body.y += (my / len) * 460 * dt;
+    }
+    clampBody();
+
+    // 進行方向に合わせて機体（文字列）を回す。左右どちらに進んでも上下は反転しないよう、
+    // 進行方向の「軸」に合わせる（±180度は同じ向きとして扱う）。
+    // 指の細かいブレで向きが暴れないよう、速度を均してから角度を求め、回転速度にも上限を設ける。
+    const vx = (body.x - body.prevX) / dt, vy = (body.y - body.prevY) / dt;
+    body.prevX = body.x;
+    body.prevY = body.y;
+    const vk = Math.min(1, dt * 9);
+    body.vx = (body.vx || 0) + (vx - (body.vx || 0)) * vk;
+    body.vy = (body.vy || 0) + (vy - (body.vy || 0)) * vk;
+
+    const speed = Math.hypot(body.vx, body.vy);
+    if (speed > 70){
+      const target = Math.atan2(body.vy, body.vx);
+      let diff = target - body.angle;
+      while (diff > Math.PI / 2) diff -= Math.PI;
+      while (diff < -Math.PI / 2) diff += Math.PI;
+      // 速いほど大きく向く（ゆっくり動かしたときは傾かない）
+      const reach = Math.min(1, (speed - 70) / 320);
+      let step = diff * reach * Math.min(1, dt * 5);
+      const maxStep = 3.2 * dt;                       // 回転速度の上限（rad/s）
+      if (step > maxStep) step = maxStep;
+      if (step < -maxStep) step = -maxStep;
+      body.angle += step;
+      while (body.angle > Math.PI / 2) body.angle -= Math.PI;
+      while (body.angle < -Math.PI / 2) body.angle += Math.PI;
+      clampBody();
+    }
+
+    for (let i = bullets.length - 1; i >= 0; i--){
+      const b = bullets[i];
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      // 画面外に出て、かつ遠ざかっている弾だけ消す（飛来中の弾は画面外にいても残す）
+      if (b.x < -60 || b.x > W + 60 || b.y < -60 || b.y > H + 60){
+        if ((b.x - W / 2) * b.vx + (b.y - H / 2) * b.vy > 0){
+          bullets.splice(i, 1);
+          continue;
+        }
+      }
+      const hit = hitTest(b);
+      if (hit){
+        destroyPart(hit.ch, hit.idx, b);
+        bullets.splice(i, 1);
+        if (body.aliveCells <= 0){ beginEnding(); return; }
+      }
+    }
+
+    if (!bullets.length){ beginEnding(); return; }
+  }
+
+  function updateEffects(dt){
+    let i;
+    for (i = impacts.length - 1; i >= 0; i--){
+      impacts[i].t += dt;
+      if (impacts[i].t >= impacts[i].life) impacts.splice(i, 1);
+    }
+    for (i = sparks.length - 1; i >= 0; i--){
+      const sp = sparks[i];
+      sp.life -= dt;
+      if (sp.life <= 0){ sparks.splice(i, 1); continue; }
+      sp.x += sp.vx * dt;
+      sp.y += sp.vy * dt;
+      sp.vx *= Math.exp(-4.2 * dt);
+      sp.vy = sp.vy * Math.exp(-4.2 * dt) + 900 * dt;
+    }
+  }
+
+  function updateDebris(dt){
+    for (let i = debris.length - 1; i >= 0; i--){
+      const d = debris[i];
+      d.vy += 1400 * dt;
+      d.vx *= Math.exp(-0.5 * dt);
+      d.x += d.vx * dt;
+      d.y += d.vy * dt;
+      d.rot += d.vr * dt;
+      const pad = Math.max(d.w, d.h) + 60;
+      if (d.y - pad > H || d.x + pad < 0 || d.x - pad > W) debris.splice(i, 1);
+    }
+  }
+
+  function draw(){
+    const color = fgColor();
+    ctx.save();
+    ctx.clearRect(0, 0, W, H);
+    if (shake > 0.3){
+      ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+    }
+
+    const halo = body ? haloProgress() : 0;
+    if (halo > 0) drawHalo(halo, haloColor());
+
+    if (body){
+      ctx.save();
+      ctx.translate(body.x, body.y);
+      ctx.rotate(body.angle);
+      ctx.scale(body.scale, body.scale);
+      for (let i = 0; i < body.chars.length; i++){
+        const ch = body.chars[i];
+        if (!ch.aliveCount) continue;
+        ctx.drawImage(ch.canvas, ch.offsetX, ch.offsetY, ch.w, ch.h);
+      }
+      ctx.restore();
+    }
+
+    const bc = bulletColor();
+    ctx.lineCap = 'round';
+    for (let i = 0; i < bullets.length; i++){
+      const b = bullets[i];
+      ctx.strokeStyle = hexA(bc, 0.22);
+      ctx.lineWidth = b.r * 1.5;
+      ctx.beginPath();
+      ctx.moveTo(b.x - b.vx * 0.045, b.y - b.vy * 0.045);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    ctx.fillStyle = bc;
+    for (let i = 0; i < bullets.length; i++){
+      const b2 = bullets[i];
+      ctx.beginPath();
+      ctx.arc(b2.x, b2.y, b2.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = color;
+
+    // 着弾の細片
+    ctx.fillStyle = color;
+    for (let i = 0; i < sparks.length; i++){
+      const sk = sparks[i];
+      ctx.globalAlpha = Math.max(0, Math.min(1, sk.life / 0.25));
+      ctx.fillRect(sk.x - sk.size / 2, sk.y - sk.size / 2, sk.size, sk.size);
+    }
+    ctx.globalAlpha = 1;
+
+    // 着弾の輪
+    for (let i = 0; i < impacts.length; i++){
+      const im = impacts[i];
+      const k2 = im.t / im.life;
+      ctx.strokeStyle = hexA(bc, (1 - k2 * k2) * 0.8);
+      ctx.lineWidth = 3 * (1 - k2) + 0.8;
+      ctx.beginPath();
+      ctx.arc(im.x, im.y, im.r0 + (im.r1 - im.r0) * k2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    for (let i = 0; i < debris.length; i++){
+      const d = debris[i];
+      ctx.save();
+      ctx.translate(d.x, d.y);
+      ctx.rotate(d.rot);
+      ctx.drawImage(d.canvas, -d.w / 2, -d.h / 2, d.w, d.h);
+      ctx.restore();
+    }
+    if (cue > 0) drawCue();
+
+    ctx.restore();
+  }
+
+
+  let last = performance.now();
+  function frame(now){
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (state === 'playing') update(dt);
+    else if (state === 'ending') updateEnding(dt);
+    haloSpin += dt;
+    if (cue > 0) cue = Math.max(0, cue - dt);
+    shake *= Math.exp(-7 * dt);           // 状態に関係なく必ず収まるようにする
+    if (shake < 0.05) shake = 0;
+    updateDebris(dt);
+    updateEffects(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 入力 ---------- */
+
+  // 長押しによる iOS のルーペ・コールアウト、右クリックメニューを抑止する
+  function blockDefault(e){ if (e.cancelable) e.preventDefault(); }
+  cv.addEventListener('touchstart', blockDefault, { passive: false });
+  cv.addEventListener('touchmove', blockDefault, { passive: false });
+  document.addEventListener('contextmenu', function(e){
+    if (e.target !== txt) e.preventDefault();
+  });
+
+  cv.addEventListener('pointerdown', function(e){
+    if (state !== 'playing') return;
+    cv.setPointerCapture(e.pointerId);
+    drag = { id: e.pointerId, dx: body.x - e.clientX, dy: body.y - e.clientY };
+  });
+  cv.addEventListener('pointermove', function(e){
+    if (!drag || drag.id !== e.pointerId || state !== 'playing') return;
+    body.x = e.clientX + drag.dx;
+    body.y = e.clientY + drag.dy;
+    clampBody();
+  });
+  function endDrag(e){ if (drag && drag.id === e.pointerId) drag = null; }
+  cv.addEventListener('pointerup', endDrag);
+  cv.addEventListener('pointercancel', endDrag);
+
+  window.addEventListener('keydown', function(e){
+    // 入力欄での文字入力（ローマ字の a / s / d / w など）を移動キーとして拾わない。
+    // 日本語変換中はキーを離した通知が来ないことがあり、押しっぱなし扱いで動き続けるため
+    if (e.target === txt || e.isComposing || e.keyCode === 229) return;
+    const k = e.key.toLowerCase();
+    if (state === 'playing' && (k.indexOf('arrow') === 0 || k === 'w' || k === 'a' || k === 's' || k === 'd')){
+      e.preventDefault();
+    }
+    keys[k] = true;
+  });
+  window.addEventListener('keyup', function(e){ keys[e.key.toLowerCase()] = false; });
+  window.addEventListener('blur', function(){ keys = Object.create(null); });
+
+  // 文字数の上限はJSで詰める。maxlength属性だとiOSの日本語変換中に入力全体が消えることがある
+  const MAX_CHARS = 12;
+  let composing = false;
+  function clipInput(){
+    const a = Array.from(txt.value);
+    if (a.length > MAX_CHARS) txt.value = a.slice(0, MAX_CHARS).join('');
+  }
+  txt.addEventListener('compositionstart', function(){ composing = true; });
+  txt.addEventListener('compositionend', function(){ composing = false; clipInput(); });
+  txt.addEventListener('input', function(e){
+    if (composing || (e && e.isComposing)) return;
+    clipInput();
+  });
+
+  resize();
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/time-schedule-simulator/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>タイムスケジュールシミュレーター</title>
+<meta name="description" content="回る予定を止めて1日の予定を組む">
+<style>
+:root{
+  --bg:#f5f1ea; --fg:#2b2d42; --sub:#8a8579;
+  --plate:#fff; --track:#ece6db; --tick:#c9c1b3; --shadow:rgba(43,45,66,.14);
+  --sleep:#8e9ae6; --prep:#ffd166; --commute:#a9b4c2; --work:#5fa8e8;
+  --lunch:#ffb36b; --free:#7fd8a4;
+  --study:#b69cf0; --club:#ff8f6b; --shop:#f59ac4; --nap:#cfd6de;
+  --movie:#f07c7c; --game:#5fd3cc; --bake:#d9b38c;
+  --warn:#d64545;
+  --sky-day:#cfe8ff; --sky-night:#3b3f63;
+  --howto-bg:#f5f1ea; --howto-fg:#2b2d42;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+#game{
+  position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;
+  display:flex;flex-direction:column;justify-content:center;   /* 表示をまとめて画面の縦中央に寄せる */
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+#head{display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 16px}
+.chip{padding:5px 14px;border-radius:999px;background:var(--plate);box-shadow:0 1px 3px var(--shadow);font-size:13px;font-weight:700;letter-spacing:.08em}
+/* 進み具合：置いた予定はその色、いま回っている予定は輪、まだの予定は薄い色 */
+#dots{display:flex;gap:6px}
+#dots i{width:10px;height:10px;border-radius:50%;background:var(--track)}
+#dots i.now{background:none;box-shadow:inset 0 0 0 2px var(--fg)}
+#now{display:flex;align-items:center;justify-content:center;gap:8px;min-height:36px;font-size:26px;font-weight:800;letter-spacing:.04em}
+#now .sw{width:14px;height:14px;border-radius:50%;flex:none}
+#board{width:100%;aspect-ratio:1;flex:0 1 auto;min-height:0;position:relative;touch-action:none}
+/* 描画は盤面より一回り大きく取り、浮いたピースや完成演出の波紋が盤面の外まで出せるようにする */
+#cv{position:absolute;left:-20%;top:-20%;width:140%;height:140%;display:block;touch-action:none}
+/* 結果は画面全体に重ねるパネル */
+#result{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));text-align:center;background:var(--bg)}
+#result.hidden{display:none}
+#rtitle{font-size:26px;font-weight:800;letter-spacing:.04em}
+/* ステージ名の横の再生ボタン：押すと1日を暮らす演出をもう一度見る */
+.rhead{display:flex;align-items:center;justify-content:center;gap:10px}
+#replay{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:2px solid var(--fg);border-radius:50%;background:var(--plate);color:var(--fg)}
+#rcv{display:block;width:min(100%,46dvh);aspect-ratio:1;margin:4px auto 0}
+.btns{display:flex;gap:10px;width:100%;margin-top:8px}
+/* ステージ一覧：押すとそのパターンで遊ぶ。今のステージは枠で示す */
+#toSelect{width:100%;min-height:52px;margin-top:10px;border:0;border-radius:999px;background:none;color:var(--fg);font-weight:700;font-size:16px;font-family:inherit;letter-spacing:.06em;text-decoration:underline;text-underline-offset:4px}
+.stages{width:100%}
+.stages .lbl{font-size:12px;color:var(--sub);letter-spacing:.15em;margin-bottom:8px}
+.stages .list{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.stages button{min-height:44px;padding:0 16px;border:2px solid transparent;border-radius:999px;background:var(--plate);color:var(--fg);font-weight:700;font-size:14px;line-height:1;font-family:inherit;box-shadow:0 1px 3px var(--shadow)}
+.stages button.make{border:2px dashed var(--sub);box-shadow:none;background:none}
+/* 起動時のステージ選択画面：縦に大きく並べる */
+#select{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:calc(20px + env(safe-area-inset-top,0px)) 24px calc(20px + env(safe-area-inset-bottom,0px));background:var(--bg);text-align:center}
+#select.hidden{display:none}
+#select .lbl{font-size:13px;margin-bottom:14px}
+#select .list{flex-direction:column;flex-wrap:nowrap;gap:10px}
+#select button{min-height:56px;font-size:17px}
+/* ステージを作る画面（項目が多いときは縦にスクロール） */
+#editor,#mine{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(20px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px));background:var(--bg)}
+#editor.hidden,#mine.hidden{display:none}
+#editor h2,#mine h2{margin:0;text-align:center;font-size:24px;font-weight:800;letter-spacing:.04em}
+#editor h2{margin-bottom:16px}
+#editor .note,#mine .note{margin:6px 0 16px;text-align:center;font-size:13px;color:var(--sub)}
+/* 1項目＝上段：色・項目名・消す、下段：時間と分の＋− */
+.row{display:grid;grid-template-columns:14px 1fr 44px;align-items:center;gap:8px;margin-bottom:8px;padding:8px 6px 8px 12px;border-radius:14px;background:var(--plate);box-shadow:0 1px 3px var(--shadow)}
+.row .sw{width:14px;height:14px;border-radius:50%}
+.row input{min-width:0;height:44px;border:0;border-radius:10px;background:var(--bg);color:var(--fg);font-weight:700;font-size:16px;line-height:1;font-family:inherit;padding:0 10px}
+.row .del{width:44px;height:44px;border:0;border-radius:10px;background:none;color:var(--sub);font-weight:700;font-size:20px;line-height:1;font-family:inherit}
+.row .del:disabled{opacity:.3}
+.len{grid-column:2 / 4;display:flex;gap:8px}
+.stp{flex:1;display:flex;align-items:center;border-radius:10px;background:var(--bg)}
+.stp b{flex:1;text-align:center;font-size:18px;font-weight:800}
+.stp b small{margin-left:2px;font-size:12px;font-weight:700;color:var(--sub)}
+.stp button{width:44px;height:44px;border:0;background:none;color:var(--fg);font-weight:800;font-size:22px;line-height:1;font-family:inherit;touch-action:none}
+.stp button:disabled{opacity:.25}
+#addRow{width:100%;min-height:48px;border:2px dashed var(--sub);border-radius:14px;background:none;color:var(--fg);font-weight:700;font-size:15px;line-height:1;font-family:inherit}
+#total{margin:14px 0 4px;text-align:center;font-size:15px;font-weight:700}
+#total.over,#total.short{color:var(--warn)}
+#editor .btns button:disabled,#addRow:disabled,.slot button:disabled{opacity:.35}
+/* ステージ名 */
+#sname-in{display:block;width:100%;height:48px;margin-bottom:14px;border:0;border-radius:14px;background:var(--plate);box-shadow:0 1px 3px var(--shadow);color:var(--fg);font-weight:800;font-size:18px;font-family:inherit;text-align:center}
+/* 共有コードと削除 */
+.codebox{margin-top:22px;padding:12px;border-radius:14px;background:var(--plate);box-shadow:0 1px 3px var(--shadow)}
+.codebox .lbl{font-size:12px;color:var(--sub);letter-spacing:.1em;margin-bottom:8px;text-align:center}
+.coderow{display:flex;gap:8px}
+.coderow input{flex:1;min-width:0;height:44px;border:0;border-radius:10px;background:var(--bg);color:var(--fg);font-size:16px;font-family:ui-monospace,Menlo,monospace;padding:0 10px}
+.coderow button{flex:none;min-width:88px;height:44px;border:0;border-radius:10px;background:var(--fg);color:var(--plate);font-weight:700;font-size:14px;font-family:inherit}
+.coderow button:disabled{opacity:.35}
+#codeMsg,#impMsg{min-height:18px;margin-top:6px;font-size:13px;text-align:center;color:var(--sub)}
+#impMsg.err{color:var(--warn)}
+#edel{display:block;margin:18px auto 0;min-height:44px;padding:0 18px;border:0;background:none;color:var(--warn);font-weight:700;font-size:14px;font-family:inherit}
+/* 自分で作ったステージの一覧（3つまで） */
+.slot{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:10px 10px 10px 16px;border-radius:14px;background:var(--plate);box-shadow:0 1px 3px var(--shadow)}
+.slot .info{flex:1;min-width:0;text-align:left}
+.slot .sname{font-weight:800;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot .meta{font-size:12px;color:var(--sub);margin-top:2px}
+.slot .meta.short{color:var(--warn)}
+.slot button{flex:none;min-width:60px;height:44px;border-radius:999px;font-weight:700;font-size:14px;font-family:inherit}
+.slot button[data-play]{border:0;background:var(--fg);color:var(--plate)}
+.slot button[data-edit]{border:2px solid var(--fg);background:var(--plate);color:var(--fg)}
+button.slot-new{width:100%;min-height:64px;margin-bottom:10px;border:2px dashed var(--sub);border-radius:14px;background:none;color:var(--fg);font-weight:700;font-size:15px;font-family:inherit}
+#eback,#mback{border:2px solid var(--fg);background:var(--plate);color:var(--fg)}
+#eplay{border:0;background:var(--fg);color:var(--plate)}
+/* 入力欄だけは文字を選べるようにする（全体の選択禁止の例外） */
+input{-webkit-user-select:text;user-select:text}
+.btns button{flex:1;min-height:52px;font-size:17px;font-weight:700;border-radius:999px;font-family:inherit;letter-spacing:.06em}
+#retry{border:0;background:var(--fg);color:var(--plate);box-shadow:0 3px 8px var(--shadow)}
+#share{border:2px solid var(--fg);background:var(--plate);color:var(--fg)}
+button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="head">
+    <div id="pname" class="chip"></div>
+    <div id="dots" aria-hidden="true"></div>
+    <div id="now" aria-live="polite"><span class="sw"></span><span class="nm"></span></div>
+  </div>
+  <div id="board"><canvas id="cv"></canvas></div>
+  <div id="result" class="hidden" aria-live="polite">
+    <div class="rhead">
+      <div id="rtitle"></div>
+      <button id="replay" type="button" aria-label="1日を再生"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M5 3.5v11l9-5.5z" fill="currentColor"/></svg></button>
+    </div>
+    <canvas id="rcv"></canvas>
+    <div class="btns">
+      <button id="retry" type="button">もう一回</button>
+      <button id="share" type="button">共有</button>
+    </div>
+    <button id="toSelect" type="button">ステージ選択に戻る</button>
+  </div>
+  <div id="select" class="hidden">
+    <div class="stages">
+      <div class="lbl">ステージを選ぶ</div>
+      <div class="list"></div>
+    </div>
+  </div>
+  <div id="mine" class="hidden">
+    <h2>自分で作る</h2>
+    <div class="note">作ったステージは3つまでブラウザに保存されます</div>
+    <div id="slots"></div>
+    <div class="codebox">
+      <div class="lbl">コードを読み込む</div>
+      <div class="coderow">
+        <input id="imp-in" type="text" placeholder="コードを貼り付け" aria-label="読み込むコード" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button id="impBtn" type="button">読み込む</button>
+      </div>
+      <div id="impMsg" aria-live="polite"></div>
+    </div>
+    <div class="btns">
+      <button id="mback" type="button">戻る</button>
+    </div>
+  </div>
+  <div id="editor" class="hidden">
+    <h2>ステージを作る</h2>
+    <input id="sname-in" type="text" maxlength="12" placeholder="ステージ名" aria-label="ステージ名">
+    <div id="rows"></div>
+    <button id="addRow" type="button">＋ 項目を追加</button>
+    <div id="total" aria-live="polite"></div>
+    <div class="btns">
+      <button id="eback" type="button">戻る</button>
+      <button id="eplay" type="button">この予定で遊ぶ</button>
+    </div>
+    <div class="codebox">
+      <div class="lbl">共有コード（相手の「コードを読み込む」に貼ると同じステージが作れます）</div>
+      <div class="coderow">
+        <input id="code-out" type="text" readonly aria-label="共有コード">
+        <button id="codeCopy" type="button">コピー</button>
+      </div>
+      <div id="codeMsg" aria-live="polite"></div>
+    </div>
+    <button id="edel" type="button">このステージを消す</button>
+  </div>
+<section class="howto" data-pos="none" hidden>
+  <h2>遊び方</h2>
+  <p>24時間の時計盤に、決められた予定を1つずつはめていくゲームです。予定は円のまわりを回っていて、タップした所で止まります。先に置いた予定と重なると、その予定が前後へ押し出されます。全部置くと、キャラクターがその通りに1日を暮らす様子が流れ、円グラフが結果に残ります。点数はありません。</p>
+  <h2>操作</h2>
+  <p>ステージを選び、止めたい所でタップします。PC はスペースか Enter でも止められます。暮らす様子はタップで飛ばせます。カスタムステージでは予定の名前と長さを決めて3つまで保存でき、コードで人に渡せます。ただし暮らす様子は流れません。</p>
+  <h2>楽しみ方</h2>
+  <p>予定は後半ほど速く回り、1周1.4秒が最後は0.6秒まで縮みます。睡眠が昼に来れば、キャラクターも昼に眠ります。わざと変な時間割を組んでも楽しめます。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+</div>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  const DAY = 1440;           // 1日（分）
+  // 予定が1周（24時間ぶん）回るのにかかる時間（秒）。小さいほど速くて難しい。
+  // 1個目は SPIN_SEC_FIRST、最後は SPIN_SEC_LAST で、後半の予定ほど速く回る
+  const SPIN_SEC_FIRST = 1.4;
+  const SPIN_SEC_LAST = 0.6;
+  const STOP_COOLDOWN = 0.2;  // 止めた直後の誤タップで次の予定まで止まらないようにする時間（秒）
+  const SNAP_SEC = 0.45;      // 止めたピースがハマり、被った予定が押し出される演出の長さ（秒）
+  const DONE_SEC = 1.4;       // 全部置き終わってから結果を出すまでの完成演出の長さ（秒）
+  const LIFT = 1.06;          // 回っているピースは盤面より少し大きく描いて浮かせる。止めるとハマって1倍になる
+  // 完成後、組んだ予定どおりにキャラが0時から24時まで暮らす演出
+  const PLAY_SEC = 12;        // 1日を暮らす長さの目安（秒）。各予定はその長さに比例した時間だけ映す
+  const MIN_SEG_SEC = 1.3;    // 短い予定でも、何をしているか分かるようにこの秒数は映す
+  const PLAY_HOLD = 0.8;      // 24時になってから結果を出すまでの間（秒）
+  const REVEAL_SEC = 0.5;     // 円グラフから場面に切り替わる長さ（秒）
+  // 1日の予定のパターン。遊ぶたびにこの中から1つをランダムに選ぶ。
+  // 並び順に1つずつ回る。start はそのパターンで想定している開始時刻（分、今は使っていない）、dur は長さ（分）。
+  // dur の合計は必ず24時間（1440分）にする（ぴったり埋まらないと押し出しの計算が合わない）
+  const h = (hh, mm = 0) => hh * 60 + mm;
+  const PATTERNS = [
+    { name:'会社員の平日', acts:[
+      { name:'睡眠',         start:h(23),     dur:480, color:'--sleep'   },
+      { name:'朝の支度',     start:h(7),      dur:90,  color:'--prep'    },
+      { name:'通勤',         start:h(8, 30),  dur:60,  color:'--commute' },
+      { name:'仕事（午前）', start:h(9, 30),  dur:240, color:'--work'    },
+      { name:'ランチ',       start:h(13, 30), dur:60,  color:'--lunch'   },
+      { name:'仕事（午後）', start:h(14, 30), dur:270, color:'--work'    },
+      { name:'自由時間',     start:h(19),     dur:240, color:'--free'    },
+    ]},
+    { name:'学生の一日', acts:[
+      { name:'睡眠',         start:h(23),     dur:450, color:'--sleep'   },
+      { name:'朝の支度',     start:h(6, 30),  dur:60,  color:'--prep'    },
+      { name:'通学',         start:h(7, 30),  dur:60,  color:'--commute' },
+      { name:'授業（午前）', start:h(8, 30),  dur:240, color:'--study'   },
+      { name:'昼休み',       start:h(12, 30), dur:60,  color:'--lunch'   },
+      { name:'授業（午後）', start:h(13, 30), dur:120, color:'--study'   },
+      { name:'部活',         start:h(15, 30), dur:180, color:'--club'    },
+      { name:'夕食',         start:h(18, 30), dur:60,  color:'--lunch'   },
+      { name:'宿題',         start:h(19, 30), dur:120, color:'--study'   },
+      { name:'自由時間',     start:h(21, 30), dur:90,  color:'--free'    },
+    ]},
+    { name:'のんびり休日', acts:[
+      { name:'睡眠',         start:h(1),      dur:480, color:'--sleep'   },
+      { name:'朝ごはん',     start:h(9),      dur:60,  color:'--lunch'   },
+      { name:'買い物',       start:h(10),     dur:120, color:'--shop'    },
+      { name:'ランチ',       start:h(12),     dur:60,  color:'--lunch'   },
+      { name:'昼寝',         start:h(13),     dur:120, color:'--nap'     },
+      { name:'映画',         start:h(15),     dur:180, color:'--movie'   },
+      { name:'夕食',         start:h(18),     dur:60,  color:'--lunch'   },
+      { name:'ゲーム',       start:h(19),     dur:360, color:'--game'    },
+    ]},
+    { name:'夜勤の一日', acts:[
+      { name:'睡眠',         start:h(9),      dur:420, color:'--sleep'   },
+      { name:'自由時間',     start:h(16),     dur:180, color:'--free'    },
+      { name:'夕食',         start:h(19),     dur:60,  color:'--lunch'   },
+      { name:'通勤',         start:h(20),     dur:60,  color:'--commute' },
+      { name:'仕事（前半）', start:h(21),     dur:360, color:'--work'    },
+      { name:'休憩',         start:h(3),      dur:60,  color:'--nap'     },
+      { name:'仕事（後半）', start:h(4),      dur:240, color:'--work'    },
+      { name:'帰宅',         start:h(8),      dur:60,  color:'--commute' },
+    ]},
+    { name:'パン屋の一日', acts:[
+      { name:'睡眠',         start:h(20),     dur:420, color:'--sleep'   },
+      { name:'仕込み',       start:h(3),      dur:180, color:'--bake'    },
+      { name:'開店準備',     start:h(6),      dur:60,  color:'--prep'    },
+      { name:'店番（午前）', start:h(7),      dur:300, color:'--shop'    },
+      { name:'昼ごはん',     start:h(12),     dur:60,  color:'--lunch'   },
+      { name:'店番（午後）', start:h(13),     dur:240, color:'--shop'    },
+      { name:'片付け',       start:h(17),     dur:60,  color:'--bake'    },
+      { name:'夕食',         start:h(18),     dur:60,  color:'--lunch'   },
+      { name:'自由時間',     start:h(19),     dur:60,  color:'--free'    },
+    ]},
+  ];
+  // 自分で作るステージ：項目の色は上から順にこの並びで割り当てる
+  const CUSTOM_COLORS = ['--sleep','--work','--free','--lunch','--study','--club','--shop','--movie','--game','--prep','--commute','--bake','--nap'];
+  const CUSTOM_DEFAULT = [ { name:'睡眠', dur:480 }, { name:'仕事', dur:480 }, { name:'自由時間', dur:480 } ];
+  const CUSTOM_KEY = 'dailySchedule.customs';  // 作ったステージ（3つまで）をまとめてブラウザに保存する
+  const OLD_KEY = 'dailySchedule.custom';      // 以前の1つだけ保存していたときのキー（読み込んで引き継ぐ）
+  const CUSTOM_MAX = 3;                        // 保存できるステージの数
+  const STEP = 15;                             // 長さの単位（分）
+  const HOLD_DELAY = 0.4;                      // ＋−を押し続けたとき、連続で変わり始めるまでの時間（秒）
+  const HOLD_EVERY = 0.08;                     // 押し続けている間に1段ずつ変わる間隔（秒）
+  const FONT = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif';
+
+  // ---------- ヘルパー ----------
+  const $ = id => document.getElementById(id);
+  const css = getComputedStyle(document.documentElement);
+  const color = name => css.getPropertyValue(name).trim();
+  const wrap = m => ((Math.round(m) % DAY) + DAY) % DAY;
+  const fmtClock = m => { m = wrap(m); return Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0'); };
+  // a が b より何分後か（-720〜+720）
+  const signedDiff = (a, b) => ((a - b) % DAY + DAY + DAY / 2) % DAY - DAY / 2;
+  // 時刻（分）→ 角度。0時を真上にして時計回り
+  const angle = m => -Math.PI / 2 + m / DAY * Math.PI * 2;
+
+  // ---------- 状態 ----------
+  let pattern = PATTERNS[0];   // 今回の1日の予定のパターン
+  let ACTS = pattern.acts;     // 今回の予定（並び順に回る）
+  let mode = 'playing';   // playing / done（完成演出中） / day（1日を暮らす演出中） / over
+  let doneT = 0;          // 完成演出の経過時間（秒）
+  let dayT = 0;           // 1日を暮らす演出の経過時間（秒）
+  let cur = 0;            // いま回っている予定の番号
+  let pos = 0;            // いま回っている予定の開始時刻（分）
+  let placed = [];        // 止めた予定の開始時刻（分）
+  let cooldown = 0;
+  let shiftFrom = [];      // ずれる前の開始時刻（演出用）
+  let shiftT = 1;          // ハマる・ずれる演出の進み具合（0〜1、1で完了）
+  let snapIdx = -1;        // いまハマっている最中のピース
+
+  // pt: 遊ぶパターン
+  function reset(pt){
+    pattern = pt;
+    ACTS = pattern.acts;
+    mode = 'playing';
+    cur = 0;
+    placed = [];
+    pos = Math.random() * DAY;
+    cooldown = 0;
+    shiftFrom = [];
+    shiftT = 1;
+    snapIdx = -1;
+    showPanel(null);
+    updateStatus();
+  }
+
+  // 見出し：パターン名と進み具合の点
+  function updateStatus(){
+    $('pname').textContent = pattern.name;
+    $('dots').innerHTML = ACTS.map((a, i) =>
+      i < placed.length ? `<i style="background:var(${a.color})"></i>`
+      : i === cur && mode === 'playing' ? '<i class="now"></i>' : '<i></i>').join('');
+  }
+
+  function stop(){
+    if (mode !== 'playing' || cooldown > 0 || shiftT < 1) return;
+    placed.push(wrap(pos));
+    snapIdx = placed.length - 1;
+    updateStatus();
+    shiftFrom = placed.slice();
+    pushAway(placed.length - 1);
+    shiftT = 0;
+    cur++;
+    cooldown = STOP_COOLDOWN;
+    // 全部置いたら、最後のピースがハマってから完成演出 → 結果
+    if (cur >= ACTS.length) { mode = 'done'; doneT = 0; updateStatus(); return; }
+    pos = Math.random() * DAY;
+    updateStatus();
+  }
+
+  const mid = i => placed[i] + ACTS[i].dur / 2;
+
+  // 置いた予定 n と重なる下の予定をずらす。
+  // n の中心より後ろにある予定は後ろへ、前にある予定は前へ押し出し、
+  // 押された予定がさらに別の予定に被ればそれも同じ向きに押す。
+  // 反対側でぶつかった場合も含め、各予定は重ならなくなる最小限しか動かさない
+  function pushAway(n){
+    const c = mid(n), half = ACTS[n].dur / 2;
+    // n の中心から時計回りに見た順（0〜1440）に並べ、n の終わり〜n の始まりの空き区間に収める
+    const others = placed.map((_, j) => j).filter(j => j !== n)
+      .map(j => ({ j, u: wrap(mid(j) - c) - ACTS[j].dur / 2, dur: ACTS[j].dur }))
+      .sort((a, b) => a.u - b.u);
+    const total = others.reduce((s, o) => s + o.dur, 0);
+    // t = 開始位置 − 手前にある予定の長さの合計。t が lo〜hi に入り、順に増えていれば重ならない
+    const lo = half, hi = DAY - half - total;
+    let pre = 0, prevT = -Infinity;
+    for (const o of others) {
+      const t = Math.max(prevT, Math.min(hi, Math.max(lo, o.u - pre)));
+      placed[o.j] = wrap(c + t + pre);
+      prevT = t;
+      pre += o.dur;
+    }
+  }
+
+  // タイトル画面のステージ一覧。用意したステージ → 最後の「カスタムステージ」から自分で作る画面に入る
+  function stageButtons(){
+    return PATTERNS.map((pt, i) => `<button type="button" data-stage="${i}">${esc(pt.name)}</button>`).join('')
+      + `<button type="button" data-make class="make">カスタムステージ</button>`
+      + `<button type="button" data-howto-open>遊び方</button>`;
+  }
+  // 画面を1つだけ出す（結果・起動時の選択・自分で作る・ステージを作る）
+  function showPanel(id){
+    ['result', 'select', 'mine', 'editor'].forEach(k => $(k).classList.toggle('hidden', k !== id));
+  }
+
+  // 起動時のステージ選択画面
+  function openSelect(){
+    mode = 'select';
+    $('select').querySelector('.list').innerHTML = stageButtons();
+    showPanel('select');
+  }
+
+  function finish(){
+    mode = 'over';
+    $('rtitle').textContent = pattern.name;
+    $('replay').style.display = pattern.custom ? 'none' : '';   // 自分で作ったステージには再生ボタンを出さない
+    showPanel('result');
+    updateStatus();
+  }
+
+  // ---------- 描画 ----------
+  const cv = $('cv'), ctx = cv.getContext('2d');
+  let W = 0, H = 0;
+
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  // 盤面の大きさの比率（予定の輪の外側の半径 r に対して）
+  const HOLE = 0.34;    // 真ん中の穴の半径
+  const PLATE = 1.17;   // 目盛りを描く白い文字盤の半径
+
+  // 予定のピース（ドーナツの一部）。lift のときは浮いて見えるよう影を付ける
+  function drawWedge(g, cx, cy, r, R, start, act, lift){
+    const a0 = angle(start), a1 = angle(start + act.dur);
+    g.save();
+    if (lift) { g.shadowColor = 'rgba(43,45,66,.35)'; g.shadowBlur = r * 0.08; g.shadowOffsetY = r * 0.02; }
+    g.beginPath();
+    g.arc(cx, cy, R, a0, a1);
+    g.arc(cx, cy, r * HOLE, a1, a0, true);
+    g.closePath();
+    g.fillStyle = color(act.color);
+    g.fill();
+    g.restore();
+    g.lineJoin = 'round';
+    g.lineWidth = 2;
+    g.strokeStyle = color('--plate');
+    g.stroke();
+  }
+
+  function drawLabel(g, cx, cy, r, start, act){
+    // 予定名と時間帯を輪の太さの真ん中に置く
+    const mid = angle(start + act.dur / 2);
+    const lr = r * (HOLE + 1) / 2 + r * 0.04;
+    const x = cx + Math.cos(mid) * lr, y = cy + Math.sin(mid) * lr;
+    const fs = Math.max(10, r * 0.072);
+    g.fillStyle = color('--fg');
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.font = `800 ${fs}px ${FONT}`;
+    g.fillText(act.name, x, y - fs * 0.55);
+    g.font = `600 ${fs * 0.78}px ${FONT}`;
+    g.globalAlpha = 0.7;
+    g.fillText(`${fmtClock(start)}-${fmtClock(start + act.dur)}`, x, y + fs * 0.62);
+    g.globalAlpha = 1;
+  }
+
+  // 白い文字盤と時計の目盛り（何時かを読むためのもの）
+  function drawPlate(g, cx, cy, r){
+    g.save();
+    g.shadowColor = color('--shadow'); g.shadowBlur = r * 0.1; g.shadowOffsetY = r * 0.02;
+    g.beginPath();
+    g.arc(cx, cy, r * PLATE, 0, Math.PI * 2);
+    g.fillStyle = color('--plate');
+    g.fill();
+    g.restore();
+    // 予定がまだ入っていない所
+    g.beginPath();
+    g.arc(cx, cy, r, 0, Math.PI * 2);
+    g.arc(cx, cy, r * HOLE, 0, Math.PI * 2, true);
+    g.fillStyle = color('--track');
+    g.fill();
+  }
+
+  function drawDial(g, cx, cy, r){
+    const gap = r * (PLATE - 1);
+    g.strokeStyle = color('--tick');
+    g.fillStyle = color('--sub');
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.font = `700 ${Math.max(10, r * 0.07)}px ${FONT}`;
+    g.lineCap = 'round';
+    for (let hr = 0; hr < 24; hr++) {
+      const a = angle(hr * 60), c = Math.cos(a), s = Math.sin(a);
+      if (hr % 3 === 0) {
+        g.fillText(String(hr), cx + c * (r + gap * 0.55), cy + s * (r + gap * 0.55));
+      } else {
+        g.lineWidth = 2;
+        g.beginPath();
+        g.moveTo(cx + c * (r + gap * 0.45), cy + s * (r + gap * 0.45));
+        g.lineTo(cx + c * (r + gap * 0.65), cy + s * (r + gap * 0.65));
+        g.stroke();
+      }
+    }
+  }
+
+  // 描画用の開始時刻。ずれる演出中は元の位置から押し出された向きに滑らせる（最初速く、最後ゆっくり）
+  function shownPos(i){
+    if (shiftT >= 1 || shiftFrom[i] === undefined) return placed[i];
+    const e = 1 - Math.pow(1 - shiftT, 3);
+    return shiftFrom[i] + signedDiff(placed[i], shiftFrom[i]) * e;
+  }
+
+  // ハマる最中のピースの大きさ。浮いた大きさから盤面に押し込まれ、少し沈んで戻る（カチッとハマる感じ）
+  function snapScale(){
+    const c1 = 1.70158, c3 = c1 + 1, t = shiftT - 1;
+    const back = 1 + c3 * t * t * t + c1 * t * t;
+    return 1 + (LIFT - 1) * (1 - back);
+  }
+
+  function drawPie(g, cx, cy, r, spinning){
+    drawPlate(g, cx, cy, r);
+    const shown = placed.map((_, i) => shownPos(i));
+    const snapping = shiftT < 1 && snapIdx >= 0;
+    const spin = spinning && !snapping;   // ハマっている間は次のピースを出さない
+    // 押し出される下の予定 → ハマるピース → 回っているピースの順に重ねる
+    shown.forEach((s, i) => { if (!(snapping && i === snapIdx)) drawWedge(g, cx, cy, r, r, s, ACTS[i], false); });
+    if (snapping) drawWedge(g, cx, cy, r, r * snapScale(), shown[snapIdx], ACTS[snapIdx], snapScale() > 1.005);
+    // 置いた予定同士が重なっても名前が隠れないよう、文字は塗りのあとにまとめて描く
+    shown.forEach((s, i) => drawLabel(g, cx, cy, r, s, ACTS[i]));
+    // 回っているピースは置いた予定の文字より上に重ねる
+    if (spin) {
+      drawWedge(g, cx, cy, r, r * LIFT, pos, ACTS[cur], true);
+    }
+    drawDial(g, cx, cy, r);
+  }
+
+  // 結果パネルのグラフ。パネルの大きさに合わせて描き直す（押し出しの演出が終わるまでは動きも見せる）
+  const rcv = $('rcv'), rctx = rcv.getContext('2d');
+  function drawResult(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const S = rcv.clientWidth;
+    if (S < 1) return;
+    if (rcv.width !== Math.round(S * dpr)) { rcv.width = rcv.height = Math.round(S * dpr); }
+    rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    rctx.clearRect(0, 0, S, S);
+    const r = S / 2 / (PLATE + 0.05);
+    if (r > 20) drawPie(rctx, S / 2, S / 2, r, false);
+  }
+
+  // 完成演出：輪がポンと弾み、外へ広がる波紋と、真ん中の穴に「完成！」が飛び出す
+  function drawDone(r){
+    const cx = W / 2, cy = H / 2, t = doneT;
+    // 弾み（最初の0.5秒で一度ふくらんで戻る）
+    const pulse = t < 0.5 ? 1 + 0.06 * Math.sin(Math.PI * t / 0.5) : 1;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(pulse, pulse);
+    ctx.translate(-cx, -cy);
+    drawPie(ctx, cx, cy, r, false);
+    ctx.restore();
+    // 波紋（文字盤の縁から外へ広がって消える）
+    if (t < 0.8) {
+      const k = t / 0.8;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * PLATE * (1 + 0.25 * (1 - Math.pow(1 - k, 2))), 0, Math.PI * 2);
+      ctx.lineWidth = r * 0.04 * (1 - k);
+      ctx.strokeStyle = color('--fg');
+      ctx.globalAlpha = 0.35 * (1 - k);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // 「完成！」（少し遅れて飛び出し、少し大きくなってから収まる）
+    const k = Math.min(1, Math.max(0, (t - 0.1) / 0.35));
+    if (k > 0) {
+      const c1 = 1.70158, c3 = c1 + 1, u = k - 1;
+      const sc = 1 + c3 * u * u * u + c1 * u * u;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(sc, sc);
+      ctx.fillStyle = color('--fg');
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `800 ${r * 0.15}px ${FONT}`;
+      ctx.fillText('完成！', 0, 0);
+      ctx.restore();
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+    const r = Math.min(W, H) / 1.4 / 2 / (PLATE + 0.05);   // 盤面（キャンバスの1/1.4）に文字盤が収まる大きさ
+    if (r < 20) return;
+    if (mode === 'done' && shiftT >= 1) drawDone(r);
+    else if (mode === 'day') {
+      const k = Math.min(1, dayT / REVEAL_SEC);
+      if (k < 1) drawPie(ctx, W / 2, H / 2, r, false);
+      drawLife(k);
+    }
+    else drawPie(ctx, W / 2, H / 2, r, mode === 'playing');
+    if (mode === 'over') drawResult();
+    // 回っているピースの予定名は円の上に出す（ハマっている間は次のピースが出ていないので空ける）。
+    // 1日を暮らす演出中は、いまキャラがしている予定を出す
+    const act = mode === 'playing' && shiftT >= 1 ? ACTS[cur] : mode === 'day' ? ACTS[lifeNow().sg.i] : null;
+    const now = act ? act.name : '';
+    if ($('now').dataset.name !== now) {
+      $('now').dataset.name = now;
+      $('now').querySelector('.nm').textContent = now;
+      $('now').querySelector('.sw').style.background = act ? `var(${act.color})` : 'none';
+    }
+  }
+
+  // ---------- 1日を暮らす演出 ----------
+  // 完成した予定どおりに、2Dのキャラが0時から24時まで暮らす。
+  // 場面は横100×縦100の座標で描く（上の0〜84が場面、下が1日の帯）
+  const FLOOR = 70;      // 床の高さ
+  const SCENE_H = 84;    // 場面の下端
+  const OUTDOOR = new Set(['commute', 'club']);   // 外の場面（空の色で昼夜を見せる）
+
+  // 予定名から、キャラが何をするかを決める。上から順に調べ、最初に当てはまったものにする
+  const KINDS = [
+    ['nap',     /昼寝|仮眠|休憩/],
+    ['sleep',   /睡眠|寝|眠/],
+    ['tidy',    /片付|掃除|準備/],
+    ['prep',    /支度|歯|洗面|身だしなみ/],
+    ['commute', /通勤|通学|帰宅|移動|出勤|散歩/],
+    ['counter', /店番|接客|レジ/],
+    ['work',    /仕事|作業|会議|勤務|残業|バイト/],
+    ['study',   /授業|勉強|宿題|学習|塾|読書/],
+    ['eat',     /ごはん|飯|食|ランチ|昼休み|おやつ/],
+    ['shop',    /買い物|買物|ショッピング/],
+    ['movie',   /映画|テレビ|動画|ドラマ|アニメ/],
+    ['game',    /ゲーム/],
+    ['club',    /部活|運動|スポーツ|ジム|筋トレ|ランニング|練習/],
+    ['bake',    /仕込み|料理|調理|パン|自炊/],
+    ['free',    /自由|休み|のんびり|趣味|スマホ/],
+  ];
+  // 名前で決まらないときは、用意したステージは色で決め、自分で作ったステージは立って過ごす
+  const COLOR_KIND = { '--sleep':'sleep', '--prep':'prep', '--commute':'commute', '--work':'work', '--lunch':'eat', '--free':'free',
+    '--study':'study', '--club':'club', '--shop':'shop', '--nap':'nap', '--movie':'movie', '--game':'game', '--bake':'bake' };
+  function kindOf(act){
+    const k = KINDS.find(([, re]) => re.test(act.name));
+    if (k) return k[0];
+    return pattern.custom ? 'idle' : (COLOR_KIND[act.color] || 'idle');
+  }
+
+  // 0時から24時までを予定ごとに区切る（日をまたぐ予定は0時で2つに分ける）
+  let segs = [];   // { i:予定の番号, from, to:時刻（分）, kind, sec:演出の長さ（秒） }
+  function buildSegs(){
+    const list = [];
+    placed.forEach((s, i) => {
+      const e = s + ACTS[i].dur;
+      if (e <= DAY) list.push({ i, from: s, to: e });
+      else { list.push({ i, from: s, to: DAY }); list.push({ i, from: 0, to: e - DAY }); }
+    });
+    return list.filter(g => g.to > g.from).sort((a, b) => a.from - b.from)
+      .map(g => ({ ...g, kind: kindOf(ACTS[g.i]), sec: Math.max(MIN_SEG_SEC, (g.to - g.from) / DAY * PLAY_SEC) }));
+  }
+  const lifeSec = () => segs.reduce((s, g) => s + g.sec, 0);
+  // いまの場面と、その場面の経過時間 t（秒）、時刻 m（分）
+  function lifeNow(){
+    let t = dayT;
+    for (let n = 0; n < segs.length; n++) {
+      const sg = segs[n];
+      if (t < sg.sec || n === segs.length - 1) {
+        const k = Math.min(1, t / sg.sec);
+        return { sg, t, m: sg.from + (sg.to - sg.from) * k };
+      }
+      t -= sg.sec;
+    }
+  }
+  // 明るさ（夜0〜昼1）。5〜7時に明けて、17〜19時に暮れる
+  const daylight = m => { const hh = m / 60; return Math.max(0, Math.min(1, (hh - 5) / 2, (19 - hh) / 2)); };
+  // 2つの色（#rrggbb）を混ぜる
+  const mix = (a, b, k) => {
+    const p = s => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16));
+    const A = p(a), B = p(b);
+    return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',')})`;
+  };
+
+  // ----- 描くためのヘルパー（場面の座標） -----
+  const box = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
+  const line = (x0, y0, x1, y1, c, w) => {
+    ctx.strokeStyle = c; ctx.lineWidth = w; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  };
+  const oval = (x, y, rx, ry, c) => { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); };
+  const lerp = (a, b, k) => a + (b - a) * k;
+
+  // キャラ：腰の位置 (x, y)、体の傾き tilt（0で直立、正で前＝右に倒れる）。
+  // 腕と脚は [付け根側, 先側] の向き（0で真下、正で前＝右、π/2で真横の前）。顔は右を向く
+  const BODY = 13, HEAD = 5.5, ARM = 6.5, LEG = 8;
+  function person(x, y, tilt, arms, legs, closed){
+    const fg = color('--fg');
+    const tip = (x0, y0, a, len) => [x0 + Math.sin(a) * len, y0 + Math.cos(a) * len];
+    const nx = x + Math.sin(tilt) * BODY, ny = y - Math.cos(tilt) * BODY;
+    const hx = nx + Math.sin(tilt) * (HEAD + 1), hy = ny - Math.cos(tilt) * (HEAD + 1);
+    ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.strokeStyle = fg;
+    const limb = (x0, y0, [a1, a2], len) => {
+      const [ex, ey] = tip(x0, y0, a1, len), [fx, fy] = tip(ex, ey, a2, len);
+      ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(ex, ey); ctx.lineTo(fx, fy); ctx.stroke();
+      return [fx, fy];
+    };
+    // 奥の手足（少し薄く）→ 体 → 手前の手足
+    ctx.globalAlpha = 0.45;
+    limb(x, y, legs[1], LEG);
+    const back = limb(nx, ny, arms[1], ARM);
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 3.4;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(nx, ny); ctx.stroke();
+    limb(x, y, legs[0], LEG);
+    const hand = limb(nx, ny, arms[0], ARM);
+    // 頭と目（右向き。眠っているときは閉じた目）
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(hx, hy, HEAD, 0, Math.PI * 2);
+    ctx.fillStyle = color('--plate'); ctx.fill(); ctx.stroke();
+    const fx = Math.cos(tilt), fy = Math.sin(tilt), ux = Math.sin(tilt), uy = -Math.cos(tilt);
+    const ex = hx + fx * 2.6 + ux * 0.8, ey = hy + fy * 2.6 + uy * 0.8;
+    if (closed) line(ex - fx * 1, ey - fy * 1, ex + fx * 1, ey + fy * 1, fg, 0.9);
+    else oval(ex, ey, 0.8, 0.8, fg);
+    return { hand, back, head: [hx, hy] };
+  }
+  // 立っているときの腰の高さ（いちばん下の足が床に着く高さ）
+  const standY = legs => FLOOR - Math.max(...legs.map(([a, b]) => Math.cos(a) * LEG + Math.cos(b) * LEG));
+  const STAND = [[0.06, 0], [-0.06, 0]];
+  const SIT = [[Math.PI / 2, 0.06], [Math.PI / 2 - 0.12, 0]];
+  // 歩く・走るときの手足（p は歩みの位相、amp は振りの大きさ）
+  const walkLegs = (p, amp) => [p, p + Math.PI].map(q => { const a = amp * Math.sin(q); return [a, a - amp * 1.3 * Math.max(0, Math.cos(q))]; });
+  const walkArms = (p, amp, bend) => [p, p + Math.PI].map(q => { const a = -amp * Math.sin(q); return [a, a + bend]; });
+
+  // ----- 家具 -----
+  function chair(x, seat){   // 背もたれはキャラの後ろ（左）
+    const c = color('--tick');
+    box(x - 7, seat, 13, 2.2, c);
+    box(x - 7, seat - 15, 2.2, 15, c);
+    box(x - 6, seat, 1.6, FLOOR - seat, c);
+    box(x + 4, seat, 1.6, FLOOR - seat, c);
+  }
+  function table(x0, x1, top){
+    const c = color('--tick');
+    box(x0, top, x1 - x0, 2.5, c);
+    box(x0 + 2, top, 1.8, FLOOR - top, c);
+    box(x1 - 3.8, top, 1.8, FLOOR - top, c);
+  }
+  function sofa(x0, x1, seat, c){
+    ctx.globalAlpha = 0.7; box(x0, seat - 13, x1 - x0, 13, c); ctx.globalAlpha = 1;   // 背もたれ（奥）
+    box(x0, seat, x1 - x0, FLOOR - 3 - seat, c);
+    box(x0 - 4, seat - 6, 5, FLOOR - 3 - seat + 6, c);
+    box(x1 - 1, seat - 6, 5, FLOOR - 3 - seat + 6, c);
+    box(x0, FLOOR - 3, 2, 3, color('--sub'));
+    box(x1 - 2, FLOOR - 3, 2, 3, color('--sub'));
+  }
+  // 寝ているときの「z」
+  function zzz(x, y, t){
+    ctx.fillStyle = color('--fg');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (let j = 0; j < 3; j++) {
+      const ph = (t * 0.5 + j / 3) % 1;
+      ctx.globalAlpha = Math.sin(ph * Math.PI);
+      ctx.font = `800 ${3 + ph * 3}px ${FONT}`;
+      ctx.fillText('z', x + ph * 8, y - ph * 14);
+    }
+    ctx.globalAlpha = 1;
+  }
+  // 机に座って手元で作業する姿勢（work / study 共通）
+  function seated(x, seat, tilt, arms){ return person(x, seat - 1, tilt, arms, SIT); }
+
+  // ----- 場面（t：その場面の経過時間（秒）、ac：予定の色） -----
+  const SCENES = {
+    // 布団で寝る（左が頭）
+    sleep(t, ac){
+      const tk = color('--tick');
+      box(20, 56, 62, 9, tk); box(20, 46, 3, 24, tk); box(79, 52, 3, 18, tk);
+      box(23, 53, 56, 4, color('--plate'));
+      oval(30, 52.5, 7, 2.6, color('--plate'));
+      const lie = [[Math.PI / 2, Math.PI / 2], [Math.PI / 2, Math.PI / 2]];
+      person(50, 49, -Math.PI / 2, lie, lie, true);
+      const top = 44 - 0.6 * Math.sin(t * 2.2);   // 寝息で布団が上下する
+      ctx.fillStyle = ac;
+      ctx.beginPath(); ctx.moveTo(37, 54); ctx.lineTo(37, top + 3); ctx.quadraticCurveTo(37, top, 41, top);
+      ctx.lineTo(74, top + 2); ctx.quadraticCurveTo(78, top + 2.5, 78, top + 6); ctx.lineTo(78, 54); ctx.fill();
+      zzz(33, 40, t);
+    },
+    // ソファで横になる
+    nap(t, ac){
+      sofa(26, 80, 56, ac);
+      const breath = 0.3 * Math.sin(t * 2.2);
+      person(56, 51 + breath, -Math.PI / 2, [[2.2, 1.2], [Math.PI / 2, Math.PI / 2]], [[Math.PI / 2, Math.PI / 2], [2.3, 0.9]], true);
+      zzz(35, 41, t);
+    },
+    // 洗面台で歯みがき
+    prep(t, ac){
+      const tk = color('--tick');
+      box(62, 20, 16, 22, tk); box(63.5, 21.5, 13, 19, color('--track'));   // 鏡
+      box(58, 51, 28, 3, tk); box(60, 54, 24, 16, tk);                     // 洗面台
+      line(64, 51, 64, 47, color('--sub'), 1.4); line(64, 47, 67, 47, color('--sub'), 1.4);
+      const p = person(46, standY(STAND), 0, [[1.6, 3.0 + 0.18 * Math.sin(t * 16)], [0.08, 0.12]], STAND);
+      line(p.hand[0], p.hand[1], p.hand[0] - 3.2, p.hand[1] + 0.6, ac, 1.4);   // 歯ブラシ
+    },
+    // 歩いて移動（景色が流れる）
+    commute(t, ac){
+      const tk = color('--tick');
+      const hs = [26, 40, 32, 46];
+      ctx.globalAlpha = 0.6;
+      for (let j = 0; j < 5; j++) {
+        const x = ((j * 30 - t * 16) % 150 + 150) % 150 - 25;
+        box(x, FLOOR - hs[j % 4], 20, hs[j % 4], tk);
+      }
+      ctx.globalAlpha = 1;
+      for (let j = 0; j < 6; j++) box(((j * 20 - t * 30) % 120 + 120) % 120 - 10, 76, 8, 1.4, color('--plate'));
+      const ph = t * Math.PI * 2 * 1.5;
+      const legs = walkLegs(ph, 0.5);
+      const p = person(44, standY(legs) - 0.6 * Math.abs(Math.cos(ph)), 0.05, walkArms(ph, 0.45, 0.35), legs);
+      box(p.back[0] - 3, p.back[1], 6, 4.5, ac);   // かばん
+    },
+    // 店番（カウンターでお辞儀）
+    counter(t, ac){
+      const tk = color('--tick');
+      const bow = Math.pow(Math.max(0, Math.sin(t * 1.6)), 3) * 0.55;
+      person(50, standY(STAND), bow, [[0.15 + bow * 0.6, 0.15 + bow * 0.6], [0.1 + bow * 0.6, 0.1 + bow * 0.6]], STAND);
+      box(60, 48, 32, FLOOR - 48, tk);                  // カウンター（手前）
+      box(60, 46, 32, 2.5, color('--sub'));
+      box(76, 37, 11, 9, ac);                           // レジ
+      box(77.5, 38.5, 8, 3, color('--plate'));
+    },
+    // 机でパソコン
+    work(t, ac){
+      const fg = color('--fg');
+      table(50, 90, 57);
+      box(74, 50, 3, 7, color('--sub'));                // モニターの台
+      box(66, 35, 20, 15, fg);                          // モニター
+      for (let j = 0; j < 4; j++) {
+        const w = 6 + 8 * Math.abs(Math.sin(t * 1.3 + j * 1.7));
+        box(68, 38 + j * 3, w, 1.2, ac);
+      }
+      box(55, 55.6, 10, 1.4, color('--sub'));           // キーボード
+      chair(40, 62);
+      seated(40, 62, 0.12, [[0.6, 1.35 + 0.12 * Math.sin(t * 22)], [0.62, 1.35 + 0.12 * Math.sin(t * 22 + 2)]]);
+    },
+    // 机でノートに書く
+    study(t, ac){
+      table(50, 90, 57);
+      box(55, 55.6, 16, 1.4, color('--plate'));         // ノート
+      box(62.5, 55.2, 1, 1.8, ac);
+      chair(40, 62);
+      const p = seated(40, 62, 0.3, [[0.5, 1.15 + 0.1 * Math.sin(t * 9)], [0.55, 1.25]]);
+      line(p.hand[0], p.hand[1], p.hand[0] + 1.5, p.hand[1] - 3.5, ac, 1.2);   // えんぴつ
+    },
+    // テーブルでごはん
+    eat(t, ac){
+      table(52, 88, 59);
+      ctx.fillStyle = ac;
+      ctx.beginPath(); ctx.arc(66, 55, 4.5, 0, Math.PI); ctx.fill();   // 茶わん
+      box(63, 54.4, 6, 0.8, color('--plate'));
+      chair(40, 62);
+      const k = (1 - Math.cos(t * 3.2)) / 2;   // 0：茶わん 〜 1：口元
+      const p = seated(40, 62, 0.08, [[lerp(0.75, 1.75, k), lerp(1.45, 3.45, k)], [0.7, 1.4]]);
+      line(p.hand[0], p.hand[1], p.hand[0] + 4, p.hand[1] - 1.5 + k * 2, color('--sub'), 0.8);   // はし
+    },
+    // 歩いて買い物（棚が流れる）
+    shop(t, ac){
+      const tk = color('--tick');
+      const goods = ['--lunch', '--free', '--shop', '--work', '--prep', '--movie'].map(color);
+      for (let j = 0; j < 5; j++) {
+        const x = ((j * 32 - t * 9) % 160 + 160) % 160 - 30;
+        box(x, 26, 26, 1.6, tk); box(x, 26, 1.6, FLOOR - 26, tk); box(x + 24.4, 26, 1.6, FLOOR - 26, tk);
+        for (let s = 0; s < 3; s++) {
+          box(x, 38 + s * 11, 26, 1.4, tk);
+          for (let q = 0; q < 4; q++) box(x + 3 + q * 5.5, 33 + s * 11, 4, 5, goods[(j * 3 + s * 2 + q) % goods.length]);
+        }
+      }
+      const ph = t * Math.PI * 2 * 1.1;
+      const legs = walkLegs(ph, 0.4);
+      const p = person(46, standY(legs), 0.03, [[0.15, 0.25], walkArms(ph, 0.35, 0.3)[1]], legs);
+      box(p.hand[0] - 3.5, p.hand[1], 7, 7, ac);   // 買い物袋
+    },
+    // ソファでスマホ
+    free(t, ac){
+      sofa(24, 76, 57, color('--track'));
+      const p = person(42, 56, -0.12, [[0.4, 2.2 + 0.05 * Math.sin(t * 6)], [0.4, 2.15]], SIT);
+      ctx.save();
+      ctx.translate(p.hand[0] + 0.5, p.hand[1] - 1.5); ctx.rotate(-0.5);
+      box(-1, -3, 2.4, 6, color('--fg')); box(-0.5, -2.4, 1.4, 4.8, ac);   // スマホ
+      ctx.restore();
+    },
+    // 暗い部屋で映画
+    movie(t, ac){
+      ctx.globalAlpha = 0.6; box(0, 0, 100, FLOOR, color('--fg')); ctx.globalAlpha = 1;
+      ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 5) * Math.sin(t * 2.3);
+      box(60, 12, 36, 24, ac);                          // スクリーン
+      ctx.globalAlpha = 1;
+      chair(38, 61);
+      const k = Math.pow(Math.max(0, Math.sin(t * 1.4)), 4);
+      const p = person(38, 60, 0.02, [[lerp(0.75, 1.75, k), lerp(1.4, 3.45, k)], [0.6, 1.5]], SIT);
+      box(p.back[0] - 2, p.back[1] - 3, 4.5, 5, color('--lunch'));   // ポップコーン
+    },
+    // ソファでゲーム
+    game(t, ac){
+      const fg = color('--fg');
+      box(66, 58, 28, 12, color('--tick'));             // テレビ台
+      box(68, 38, 24, 17, fg);                          // テレビ
+      box(70, 40, 20, 13, color('--track'));
+      box(72 + 14 * (0.5 + 0.5 * Math.sin(t * 2.4)), 48 - 4 * Math.abs(Math.sin(t * 4.8)), 2.5, 2.5, ac);
+      sofa(14, 54, 57, color('--track'));
+      const j = 0.06 * Math.sin(t * 25);
+      const p = person(34, 56, 0.1, [[0.55, 1.9 + j], [0.55, 1.85 - j]], SIT);
+      box(p.hand[0] - 1.5, p.hand[1] - 1.5, 4.5, 2.6, color('--sub'));   // コントローラー
+    },
+    // ボールを追って走る
+    club(t, ac){
+      for (let j = 0; j < 6; j++) box(((j * 22 - t * 40) % 132 + 132) % 132 - 16, 72, 1.4, 12, color('--plate'));
+      const ph = t * Math.PI * 2 * 2.3;
+      const legs = walkLegs(ph, 0.8);
+      person(40, standY(legs) - 1.2 * Math.abs(Math.cos(ph)), 0.2, walkArms(ph, 0.9, 1.4), legs);
+      const by = FLOOR - 3 - 10 * Math.abs(Math.sin(t * Math.PI * 1.15));
+      oval(58 + 2 * Math.sin(t * 2), by, 3, 3, ac);
+    },
+    // 台の上で生地をこねる
+    bake(t, ac){
+      const tk = color('--tick');
+      box(72, 22, 18, 14, tk); box(74, 24, 14, 10, color('--fg'));   // オーブン
+      ctx.globalAlpha = 0.5 + 0.2 * Math.sin(t * 3); box(75, 25, 12, 8, color('--lunch')); ctx.globalAlpha = 1;
+      box(52, 54, 40, 3, tk); box(54, 57, 36, FLOOR - 57, tk);       // 台
+      const k = (1 - Math.cos(t * 6)) / 2;   // こねる力（0〜1）
+      oval(64, 52.5 + k * 0.4, 6.5 * (1 + 0.18 * k), 2.6 * (1 - 0.25 * k), ac);
+      person(46, standY(STAND), 0.25 + 0.12 * k, [[lerp(0.9, 1.25, k), lerp(1.75, 1.15, k)], [lerp(0.85, 1.2, k), lerp(1.7, 1.1, k)]], STAND);
+    },
+    // ほうきで掃く
+    tidy(t, ac){
+      const s = Math.sin(t * 5);
+      const p = person(42, standY(STAND), 0.15, [[0.75 + 0.2 * s, 0.95 + 0.25 * s], [0.95 + 0.2 * s, 1.3 + 0.25 * s]], STAND);
+      const bx = p.hand[0] + 9 + 3 * s, by = FLOOR - 2;
+      line(p.back[0], p.back[1], bx, by - 3, color('--sub'), 1.4);   // 柄
+      ctx.fillStyle = ac;
+      ctx.beginPath(); ctx.moveTo(bx - 1.5, by - 4); ctx.lineTo(bx + 1.5, by - 4); ctx.lineTo(bx + 4.5, FLOOR); ctx.lineTo(bx - 3.5, FLOOR); ctx.fill();
+    },
+    // 何をするか決まらない予定：その場で過ごす
+    idle(t, ac){
+      const b = Math.sin(t * 3);
+      person(50, standY(STAND) + 0.3 * b, 0.03 * b, [[0.1 + 0.08 * b, 0.2], [-0.1, 0.1]], STAND);
+    },
+  };
+
+  // 場面・時刻・1日の帯を描く。reveal（0〜1）で、円グラフから丸く広がって切り替わる
+  function drawLife(reveal){
+    const S = Math.min(W, H) / 1.4;
+    const { sg, t, m } = lifeNow();
+    const ac = color(ACTS[sg.i].color);
+    const light = daylight(m);
+    const sky = mix(color('--sky-night'), color('--sky-day'), light);
+    ctx.save();
+    ctx.translate((W - S) / 2, (H - S) / 2);
+    ctx.scale(S / 100, S / 100);
+    if (reveal < 1) {
+      const e = 1 - Math.pow(1 - reveal, 3);
+      ctx.beginPath(); ctx.arc(50, 50, 75 * e, 0, Math.PI * 2); ctx.clip();
+      box(0, 0, 100, 100, color('--bg'));
+    }
+    ctx.save();
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(0, 0, 100, SCENE_H, 5); else ctx.rect(0, 0, 100, SCENE_H);
+    ctx.clip();
+    const outdoor = OUTDOOR.has(sg.kind);
+    if (outdoor) box(0, 0, 100, FLOOR, sky);
+    else {
+      box(0, 0, 100, FLOOR, color('--plate'));
+      box(8, 12, 22, 18, sky);                          // 窓（外の明るさが見える）
+      ctx.strokeStyle = color('--tick'); ctx.lineWidth = 1.4; ctx.strokeRect(8, 12, 22, 18);
+      line(19, 12, 19, 30, color('--tick'), 1);
+    }
+    box(0, FLOOR, 100, SCENE_H - FLOOR, color('--track'));
+    SCENES[sg.kind](t, ac);
+    // 夜の室内は少し暗くする
+    if (!outdoor && light < 1) { ctx.globalAlpha = (1 - light) * 0.3; box(0, 0, 100, SCENE_H, color('--sky-night')); ctx.globalAlpha = 1; }
+    ctx.restore();
+    // 時刻
+    ctx.fillStyle = color('--plate');
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(75, 3, 22, 9, 4.5); else ctx.rect(75, 3, 22, 9);
+    ctx.fill();
+    ctx.fillStyle = color('--fg');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `800 6px ${FONT}`;
+    ctx.fillText(m >= DAY ? '24:00' : fmtClock(Math.floor(m)), 86, 7.7);
+    // 1日の帯（組んだ予定の色）と、いまの位置
+    segs.forEach(g => box(g.from / DAY * 100, 89, (g.to - g.from) / DAY * 100, 4, color(ACTS[g.i].color)));
+    line(m / DAY * 100, 86.5, m / DAY * 100, 95.5, color('--fg'), 1.4);
+    ctx.restore();
+  }
+
+  // ---------- ループ ----------
+  function update(dt){
+    updateHold(dt);
+    shiftT = Math.min(1, shiftT + dt / SNAP_SEC);   // 最後の予定を置いたあとも演出は続ける
+    if (mode === 'done' && shiftT >= 1) {
+      doneT += dt;
+      if (doneT >= DONE_SEC) {
+        // 自分で作ったステージは1日を暮らす演出をせず、そのまま結果へ
+        if (pattern.custom) finish();
+        else { mode = 'day'; dayT = 0; segs = buildSegs(); }
+      }
+    }
+    if (mode === 'day') {
+      dayT += dt;
+      if (dayT >= lifeSec() + PLAY_HOLD) finish();
+    }
+    if (mode !== 'playing') return;
+    if (shiftT < 1) return;   // ハマり終わるまで次のピースは回さない（止めた直後の誤タップ防止もここから数える）
+    const k = ACTS.length > 1 ? cur / (ACTS.length - 1) : 0;   // 0（1個目）〜1（最後）
+    const spinSec = SPIN_SEC_FIRST + (SPIN_SEC_LAST - SPIN_SEC_FIRST) * k;
+    pos = (pos + dt * DAY / spinSec) % DAY;
+    cooldown = Math.max(0, cooldown - dt);
+  }
+
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- 入力 ----------
+  $('game').addEventListener('pointerdown', e => {
+    if (e.target.closest('button') || e.target.closest('#editor,#mine')) return;   // 作る画面の入力欄は普通に触れるようにする
+    e.preventDefault();
+    if (mode === 'day') { finish(); return; }   // 1日を暮らす演出はタップで飛ばして結果へ
+    stop();
+  });
+  document.addEventListener('keydown', e => {
+    if (mode === 'day' && (e.code === 'Space' || e.code === 'Enter')) { e.preventDefault(); finish(); return; }
+    if (mode === 'playing' && (e.code === 'Space' || e.code === 'Enter')) {
+      e.preventDefault();
+      stop();
+    }
+  });
+
+  $('retry').addEventListener('pointerdown', e => e.stopPropagation());
+  $('retry').addEventListener('click', () => reset(pattern));   // もう一回は同じステージをやり直す
+  // 結果のステージ名の横の再生ボタン：1日を暮らす演出をもう一度流し、終わったら結果に戻る
+  $('replay').addEventListener('pointerdown', e => e.stopPropagation());
+  $('replay').addEventListener('click', () => {
+    mode = 'day';
+    dayT = 0;
+    segs = buildSegs();
+    showPanel(null);
+  });
+  $('toSelect').addEventListener('pointerdown', e => e.stopPropagation());
+  $('toSelect').addEventListener('click', openSelect);
+  // ステージ一覧から選んだパターンで遊ぶ
+  document.querySelectorAll('.stages').forEach(el => {
+    el.addEventListener('pointerdown', e => e.stopPropagation());
+    el.addEventListener('click', e => {
+      const b = e.target.closest('button[data-stage]');
+      if (b) reset(PATTERNS[Number(b.dataset.stage)]);
+      if (e.target.closest('button[data-make]')) openMine();
+    });
+  });
+
+  // ---------- ステージを作る ----------
+  const fmtLen = m => {
+    const hh = Math.floor(m / 60), mm = m % 60;
+    return hh ? (mm ? `${hh}時間${mm}分` : `${hh}時間`) : `${mm}分`;
+  };
+  // HTMLに入れる文字は必ず変換する（作った名前や読み込んだコードの中身をそのまま入れない）
+  const esc = t => String(t).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[ch]);
+  const totalOf = items => items.reduce((t, it) => t + it.dur, 0);
+  const isComplete = c => totalOf(c.items) === DAY;
+  const dispName = c => c.name.trim() || 'ステージ名なし';   // 名前が空のときの表示
+
+  // ステージ1つ分として正しい形かを調べ、整えて返す（だめなら null）
+  function sanitize(v){
+    if (!v || typeof v.name !== 'string' || !Array.isArray(v.items) || !v.items.length || v.items.length > 40) return null;
+    if (!v.items.every(it => it && typeof it.name === 'string' && Number.isInteger(it.dur) && it.dur >= STEP && it.dur % STEP === 0)) return null;
+    if (totalOf(v.items) > DAY) return null;
+    return { name: v.name.slice(0, 12), items: v.items.map(it => ({ name: it.name.slice(0, 10), dur: it.dur })) };
+  }
+
+  let customs = loadCustoms();   // 作ったステージ { name, items:[{ name, dur }] } の一覧
+  let editIdx = 0;               // いま編集しているステージの番号
+  let customItems = [];          // いま編集しているステージの項目（customs[editIdx].items と同じもの）
+
+  // 保存したステージを読む（壊れているものは捨てる。以前の1つだけの保存も引き継ぐ）
+  function loadCustoms(){
+    try {
+      const v = JSON.parse(localStorage.getItem(CUSTOM_KEY));
+      if (Array.isArray(v)) return v.map(sanitize).filter(Boolean).slice(0, CUSTOM_MAX);
+      const old = JSON.parse(localStorage.getItem(OLD_KEY));
+      const c = Array.isArray(old) && sanitize({ name: '自分の一日', items: old });
+      if (c) return [c];
+    } catch(e) {}
+    return [];
+  }
+  function saveCustom(){
+    try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customs)); } catch(e) {}
+  }
+
+  function customPattern(i){
+    const c = customs[i];
+    return { name: dispName(c), custom: true, slot: i,
+      acts: c.items.map((it, k) => ({ name: it.name.trim() || `予定${k + 1}`, dur: it.dur, color: CUSTOM_COLORS[k % CUSTOM_COLORS.length] })) };
+  }
+  function playCustom(i){
+    if (customs[i] && isComplete(customs[i])) reset(customPattern(i));
+  }
+
+  // ----- 共有コード：ステージ名と項目（長さは15分を1とした数）を文字列にする -----
+  function encodeCode(c){
+    const json = JSON.stringify([c.name, c.items.map(it => [it.name, it.dur / STEP])]);
+    let bin = '';
+    new TextEncoder().encode(json).forEach(b => { bin += String.fromCharCode(b); });
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function decodeCode(code){
+    try {
+      const b64 = code.trim().replace(/-/g, '+').replace(/_/g, '/');
+      const bin = atob(b64 + '='.repeat((4 - b64.length % 4) % 4));
+      const v = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, ch => ch.charCodeAt(0))));
+      if (!Array.isArray(v) || !Array.isArray(v[1])) return null;
+      return sanitize({ name: v[0], items: v[1].map(x => Array.isArray(x) ? { name: x[0], dur: x[1] * STEP } : null) });
+    } catch(e) { return null; }
+  }
+
+  // ----- 自分で作る（作ったステージの一覧） -----
+  function openMine(){
+    mode = 'mine';
+    $('impMsg').textContent = '';
+    renderSlots();
+    showPanel('mine');
+    $('mine').scrollTop = 0;
+  }
+  function renderSlots(){
+    let html = customs.map((c, i) => {
+      const total = totalOf(c.items), ok = total === DAY;
+      return `<div class="slot">
+        <div class="info">
+          <div class="sname">${esc(dispName(c))}</div>
+          <div class="meta${ok ? '' : ' short'}">${c.items.length}項目・${ok ? '24時間' : `あと${fmtLen(DAY - total)}で完成`}</div>
+        </div>
+        <button type="button" data-play="${i}"${ok ? '' : ' disabled'}>遊ぶ</button>
+        <button type="button" data-edit="${i}">編集</button>
+      </div>`;
+    }).join('');
+    if (customs.length < CUSTOM_MAX) html += `<button type="button" class="slot-new" data-new>＋ 新しく作る（あと${CUSTOM_MAX - customs.length}つ）</button>`;
+    $('slots').innerHTML = html;
+    $('impBtn').disabled = customs.length >= CUSTOM_MAX;
+    $('imp-in').placeholder = customs.length >= CUSTOM_MAX ? '保存がいっぱいです' : 'コードを貼り付け';
+  }
+  $('slots').addEventListener('click', e => {
+    const p = e.target.closest('button[data-play]'); if (p) { playCustom(Number(p.dataset.play)); return; }
+    const ed = e.target.closest('button[data-edit]'); if (ed) { openEditor(Number(ed.dataset.edit)); return; }
+    if (e.target.closest('button[data-new]') && customs.length < CUSTOM_MAX) {
+      customs.push({ name: `マイステージ${customs.length + 1}`, items: CUSTOM_DEFAULT.map(it => ({ ...it })) });
+      saveCustom();
+      openEditor(customs.length - 1);
+    }
+  });
+  $('impBtn').addEventListener('click', () => {
+    const msg = $('impMsg');
+    if (customs.length >= CUSTOM_MAX) {
+      msg.textContent = '保存は3つまでです。どれかを消してから読み込んでください'; msg.classList.add('err'); return;
+    }
+    const c = decodeCode($('imp-in').value);
+    if (!c) { msg.textContent = 'コードが正しくありません'; msg.classList.add('err'); return; }
+    customs.push(c);
+    saveCustom();
+    $('imp-in').value = '';
+    renderSlots();
+    msg.textContent = `「${dispName(c)}」を読み込みました`; msg.classList.remove('err');
+  });
+  $('mback').addEventListener('click', () => {
+    openSelect();
+  });
+
+  // ----- ステージを作る（1つのステージの編集） -----
+  function openEditor(i){
+    editIdx = i;
+    customItems = customs[i].items;
+    mode = 'edit';
+    $('sname-in').value = customs[i].name;
+    $('codeMsg').textContent = '';
+    resetDelete();
+    showPanel('editor');
+    $('editor').scrollTop = 0;
+    renderRows();
+  }
+  $('sname-in').addEventListener('input', e => {
+    customs[editIdx].name = e.target.value;
+    saveCustom();
+    updateCode();
+  });
+  function updateCode(){
+    $('code-out').value = encodeCode(customs[editIdx]);
+  }
+  $('codeCopy').addEventListener('click', () => {
+    const code = $('code-out').value;
+    const done = () => { $('codeMsg').textContent = 'コピーしました'; setTimeout(() => { $('codeMsg').textContent = ''; }, 1500); };
+    // コピーできない環境ではコードを選んだ状態にして、手でコピーしてもらう
+    const manual = () => { $('code-out').focus(); $('code-out').select(); $('codeMsg').textContent = 'コードを長押ししてコピーしてください'; };
+    if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(manual); else manual();
+  });
+  // 消すボタンは誤って押さないよう、2回押して消す（確認ダイアログは出さない）
+  let delArmed = false, delTimer = 0;
+  function resetDelete(){ delArmed = false; clearTimeout(delTimer); $('edel').textContent = 'このステージを消す'; }
+  $('edel').addEventListener('click', () => {
+    if (!delArmed) {
+      delArmed = true;
+      $('edel').textContent = 'もう一度押すと消えます';
+      delTimer = setTimeout(resetDelete, 3000);
+      return;
+    }
+    resetDelete();
+    customs.splice(editIdx, 1);
+    saveCustom();
+    openMine();
+  });
+
+  // 長さは「時間」と「分」を別々の＋−で変える（時間は1時間ずつ、分は15分ずつ）
+  const stepper = (i, unit, label) => `
+    <div class="stp">
+      <button type="button" data-d="${-unit}" aria-label="${i + 1}番目を${label}減らす">−</button>
+      <b data-v="${unit}"></b>
+      <button type="button" data-d="${unit}" aria-label="${i + 1}番目を${label}増やす">＋</button>
+    </div>`;
+  function renderRows(){
+    $('rows').innerHTML = customItems.map((it, i) => `
+      <div class="row" data-i="${i}">
+        <span class="sw" style="background:var(${CUSTOM_COLORS[i % CUSTOM_COLORS.length]})"></span>
+        <input type="text" maxlength="10" placeholder="項目名" aria-label="${i + 1}番目の項目名">
+        <button type="button" class="del" aria-label="${i + 1}番目を消す"${customItems.length <= 1 ? ' disabled' : ''}>×</button>
+        <div class="len">${stepper(i, 60, '1時間')}${stepper(i, STEP, `${STEP}分`)}</div>
+      </div>`).join('');
+    // 項目名は value に直接入れる（HTMLに埋め込まない）
+    $('rows').querySelectorAll('input').forEach((el, i) => { el.value = customItems[i].name; });
+    updateTotal();
+  }
+  // 長さの表示と、＋−を押せるかどうかを今の値に合わせる
+  function updateTotal(){
+    const total = customItems.reduce((t, it) => t + it.dur, 0);
+    $('rows').querySelectorAll('.row').forEach(row => {
+      const it = customItems[Number(row.dataset.i)];
+      row.querySelector('b[data-v="60"]').innerHTML = `${Math.floor(it.dur / 60)}<small>時間</small>`;
+      row.querySelector(`b[data-v="${STEP}"]`).innerHTML = `${it.dur % 60}<small>分</small>`;
+      row.querySelectorAll('button[data-d]').forEach(b => { b.disabled = !canChange(it, Number(b.dataset.d), total); });
+    });
+    const over = total > DAY;
+    // 24時間ぴったり埋まっていないと遊べない。足りないときは残りを出す
+    $('total').textContent = over ? `合計 ${fmtLen(total)}（24時間を超えています）`
+      : total < DAY ? `合計 ${fmtLen(total)} ／ 24時間（あと${fmtLen(DAY - total)}）`
+      : `合計 24時間 ／ 24時間`;
+    $('total').classList.toggle('over', over);
+    $('total').classList.toggle('short', total < DAY);
+    $('eplay').disabled = total !== DAY;
+    $('addRow').disabled = total + STEP > DAY;
+    updateCode();
+  }
+
+  // 長さは15分以上、全体の合計は24時間まで
+  function canChange(it, d, total){
+    return it.dur + d >= STEP && total + d <= DAY;
+  }
+  // 長さは合計の分で持つので、分の＋−は時間に繰り上がる・繰り下がる（1時間45分＋15分→2時間0分）
+  function changeLen(i, d){
+    const it = customItems[i];
+    const total = customItems.reduce((t, x) => t + x.dur, 0);
+    if (!canChange(it, d, total)) return false;
+    it.dur += d;
+    saveCustom();
+    updateTotal();
+    return true;
+  }
+
+  $('rows').addEventListener('input', e => {
+    const row = e.target.closest('.row'); if (!row || e.target.tagName !== 'INPUT') return;
+    customItems[Number(row.dataset.i)].name = e.target.value;
+    saveCustom();
+    updateCode();
+  });
+  // ＋−は押した瞬間に1段変わり、押し続けると連続で変わる
+  let hold = null;
+  $('rows').addEventListener('pointerdown', e => {
+    const b = e.target.closest('button[data-d]'); if (!b || b.disabled) return;
+    e.preventDefault();
+    const i = Number(b.closest('.row').dataset.i), d = Number(b.dataset.d);
+    changeLen(i, d);
+    stopHold();
+    hold = { i, d, t: -HOLD_DELAY };
+  });
+  const stopHold = () => { hold = null; };
+  ['pointerup', 'pointercancel', 'blur'].forEach(t => addEventListener(t, stopHold));
+  function updateHold(dt){
+    if (!hold) return;
+    hold.t += dt;
+    while (hold && hold.t >= HOLD_EVERY) {
+      hold.t -= HOLD_EVERY;
+      if (!changeLen(hold.i, hold.d)) stopHold();
+    }
+  }
+  $('rows').addEventListener('click', e => {
+    const b = e.target.closest('.del'); if (!b || customItems.length <= 1) return;
+    customItems.splice(Number(b.closest('.row').dataset.i), 1);
+    saveCustom();
+    renderRows();
+  });
+  $('addRow').addEventListener('click', () => {
+    const total = customItems.reduce((t, it) => t + it.dur, 0);
+    customItems.push({ name: '', dur: Math.min(60, DAY - total) });
+    saveCustom();
+    renderRows();
+    const inputs = $('rows').querySelectorAll('input');
+    inputs[inputs.length - 1].focus();
+  });
+  $('eback').addEventListener('click', () => { resetDelete(); openMine(); });
+  $('eplay').addEventListener('click', () => {
+    saveCustom();
+    resetDelete();
+    playCustom(editIdx);
+  });
+
+  // ---------- 共有 ----------
+  function shareText(){
+    return `${pattern.name}を組みました！\n${location.href.split(/[?#]/)[0]}\n#タイムスケジュールシミュレーター`;
+  }
+
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(){
+    const S = 600;
+    const c = document.createElement('canvas');
+    c.width = S; c.height = S + 80;
+    const g = c.getContext('2d');
+    g.fillStyle = color('--bg');
+    g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = color('--fg');
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.font = `800 34px ${FONT}`;
+    g.fillText(pattern.name, S / 2, 50);
+    drawPie(g, S / 2, S / 2 + 70, S / 2 / (PLATE + 0.08), false);
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);   // toBlob の非同期コールバックは避ける
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share');
+    const text = shareText();
+    const file = resultImageFile();
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ text, files: [file] }).catch(() => {});
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+      return;
+    }
+    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    navigator.clipboard?.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+
+  // ---------- iOS対策 ----------
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  const onBoard = t => t instanceof Element && !!t.closest('#board');
+  document.addEventListener('touchstart', e => { if (onBoard(e.target)) e.preventDefault(); }, { passive:false });
+  document.addEventListener('touchmove',  e => { if (onBoard(e.target)) e.preventDefault(); }, { passive:false });
+  const isField = t => t instanceof Element && !!t.closest('input');
+  document.addEventListener('selectstart', e => { if (!isField(e.target)) e.preventDefault(); });
+  document.addEventListener('contextmenu', e => { if (!isField(e.target)) e.preventDefault(); });
+  // スマホでのダブルタップ拡大を防ぐ（連打で拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+
+  // ---------- 開始 ----------
+  resize();
+  if (window.ResizeObserver) new ResizeObserver(resize).observe($('board'));
+  addEventListener('resize', resize);
+  openSelect();   // 起動したらまずステージを選ぶ
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

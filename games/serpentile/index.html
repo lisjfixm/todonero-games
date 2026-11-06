@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/serpentile/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ヘキサルート</title>
+<meta name="description" content="タイルを回してコマを盤の外へ逃がす">
+<style>
+  :root{
+    /* light (default) */
+    --howto-bg:var(--panel);
+    --howto-fg:var(--text);
+    --bg:#e7e4ee;
+    --bg2:#dcd7ea;
+    --panel:#ffffff;
+    --accent:#3967ff;
+    --accent2:#fdd83e;
+    --title-grad:linear-gradient(180deg,#ffb13a 0%,#ff6a3d 48%,#fe384b 100%);
+    --fail-grad:linear-gradient(180deg,#ff8a75 0%,#fe5a4e 48%,#e02445 100%);
+    --text:#1d1830;
+    --sub:#6c6384;
+    --line:rgba(26,18,52,.08);
+    --line-hover:rgba(26,18,52,.16);
+    --btn:rgba(255,255,255,.55);
+    --btn-hover:#ffffff;
+    --overlay-bg:rgba(231,228,238,.9);
+    --face:#f4f2fa;
+    --face-hover:#ece9f6;
+    --riser:#d6d1e4;
+    --seam:#e5e1f0;
+    --ink:#2e2a4a;
+    --lockface:#dcd7ea;
+    --lockseam:#cdc6e0;
+    --lockpin:#a49bc4;
+    --blockface:#4a4468;
+  }
+  [data-theme="night"]{
+    --bg:#050b24;
+    --bg2:#0a1336;
+    --panel:#0c1838;
+    --accent:#fdd83e;
+    --accent2:#fe384b;
+    --title-grad:linear-gradient(180deg,#ffe98a 0%,#fdd83e 58%,#eeb01a 100%);
+    --fail-grad:linear-gradient(180deg,#ffa896 0%,#fe6a5a 55%,#e13a4e 100%);
+    --text:#e8edf7;
+    --sub:#8b9ab7;
+    --line:rgba(255,255,255,.08);
+    --line-hover:rgba(255,255,255,.18);
+    --btn:rgba(255,255,255,.06);
+    --btn-hover:rgba(255,255,255,.12);
+    --overlay-bg:rgba(5,11,36,.85);
+    --face:#13214c;
+    --face-hover:#1a2a5c;
+    --riser:#060f30;
+    --seam:#0c1838;
+    --ink:#dfe6f5;
+    --lockface:#0d1a40;
+    --lockseam:#1a2a55;
+    --lockpin:#4a5a85;
+    --blockface:#2b3a68;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;}
+  body{
+    background:radial-gradient(1200px 700px at 50% -20%,var(--bg2) 0%,transparent 65%),var(--bg);
+    color:var(--text);
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",-apple-system,sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    min-height:100dvh;padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
+    -webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;
+  }
+  header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:18px 4px 12px;}
+  .stats{display:flex;gap:18px;}
+  .stat .k{font-size:11px;color:var(--sub);letter-spacing:.1em;}
+  .stat .v{font-size:20px;font-weight:800;line-height:1.1;}
+  .stat .v.low{color:#fe384b;}
+  .theme-btn{
+    width:44px;height:44px;border:none;border-radius:13px;outline:none;
+    background:var(--btn);color:var(--text);font-size:19px;line-height:1;cursor:pointer;
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;
+    transition:background .2s ease,transform .15s ease;
+  }
+  .theme-btn:hover{background:var(--btn-hover);}
+  .theme-btn:active{transform:scale(.9);}
+  .board-wrap{
+    width:100%;max-width:480px;background:var(--panel);border-radius:22px;
+    border:1px solid var(--line);
+    padding:12px;position:relative;touch-action:none;
+  }
+  #board{display:block;width:100%;height:auto;}
+  .cell{cursor:pointer;transform-box:fill-box;transform-origin:center;
+    transition:transform .2s cubic-bezier(.33,.02,.16,1);}
+  .locked .cell{cursor:not-allowed;}
+  .riser{fill:var(--riser);}
+  .face{fill:var(--face);stroke:var(--seam);stroke-width:1;}
+  .locked .face{fill:var(--lockface);stroke:var(--lockseam);}
+  .link{fill:none;stroke:var(--ink);stroke-width:7;stroke-linecap:butt;}
+  .pos:not(.locked):hover .face{fill:var(--face-hover);}
+  .blockface{fill:var(--blockface);}
+  .lockpin{fill:none;stroke:var(--lockpin);stroke-width:2.5;}
+  .pg{cursor:pointer;}
+  .phex{stroke:#1d1830;stroke-width:2.5;stroke-linejoin:round;}
+  #pieces{transition:opacity .5s ease;}
+  #pieces.fail{opacity:.15;}
+  .controls{width:100%;max-width:480px;display:flex;gap:10px;margin-top:16px;}
+  button.btn{
+    flex:1;padding:13px;border:none;border-radius:14px;outline:none;
+    font-weight:800;font-size:15px;color:var(--text);background:var(--btn);
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);cursor:pointer;
+    transition:background .2s ease,transform .15s ease;
+  }
+  button.btn:hover{background:var(--btn-hover);}
+  button.btn:active{transform:scale(.97);}
+  .overlay{position:absolute;inset:0;border-radius:22px;background:var(--overlay-bg);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;text-align:center;z-index:60;overflow:hidden;}
+  .overlay.show{display:flex;}
+  .overlay .confetti{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+  .clear-card{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 16px;}
+  .clear-eyebrow{
+    font-size:15px;font-weight:800;letter-spacing:.12em;color:var(--sub);
+    animation:clearEyebrow .5s .05s both;
+  }
+  .clear-title{
+    font-size:clamp(28px,9vw,52px);font-weight:900;line-height:1.04;letter-spacing:.02em;
+    background:var(--title-grad);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,.22));
+    animation:clearPop .6s cubic-bezier(.2,1.3,.35,1) both;
+  }
+  .overlay.fail .clear-title{background-image:var(--fail-grad);}
+  @keyframes clearPop{0%{opacity:0;transform:scale(.5) translateY(10px);}100%{opacity:1;transform:scale(1) translateY(0);}}
+  @keyframes clearEyebrow{0%{opacity:0;transform:translateY(-8px);}100%{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+<header>
+  <div class="stats">
+    <div class="stat"><div class="k">LEVEL</div><div class="v" id="lv">1</div></div>
+    <div class="stat"><div class="k">MOVES</div><div class="v" id="mv"></div></div>
+  </div>
+  <button id="themeBtn" class="theme-btn" aria-label="ナイトモード切替">🌙</button>
+</header>
+
+<div class="board-wrap" id="boardWrap">
+  <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="六角形ルートパズル"></svg>
+  <div class="overlay" id="overlay">
+    <canvas class="confetti" id="confetti"></canvas>
+    <div class="clear-card">
+      <div class="clear-eyebrow">Level <span id="ovLv">1</span></div>
+      <div class="clear-title" id="ovTitle">LEVEL COMPLETE</div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="btn" id="resetBtn" type="button">やり直す</button>
+  <button class="btn" type="button" data-howto-open>遊び方</button>
+</div>
+
+<section class="howto" hidden data-pos="none">
+  <h2>遊び方</h2>
+  <p>矢印つきのコマをすべて盤の外へ逃がす、1手ずつ考えるパズルです。コマは矢印の向きへ飛び出し、タイルの線をたどって進みます。外へ出たコマは消え、全部消えるとクリアです。暗いマスや別のコマに阻まれたり、同じ道を回り続けたりすると元の位置へ戻ります。発射できる回数はコマの数に3を足した回数で、使い切ると同じ問題の最初に戻ります。</p>
+  <h2>操作</h2>
+  <p>タイルをタップすると60度回り、コマをタップすると発射します。丸い印のあるタイルは回せません。PC はクリックで同じように遊べます。</p>
+  <h2>コツ</h2>
+  <p>タイルを回しても回数は減らないので、発射の前に線をたどって出口まで確かめてください。逃げたコマのマスはすぐに空きます。道をふさいでいるコマから先に出すと、後のコマの道が開きます。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+
+<script>
+(function(){
+  // レベル1〜5は固定の5問。レベル6以降は2〜5問目からランダム（直前と同じ問題は避ける）。
+  const STAGES=[{"c":[[0,-1,4,0,0],[0,0,6,4,0],[0,1,2,0,0],[-1,1,2,0,0],[1,0,2,0,0],[1,-1,2,0,0],[-1,0,2,0,0]],"p":[[0,0,1],[1,-1,2],[0,1,4],[-1,0,5]]},{"c":[[0,-1,9,0,0],[0,0,10,1,0],[0,1,4,1,0],[-1,1,2,0,0],[1,0,3,0,0],[1,-1,3,2,0],[-1,0,7,0,0],[-1,-1,3,1,0],[-2,0,4,0,0],[-2,1,4,1,0],[-2,2,2,0,0],[-1,2,5,0,0],[0,2,1,0,0],[1,1,2,0,0],[2,0,1,0,0],[2,-1,0,0,0],[2,-2,3,2,0],[1,-2,2,1,0],[3,0,0,0,0],[2,1,0,0,0],[1,2,1,0,0],[0,3,1,0,0],[-1,3,1,0,0],[-2,3,1,0,0],[-3,3,3,0,0],[-3,2,0,3,0],[-3,1,0,0,0],[-3,0,1,0,0],[-2,-1,3,3,0],[-1,-2,2,3,0],[0,-3,5,1,0],[0,-2,2,0,0],[1,-3,1,0,0],[2,-3,3,1,0],[3,-3,1,2,0],[3,-2,5,0,0],[3,-1,1,0,0]],"p":[[0,-3,0],[0,-2,2],[-1,-2,2],[-1,-1,4],[1,-2,0],[1,-3,2],[3,-3,2],[2,-2,3],[3,-2,3],[3,-1,2],[3,0,1],[2,1,5],[2,0,1],[1,1,5],[1,2,1],[0,3,1],[0,2,3],[-1,3,2],[-2,3,1],[-3,3,4],[-2,2,3],[-3,2,1],[-1,1,5],[-2,1,3],[-3,1,1],[-2,0,4],[-3,0,2],[-2,-1,2],[-1,0,2],[0,1,5],[2,-1,1],[0,-1,4],[1,-1,3],[2,-3,0],[-1,2,0],[0,0,2],[1,0,5]]},{"c":[[0,-1,9,0,0],[0,0,10,1,0],[0,1,4,1,0],[-1,1,2,0,0],[1,0,3,0,0],[1,-1,3,2,0],[-1,0,7,0,0],[-1,-1,3,1,0],[-2,0,4,0,1],[-1,2,5,0,0],[0,2,1,0,0],[1,1,2,0,0],[2,-2,3,2,1],[1,-2,2,1,0],[3,0,0,0,0],[2,1,0,0,0],[1,2,1,0,0],[0,3,1,0,0],[-1,3,1,0,0],[-2,3,1,0,0],[-3,3,3,0,0],[-3,2,0,3,0],[-3,1,0,0,0],[-3,0,1,0,0],[-2,-1,3,3,0],[-1,-2,2,3,0],[0,-3,5,1,0],[0,-2,2,0,0],[1,-3,1,0,0],[2,-3,3,1,0],[3,-3,1,2,0],[3,-2,5,0,0],[3,-1,1,0,0],[-2,2,2,2,1],[2,0,3,0,1]],"p":[[0,-3,0],[-1,-2,4],[-1,-1,4],[1,-2,2],[1,-3,3],[3,-3,2],[3,-2,4],[3,0,1],[2,1,5],[1,2,1],[0,3,1],[-1,3,2],[-2,3,1],[-3,3,4],[-1,1,5],[-3,1,1],[-3,0,5],[-1,0,3],[0,-1,5],[1,-1,3],[2,-3,0],[-1,2,0],[1,0,0],[0,0,2],[1,1,0],[0,2,1],[-2,-1,1],[0,-2,1],[3,-1,2],[-3,2,0]]},{"c":[[0,-1,9,0,0],[0,0,10,1,0],[0,1,4,1,0],[-1,1,2,0,0],[1,0,3,0,0],[1,-1,3,2,0],[-1,0,7,0,0],[-1,-1,3,1,0],[-1,2,9,2,0],[0,2,1,0,0],[1,1,2,0,0],[2,-2,3,2,0],[1,-2,2,1,0],[3,0,3,0,0],[2,1,0,0,0],[1,2,1,0,0],[0,3,6,0,0],[-1,3,2,0,0],[-2,3,1,0,0],[-3,3,3,0,0],[-3,2,0,3,0],[-3,1,1,0,0],[-3,0,1,0,0],[-2,-1,3,3,0],[-1,-2,2,3,0],[0,-3,5,1,0],[0,-2,2,0,0],[1,-3,1,0,0],[2,-3,3,1,0],[3,-3,1,2,0],[3,-2,5,0,0],[3,-1,2,0,0],[-2,2,2,2,0],[2,0,3,0,0],[-4,1,1,0,0],[-4,2,2,0,0],[-4,3,4,0,0],[-4,4,4,0,0],[-3,4,6,0,0],[-2,4,2,0,0],[-1,4,4,0,0],[1,3,3,0,0],[0,4,2,0,0],[2,2,1,0,0],[3,1,3,0,0],[4,0,2,0,0],[4,-1,1,0,0],[4,-2,2,0,0],[4,-3,4,0,0],[4,-4,4,0,0],[3,-4,0,0,0],[2,-4,4,0,0],[1,-4,2,0,0],[0,-4,5,0,0],[-1,-3,3,0,0],[-3,-1,0,0,0],[-2,1,0,0,0],[2,-1,0,0,0],[-4,0,1,0,0],[-2,0,0,0,0],[-2,-2,3,0,0]],"p":[[0,-3,0],[-1,-2,4],[1,-2,2],[1,-3,3],[3,-3,2],[3,-2,4],[3,0,5],[2,1,5],[1,2,1],[0,3,1],[-1,3,2],[-2,3,1],[-3,3,4],[-3,1,1],[-3,0,5],[-1,0,3],[1,-1,4],[2,-3,0],[-1,2,3],[1,0,0],[0,0,4],[1,1,0],[0,2,2],[-2,-1,1],[0,-2,1],[3,-1,2],[-3,2,0],[-2,0,0],[-2,1,2],[-2,2,2],[0,1,2],[2,0,5],[2,-2,0],[0,-1,0],[-1,1,1],[-1,-1,0],[2,-1,4]]},{"c":[[-1,-2,0,0,0],[0,-3,2,0,0],[-2,0,0,0,0],[-2,1,1,0,0],[-1,1,2,0,0],[0,0,1,0,0],[0,1,0,0,0],[1,0,2,0,0],[2,-1,0,0,0],[2,-2,1,0,0],[2,-3,4,0,0],[-1,-1,1,0,0],[0,-1,4,0,0],[-1,0,4,0,0],[1,-1,3,0,0],[1,-2,1,0,0],[1,-3,0,0,0],[-2,-1,3,0,0],[-3,1,3,0,0],[-3,0,2,0,0],[3,-2,3,0,0],[3,-1,2,0,0],[2,0,1,0,0],[1,1,0,0,0],[0,2,3,0,0],[-1,2,0,0,0],[-2,2,1,0,0],[-3,2,0,0,0],[3,-3,1,0,0],[0,-2,3,0,0]],"p":[[-1,-2,0],[-2,-1,5],[-3,0,1],[-3,1,0],[-2,1,3],[-2,2,1],[-3,2,2],[-1,2,3],[0,2,2],[0,1,2],[-1,1,4],[-1,0,5],[0,0,0],[0,-1,1],[-1,-1,1],[0,-3,2],[2,-3,3],[3,-3,1],[3,-2,2],[3,-1,1],[2,-1,4],[2,0,5],[1,0,4],[1,1,3],[1,-2,2],[1,-3,5],[2,-2,4],[1,-1,5],[-2,0,2]]}];
+
+  const DIRS=[[1,-1],[0,-1],[-1,0],[-1,1],[0,1],[1,0]];
+  const SQ3=Math.sqrt(3), R=40, D=R*SQ3/2;
+  const PSPEED=300;                                   // ピースの移動速度 px/s
+  const SLACK=3;                                      // 1ピース1回ぶんに加えて許される無駄撃ちの回数
+  const PALETTE=['#fe384b','#3967ff','#fdd83e','#3ad939'];
+
+  function allMatchings(){
+    const out=[];
+    (function go(a,c){
+      if(!a.length){out.push(c.map(p=>p.slice()));return;}
+      const x=a[0];
+      for(let i=1;i<a.length;i++){
+        const y=a[i], rest=a.filter((_,j)=>j!==0&&j!==i);
+        c.push([x,y]); go(rest,c); c.pop();
+      }
+    })([0,1,2,3,4,5],[]);
+    return out;
+  }
+  const ORIENTATIONS=allMatchings();
+
+  const ck=(q,r)=>q+","+r;
+  const mid=k=>{const a=(30+60*k)*Math.PI/180;return [D*Math.cos(a),-D*Math.sin(a)];};
+  const hexPts=rad=>{const p=[];
+    for(let i=0;i<6;i++){const a=i*Math.PI/3;p.push((rad*Math.cos(a)).toFixed(2)+","+(-rad*Math.sin(a)).toFixed(2));}
+    return p.join(" ");};
+  const gapOf=(a,b)=>Math.min(((b-a)%6+6)%6,((a-b)%6+6)%6);
+  const T_ADJ=(R/2)*(4/3)*Math.tan(Math.PI/6);
+  const T_SKIP=(1.5*R)*(4/3)*Math.tan(Math.PI/12);
+  function ctrlPoints(a,b){
+    const A=mid(a), B=mid(b), g=gapOf(a,b);
+    if(g===3) return [A,
+      [A[0]+(B[0]-A[0])/3, A[1]+(B[1]-A[1])/3],
+      [A[0]+2*(B[0]-A[0])/3, A[1]+2*(B[1]-A[1])/3], B];
+    const t=g===1?T_ADJ:T_SKIP, s=1-t/D;
+    return [A,[A[0]*s,A[1]*s],[B[0]*s,B[1]*s],B];
+  }
+  const fmt=v=>`${v[0].toFixed(2)} ${v[1].toFixed(2)}`;
+  const pathD=(a,b)=>{const P=ctrlPoints(a,b);
+    return gapOf(a,b)===3?`M${fmt(P[0])} L${fmt(P[3])}`:`M${fmt(P[0])} C${fmt(P[1])} ${fmt(P[2])} ${fmt(P[3])}`;};
+  function bez(P,u){const m=1-u;
+    return [0,1].map(j=>m*m*m*P[0][j]+3*m*m*u*P[1][j]+3*m*u*u*P[2][j]+u*u*u*P[3][j]);}
+  const rot=(p,deg)=>{const f=deg*Math.PI/180;
+    return [p[0]*Math.cos(f)-p[1]*Math.sin(f), p[0]*Math.sin(f)+p[1]*Math.cos(f)];};
+
+  const board=document.getElementById("board");
+  const overlay=document.getElementById("overlay");
+  const ovLv=document.getElementById("ovLv");
+  const ovTitle=document.getElementById("ovTitle");
+  const lvEl=document.getElementById("lv");
+  const mvEl=document.getElementById("mv");
+  let cells, pieces, center, level=1, curStage=0, busy=false, flying=[], moves=0;
+  let raf=null, last=null, nextTimer=null;
+
+  const partnerOf=(base,e)=>{for(const [x,y] of base){if(x===e)return y;if(y===e)return x;}return -1;};
+  const tileEdge=(c,e)=>(e+c.steps)%6;
+  const boardEdge=(c,b)=>((b-c.steps)%6+6)%6;
+
+  // いま発射したらどこへ行くか：通過アークの列と、盤外へ抜けるかどうか。
+  function routeNow(startKey,dir,skipKey){
+    let [q,r]=startKey.split(",").map(Number), d=dir;
+    const seen=new Set(), legs=[];
+    for(let n=0;n<400;n++){
+      const nk=ck(q+DIRS[d][0], r+DIRS[d][1]);
+      if(!cells.has(nk)) return {escaped:true,legs,exit:[ck(q,r),d]};
+      const c=cells.get(nk);
+      if(c.block) return {escaped:false,legs,exit:[ck(q,r),d]};
+      if(pieces.has(nk) && nk!==skipKey) return {escaped:false,legs,exit:[ck(q,r),d]};
+      const entry=(d+3)%6, id=nk+"|"+entry;
+      if(seen.has(id)) return {escaped:false,legs,exit:[ck(q,r),d]};
+      seen.add(id);
+      const bIn=tileEdge(c,entry), bOut=partnerOf(c.base,bIn);
+      d=boardEdge(c,bOut);
+      [q,r]=nk.split(",").map(Number);
+      legs.push([nk,bIn,bOut]);
+    }
+    return {escaped:false,legs,exit:[ck(q,r),d]};
+  }
+
+  function stageForLevel(lv){
+    if(lv<=STAGES.length) return lv-1;
+    const pool=[];
+    for(let i=1;i<STAGES.length;i++) if(i!==curStage) pool.push(i);
+    return pool[Math.floor(Math.random()*pool.length)];
+  }
+
+  function buildStage(ix){
+    if(raf){cancelAnimationFrame(raf);raf=null;last=null;}
+    if(nextTimer){clearTimeout(nextTimer);nextTimer=null;}
+    curStage=ix;
+    const st=STAGES[ix];
+    cells=new Map(); pieces=new Map(); flying=[];
+    let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+    center=new Map();
+    for(const [q,r] of st.c.map(a=>[a[0],a[1]])){
+      const x=1.5*R*q, y=SQ3*R*(r+q/2);
+      center.set(ck(q,r),[x,y]);
+      minx=Math.min(minx,x-R); maxx=Math.max(maxx,x+R);
+      miny=Math.min(miny,y-R); maxy=Math.max(maxy,y+R);
+    }
+    const PAD=10, ox=-minx+PAD, oy=-miny+PAD;
+    for(const [k,v] of center) center.set(k,[v[0]+ox, v[1]+oy]);
+    board.setAttribute("viewBox",`0 0 ${(maxx-minx+PAD*2).toFixed(1)} ${(maxy-miny+PAD*2).toFixed(1)}`);
+
+    const RISE=7;
+    let svg=`<g class="riser">`+st.c.map(([q,r])=>{
+      const [cx,cy]=center.get(ck(q,r));
+      return `<g transform="translate(${cx.toFixed(2)},${(cy+RISE).toFixed(2)})"><polygon points="${hexPts(R)}"/></g>`;
+    }).join("")+`</g>`;
+
+    for(const [q,r,bi,steps,lock] of st.c){
+      const k=ck(q,r), [cx,cy]=center.get(k);
+      svg+=`<g class="pos${lock?" locked":""}" transform="translate(${cx.toFixed(2)},${cy.toFixed(2)})">`;
+      if(bi<0){
+        cells.set(k,{block:true});
+        svg+=`<polygon class="blockface" points="${hexPts(R)}"/>`;
+      }else{
+        const base=ORIENTATIONS[bi];
+        cells.set(k,{block:false,base,steps,locked:!!lock});
+        svg+=`<g class="cell" data-k="${k}" style="transform:rotate(${steps*60}deg)">`;
+        svg+=`<polygon class="face" points="${hexPts(R)}"/>`;
+        for(const [a,b] of base) svg+=`<path class="link" d="${pathD(a,b)}"/>`;
+        svg+=`</g>`;
+        if(lock) svg+=`<circle class="lockpin" r="6"/>`;
+      }
+      svg+=`</g>`;
+    }
+    svg+=`<g id="pieces"></g>`;
+    board.innerHTML=svg;
+
+    st.p.forEach(([q,r,d],i)=>{
+      const col=PALETTE[i%PALETTE.length];
+      const ink=(col==='#fdd83e'||col==='#3ad939')?'#1d1830':'#ffffff';
+      pieces.set(ck(q,r),{dir:d,col,ink});
+    });
+    drawPieces();
+    moves=st.p.length+SLACK;
+    lvEl.textContent=level;
+    updateMoves();
+    overlay.classList.remove("show","fail");
+    busy=false;
+  }
+
+  function updateMoves(){
+    mvEl.textContent=moves;
+    mvEl.classList.toggle("low", moves<=1);
+  }
+
+  function pieceSVG(k,p){
+    const [cx,cy]=center.get(k);
+    const a=(30+60*p.dir)*Math.PI/180;
+    const deg=Math.atan2(-Math.sin(a),Math.cos(a))*180/Math.PI;
+    return `<g class="pg" id="pg_${k.replace(",","_")}" transform="translate(${cx.toFixed(2)},${cy.toFixed(2)})">`+
+      `<polygon class="phex" fill="${p.col}" points="${hexPts(R)}"/>`+
+      `<g class="pa" transform="rotate(${deg.toFixed(2)})">`+
+      `<path fill="${p.ink}" d="M21 0 L4 -13 L4 -5.5 L-18 -5.5 L-18 5.5 L4 5.5 L4 13 Z"/>`+
+      `</g></g>`;
+  }
+  function drawPieces(){
+    document.getElementById("pieces").innerHTML=
+      [...pieces].map(([k,p])=>pieceSVG(k,p)).join("");
+  }
+
+  // ルートを等速で歩けるようポリラインに標本化する。
+  function polyline(startKey,dir,res){
+    const pts=[]; const [sx,sy]=center.get(startKey);
+    pts.push([sx,sy]);
+    const m0=mid(dir); pts.push([sx+m0[0], sy+m0[1]]);
+    for(const [nk,bIn,bOut] of res.legs){
+      const [cx,cy]=center.get(nk), c=cells.get(nk), P=ctrlPoints(bIn,bOut);
+      for(let i=1;i<=10;i++){
+        const p=rot(bez(P,i/10), c.steps*60);
+        pts.push([cx+p[0], cy+p[1]]);
+      }
+    }
+    const [lastKey,lastDir]=res.exit;
+    const [lx,ly]=center.get(lastKey), m=mid(lastDir);
+    pts.push([lx+m[0]*(res.escaped?2.2:1.0), ly+m[1]*(res.escaped?2.2:1.0)]);
+    const fwd=pts.length-1;                       // 往路のセグメント数
+    if(!res.escaped) for(let i=pts.length-2;i>=0;i--) pts.push(pts[i]);
+    return {pts,fwd};
+  }
+
+  function startRun(key){
+    const p=pieces.get(key);
+    const res=routeNow(key,p.dir,key);
+    const el=document.getElementById("pg_"+key.replace(",","_"));
+    const {pts,fwd}=polyline(key,p.dir,res);
+    const deg0=-(30+60*p.dir);                    // 矢印の静止時の向き
+    let len=0; const seg=[];
+    for(let i=1;i<pts.length;i++){
+      const d=Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]);
+      seg.push(d); len+=d;
+    }
+    moves--; updateMoves();
+    if(res.escaped) pieces.delete(key);            // マスは即座に空く
+    flying=[{el,arrow:el.querySelector(".pa"),pts,seg,len,t:0,fwd,deg0,escaped:res.escaped}];
+    busy=true;
+    last=null; raf=requestAnimationFrame(step);
+  }
+
+  function step(ts){
+    if(last===null) last=ts;
+    const dt=Math.min((ts-last)/1000,.05); last=ts;
+    const f=flying[0];
+    f.t+=PSPEED*dt;
+    let d=f.t, i=0;
+    while(i<f.seg.length && d>f.seg[i]){ d-=f.seg[i]; i++; }
+    if(i>=f.seg.length){
+      raf=null; last=null; flying=[];
+      if(f.escaped) f.el.remove();
+      else { const a=f.pts[0];
+        f.el.setAttribute("transform",`translate(${a[0].toFixed(2)},${a[1].toFixed(2)})`);
+        f.arrow.setAttribute("transform",`rotate(${f.deg0.toFixed(2)})`); }
+      busy=false;
+      finishTurn();
+      return;
+    }
+    const a=f.pts[i], b=f.pts[i+1], u=f.seg[i]?d/f.seg[i]:0;
+    const x=a[0]+(b[0]-a[0])*u, y=a[1]+(b[1]-a[1])*u;
+    f.el.setAttribute("transform",`translate(${x.toFixed(2)},${y.toFixed(2)})`);
+    const dx=b[0]-a[0], dy=b[1]-a[1];
+    if(dx||dy){
+      let deg=Math.atan2(dy,dx)*180/Math.PI;
+      if(i>=f.fwd) deg+=180;                      // 復路も前を向いたまま戻る
+      f.arrow.setAttribute("transform",`rotate(${deg.toFixed(2)})`);
+    }
+    raf=requestAnimationFrame(step);
+  }
+
+  function finishTurn(){
+    if(pieces.size===0){ win(); return; }
+    if(moves<=0) fail();
+  }
+
+  // 手数切れ：FAILED を表示（紙吹雪なし）してから、同じ問題を自動でやり直す
+  function fail(){
+    busy=true;
+    document.getElementById("pieces").classList.add("fail");
+    ovLv.textContent=level;
+    ovTitle.textContent="FAILED";
+    overlay.classList.add("show","fail");
+    nextTimer=setTimeout(()=>{ nextTimer=null; buildStage(curStage); }, 2000);
+  }
+
+  function win(){
+    busy=true;
+    ovLv.textContent=level;
+    ovTitle.textContent="LEVEL COMPLETE";
+    overlay.classList.remove("fail");
+    overlay.classList.add("show");
+    confettiBurst();
+    nextTimer=setTimeout(()=>{ nextTimer=null; level++; buildStage(stageForLevel(level)); }, 2000);
+  }
+
+  // クリア時の紙吹雪（外部依存なし・canvas 描画）。共通4色を使用。
+  function confettiBurst(){
+    const canvas=document.getElementById('confetti');
+    const rect=overlay.getBoundingClientRect();
+    if(!rect.width||!rect.height) return;
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    const W=rect.width, H=rect.height;
+    canvas.width=W*dpr; canvas.height=H*dpr;        // バッファ確保（同時にクリア）
+    canvas.style.width=W+'px'; canvas.style.height=H+'px';
+    const ctx=canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    const colors=['#fe384b','#3967ff','#fdd83e','#3ad939'];
+    const parts=[];
+    for(let i=0;i<110;i++){
+      const a=Math.random()*Math.PI*2;
+      const sp=4+Math.random()*7;
+      parts.push({
+        x:W/2, y:H*0.42,
+        vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-(3+Math.random()*3),
+        g:0.18+Math.random()*0.12, size:5+Math.random()*6,
+        rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.3,
+        color:colors[i%colors.length], life:0, max:60+Math.random()*40
+      });
+    }
+    if(confettiBurst._raf) cancelAnimationFrame(confettiBurst._raf);
+    function tick(){
+      ctx.clearRect(0,0,W,H);
+      let alive=false;
+      for(const p of parts){
+        if(p.life++>p.max) continue;
+        alive=true;
+        p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.vx*=0.99; p.rot+=p.vr;
+        ctx.save();
+        ctx.globalAlpha=Math.max(0,1-p.life/p.max);
+        ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.fillStyle=p.color;
+        ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+        ctx.restore();
+      }
+      if(alive){confettiBurst._raf=requestAnimationFrame(tick);}
+      else ctx.clearRect(0,0,W,H);
+    }
+    tick();
+  }
+
+  board.addEventListener("click",e=>{
+    if(busy||moves<=0) return;
+    const pg=e.target.closest(".pg");
+    if(pg){                                   // ピースをタップ → 発射
+      const key=pg.id.slice(3).replace("_",",");
+      if(pieces.has(key)) startRun(key);
+      return;
+    }
+    const t=e.target.closest(".cell");        // タイルをタップ → 回転（何度でも）
+    if(!t) return;
+    const c=cells.get(t.dataset.k);
+    if(!c||c.locked) return;
+    c.steps+=1;
+    t.style.transform=`rotate(${c.steps*60}deg)`;
+  });
+  document.getElementById("resetBtn").addEventListener("click",()=>{
+    if(busy) return;
+    buildStage(curStage);
+  });
+
+  // ダブルタップによるズーム抑止（枠のパディング部分も含む）。ピンチズームは妨げない。
+  const boardWrap=document.getElementById("boardWrap");
+  let lastTapEnd=0;
+  boardWrap.addEventListener("touchend",e=>{
+    const now=Date.now();
+    if(now-lastTapEnd<350) e.preventDefault();
+    lastTapEnd=now;
+  },{passive:false});
+
+  // theme toggle
+  const themeBtn=document.getElementById("themeBtn");
+  themeBtn.addEventListener("click",()=>{
+    const isNight=document.documentElement.getAttribute("data-theme")==="night";
+    if(isNight){
+      document.documentElement.removeAttribute("data-theme");
+      themeBtn.textContent="🌙";
+    }else{
+      document.documentElement.setAttribute("data-theme","night");
+      themeBtn.textContent="☀️";
+    }
+  });
+
+  buildStage(stageForLevel(level));
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

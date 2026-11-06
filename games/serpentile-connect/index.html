@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/serpentile-connect/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ヘキサコネクト</title>
+<meta name="description" content="タイルを回して辺の色をそろえるパズル">
+<style>
+  :root{
+    --bg:#222; --fg:#eee; --sub:#aaa;
+    --tile:#3a3a3a; --line:#555;
+    --c1:#e53935; --c2:#1e88e5; --c3:#fdd835;
+    --panel:rgba(0,0,0,.72);
+    --howto-bg:#3a3a3a; --howto-fg:#eee;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg);color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #game{position:relative;margin:0 auto;width:100%;max-width:420px;height:100vh;height:100dvh;display:flex;flex-direction:column}
+  #cv{flex:1;width:100%;display:block;touch-action:none}
+  .overlay{position:absolute;inset:0;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center}
+  .hidden{display:none}
+  h1{margin:0;font-size:32px}
+  p{margin:0;line-height:1.7;color:var(--sub)}
+  button{min-width:180px;min-height:48px;font-size:18px;border:0;border-radius:8px;background:var(--fg);color:var(--bg);font-family:inherit}
+  button:focus-visible{outline:3px solid var(--c3);outline-offset:2px}
+  .howto-dialog p{color:inherit} /* 上の p の色がパネルに効くのを戻す */
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="cv"></canvas>
+
+
+  <div id="over" class="overlay hidden">
+    <h1 id="clearTitle">クリア！</h1>
+    <button id="next">次のステージ</button>
+    <button id="share">共有</button>
+  </div>
+  <section class="howto" hidden data-pos="top-left">
+    <h2>遊び方</h2>
+    <p>3色の線が描かれた六角形のタイルを回し、盤全体の色をつなげるパズルです。隣り合うタイルの辺は同じ色にそろえ、盤の外周の辺は外側の短い線と同じ色に合わせます。すべての辺が合うとクリアです。手数や時間の制限はありません。盤はステージごとに大きくなり、ステージ6からはランダムな形が続きます。進み具合はブラウザに保存されます。</p>
+    <h2>操作</h2>
+    <p>タイルをタップすると60度回ります。2本指のピンチで3倍まで拡大でき、1本指のドラッグで表示を動かせます。PC はクリックで回し、ホイールで拡大、ドラッグで移動します。</p>
+    <h2>コツ</h2>
+    <p>光は外周の合っている辺から流れ込み、つながった線を順にたどります。外周のタイルから合わせ、光が届いた先へ内側に進めると、合っていない所を見つけやすくなります。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+
+  // ---------- 定数 ----------
+  // ステージごとの盤の半径（1で7枚、2で19枚、3で37枚）。ステージ2は外周を1周増やしたもの
+  const STAGES = [1, 2, 3, 4, 5];
+  // ステージ5のあとは、ランダムな形の盤が無限に続く
+  const RAND_MIN = 40;      // ランダムな盤のタイル枚数（最小）
+  const RAND_MAX = 100;     // ランダムな盤のタイル枚数（最大）
+  const FIT = 0.94;        // 盤が画面に占める割合
+  const PATH_W = 0.26;     // パスの太さ（タイル半径に対する比）
+  const CURVE = 0.45;      // パスの曲がり具合（制御点を中心へ寄せる比）
+  const HINT_LEN = 0.35;   // 外周ヒントの長さ（タイル半径に対する比）
+  const HINT_GAP = 0.08;   // 外周ヒントとタイルのすき間（同上）
+  const ZOOM_MAX = 3;       // ズームの最大倍率（最小は等倍）
+  const WHEEL_RATE = 0.0015; // PCのホイール1目盛りあたりのズーム量
+  const TAP_MOVE = 10;      // これ以上指が動いたらタップ（回転）とみなさない（px）
+  const STAGE_KEY = 'serpentile.stage';  // 進捗（次に遊ぶステージ番号）の保存先
+
+  // 辺kの隣のマス（pointy-top の軸座標、画面上で時計回り：東→南東→南西→西→北西→北東）
+  const DIRS = [[1,0],[0,1],[-1,1],[-1,0],[0,-1],[1,-1]];
+
+  // ---------- タイルの候補 ----------
+  // 6辺を3本のパスで結ぶ組み合わせ（15通り）× 3色の割り当て（6通り）
+  function matchings(rest){
+    if (!rest.length) return [[]];
+    const out = [], a = rest[0];
+    for (let i = 1; i < rest.length; i++){
+      const b = rest[i], r2 = rest.filter((_, j) => j !== 0 && j !== i);
+      for (const m of matchings(r2)) out.push([[a,b], ...m]);
+    }
+    return out;
+  }
+  const PERMS = [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+  const CANDS = [];
+  for (const m of matchings([0,1,2,3,4,5])){
+    for (const p of PERMS){
+      const cols = new Array(6);
+      const pairs = m.map(([a,b], i) => { cols[a] = cols[b] = p[i]; return [a,b,p[i]]; });
+      CANDS.push({cols, pairs});
+    }
+  }
+
+  // ---------- 演出 ----------
+  const ROT_SPEED = 18;     // 回転アニメの追従の速さ（大きいほど速く回りきる）
+  const DIM_ALPHA = 0.35;   // 光が届いていないパスの明るさ
+  const FLOW_TIME = 0.28;   // 光がタイル1枚ぶんのパスを流れる時間（秒）
+  const DRAIN_TIME = 0.15;  // 繋がりが切れたとき光が引いていく時間（秒）
+  const GLOW_BLUR = 0.35;   // 光っているパスのにじみ（タイル半径に対する比）
+  const HEAD_R = 0.11;      // 流れる光の先頭の大きさ（同上）
+  const SPARK_N = 8;        // 光がタイルの境目を越えるときに飛ぶ火花の数
+  const SPARK_LIFE = 0.5;   // 火花の寿命（秒）
+  const WAVE_DELAY = 0.18;  // クリア時の光の波が隣のタイルへ伝わる間隔（秒）
+  const WAVE_LEN = 0.7;     // クリア時に1枚のタイルが光っている時間（秒）
+  const CLEAR_WAIT = 1.9;   // クリアしてから結果画面を出すまで（秒）
+  const CURVE_N = 32;       // パスの曲線を折れ線にするときの分割数
+
+  // ---------- 盤 ----------
+  let cells = [], state = 'idle', clearT = 0;
+  let sparks = [];
+  // ステージの進捗：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  let stage = 0;
+  try { stage = Math.max(0, parseInt(localStorage.getItem(STAGE_KEY)) || 0); } catch(e) {}
+  const saveStage = n => { try { localStorage.setItem(STAGE_KEY, String(n)); } catch(e) {} };
+
+  function shuffle(a){
+    for (let i = a.length - 1; i > 0; i--){ const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+
+  // 盤の形（マスの軸座標の一覧）を作る。ステージ1〜5は六角形、それ以降はランダムな形
+  function makeShape(){
+    const out = [];
+    if (stage < STAGES.length){
+      const R = STAGES[stage];
+      for (let r = -R; r <= R; r++) for (let q = -R; q <= R; q++) if (Math.abs(q + r) <= R) out.push([q, r]);
+      return out;
+    }
+    // 中央の1マスから、今ある盤のどこかの隣へランダムに1マスずつ広げていく
+    const n = RAND_MIN + Math.floor(Math.random() * (RAND_MAX - RAND_MIN + 1));
+    const set = new Set(['0,0']), list = [[0, 0]];
+    while (list.length < n){
+      const [q, r] = list[Math.random() * list.length | 0];
+      const [dq, dr] = DIRS[Math.random() * 6 | 0];
+      const key = (q + dq) + ',' + (r + dr);
+      if (!set.has(key)){ set.add(key); list.push([q + dq, r + dr]); }
+    }
+    // 盤の内側に閉じ込められた穴は埋める（外側からたどれない空きマスを盤にする）
+    let lo = Infinity, hi = -Infinity;
+    for (const [q, r] of list){ lo = Math.min(lo, q, r); hi = Math.max(hi, q, r); }
+    lo -= 1; hi += 1;
+    const outside = new Set(), stack = [[lo, lo]];
+    while (stack.length){
+      const [q, r] = stack.pop(), key = q + ',' + r;
+      if (q < lo || q > hi || r < lo || r > hi || outside.has(key) || set.has(key)) continue;
+      outside.add(key);
+      for (const [dq, dr] of DIRS) stack.push([q + dq, r + dr]);
+    }
+    for (let r = lo; r <= hi; r++) for (let q = lo; q <= hi; q++){
+      const key = q + ',' + r;
+      if (!set.has(key) && !outside.has(key)){ set.add(key); list.push([q, r]); }
+    }
+    return list;
+  }
+
+  function buildBoard(){
+    cells = [];
+    const map = new Map();
+    // 上の行から順に並べる（完成形を作るバックトラックが隣と整合しやすい順）
+    const shape = makeShape().sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+    for (const [q, r] of shape){
+      // rot: 論理上の向き / turns: 累計の回転数 / vis: 描画上の回転（turns へ追従）
+      const c = {q, r, tile:null, rot:0, turns:0, vis:0, nb:[], hints:[], segs:[], dist:Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r))};
+      cells.push(c); map.set(q + ',' + r, c);
+    }
+    for (const c of cells) c.nb = DIRS.map(([dq,dr]) => map.get((c.q+dq) + ',' + (c.r+dr)) || null);
+
+    // 完成形をバックトラックで作る（隣り合う辺の色が全て一致する配置）
+    const solve = i => {
+      if (i === cells.length) return true;
+      const c = cells[i];
+      for (const t of shuffle(CANDS.slice())){
+        let ok = true;
+        for (let k = 0; k < 6 && ok; k++){
+          const n = c.nb[k];
+          if (n && n.tile && n.tile.cols[(k+3)%6] !== t.cols[k]) ok = false;
+        }
+        if (ok){ c.tile = t; if (solve(i+1)) return true; c.tile = null; }
+      }
+      return false;
+    };
+    solve(0);
+
+    // 外周に出る辺には、完成形での色をヒントとして持たせる
+    for (const c of cells) c.hints = c.nb.map((n, k) => n ? null : c.tile.cols[k]);
+
+    // 回転だけを崩す（崩した結果がたまたま完成形なら崩し直す）
+    do { for (const c of cells) c.rot = Math.random() * 6 | 0; } while (isSolved());
+    for (const c of cells){ c.turns = c.vis = c.rot; }
+
+    // パス1本ごとの光の状態 fill:流れ込んだ割合 / entry:光が入ってくる端(0=p,1=q) / pred:手前のパス
+    for (const c of cells) c.segs = c.tile.pairs.map(([p, q, col]) => ({c, p, q, col, fill:0, entry:0, reached:false, pred:null}));
+    // 開始時点ですでに繋がっている分は、流れるアニメを挟まず光らせておく
+    trace();
+    for (const c of cells) for (const g of c.segs) if (g.reached) g.fill = 1;
+    sparks = [];
+  }
+
+  const colorAt = (c, k) => c.tile.cols[(k - c.rot + 6) % 6];
+  const settled = c => c.vis === c.turns;
+
+  function isSolved(){
+    for (const c of cells) for (let k = 0; k < 6; k++){
+      const n = c.nb[k];
+      if (n ? colorAt(c, k) !== colorAt(n, (k+3)%6) : colorAt(c, k) !== c.hints[k]) return false;
+    }
+    return true;
+  }
+
+  // 画面上の辺kが繋がっているか（回転中のタイルは繋がっていない扱い）
+  function edgeOk(c, k){
+    if (!settled(c)) return false;
+    const n = c.nb[k];
+    if (!n) return colorAt(c, k) === c.hints[k];
+    return settled(n) && colorAt(c, k) === colorAt(n, (k+3)%6);
+  }
+
+  // 画面上の辺kにつながっているパスと、そのパスのどちらの端か
+  function segAt(c, k){
+    const o = (k - c.rot + 6) % 6;
+    for (const g of c.segs){
+      if (g.p === o) return [g, 0];
+      if (g.q === o) return [g, 1];
+    }
+  }
+  // パスの出口（entry の反対側の端）の画面上の辺
+  const exitSide = g => ((g.entry ? g.p : g.q) + g.c.rot) % 6;
+
+  // 外周のヒントから、繋がっている辺をたどって光が届くパスを調べる
+  // （幅優先なので、各パスには一番近いヒントからの向きで光が入る）
+  function trace(){
+    const all = [];
+    for (const c of cells) for (const g of c.segs){ g.reached = false; g.pred = null; g.newEntry = g.entry; all.push(g); }
+    const queue = [];
+    for (const c of cells) for (let k = 0; k < 6; k++){
+      if (c.nb[k] || !edgeOk(c, k)) continue;
+      const [g, e] = segAt(c, k);
+      if (g.reached) continue;
+      g.reached = true; g.pred = 'hint'; g.newEntry = e; queue.push(g);
+    }
+    while (queue.length){
+      const g = queue.shift(), c = g.c;
+      const k = ((g.newEntry ? g.p : g.q) + c.rot) % 6;
+      const n = c.nb[k];
+      if (!n || !edgeOk(c, k)) continue;
+      const [h, e] = segAt(n, (k+3)%6);
+      if (h.reached) continue;
+      h.reached = true; h.pred = g; h.newEntry = e; queue.push(h);
+    }
+    // 外周に出ずに閉じた輪になっているパスも、輪が完成していれば光らせる
+    for (const g of all){
+      if (g.reached) continue;
+      const loop = [];
+      let cur = g, e = 0, ok = true;
+      do {
+        loop.push(cur);
+        const k = ((e ? cur.p : cur.q) + cur.c.rot) % 6;
+        const n = cur.c.nb[k];
+        if (!n || !edgeOk(cur.c, k)){ ok = false; break; }
+        [cur, e] = segAt(n, (k+3)%6);
+      } while (cur !== g && loop.length <= all.length);
+      if (ok && cur === g) for (const h of loop){ h.reached = true; h.pred = 'loop'; h.newEntry = 0; }
+    }
+    // 入ってくる向きが変わったパスは、光を流し直す
+    for (const g of all){
+      if (g.reached && g.newEntry !== g.entry){ g.entry = g.newEntry; g.fill = 0; }
+    }
+  }
+
+  // ---------- 描画 ----------
+  const cv = $('cv'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, S = 30, OX = 0, OY = 0;
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let COLORS = [], TILE = '', LINE = '', BG = '';
+  // 表示のズーム：画面上の座標 = 盤の座標 × zoom + (panX, panY)
+  let zoom = 1, panX = 0, panY = 0, DPR = 1;
+
+  function resize(){
+    const dpr = DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    clampPan();
+    // 盤の外接範囲（タイル半径1のときの座標）を求め、外周ヒントがはみ出す分も含めて画面に収める
+    const m = Math.sqrt(3) / 2 + HINT_GAP + HINT_LEN;   // マスの中心から外周ヒントの先端まで
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const c of cells){
+      const x = Math.sqrt(3) * (c.q + c.r / 2), y = 1.5 * c.r;
+      x0 = Math.min(x0, x - m); x1 = Math.max(x1, x + m);
+      y0 = Math.min(y0, y - m); y1 = Math.max(y1, y + m);
+    }
+    S = Math.min(W * FIT / (x1 - x0), H * FIT / (y1 - y0));
+    OX = W / 2 - S * (x0 + x1) / 2; OY = H / 2 - S * (y0 + y1) / 2;
+  }
+
+  const center = c => [OX + S * Math.sqrt(3) * (c.q + c.r / 2), OY + S * 1.5 * c.r];
+  const edgeR = () => S * Math.sqrt(3) / 2;   // 中心から辺の中点まで
+  const edgeMid = (c, k) => {
+    const [x, y] = center(c), t = Math.PI / 3 * k, a = edgeR();
+    return [x + Math.cos(t) * a, y + Math.sin(t) * a];
+  };
+
+  function hexPath(x, y, s){
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++){
+      const a = Math.PI / 180 * (30 + 60 * i);
+      ctx[i ? 'lineTo' : 'moveTo'](x + s * Math.cos(a), y + s * Math.sin(a));
+    }
+    ctx.closePath();
+  }
+
+  // パスの曲線を、光が入る端から順に並べた折れ線にする（タイルの中心が原点）
+  function segPoints(g){
+    const a = edgeR();
+    const mid = k => { const t = Math.PI / 3 * k; return [Math.cos(t) * a, Math.sin(t) * a]; };
+    const [x1, y1] = mid(g.entry ? g.q : g.p), [x2, y2] = mid(g.entry ? g.p : g.q);
+    const cx1 = x1 * CURVE, cy1 = y1 * CURVE, cx2 = x2 * CURVE, cy2 = y2 * CURVE;
+    const pts = [];
+    for (let i = 0; i <= CURVE_N; i++){
+      const t = i / CURVE_N, u = 1 - t;
+      pts.push([
+        u*u*u*x1 + 3*u*u*t*cx1 + 3*u*t*t*cx2 + t*t*t*x2,
+        u*u*u*y1 + 3*u*u*t*cy1 + 3*u*t*t*cy2 + t*t*t*y2,
+      ]);
+    }
+    return pts;
+  }
+
+  // 折れ線の先頭から割合 f までを線として引き、その先端の座標を返す
+  function strokePart(pts, f){
+    let total = 0;
+    for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]);
+    let rest = total * f, end = pts[0];
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++){
+      const d = Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]);
+      if (d >= rest){
+        const t = d ? rest / d : 0;
+        end = [pts[i-1][0] + (pts[i][0] - pts[i-1][0]) * t, pts[i-1][1] + (pts[i][1] - pts[i-1][1]) * t];
+        ctx.lineTo(end[0], end[1]);
+        break;
+      }
+      rest -= d; end = pts[i]; ctx.lineTo(end[0], end[1]);
+    }
+    ctx.stroke();
+    return end;
+  }
+
+  // クリア時の光の波：このタイルが今どれだけ光っているか（0〜1）
+  function wave(c){
+    if (state !== 'clearing') return 0;
+    const t = (clearT - c.dist * WAVE_DELAY) / WAVE_LEN;
+    return t <= 0 || t >= 1 ? 0 : Math.sin(Math.PI * t);
+  }
+
+  function drawTile(c){
+    const [x, y] = center(c);
+    hexPath(x, y, S * 0.97);
+    ctx.fillStyle = TILE; ctx.fill();
+    ctx.strokeStyle = LINE; ctx.lineWidth = 1; ctx.stroke();
+
+    const a = edgeR();
+    const w = wave(c);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.PI / 3 * c.vis);   // 回転アニメはタイルごと回す
+    ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
+    for (const g of c.segs){
+      const pts = segPoints(g), color = COLORS[g.col];
+      // 交差が見分けられるよう、下地の縁取りを先に引く
+      ctx.strokeStyle = TILE; ctx.lineWidth = S * (PATH_W + 0.12); strokePart(pts, 1);
+      // 光が届いていない部分：暗い線
+      ctx.globalAlpha = DIM_ALPHA;
+      ctx.strokeStyle = color; ctx.lineWidth = S * PATH_W; strokePart(pts, 1);
+      ctx.globalAlpha = 1;
+      // 光が届いた部分：入口から流れ込んだ長さだけ、その色で光らせる
+      if (g.fill > 0){
+        ctx.shadowColor = color; ctx.shadowBlur = S * GLOW_BLUR * (1 + w * 1.5);
+        const head = strokePart(pts, g.fill);
+        ctx.shadowBlur = 0;
+        // 流れている途中は、先頭に白い光の粒を付ける
+        if (g.fill < 1 && g.reached){
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.fillStyle = '#fff'; ctx.shadowColor = color; ctx.shadowBlur = S * GLOW_BLUR;
+          ctx.beginPath(); ctx.arc(head[0], head[1], S * HEAD_R, 0, Math.PI * 2); ctx.fill();
+          ctx.shadowBlur = 0; ctx.globalCompositeOperation = 'source-over';
+        }
+      }
+      // クリア時の波：白く重ねて光らせる
+      if (w > 0){
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = w * 0.6;
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = S * PATH_W * 0.45; strokePart(pts, 1);
+        ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+      }
+    }
+    ctx.restore();
+
+    // 外周ヒント：盤の外側に、その辺から出るべき色を短い線で示す（盤に固定なので回さない）
+    // 合っている辺のヒントは光り、そこから盤の中へ光が流れ込む
+    for (let k = 0; k < 6; k++){
+      if (c.hints[k] === null) continue;
+      const t = Math.PI / 3 * k, d0 = a + S * HINT_GAP, d1 = d0 + S * HINT_LEN;
+      const ok = edgeOk(c, k);
+      ctx.globalAlpha = ok ? 1 : 0.55;
+      ctx.shadowColor = COLORS[c.hints[k]];
+      ctx.shadowBlur = ok ? S * GLOW_BLUR : 0;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(t) * d0, y + Math.sin(t) * d0);
+      ctx.lineTo(x + Math.cos(t) * d1, y + Math.sin(t) * d1);
+      ctx.strokeStyle = COLORS[c.hints[k]]; ctx.lineWidth = S * PATH_W; ctx.stroke();
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    }
+  }
+
+  function drawSparks(){
+    ctx.globalCompositeOperation = 'lighter';
+    for (const s of sparks){
+      const t = s.age / s.life;
+      ctx.globalAlpha = 1 - t;
+      ctx.fillStyle = s.color;
+      ctx.beginPath(); ctx.arc(s.x, s.y, S * 0.06 * (1 - t * 0.5), 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function draw(){
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+    ctx.setTransform(DPR * zoom, 0, 0, DPR * zoom, DPR * panX, DPR * panY);
+    // 回転中のタイルは隣に重なるので最後に描く
+    for (const c of cells) if (settled(c)) drawTile(c);
+    for (const c of cells) if (!settled(c)) drawTile(c);
+    drawSparks();
+  }
+
+  // ---------- 更新 ----------
+  function burst(x, y, color, n, speed){
+    for (let i = 0; i < n; i++){
+      const a = Math.random() * Math.PI * 2, v = S * speed * (0.4 + Math.random() * 0.6);
+      sparks.push({x, y, vx:Math.cos(a) * v, vy:Math.sin(a) * v, age:0, life:SPARK_LIFE * (0.6 + Math.random() * 0.4), color});
+    }
+  }
+
+  function update(dt){
+    for (const c of cells){
+      if (settled(c)) continue;
+      c.vis += (c.turns - c.vis) * Math.min(1, dt * ROT_SPEED);
+      if (Math.abs(c.turns - c.vis) < 0.01) c.vis = c.turns;
+    }
+
+    // 光の流れ：手前のパスが光で満たされてから、次のパスへ流れ込む
+    trace();
+    for (const c of cells) for (const g of c.segs){
+      if (!g.reached){ g.fill = Math.max(0, g.fill - dt / DRAIN_TIME); continue; }
+      if (g.fill >= 1) continue;
+      const ready = g.pred === 'hint' || g.pred === 'loop' || g.pred.fill >= 1;
+      if (!ready) continue;
+      g.fill = Math.min(1, g.fill + dt / FLOW_TIME);
+      // 出口まで流れきったら、境目で火花を散らす
+      if (g.fill >= 1){
+        const k = exitSide(g);
+        if (edgeOk(c, k)){ const [x, y] = edgeMid(c, k); burst(x, y, COLORS[g.col], SPARK_N, 2.2); }
+      }
+    }
+
+    for (const s of sparks){
+      s.age += dt; s.x += s.vx * dt; s.y += s.vy * dt;
+      s.vx *= 1 - dt * 3; s.vy *= 1 - dt * 3;   // 空気抵抗で減速
+    }
+    sparks = sparks.filter(s => s.age < s.life);
+
+    // 全部の辺が合い、光が全てのパスに流れきったらクリア演出へ
+    if (state === 'playing' && cells.every(settled) && isSolved() && cells.every(c => c.segs.every(g => g.fill >= 1))){
+      state = 'clearing'; clearT = 0;
+      for (const c of cells) c.waved = false;
+    }
+    if (state === 'clearing'){
+      clearT += dt;
+      // 光の波が届いたタイルから、全ての辺で火花を散らす
+      for (const c of cells){
+        if (c.waved || clearT < c.dist * WAVE_DELAY) continue;
+        c.waved = true;
+        for (let k = 0; k < 6; k++){
+          const [x, y] = edgeMid(c, k);
+          burst(x, y, COLORS[colorAt(c, k)], 6, 3);
+        }
+      }
+      if (clearT >= CLEAR_WAIT) clear();
+    }
+  }
+
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1/30);
+    last = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- 状態 ----------
+  function startGame(){
+    buildBoard();
+    resize();
+    resetZoom();
+    saveStage(stage);
+    state = 'playing';
+    $('over').classList.add('hidden');
+  }
+
+  function clear(){
+    state = 'over';
+    $('clearTitle').textContent = `ステージ${stage + 1} クリア！`;
+    // クリアしたら、次に開いたときは次のステージから始まるようにする
+    saveStage(stage + 1);
+    $('over').classList.remove('hidden');
+  }
+
+  // ---------- 入力 ----------
+  // ---------- ズーム（このゲームだけ例外的に、スマホは2本指ピンチ・PCはホイールで拡大できる） ----------
+  function resetZoom(){ zoom = 1; panX = 0; panY = 0; }
+  // 盤が画面の外へ逃げないよう、表示位置を画面内に収める
+  function clampPan(){
+    panX = Math.min(0, Math.max(W - W * zoom, panX));
+    panY = Math.min(0, Math.max(H - H * zoom, panY));
+  }
+  // 画面上の点 (sx, sy) を動かさずに倍率を z にする
+  function zoomAt(sx, sy, z){
+    z = Math.min(ZOOM_MAX, Math.max(1, z));
+    const wx = (sx - panX) / zoom, wy = (sy - panY) / zoom;
+    zoom = z; panX = sx - wx * z; panY = sy - wy * z;
+    clampPan();
+  }
+  const localPos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+
+  cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    const [sx, sy] = localPos(e);
+    zoomAt(sx, sy, zoom * Math.exp(-e.deltaY * WHEEL_RATE));
+  }, {passive:false});
+
+  // 指（またはマウス）の管理。2本になったらピンチ、1本で動かしたらドラッグ移動、1本で動かずに離したらタップ
+  const pointers = new Map();
+  let pinch = null, gestureHadPinch = false;
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    const [x, y] = localPos(e);
+    if (!pointers.size) gestureHadPinch = false;
+    pointers.set(e.pointerId, {x, y, x0:x, y0:y});
+    if (pointers.size === 2){
+      const [a, b] = [...pointers.values()];
+      gestureHadPinch = true;
+      pinch = {d:Math.hypot(a.x - b.x, a.y - b.y) || 1, mx:(a.x + b.x) / 2, my:(a.y + b.y) / 2, zoom, panX, panY};
+    }
+  });
+  cv.addEventListener('pointermove', e => {
+    const p = pointers.get(e.pointerId);
+    if (!p) return;
+    const px = p.x, py = p.y;
+    [p.x, p.y] = localPos(e);
+    // 1本指（またはマウス）のドラッグで表示位置を動かす。タップと区別するため、少し動いてから動かし始める
+    if (pointers.size === 1){
+      if (!p.drag && (gestureHadPinch || Math.hypot(p.x - p.x0, p.y - p.y0) > TAP_MOVE)) p.drag = true;
+      if (p.drag){ panX += p.x - px; panY += p.y - py; clampPan(); }
+      return;
+    }
+    if (pinch && pointers.size >= 2){
+      const [a, b] = [...pointers.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      // ピンチ開始時に指の中点の下にあった盤の位置が、今の中点の下に来るようにする（指の移動でずらすこともできる）
+      const z = Math.min(ZOOM_MAX, Math.max(1, pinch.zoom * d / pinch.d));
+      const wx = (pinch.mx - pinch.panX) / pinch.zoom, wy = (pinch.my - pinch.panY) / pinch.zoom;
+      zoom = z; panX = mx - wx * z; panY = my - wy * z;
+      clampPan();
+    }
+  });
+  const pointerEnd = e => {
+    const p = pointers.get(e.pointerId);
+    if (!p) return;
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = null;
+    // ピンチを含む操作や、指が動いた操作はタイルを回さない
+    if (e.type !== 'pointerup' || gestureHadPinch || p.drag || Math.hypot(p.x - p.x0, p.y - p.y0) > TAP_MOVE) return;
+    tapAt((p.x - panX) / zoom, (p.y - panY) / zoom);
+  };
+  cv.addEventListener('pointerup', pointerEnd);
+  cv.addEventListener('pointercancel', pointerEnd);
+
+  // 盤の座標 (px, py) にあるタイルを回す
+  function tapAt(px, py){
+    if (state !== 'playing') return;
+    let hit = null, bd = Infinity;
+    for (const c of cells){
+      const [x, y] = center(c), d = Math.hypot(px - x, py - y);
+      if (d < bd){ bd = d; hit = c; }
+    }
+    if (!hit || bd > S) return;
+    // 連打しても回転アニメが追いつくよう、累計の回転数を進める
+    hit.turns++;
+    hit.rot = (hit.rot + 1) % 6;
+  }
+
+  const nextStage = () => { stage++; startGame(); };
+  $('next').addEventListener('click', nextStage);
+  addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ' ') && state === 'over' && document.activeElement === document.body){
+      e.preventDefault();
+      nextStage();
+    }
+  });
+
+  // ---------- 共有 ----------
+  function shareText(){
+    return `ヘキサコネクト ステージ${stage + 1}を全部つないだ！\n${location.href.split(/[?#]/)[0]}\n#ヘキサコネクト`;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(){
+    const bin = atob(cv.toDataURL('image/png').split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const btn = $('share'), text = shareText(), file = resultImageFile();
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      navigator.share({ text, files: [file] }).catch(() => {});
+      return;
+    }
+    if (navigator.share){ navigator.share({ text }).catch(() => {}); return; }
+    navigator.clipboard?.writeText(text).then(() => {
+      btn.textContent = 'コピーしました';
+      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+    }).catch(() => {});
+  });
+
+  // ---------- iOS対策 ----------
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, {passive:false});
+  document.addEventListener('touchmove', e => { if (e.target === cv) e.preventDefault(); }, {passive:false});
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, {passive:false});
+
+  // ---------- 初期化 ----------
+  COLORS = [css('--c1'), css('--c2'), css('--c3')];
+  TILE = css('--tile'); LINE = css('--line'); BG = css('--bg');
+  // 開くとすぐステージ1から始める
+  startGame();
+  addEventListener('resize', resize);
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

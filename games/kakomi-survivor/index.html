@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/kakomi-survivor/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>かこみサバイバー</title>
+<meta name="description" content="体で地面を囲んで落とすサバイバル">
+<style>
+:root{
+  /* 地面（市松模様の2色） / 文字 */
+  --bg:#b9ea8c; --bg2:#a6df73; --fg:#2b2b2b; --sub:#666; --panel:#fff;
+  /* 空 / 海 / 地面の断面（外周・穴の中） */
+  --sky:#bfeaff; --sea:#2ec4f0; --soil:#d69a5c; --soil-dark:#b47740;
+  /* 落ちる床の点滅 */
+  --flash:#ff3b3b;
+  /* フィールドに落ちている球 */
+  --pellet:#ffb627;
+  /* プレイヤー（体の色 / 頭の色） */
+  --p-body:#2f6dff; --p-head:#2f6dff;
+  /* CPU（体の色） */
+  --c1-body:#ff4d6d; --c2-body:#ffb703; --c3-body:#9b5de5; --c4-body:#f15bb5;
+  --howto-bg:#fff; --howto-fg:#2b2b2b;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:var(--sky); color:var(--fg);
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+#wrap{position:fixed;inset:0}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:absolute;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 12px);padding:6px 20px;border-radius:999px;background:rgba(255,255,255,.92);box-shadow:0 3px 0 rgba(0,0,0,.15);font-size:20px;font-weight:800;white-space:nowrap;pointer-events:none}
+#toast{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 54px);transform:translateX(-50%);opacity:0;padding:3px 12px;border-radius:999px;background:rgba(255,255,255,.92);font-size:14px;font-weight:800;white-space:nowrap;pointer-events:none;transition:opacity .2s}
+#toast.show{opacity:1}
+#toast small{margin-left:.6em;font-size:inherit;font-weight:700;color:var(--sub)}
+#toast .dot{display:inline-block;width:.8em;height:.8em;border-radius:50%;margin-right:.35em;vertical-align:-.05em}
+#over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(20,60,90,.35)}
+#over.hidden{display:none}
+.panel{background:var(--panel);border-radius:22px;padding:24px 20px;width:min(320px, calc(100% - 32px));text-align:center;box-shadow:0 6px 0 rgba(0,0,0,.15)}
+#resTitle{font-size:22px;font-weight:800;margin:0 0 8px}
+#resScore{font-size:40px;font-weight:800;margin:0 0 4px;color:var(--p-body)}
+#resSub{font-size:16px;color:var(--sub);margin:0 0 20px}
+.btns{display:flex;gap:12px}
+button{flex:1;min-height:48px;font-size:18px;font-weight:800;border:none;border-radius:999px;background:var(--p-body);color:#fff;font-family:inherit;touch-action:manipulation;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+button.sub{background:#fff;color:var(--p-body);border:2px solid var(--p-body)}
+button:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.2)}
+button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.howto-open{min-height:0}   /* 上の button の min-height を「遊び方」ボタンに効かせない */
+#share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);touch-action:none}
+#share-view.hidden{display:none}
+#share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y}
+#share-img{display:block;width:100%;height:auto;border-radius:12px}
+#share-text{white-space:pre-wrap;word-break:break-all;text-align:left;font-size:14px;margin:12px 0 16px;-webkit-user-select:text;user-select:text}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv"></canvas>
+  <div id="hud" aria-live="polite"></div>
+  <div id="toast" aria-live="assertive"></div>
+  <div id="over" class="hidden">
+    <div class="panel">
+      <p id="resTitle"></p>
+      <p id="resScore"></p>
+      <p id="resSub"></p>
+      <div class="btns">
+        <button id="retry">もう一回</button>
+        <button id="share" class="sub">共有</button>
+      </div>
+    </div>
+  </div>
+  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+    <div class="panel">
+      <img id="share-img" alt="共有される結果画像">
+      <p id="share-text"></p>
+      <div class="btns"><button id="share-close" type="button">閉じる</button></div>
+    </div>
+  </div>
+  <section class="howto" hidden data-pos="top-left">
+    <h2>遊び方</h2>
+    <p>自分の体で地面を囲み、囲んだ床を海へ落として生き残るサバイバルゲームです。CPU4人を合わせた5人で戦い、最後の1人になれば1位です。頭の下の床がなくなると海に落ちて脱落し、順位と囲った回数、倒した数が結果に出ます。</p>
+    <h2>操作</h2>
+    <p>指を置いてドラッグした方向へ頭が曲がります。頭は止まらずに進み続けます。PC ではマウスのドラッグか矢印キーです。</p>
+    <h2>コツ</h2>
+    <p>自分の体を横切ると輪が閉じ、内側の床が赤く点滅して約0.7秒後に落ちます。落ちるのは床の上に頭があるときだけなので、点滅中に抜ければ助かります。球を拾うと体が伸びて、大きく囲めるようになります。開始30秒後からは10秒ごとに外側が崩れるので、端に長くいるのは危険です。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- 定数 ----------
+  const WORLD = 750;        // フィールド（円）の直径（ワールド単位）。中心は (WORLD/2, WORLD/2)
+  const FIELD_R = WORLD / 2; // フィールドの半径（いちばん外まで）
+  const EDGE_DEPTH = 0.25;   // フィールドの縁のでこぼこの深さ（半径の割合。縁は半径の 1-これ 〜 1 の間でうねる）
+  const EDGE_N = 360;        // 縁の形を持つ点の数
+  // ----- 外側から崩れる -----
+  const SHRINK_START = 30;   // 始まってから最初に外側が崩れるまでの秒数
+  const SHRINK_EVERY = 10;   // 崩れたあと、次に崩れるまでの秒数
+  const SHRINK_STEP = 0.1;   // 1回に崩れる幅（最初の大きさに対する割合。縁の形はそのまま縮む）
+  const SHRINK_MIN = 0.2;    // これより小さくは崩れない（最初の大きさに対する割合）
+  const CELL = 3;            // 削った地面を数えるマスの大きさ（ワールド単位）
+  const GRID = WORLD / CELL; // マス数（一辺）
+  const SPEED = 150;         // 頭の移動速度（単位/秒）。プレイヤーもCPUも同じ
+  const TURN = 5.5;          // 最大旋回速度（rad/秒）。大きいほど小回りが利く
+  const SEG = 6;             // 体の節の間隔
+  const BASE_LEN = 280;      // 最初の体の長さ
+  // ----- 球（拾うと体が伸びる。体の長さが変わるのは球を拾ったときだけ） -----
+  const PELLET_COUNT = 75;   // フィールドに落ちている球の数（拾われたり穴に落ちたりしたら別の場所に補充）
+  const PELLET_R = 5;        // 球の半径
+  const PELLET_GROW = 12.5;  // 球1個で伸びる長さ
+  const POP_TIME = 0.35;     // 球を拾ったときの演出（球がふくらんで消える）の秒数
+  const POP_SCALE = 5;       // 演出で球がふくらむ大きさ（元の何倍か）
+  const POP_MAX = 24;        // 同時に出せる演出の数
+  const PELLET_FLOAT = 6;    // 球を地面から浮かせる高さ（球の下端まで）
+  const PELLET_BOB = 2.5;    // 球が上下に動く幅（片側）
+  const PELLET_BOB_T = 1.6;  // 球が1往復する秒数
+  const EAT_TIME = 0.3;      // 球を拾ったときに頭がぷるんとふくらむ秒数
+  const EAT_SCALE = 0.45;    // そのときに横へふくらむ大きさ（元の何割増しか）
+  const SHARE_INSTANT = 0.5; // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const TOAST_TIME = 1.5;    // 「たおした！」を出しておく秒数
+  const SKIP = 3;            // 頭の直近の節は交差判定から外す（曲がっただけで囲ったことにならないように）
+  const BODY_W = 5;          // 体の太さ
+  const BODY_ALPHA = 0.55;   // 体の線の不透明度（0〜1。小さいほど透ける）
+  const HEAD_R = 8;          // 頭の半径
+  const FOOT_R = 8;          // 落ちる判定に使う円の半径（この円の中に床が少しでも残っていれば落ちない）
+  // ----- 囲った床が落ちる演出 -----
+  const FLASH_TIME = 1 / 1.5;// 輪を閉じてから床が落ちるまでの秒数（この間、床が赤く点滅する。まだ上にいられる）
+  const CRUMBLE_FLASH = 1.0; // 外側が崩れる前に赤く点滅する秒数
+  const BLINK = 0.12;        // 赤い点滅の切り替え間隔（秒）
+  const FLASH_OPACITY = 0.55;// 赤の濃さ
+  const PIECE_RES = 2;       // 落ちる床の模様を描く細かさ（1単位あたりのpx）
+  const VIEW_MAX = WORLD / 2;  // 画面に映す幅の最大値（いちばん引いたとき。ステージ全体の半分の幅）
+  const VIEW_MIN = 380;      // 画面に映す幅の最小値（ワールド単位）
+  const VIEW_K = 0.45;       // 画面に映す幅 = 今の体の長さ × VIEW_K（体いっぱいの輪でも画面に収まるように）
+  const DEAD = 8;            // ドラッグの遊び（px）
+  const STICK_R = 40;        // ドラッグの起点が指についてくる距離（px）
+  const GRID_STEP = 50;      // 地面のマス目の間隔（動いているのが分かるように）
+  // ----- 3D表示 -----
+  const GROUND_T = 10;       // 地面の厚み（穴から断面が見える）
+  const SEA_DEPTH = 60;      // 地面の表面から海面までの高さ
+  const FALL_G = 400;        // 海に落ちるときの重力（単位/秒²）
+  const FALL_SINK = 20;      // 海面からさらにこれだけ沈んだら消える
+  const FALL_TIME = Math.sqrt(2 * (SEA_DEPTH + FALL_SINK) / FALL_G);   // 落ちはじめてから消えるまでの秒数
+  const CAM_FOV = 45;        // カメラの画角（度）
+  const CAM_TILT = 58;       // カメラの見下ろす角度（度、90で真上）
+  const GROUND_TEX = 1024;   // 地面の模様（マス目と穴）を描く画像の大きさ（px）。大きいほど穴の縁が滑らか
+  const BODY_Y = 1;          // 体（地面に描く平らな線）の高さ。地面とちらつかないよう少しだけ浮かせる
+  const BODY_LAYER = 0.6;    // キャラごとに線の高さをこれだけずらす（線同士が重なってちらつかないように）
+  const MAX_PTS = 2000;      // 体の線に使う点の最大数（体の長さ SEG × これ まで描ける）
+
+  // ----- CPU -----
+  const CPU_COUNT = 4;            // CPUの数
+  const CPU_SPAWN_GAP = 180;      // CPUが出てくるとき、プレイヤーの頭から最低これだけ離す
+  const WALL_MARGIN = 80;         // CPUはこれよりフィールドの端に近づくと中央へ向きを変える
+  const CPU_HOLE_MARGIN = 5;      // CPUは穴の縁からこの距離を空けて進む
+  const CPU_LOOK_T = 0.6;         // CPUはこの秒数先まで自分の動き（曲がりきれるか）を予測し、穴や海に落ちる向きを避ける
+  const CPU_LOOP_MIN = 0.55;      // CPUが作る四角い輪の周りの長さ（今の体の長さに対する割合、最小）
+  const CPU_LOOP_MAX = 0.8;       // 同（最大）。1に近いほど大きく囲うが、尻尾が足りず輪が閉じにくくなる
+  const CPU_WANDER_MIN = 0.8;     // 輪を作る合間にうろつく時間（秒、最小）
+  const CPU_WANDER_MAX = 2.0;     // 同（最大）
+  const CPU_FOOD_DIST = 150;      // うろついている間、この距離内の球を拾いに行く
+  // ----- CPUの狩り（相手の頭の周りをぐるっと回って囲む）。強さはここで調整 -----
+  const CPU_HUNT_RANGE = 520;     // この距離内に相手の頭があれば狩りに行く
+  const CPU_HUNT_CHANCE = 1;    // 0.3秒ごとの判定で狩りを始める確率
+  const CPU_HUNT_TIME = 10;        // 1回の狩りを続ける最大の秒数
+  const CPU_PLAYER_BIAS = 0.25;    // プレイヤーを狙いやすくする（距離にこの倍率をかけて比べる。小さいほどプレイヤー優先）
+  const CPU_ORBIT_FILL = 0.75;    // 囲む円の周りの長さ = 体の長さ × これ（1に近いほど大きく囲うが輪が閉じにくい）
+  const CPU_ORBIT_MIN = 32;       // 囲む円の半径の最小（曲がれる小ささの限界）
+  const CPU_ORBIT_MAX = 110;      // 囲む円の半径の最大
+  const CPU_HUNT_SPEED = 1;       // 狩りの最中のCPUの速さ（プレイヤーの何倍か。1＝プレイヤーと同じ）
+  const CPU_LEAD = 0.35;          // 相手の動きをこの秒数先まで読んで、その位置を囲む（CPUごとに0.3〜1.3倍にばらつかせる）
+  const CPU_MAX_ON_PLAYER = 2;    // 同時にプレイヤーを狙うCPUの数の上限（全員で同じ動きをしないように）
+  const CPU_HUNT_REST_MIN = 1;    // 狩りが終わってから次の狩りまで休む秒数（最小）
+  const CPU_HUNT_REST_MAX = 3;    // 同（最大）
+  const CPU_CLOSE_DIST = 110;      // 自分の体のこの距離内に、相手の頭を囲える近道があれば体に向かって輪を閉じに行く
+  const CPU_CLOSE_SCAN = 0.1;
+  const CPU_OPEN_MIN = 110;       // 進む向きの先の空き（穴や海までの距離）がこれより短ければ、もっと空いている向きへ移る
+  const CPU_RAY_MAX = 300;        // 空きを調べる距離の上限     // その近道を探す間隔（秒）
+
+  const $ = id => document.getElementById(id);
+  const cv = $('cv');
+  const hud = $('hud');
+  const FONT = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif';
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const dirX = a => Math.cos(a), dirY = a => Math.sin(a);
+
+  // ---------- 色（CSS変数から読む） ----------
+  const css = getComputedStyle(document.documentElement);
+  const cssVar = k => css.getPropertyValue('--' + k).trim();
+  const C = {bg: cssVar('bg'), bg2: cssVar('bg2'), sky: cssVar('sky'), soilDark: cssVar('soil-dark'), fg: cssVar('fg'), head: cssVar('p-head'),
+             sea: cssVar('sea'), soil: cssVar('soil'), flash: cssVar('flash')};
+  // 添字＝ID（1がプレイヤー、2〜がCPU）
+  const BODY_COL = [null, cssVar('p-body')];
+  for (let i = 1; i <= CPU_COUNT; i++) BODY_COL.push(cssVar('c' + i + '-body'));
+  const PELLET_COL = cssVar('pellet');   // 球の色
+  // 地面の模様（市松模様）を、ワールドの (x0,y0) から幅 w・高さ h の範囲で、1単位 k px で描く
+  function paintGround(g, x0, y0, w, h, k){
+    g.fillStyle = C.bg; g.fillRect(0, 0, w * k, h * k);
+    g.fillStyle = C.bg2;
+    for (let iy = Math.floor(y0 / GRID_STEP); iy * GRID_STEP < y0 + h; iy++){
+      for (let ix = Math.floor(x0 / GRID_STEP); ix * GRID_STEP < x0 + w; ix++){
+        if ((ix + iy) & 1) g.fillRect((ix * GRID_STEP - x0) * k, (iy * GRID_STEP - y0) * k, GRID_STEP * k, GRID_STEP * k);
+      }
+    }
+  }
+
+  // ---------- 削った地面（穴） ----------
+  // マスごとに削った人のIDを持ち（0は地面）、穴の形を小さいキャンバスに1マス1ピクセルで描いておく（地面の模様から抜くのに使う）
+  const terr = new Uint8Array(GRID * GRID);
+  const counts = new Array(CPU_COUNT + 2).fill(0);   // 持ち主ごとのマス数
+  const tcv = document.createElement('canvas'); tcv.width = tcv.height = GRID;
+  const tctx = tcv.getContext('2d');
+  const timg = tctx.createImageData(GRID, GRID);
+  // 囲った形を塗って、どのマスが内側かを調べるための作業用キャンバス
+  const scv = document.createElement('canvas'); scv.width = scv.height = GRID;
+  const sctx = scv.getContext('2d', { willReadFrequently: true });
+  // 地面の模様：表面（マス目）と裏の断面（土）。どちらも穴の所を透明に抜いて、下の海が見えるようにする
+  const gcv = document.createElement('canvas'); gcv.width = gcv.height = GROUND_TEX;
+  const gctx = gcv.getContext('2d', { willReadFrequently: true });
+  const ucv = document.createElement('canvas'); ucv.width = ucv.height = GROUND_TEX / 2;
+  // 地面の模様と裏面の画像の組（描き方は同じで大きさだけ違う）
+  const views = () => [[gctx, groundTex, GROUND_TEX], [uctx, underTex, GROUND_TEX / 2]];
+  const uctx = ucv.getContext('2d', { willReadFrequently: true });
+  // ---------- フィールドの縁（試合ごとにランダムな形） ----------
+  // 角度ごとの縁までの半径。いくつかの波を重ねた形を、半径の (1-EDGE_DEPTH)〜1 に収める
+  const edgeR = new Float32Array(EDGE_N);
+  function makeEdge(){
+    const waves = [];
+    for (let k = 2; k <= 7; k++) waves.push([k, rand(0.4, 1) / k, rand(0, Math.PI * 2)]);
+    let lo = Infinity, hi = -Infinity;
+    const v = new Float32Array(EDGE_N);
+    for (let i = 0; i < EDGE_N; i++){
+      const a = i / EDGE_N * Math.PI * 2;
+      let f = 0;
+      for (const [k, amp, ph] of waves) f += amp * Math.sin(k * a + ph);
+      v[i] = f; lo = Math.min(lo, f); hi = Math.max(hi, f);
+    }
+    for (let i = 0; i < EDGE_N; i++) edgeR[i] = FIELD_R * (1 - EDGE_DEPTH * (hi - v[i]) / (hi - lo));
+  }
+  makeEdge();
+  // 向き a（中心から見た角度）の縁までの半径
+  function edgeAt(a){
+    const t = ((a / (Math.PI * 2)) % 1 + 1) % 1 * EDGE_N, i = Math.floor(t), f = t - i;
+    return edgeR[i % EDGE_N] * (1 - f) + edgeR[(i + 1) % EDGE_N] * f;
+  }
+  // 今のフィールドの大きさ（最初を1として、外側が崩れるたびに小さくなる）
+  let edgeScale = 1;
+  // フィールドの外側を透明にする
+  function clipField(g, size){
+    const k = size / WORLD;
+    g.globalCompositeOperation = 'destination-in';
+    g.beginPath();
+    for (let i = 0; i < EDGE_N; i++){
+      const a = i / EDGE_N * Math.PI * 2;
+      const r = edgeR[i] * edgeScale;
+      const x = (FIELD_R + Math.cos(a) * r) * k, y = (FIELD_R + Math.sin(a) * r) * k;
+      i ? g.lineTo(x, y) : g.moveTo(x, y);
+    }
+    g.closePath(); g.fill();
+  }
+  // 穴が増えた範囲（マス単位）だけ地面の模様から抜き、その範囲だけGPUに送り直す
+  // （毎回まるごと描き直して送るとカクつくため。穴は増える一方なので差分だけでよい）
+  function digView(poly, bx, by, bw, bh){
+    for (const [g, tex, size] of views()){
+      const k = size / WORLD, kc = size / GRID;
+      // 穴の形はマス目ではなく、囲った体の線そのもので抜く（縁がガタガタにならないように）
+      g.globalCompositeOperation = 'destination-out';
+      g.beginPath();
+      g.moveTo(poly[0].x * k, poly[0].y * k);
+      for (let i = 1; i < poly.length; i++) g.lineTo(poly[i].x * k, poly[i].y * k);
+      g.closePath();
+      g.fill('nonzero');
+      const x = Math.max(0, Math.floor(bx * kc) - 2), y = Math.max(0, Math.floor(by * kc) - 2);
+      const w = Math.min(size, Math.ceil((bx + bw) * kc) + 2) - x, h = Math.min(size, Math.ceil((by + bh) * kc) + 2) - y;
+      uploadRegion(tex, g, size, x, y, w, h);
+    }
+  }
+  function rebuildHoleView(){
+    const k = GROUND_TEX / WORLD;
+    gctx.globalCompositeOperation = 'source-over';
+    paintGround(gctx, 0, 0, WORLD, WORLD, k);
+    clipField(gctx, GROUND_TEX);
+    gctx.globalCompositeOperation = 'destination-out';
+    gctx.drawImage(tcv, 0, 0, GROUND_TEX, GROUND_TEX);
+    uctx.globalCompositeOperation = 'source-over';
+    uctx.fillStyle = C.soilDark; uctx.fillRect(0, 0, ucv.width, ucv.height);
+    clipField(uctx, ucv.width);
+    uctx.globalCompositeOperation = 'destination-out';
+    uctx.drawImage(tcv, 0, 0, ucv.width, ucv.height);
+    groundTex.needsUpdate = true; underTex.needsUpdate = true;
+  }
+
+  // ---------- 状態 ----------
+  let snakes = [], player, mode, deathReason, rank = 0, pellets = [];
+  let overTimer = -1;   // 0以上なら、この秒数のあとに結果を出す（落ちるアニメを見せてから）
+
+  // 穴でない場所にランダムに球を置く
+  function newPellet(){
+    let x = 0, y = 0;
+    for (let i = 0; i < 30; i++){
+      x = rand(PELLET_R, WORLD - PELLET_R); y = rand(PELLET_R, WORLD - PELLET_R);
+      if (fieldDist(x, y) < FIELD_R - PELLET_R * 2 && !dangerAt(x, y)) break;
+    }
+    return {x, y};
+  }
+
+  function makeSnake(id, cpu){
+    return {id, cpu, alive:false, pts:[], ang:0, target:0, bodyLen:0, loops:0, kills:0,
+            st:'wander', t:0, scan:0, h0:0, turnDir:1, leg:0, legTravel:0,
+            legA:0, legB:0, loopStart:0};
+  }
+
+  function spawn(s, x, y, ang){
+    s.alive = true;
+    s.pts = [{x, y}, {x, y}];   // 末尾の要素が頭
+    s.ang = s.target = ang;
+    s.len = BASE_LEN; s.bodyLen = 0; s.loops = 0; s.fallT = 0; s.eatT = EAT_TIME;
+    s.st = 'wander'; s.t = rand(1.5, 2.5); s.scan = rand(0.3, 2); s.prey = null; s.huntT = 0;
+    // CPUごとの性格（狙う確率・先読み・囲む円の大きさ・回る向きの好み）をばらつかせる
+    s.aggr = rand(0.4, 1); s.lead = rand(0.3, 1.3); s.fill = rand(0.85, 1.1); s.dirPref = Math.random() < 0.5 ? 1 : -1;
+  }
+
+  // CPUの出現位置：プレイヤーと他のCPUから離れた場所を探す
+  function spawnCpu(s){
+    let x = 0, y = 0;
+    for (let i = 0; i < 40; i++){
+      x = rand(0, WORLD); y = rand(0, WORLD);
+      if (fieldDist(x, y) > FIELD_R - 60 || holeNear(x, y, 60)) continue;
+      const ok = snakes.every(o => {
+        if (o === s || !o.alive) return true;
+        const h = headOf(o);
+        return Math.hypot(h.x - x, h.y - y) > (o === player ? CPU_SPAWN_GAP : 120);
+      });
+      if (ok) break;
+    }
+    spawn(s, x, y, rand(-Math.PI, Math.PI));
+  }
+
+  function start(){
+    terr.fill(0); counts.fill(0); pend.fill(0);
+    for (const q of pendings) removePiece(q);
+    for (const p of pops){ p.t = POP_TIME; p.mesh.visible = false; }
+    pendings = [];
+    timg.data.fill(0);
+    tctx.clearRect(0, 0, GRID, GRID);
+    if (crumble) for (const m of crumble.meshes) removeMesh(m);
+    crumble = null; edgeScale = 1; shrinkT = SHRINK_START;
+    makeEdge();
+    rebuildHoleView();
+    buildRim();
+    pellets = [];
+    for (let i = 0; i < PELLET_COUNT; i++) pellets.push(newPellet());
+    snakes = [makeSnake(1, false)];
+    for (let i = 0; i < CPU_COUNT; i++) snakes.push(makeSnake(i + 2, true));
+    player = snakes[0];
+    player.kills = 0;
+    spawn(player, WORLD / 2, WORLD / 2, -Math.PI / 2);
+    for (let i = 1; i < snakes.length; i++) spawnCpu(snakes[i]);
+    mode = 'playing';
+    document.documentElement.setAttribute('data-howto-hidden', '');
+    overTimer = -1;
+    $('over').classList.add('hidden');
+    $('share-view').classList.add('hidden');
+    $('toast').classList.remove('show');
+    updateHud();
+  }
+
+  const headOf = s => s.pts[s.pts.length - 1];
+  const maxLenOf = s => s.len;
+  // フィールドの中心からの距離
+  // 中心からの距離を、その向きの縁が FIELD_R になるように引きのばした値（FIELD_R より大きければフィールドの外）
+  const fieldDist = (x, y) => Math.hypot(x - FIELD_R, y - FIELD_R) * FIELD_R / (edgeAt(Math.atan2(y - FIELD_R, x - FIELD_R)) * edgeScale);
+  // 次に崩れる外側の帯（赤く点滅中）の上か
+  const crumbleAt = (x, y) => !!crumble && crumble.phase === 'flash' &&
+    Math.hypot(x - FIELD_R, y - FIELD_R) > edgeAt(Math.atan2(y - FIELD_R, x - FIELD_R)) * crumble.to;
+  const aliveCount = () => snakes.filter(o => o.alive).length;
+  function updateHud(){ hud.textContent = '残り ' + aliveCount() + '人'; }
+
+  // (x,y) が穴か
+  function holeAt(x, y){
+    const gx = Math.floor(x / CELL), gy = Math.floor(y / CELL);
+    if (gx < 0 || gy < 0 || gx >= GRID || gy >= GRID) return false;
+    return terr[gy * GRID + gx] !== 0;
+  }
+  // (x,y) の穴を作ったキャラ
+  function holeMaker(x, y){
+    const gx = Math.floor(x / CELL), gy = Math.floor(y / CELL);
+    if (gx < 0 || gy < 0 || gx >= GRID || gy >= GRID) return null;
+    const id = terr[gy * GRID + gx];
+    return snakes.find(o => o.id === id) || null;
+  }
+  // 頭の下の円（半径 FOOT_R）のどこかに床が残っているか。中心と円周の8点で調べる
+  const FOOT_PTS = [[0, 0]];
+  for (let i = 0; i < 8; i++) FOOT_PTS.push([Math.cos(i * Math.PI / 4), Math.sin(i * Math.PI / 4)]);
+  function supported(x, y){
+    for (const [ux, uy] of FOOT_PTS){
+      const px = x + ux * FOOT_R, py = y + uy * FOOT_R;
+      if (fieldDist(px, py) <= FIELD_R && !holeAt(px, py)) return true;
+    }
+    return false;
+  }
+  // 円の下にある穴を作ったキャラ（倒した数に入れる相手）
+  function footMaker(x, y){
+    for (const [ux, uy] of FOOT_PTS){
+      const m = holeMaker(x + ux * FOOT_R, y + uy * FOOT_R);
+      if (m) return m;
+    }
+    return null;
+  }
+  // 穴か、これから落ちる床（赤く点滅中）か。CPUが避ける・球を置かない判定に使う
+  function dangerAt(x, y){
+    const gx = Math.floor(x / CELL), gy = Math.floor(y / CELL);
+    if (gx < 0 || gy < 0 || gx >= GRID || gy >= GRID) return false;
+    const gi = gy * GRID + gx;
+    return terr[gi] !== 0 || pend[gi] !== 0 || crumbleAt(x, y);
+  }
+  function holeNear(x, y, r){
+    for (let dy = -r; dy <= r; dy += 10) for (let dx = -r; dx <= r; dx += 10){
+      if (dx * dx + dy * dy <= r * r && dangerAt(x + dx, y + dy)) return true;
+    }
+    return false;
+  }
+  // (x,y) の周り r 以内に穴があるか（上下左右と中心を見る）
+  function holeClose(x, y, r){
+    return holeAt(x, y) || holeAt(x + r, y) || holeAt(x - r, y) || holeAt(x, y + r) || holeAt(x, y - r);
+  }
+  // (x0,y0)→(x1,y1) の間に穴がないか
+  function pathClear(x0, y0, x1, y1){
+    const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 6));
+    for (let i = 1; i <= n; i++){
+      if (dangerAt(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n)) return false;
+    }
+    return true;
+  }
+
+  // 線分AB（頭の移動）と線分CD（体の節）の交差。交差すればAB上の位置t(0〜1)、しなければ-1
+  function segHit(ax, ay, bx, by, cx, cy, dx, dy){
+    const rx = bx - ax, ry = by - ay, sx = dx - cx, sy = dy - cy;
+    const den = rx * sy - ry * sx;
+    if (Math.abs(den) < 1e-9) return -1;
+    const qx = cx - ax, qy = cy - ay;
+    const t = (qx * sy - qy * sx) / den, u = (qx * ry - qy * rx) / den;
+    return (t >= 0 && t <= 1 && u >= 0 && u <= 1) ? t : -1;
+  }
+
+  function setCell(gi, owner){
+    terr[gi] = owner;
+    const o = gi * 4;
+    timg.data[o] = timg.data[o + 1] = timg.data[o + 2] = 0;
+    timg.data[o + 3] = owner ? 255 : 0;
+  }
+
+  // 体で囲った多角形の内側の地面を削って owner の穴にする（すでに穴の所はそのまま）。増えたマス数を返す
+  // 囲った内側を「これから落ちる床」にする（すでに穴・落ちる予定の所は除く）。対象のマス数を返す
+  function fillLoop(owner, poly){
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of poly){
+      x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y);
+      x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y);
+    }
+    const bx = Math.max(0, Math.floor(x0 / CELL)), by = Math.max(0, Math.floor(y0 / CELL));
+    const ex = Math.min(GRID, Math.ceil(x1 / CELL) + 1), ey = Math.min(GRID, Math.ceil(y1 / CELL) + 1);
+    const bw = ex - bx, bh = ey - by;
+    if (bw <= 0 || bh <= 0) return 0;
+    sctx.clearRect(bx, by, bw, bh);
+    sctx.beginPath();
+    sctx.moveTo(poly[0].x / CELL, poly[0].y / CELL);
+    for (let i = 1; i < poly.length; i++) sctx.lineTo(poly[i].x / CELL, poly[i].y / CELL);
+    sctx.closePath();
+    sctx.fill('nonzero');   // 輪の中で体がさらに交差していても、囲まれた部分はすべて塗る
+    const d = sctx.getImageData(bx, by, bw, bh).data;
+    const cells = [];
+    for (let y = 0; y < bh; y++){
+      for (let x = 0; x < bw; x++){
+        if (d[(y * bw + x) * 4 + 3] < 128) continue;
+        const gi = (by + y) * GRID + bx + x;
+        if (terr[gi] || pend[gi]) continue;
+        pend[gi] = 1;
+        cells.push(gi);
+      }
+    }
+    return cells.length ? addPending(owner, poly, cells, {d, bx, by, bw, bh}, x0, y0, x1, y1) : null;
+  }
+
+  // ---------- 落ちる床 ----------
+  // 輪を閉じると、囲った床が FLASH_TIME 秒赤く点滅し、そのあと床ごと海へ落ちて穴になる
+  const pend = new Uint8Array(GRID * GRID);   // 1 = 落ちる予定のマス
+  let pendings = [];
+  // 囲った形（白）だけを描いたキャンバスと、その形に切り抜いた地面の模様のキャンバスを作る
+  function pieceCanvases(poly, x0, y0, w, h){
+    const k = Math.min(PIECE_RES, 1024 / Math.max(w, h));
+    const cw = Math.max(1, Math.ceil(w * k)), ch = Math.max(1, Math.ceil(h * k));
+    const path = g => {
+      g.beginPath();
+      g.moveTo((poly[0].x - x0) * k, (poly[0].y - y0) * k);
+      for (let i = 1; i < poly.length; i++) g.lineTo((poly[i].x - x0) * k, (poly[i].y - y0) * k);
+      g.closePath();
+    };
+    const mcv = document.createElement('canvas'); mcv.width = cw; mcv.height = ch;
+    const mg = mcv.getContext('2d');
+    mg.fillStyle = '#fff'; path(mg); mg.fill('nonzero');
+    const tcv2 = document.createElement('canvas'); tcv2.width = cw; tcv2.height = ch;
+    const tg = tcv2.getContext('2d');
+    paintGround(tg, x0, y0, w, h, k);
+    tg.globalCompositeOperation = 'destination-in';
+    path(tg); tg.fillStyle = '#fff'; tg.fill('nonzero');
+    return {mcv, tcv2};
+  }
+  function pieceMesh(canvas, x0, y0, w, h, y, mat){
+    mat.map = new THREE.CanvasTexture(canvas);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(x0 + w / 2, y, y0 + h / 2);
+    scene.add(m);
+    return m;
+  }
+  function addPending(owner, poly, cells, mask, x0, y0, x1, y1){
+    const w = Math.max(1, x1 - x0), h = Math.max(1, y1 - y0);
+    const {mcv, tcv2} = pieceCanvases(poly, x0, y0, w, h);
+    // 赤い点滅（地面の上に半透明の赤を重ねる）
+    const flash = pieceMesh(mcv, x0, y0, w, h, 0.2, new THREE.MeshBasicMaterial({color: C.flash, transparent: true,
+      opacity: FLASH_OPACITY, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1}));
+    const q = {owner, poly, cells, mask, x0, y0, w, h, mcv, tcv2, t: 0, phase: 'flash', meshes: [flash]};
+    pendings.push(q);
+    return q;
+  }
+  function removePiece(q){
+    for (const m of q.meshes){
+      scene.remove(m);
+      m.geometry.dispose(); m.material.map.dispose(); m.material.dispose();
+    }
+    q.meshes = [];
+  }
+  function insideMask(mask, x, y){
+    const gx = Math.floor(x / CELL) - mask.bx, gy = Math.floor(y / CELL) - mask.by;
+    if (gx < 0 || gy < 0 || gx >= mask.bw || gy >= mask.bh) return false;
+    return mask.d[(gy * mask.bw + gx) * 4 + 3] >= 128;
+  }
+  // 点滅が終わった床を落とす：穴にして、上にいた頭は一緒に落ちる
+  function dropPending(q){
+    const {bx, by, bw, bh} = q.mask;
+    for (const gi of q.cells){ pend[gi] = 0; counts[q.owner.id]++; setCell(gi, q.owner.id); }
+    tctx.putImageData(timg, 0, 0, bx, by, bw, bh);
+    digView(q.poly, bx, by, bw, bh);
+    for (let i = 0; i < pellets.length; i++) if (holeAt(pellets[i].x, pellets[i].y)) pellets[i] = newPellet();
+    // 床の切れ端（表面と裏面）を作って落とす
+    removePiece(q);
+    q.meshes.push(pieceMesh(q.tcv2, q.x0, q.y0, q.w, q.h, 0, new THREE.MeshLambertMaterial({alphaTest: 0.5})));
+    q.meshes.push(pieceMesh(q.mcv, q.x0, q.y0, q.w, q.h, -GROUND_T, new THREE.MeshLambertMaterial({color: C.soilDark, alphaTest: 0.5, side: THREE.DoubleSide})));
+    q.phase = 'drop'; q.t = 0;
+    for (const o of snakes){
+      if (!o.alive) continue;
+      const h = headOf(o);
+      if (!insideMask(q.mask, h.x, h.y) || supported(h.x, h.y)) continue;
+      kill(o, o === q.owner ? 'fall' : 'enclosed', q.owner);
+    }
+  }
+  function updatePendings(dt){
+    for (const q of pendings){
+      q.t += dt;
+      if (q.phase === 'flash'){
+        q.meshes[0].visible = Math.floor(q.t / BLINK) % 2 === 0;
+        if (q.t >= FLASH_TIME) dropPending(q);
+      } else {
+        const drop = FALL_G * q.t * q.t / 2;
+        q.meshes[0].position.y = -drop;
+        q.meshes[1].position.y = -GROUND_T - drop;
+        if (q.t >= FALL_TIME){ removePiece(q); q.done = true; }
+      }
+    }
+    if (pendings.some(q => q.done)) pendings = pendings.filter(q => !q.done);
+  }
+
+  // 直前に囲った輪の内側に点(x,y)があるか
+
+
+  // 体を最大長に切りそろえ、今の長さを返す（球を拾った直後は尻尾が止まって体が伸びていく）
+  function trim(s){
+    const pts = s.pts, maxLen = maxLenOf(s);
+    let acc = 0;
+    for (let i = pts.length - 1; i > 0; i--){
+      const a = pts[i], b = pts[i - 1];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (acc + d >= maxLen){
+        const r = d > 0 ? (maxLen - acc) / d : 0;
+        b.x = a.x + (b.x - a.x) * r; b.y = a.y + (b.y - a.y) * r;
+        if (i - 1 > 0) pts.splice(0, i - 1);
+        return maxLen;
+      }
+      acc += d;
+    }
+    return acc;
+  }
+
+  // 倒れたら復活しない。削った穴も残る（サバイバル：最後の1人になったら勝ち）
+  // 倒れると海に落ちていく（fallT が落ちはじめてからの秒数）。結果は落ちきってから出す
+  // by は倒した相手（その相手が作った穴・床で落ちたとき）。自分の穴なら倒した数には入れない
+  function kill(s, reason, by){
+    if (by && by !== s) by.kills++; else by = null;
+    s.alive = false;
+    s.fallT = 0;
+    // 落ちる直前の速さ（向きと大きさ）を覚えておき、落ちている間もその速さで前へ進ませる
+    s.fallVx = dirX(s.ang) * speedOf(s); s.fallVy = dirY(s.ang) * speedOf(s);
+    updateHud();
+    // CPUが減ったら知らせる（プレイヤーが倒したときは「たおした！」）。勝ちが決まったときは出さない
+    if (s.cpu && player.alive && aliveCount() > 1) showToast(s, by === player ? 'たおした！' : '脱落！');
+    if (!s.cpu){ rank = aliveCount() + 1; deathReason = reason; overTimer = FALL_TIME; }
+    else if (player.alive && aliveCount() === 1){ rank = 1; deathReason = 'win'; overTimer = FALL_TIME; }
+  }
+
+  const speedOf = s => s.cpu && s.st === 'hunt' ? SPEED * CPU_HUNT_SPEED : SPEED;
+
+  // 1匹ぶん進める
+  function step(s, dt){
+    // 旋回：目標の向きへ最大旋回速度で近づける
+    let diff = s.target - s.ang;
+    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+    s.ang += Math.max(-TURN * dt, Math.min(TURN * dt, diff));
+
+    const pts = s.pts, n = pts.length;
+    const head = pts[n - 1];
+    const ax = head.x, ay = head.y;
+    const v = speedOf(s);
+    const bx = ax + dirX(s.ang) * v * dt, by = ay + dirY(s.ang) * v * dt;
+
+    // 自分の体と交差したら、交点から頭までの体が作る輪の内側の地面を削る
+    let hitJ = -1, hitT = 2;
+    for (let j = n - 2 - SKIP; j >= 0; j--){
+      const t = segHit(ax, ay, bx, by, pts[j].x, pts[j].y, pts[j + 1].x, pts[j + 1].y);
+      if (t >= 0 && t < hitT){ hitT = t; hitJ = j; }
+    }
+    if (hitJ >= 0){
+      const P = {x: ax + (bx - ax) * hitT, y: ay + (by - ay) * hitT};
+      const poly = [P];
+      for (let k = hitJ + 1; k <= n - 2; k++) poly.push(pts[k]);
+      poly.push({x: ax, y: ay});
+      // 囲った床は赤く点滅したあと落ちる。そのとき上にいた頭は一緒に落ちる（体だけなら何も起きない）
+      // 囲った床は赤く点滅したあと落ちる。点滅中は逃げられ、落ちるときに上にいた頭だけが一緒に落ちる
+      if (fillLoop(s, poly)) s.loops++;
+    }
+
+    head.x = bx; head.y = by;
+    // 頭の下の円に床がまったくなくなったら海に落ちる（中心がフィールドの外なら外へ、穴ならその穴を作った相手が倒したことになる）
+    if (!supported(bx, by)){
+      if (fieldDist(bx, by) > FIELD_R) kill(s, 'wall'); else kill(s, 'fall', footMaker(bx, by));
+      return;
+    }
+    // 球を拾ったら体が伸びる
+    for (let i = 0; i < pellets.length; i++){
+      const q = pellets[i];
+      if (Math.abs(q.x - bx) < HEAD_R + PELLET_R && Math.abs(q.y - by) < HEAD_R + PELLET_R &&
+          Math.hypot(q.x - bx, q.y - by) < HEAD_R + PELLET_R){
+        s.len += PELLET_GROW;
+        s.eatT = 0;
+        spawnPop(q.x, q.y, i);
+        pellets[i] = newPellet();
+      }
+    }
+    // 一定間隔ごとに節を固定する
+    const prev = pts[n - 2];
+    if (Math.hypot(bx - prev.x, by - prev.y) >= SEG) pts.push({x: bx, y: by});
+    s.bodyLen = trim(s);
+  }
+
+  // ---------- CPUの動き ----------
+  // うろつく → 四角く回って輪を閉じる → うろつく… を繰り返し、他人の頭を囲えそうなら狙う
+  const toCenter = h => Math.atan2(WORLD / 2 - h.y, WORLD / 2 - h.x);
+  const inField = (x, y) => fieldDist(x, y) < FIELD_R - WALL_MARGIN;
+
+  function wander(s){
+    s.st = 'wander';
+    s.t = rand(CPU_WANDER_MIN, CPU_WANDER_MAX);
+    s.target = s.ang + rand(-0.8, 0.8);
+  }
+
+  // 今の向きから回る四角い輪（右回り/左回り）の候補。壁にかかるものは除く
+  function loopPlans(s){
+    const h = headOf(s);
+    const P = s.bodyLen * rand(CPU_LOOP_MIN, CPU_LOOP_MAX);
+    const a = P / 4 * rand(0.75, 1.25), b = P / 2 - a;
+    const plans = [];
+    for (const d of [1, -1]){
+      const ux = dirX(s.ang), uy = dirY(s.ang);
+      const vx = dirX(s.ang + d * Math.PI / 2), vy = dirY(s.ang + d * Math.PI / 2);
+      const x1 = h.x + a * ux, y1 = h.y + a * uy;
+      const x2 = x1 + b * vx, y2 = y1 + b * vy;
+      const x3 = x2 - a * ux, y3 = y2 - a * uy;
+      if (!inField(x1, y1) || !inField(x2, y2) || !inField(x3, y3)) continue;
+      if (!pathClear(h.x, h.y, x1, y1) || !pathClear(x1, y1, x2, y2) || !pathClear(x2, y2, x3, y3) || !pathClear(x3, y3, h.x, h.y)) continue;
+      // この輪の中に他人の頭があるか
+      const hunt = snakes.some(o => {
+        if (o === s || !o.alive) return false;
+        const q = headOf(o), qx = q.x - h.x, qy = q.y - h.y;
+        const u = qx * ux + qy * uy, v = qx * vx + qy * vy;
+        return u > 0 && u < a && v > 0 && v < b;
+      });
+      plans.push({d, a, b, hunt});
+    }
+    return plans;
+  }
+
+  function startLoop(s, p){
+    s.st = 'loop'; s.turnDir = p.d; s.h0 = s.ang; s.target = s.ang;
+    s.leg = 0; s.legTravel = 0; s.legA = p.a; s.legB = p.b; s.loopStart = s.loops;
+  }
+
+  // 輪づくりを始める（他人の頭を囲える向きがあればそちらを選ぶ）
+  function tryLoop(s){
+    if (s.bodyLen < maxLenOf(s) * 0.95) return false;   // 体が伸びきるまで待つ
+    const plans = loopPlans(s);
+    if (!plans.length) return false;
+    const p = plans.find(q => q.hunt) || plans[Math.floor(Math.random() * plans.length)];
+    startLoop(s, p);
+    return true;
+  }
+
+  // 目標の向きへ曲がりながら CPU_LOOK_T 秒進んだとき、穴にもフィールドの外にも出ないか
+  // (x,y) から向き a で進み始め、目標の向きへ曲がりながら look 秒進んだとき、穴にもフィールドの外にも出ないか。出なければ着いた所を返す
+  function simCourse(s, x, y, a, target, margin, look){
+    const st = 0.02;   // 細かく（3単位ごとに）調べて、穴の角をかすめないようにする
+    let leaving = dangerAt(x, y);   // 今いる所が落ちる床なら、そこから出るまでは床の上を通ってよい
+    for (let t = 0; t < look; t += st){
+      let d = target - a;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      a += Math.max(-TURN * st, Math.min(TURN * st, d));
+      x += dirX(a) * speedOf(s) * st; y += dirY(a) * speedOf(s) * st;
+      if (fieldDist(x, y) > FIELD_R - 10 || holeClose(x, y, margin)) return null;
+      if (dangerAt(x, y)){ if (!leaving) return null; }
+      else leaving = false;
+    }
+    return leaving ? null : {x, y, a};
+  }
+  function safeCourse(s, target, margin = CPU_HOLE_MARGIN, look = CPU_LOOK_T){
+    const h = headOf(s);
+    return !!simCourse(s, h.x, h.y, s.ang, target, margin, look);
+  }
+  // その向きへ進んでも、着いた先でまだどこかへ進み続けられるか（行き止まりに入って詰まないように2段先まで見る）
+  function roomyCourse(s, target){
+    const h = headOf(s);
+    const e = simCourse(s, h.x, h.y, s.ang, target, CPU_HOLE_MARGIN, CPU_LOOK_T);
+    if (!e) return false;
+    for (let k = 0; k < 8; k++){
+      if (simCourse(s, e.x, e.y, e.a, e.a + (k - 4) * Math.PI / 4, CPU_HOLE_MARGIN, CPU_LOOK_T)) return true;
+    }
+    return false;
+  }
+
+
+  // (x,y) から向き a へ、穴（点滅中の床も）か海にぶつかるまでの距離
+  function clearance(x, y, a){
+    const ux = dirX(a), uy = dirY(a);
+    for (let d = 6; d < CPU_RAY_MAX; d += 6){
+      const px = x + ux * d, py = y + uy * d;
+      if (fieldDist(px, py) > FIELD_R - 10 || dangerAt(px, py)) return d;
+    }
+    return CPU_RAY_MAX;
+  }
+  function think(s, dt){
+    plan(s, dt);
+    const h = headOf(s);
+    // 囲みに行く途中・狩りの最中でなければ、行き止まりに向かっていないか見る。先が狭ければ空いている向きへ移る（追い込まれて詰まないように）
+    if (!s.closeTo && s.st !== 'hunt' && clearance(h.x, h.y, s.target) < CPU_OPEN_MIN){
+      let best = s.target, bc = clearance(h.x, h.y, s.target);
+      for (let k = 0; k < 16; k++){
+        const a = s.ang + (k - 8) * Math.PI / 8, c = clearance(h.x, h.y, a);
+        if (c > bc + 20){ bc = c; best = a; }
+      }
+      if (best !== s.target){
+        if (s.st === 'loop') wander(s);
+        s.target = best;
+      }
+    }
+    // 決めた向きで落ちそう、または行き止まりに入りそうなら、大丈夫な向きの中から先がいちばん空いている向きを選ぶ
+    if (roomyCourse(s, s.target)) return;
+    if (s.st === 'loop') wander(s);
+    const base = s.target;
+    let pick = null, pc = -1;
+    for (let k = 1; k <= 10; k++){
+      for (const sg of [1, -1]){
+        const c = base + sg * k * 0.3;
+        if (!roomyCourse(s, c)) continue;
+        const cl = clearance(h.x, h.y, c);
+        if (cl > pc){ pc = cl; pick = c; }
+      }
+    }
+    if (pick !== null){ s.target = pick; return; }
+    // 2段先まで大丈夫な向きがなければ、すぐ先だけ落ちない向き
+    if (safeCourse(s, base)){ s.target = base; return; }
+    for (let k = 1; k <= 10; k++){
+      for (const sg of [1, -1]){
+        const c = base + sg * k * 0.3;
+        if (!safeCourse(s, c)) continue;
+        const cl = clearance(h.x, h.y, c);
+        if (cl > pc){ pc = cl; pick = c; }
+      }
+    }
+    if (pick !== null){ s.target = pick; return; }
+    // どれもだめなら（穴の縁ぎりぎりにいるときなど）、縁との間を詰めて近い先だけ見て探し直す
+    for (let k = 0; k < 24; k++){
+      const c = s.ang + (k - 12) * Math.PI / 12;
+      if (!safeCourse(s, c, 0, CPU_LOOK_T * 0.5)) continue;
+      const cl = clearance(h.x, h.y, c);
+      if (cl > pc){ pc = cl; pick = c; }
+    }
+    if (pick !== null) s.target = pick;
+  }
+
+  // 囲む円の半径（体の長さで決まる）
+  const orbitR = s => Math.min(CPU_ORBIT_MAX, s.bodyLen * CPU_ORBIT_FILL * s.fill / (2 * Math.PI));
+  // 狙う相手を選んで狩りを始める（プレイヤーを優先）
+  function startHunt(s, h){
+    if (orbitR(s) < CPU_ORBIT_MIN) return false;   // 体が短すぎて囲めない
+    let best = null, bd = Infinity;
+    for (const o of snakes){
+      if (o === s || !o.alive) continue;
+      const q = headOf(o), d = Math.hypot(q.x - h.x, q.y - h.y);
+      if (d > CPU_HUNT_RANGE) continue;
+      // プレイヤーを狙っているCPUがもう上限まで居れば、プレイヤーは狙わない
+      if (o === player && snakes.filter(c => c.cpu && c.alive && c.st === 'hunt' && c.prey === player).length >= CPU_MAX_ON_PLAYER) continue;
+      const score = o === player ? d * CPU_PLAYER_BIAS : d;
+      if (score < bd){ bd = score; best = o; }
+    }
+    if (!best) return false;
+    s.st = 'hunt'; s.prey = best; s.huntT = CPU_HUNT_TIME; s.huntLoops = s.loops;
+    // 今の進み方から自然な回り方（右回り/左回り）を決める
+    const q = headOf(best);
+    const cross = (h.x - q.x) * dirY(s.ang) - (h.y - q.y) * dirX(s.ang);
+    s.orbitDir = Math.abs(cross) < 1e-3 ? s.dirPref : (cross >= 0 ? 1 : -1);
+    return true;
+  }
+  // 狩り：相手の少し先の位置を中心に、体で一周できる大きさの円を描いて回る。一周すると輪が閉じて囲める
+  function hunt(s, dt, h){
+    const o = s.prey;
+    s.huntT -= dt;
+    // 輪を閉じた・相手がいない・時間切れなら終わり。閉じた輪から外へ抜ける
+    if (!o || !o.alive || s.loops !== s.huntLoops || s.huntT <= 0){
+      wander(s); s.scan = rand(CPU_HUNT_REST_MIN, CPU_HUNT_REST_MAX);
+      if (o) s.target = Math.atan2(h.y - headOf(o).y, h.x - headOf(o).x);
+      return;
+    }
+    const q = headOf(o);
+    const px = q.x + dirX(o.ang) * SPEED * CPU_LEAD * s.lead, py = q.y + dirY(o.ang) * SPEED * CPU_LEAD * s.lead;
+    const dx = h.x - px, dy = h.y - py, d = Math.hypot(dx, dy);
+    const R = Math.max(CPU_ORBIT_MIN, orbitR(s));
+    if (d > R * 2.2){ s.target = Math.atan2(py - h.y, px - h.x); return; }   // 遠ければまず近づく
+    const a = Math.atan2(dy, dx);
+    const corr = Math.max(-1, Math.min(1, (d - R) / R)) * 0.9;   // 円より外なら内へ、内なら外へ寄せる
+    s.target = a + s.orbitDir * (Math.PI / 2 + corr);
+  }
+
+  // 点(x,y)が多角形の中か
+  function inPoly(poly, x, y){
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++){
+      const a = poly[i], b = poly[j];
+      if ((a.y > y) !== (b.y > y) && x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+    }
+    return inside;
+  }
+  // 輪を閉じる近道：自分の体の近い所へまっすぐ向かえば、相手の頭を囲んだ輪ができるか。できるならその点を返す
+  function closeShortcut(s, h){
+    const pts = s.pts, n = pts.length;
+    let best = null, bd = CPU_CLOSE_DIST;
+    for (let i = n - 2 - SKIP * 3; i >= 0; i -= 2){
+      const p = pts[i], d = Math.hypot(p.x - h.x, p.y - h.y);
+      if (d >= bd || !pathClear(h.x, h.y, p.x, p.y)) continue;
+      const poly = pts.slice(i);
+      if (snakes.some(o => o !== s && o.alive && inPoly(poly, headOf(o).x, headOf(o).y))){ best = p; bd = d; }
+    }
+    return best;
+  }
+
+  // CPUがどちらへ進みたいかを決める
+  function plan(s, dt){
+    const h = headOf(s);
+    s.t -= dt;
+    // 相手の頭を囲める近道があれば、何をしていても体に向かって輪を閉じに行く
+    s.closeScan = (s.closeScan || 0) - dt;
+    if (s.closeScan <= 0){ s.closeScan = CPU_CLOSE_SCAN; s.closeTo = closeShortcut(s, h); }
+    if (s.closeTo){
+      const p = s.closeTo;
+      // 体を少し越えた先を狙って確実に横切る
+      s.target = Math.atan2(p.y - h.y, p.x - h.x);
+      return;
+    }
+    // フィールドの端に近づいて外向きに進んでいたら中央へ（何をしていても優先）
+    const fd = fieldDist(h.x, h.y), cd = Math.hypot(h.x - FIELD_R, h.y - FIELD_R) || 1;
+    if (fd > FIELD_R - WALL_MARGIN &&
+        (dirX(s.ang) * (h.x - FIELD_R) + dirY(s.ang) * (h.y - FIELD_R)) / cd > -0.2){
+      if (s.st !== 'hunt'){   // 狩りの最中は端の処理を落ちない向き探し（think）に任せる
+        if (s.st !== 'wander') wander(s);
+        s.target = toCenter(h);
+        return;
+      }
+    }
+    if (s.st === 'hunt'){ hunt(s, dt, h); return; }
+    if (s.st === 'wander'){
+      // 近くに相手の頭があれば（確率で）狩りに行く
+      s.scan -= dt;
+      if (s.scan <= 0){
+        s.scan = 0.3;
+        if (Math.random() < CPU_HUNT_CHANCE * s.aggr && startHunt(s, h)) return;
+      }
+      if (s.t <= 0 && !tryLoop(s)){
+        wander(s);
+        if (s.bodyLen >= maxLenOf(s) * 0.95) s.target = toCenter(h) + rand(-0.6, 0.6);   // 壁際で輪が作れないときは広い所へ
+      }
+      // 近くの球を拾いに行く（間に穴がないものだけ）
+      if (s.st === 'wander'){
+        let best = null, bd = CPU_FOOD_DIST;
+        for (const q of pellets){
+          const d = Math.hypot(q.x - h.x, q.y - h.y);
+          if (d < bd && pathClear(h.x, h.y, q.x, q.y)){ bd = d; best = q; }
+        }
+        if (best) s.target = Math.atan2(best.y - h.y, best.x - h.x);
+      }
+    } else if (s.st === 'loop'){
+      // 輪が閉じたか、4辺目を行き過ぎたら終わり
+      if (s.loops !== s.loopStart || s.leg > 4){ wander(s); return; }
+      s.target = s.h0 + s.turnDir * s.leg * Math.PI / 2;
+      s.legTravel += SPEED * dt;
+      const len = s.leg === 4 ? s.legA * 1.5 : (s.leg % 2 === 0 ? s.legA : s.legB);
+      if (s.legTravel >= len){ s.leg++; s.legTravel = 0; }
+    }
+  }
+
+  function update(dt){
+    if (mode !== 'playing') return;
+    if (overTimer >= 0 && (overTimer -= dt) < 0){ gameOver(); return; }
+    updatePendings(dt);
+    updateCrumble(dt);
+    updatePops(dt);
+    if (mode !== 'playing') return;
+    for (const s of snakes){
+      if (!s.alive){
+        s.fallT += dt;
+        continue;
+      }
+      if (s.eatT < EAT_TIME) s.eatT += dt;
+      if (s.cpu) think(s, dt);
+      step(s, dt);
+      if (mode !== 'playing') return;
+    }
+  }
+
+  // CPUが減ったら少しの間出す（減った相手の色の丸と残り人数つき）
+  let toastTimer = 0;
+  function showToast(o, msg){
+    const t = $('toast');
+    t.innerHTML = '<span class="dot" style="background:' + BODY_COL[o.id] + '"></span>' + msg + '<small>残り ' + aliveCount() + '人</small>';
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), TOAST_TIME * 1000);
+  }
+
+  function gameOver(){
+    mode = 'over';
+    document.documentElement.removeAttribute('data-howto-hidden');
+    $('resTitle').textContent = {wall: '海に落ちた！', enclosed: '囲まれた！', fall: '海に落ちた！', win: '最後まで生き残った！'}[deathReason];
+    $('resScore').textContent = rank + '位';
+    $('resSub').textContent = '囲った回数 ' + player.loops + '回・倒した数 ' + player.kills;
+    $('over').classList.remove('hidden');
+  }
+
+  // ---------- 描画（three.js） ----------
+  // ゲームの計算は今まで通り平面(x, y)で行い、3Dでは (x, 高さ, y) に置いて表示する
+  const renderer = new THREE.WebGLRenderer({canvas: cv, antialias: true});
+  const gl = renderer.getContext();
+  // テクスチャの一部分だけGPUに送り直す
+  function uploadRegion(tex, g, size, x, y, w, h){
+    const p = renderer.properties.get(tex);
+    if (!p.__webglTexture || p.__version !== tex.version){ tex.needsUpdate = true; return; }   // まだ一度も送っていなければまるごと送る
+    const img = g.getImageData(x, y, w, h);
+    renderer.state.bindTexture(gl.TEXTURE_2D, p.__webglTexture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);        // three.js と同じく上下反転して送る
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, x, size - y - h, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.generateMipmap(gl.TEXTURE_2D);
+  }
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(C.sky);
+  const camera = new THREE.PerspectiveCamera(CAM_FOV, 1, 10, 20000);   // 手前の範囲を広めにして奥行きの精度を上げる（ちらつき防止）
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x99bb88, 0.9));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.45);
+  sun.position.set(-0.4, 1, 0.3);
+  scene.add(sun);
+
+  // 海（地面の下とフィールドの外に広がる）
+  // 模様：泡の網目のタイル（上下左右の端がつながるように作る）
+  const SEA_TILE = 320;     // 模様1枚の大きさ（ワールド単位）
+  // 水面の模様：泡の網目。にじまないよう、海の色はべた塗りで、網目の白い線はくっきり（ふちだけ1pxなめらかに）
+  const SEA_LINE = 7;       // 網目の白い線の太さ（模様1枚 1024px あたりのpx）
+  function drawSea(g, n, col){
+    const img = g.createImageData(n, n), d = img.data;
+    let seed = 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const G = 6, cell = n / G, P = [];
+    for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) P.push([(i + 0.15 + rnd() * 0.7) * cell, (j + 0.15 + rnd() * 0.7) * cell]);
+    const base = hex(col), lw = SEA_LINE * n / 1024, TAU = Math.PI * 2;
+    const mod = v => ((v % n) + n) % n;
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++){
+      // ゆらぎ（周期がタイルに合う正弦波）
+      const wx = mod(x + n * (0.012 * Math.sin(y / n * TAU * 3) + 0.006 * Math.sin(y / n * TAU * 7)));
+      const wy = mod(y + n * (0.012 * Math.sin(x / n * TAU * 3) + 0.006 * Math.sin(x / n * TAU * 5)));
+      const ci = Math.floor(wx / cell), cj = Math.floor(wy / cell);
+      let f1 = 1e9, f2 = 1e9;
+      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++){
+        const p = P[((cj + dj + G) % G) * G + (ci + di + G) % G];
+        let dx = p[0] - wx, dy = p[1] - wy;
+        dx -= Math.round(dx / n) * n; dy -= Math.round(dy / n) * n;
+        const dd = Math.hypot(dx, dy);
+        if (dd < f1){ f2 = f1; f1 = dd; } else if (dd < f2) f2 = dd;
+      }
+      // 網目の境目からの距離（f2-f1 の半分）で線を引く
+      const e = (f2 - f1) / 2;
+      const k = Math.max(0, Math.min(1, lw / 2 + 0.5 - e));
+      const o = (y * n + x) * 4;
+      for (let c = 0; c < 3; c++) d[o + c] = base[c] + (255 - base[c]) * k;
+      d[o + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+  }
+  function hex(c){ return [1, 3, 5].map(i => parseInt(c.substr(i, 2), 16)); }
+  function seaTexture(){
+    const n = 1024, c = document.createElement('canvas');
+    c.width = c.height = n;
+    drawSea(c.getContext('2d'), n, C.sea);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(20000 / SEA_TILE, 20000 / SEA_TILE);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  // 光の当たり方で明るくならないよう、模様の色をそのまま出す。遠くは空の色にかすませて水平線をなじませる
+  const sea = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000),
+    new THREE.MeshBasicMaterial({map: seaTexture()}));
+  scene.fog = new THREE.Fog(C.sky, 2200, 7000);
+  sea.rotation.x = -Math.PI / 2;
+  sea.position.set(WORLD / 2, -SEA_DEPTH, WORLD / 2);
+  scene.add(sea);
+
+  // 地面：表面と裏面の2枚。穴の所は透明に抜けている。裏面が穴の縁から覗いて地面の厚みに見える
+  const groundTex = new THREE.CanvasTexture(gcv);
+  groundTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const underTex = new THREE.CanvasTexture(ucv);
+  const groundGeo = new THREE.PlaneGeometry(WORLD, WORLD);
+  const ground = new THREE.Mesh(groundGeo, new THREE.MeshLambertMaterial({map: groundTex, alphaTest: 0.5}));
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.set(WORLD / 2, 0, WORLD / 2);
+  scene.add(ground);
+  const under = new THREE.Mesh(groundGeo, new THREE.MeshLambertMaterial({map: underTex, alphaTest: 0.5}));
+  under.rotation.x = -Math.PI / 2;
+  under.position.set(WORLD / 2, -GROUND_T, WORLD / 2);
+  scene.add(under);
+  // フィールドの外周の断面
+  const soilMat = new THREE.MeshLambertMaterial({color: C.soil, side: THREE.DoubleSide});
+  // 外周の崖は海の中まで伸ばして、ステージが海から立っているように見せる
+  const RIM_H = SEA_DEPTH + 10;
+  // 縁の形に沿って、上（地面の高さ）と下（海の中）の2列の点を並べた帯
+  const rim = new THREE.Mesh(new THREE.BufferGeometry(), soilMat);
+  scene.add(rim);
+  function buildRim(){
+    const pos = new Float32Array((EDGE_N + 1) * 2 * 3), idx = [];
+    for (let i = 0; i <= EDGE_N; i++){
+      const a = i / EDGE_N * Math.PI * 2, r = edgeR[i % EDGE_N] * edgeScale;
+      const x = FIELD_R + Math.cos(a) * r, z = FIELD_R + Math.sin(a) * r;
+      pos.set([x, 0, z, x, -RIM_H, z], i * 6);
+      if (i < EDGE_N){ const b = i * 2; idx.push(b, b + 1, b + 2, b + 1, b + 3, b + 2); }
+    }
+    rim.geometry.dispose();
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    rim.geometry = geo;
+  }
+
+  // ---------- 外側から崩れる ----------
+  // 一定時間ごとに、外側の帯が赤く点滅してから海へ落ちる（囲った床と同じ流れ）。縁の形はそのまま一回り小さくなる
+  let crumble = null, shrinkT = SHRINK_START;
+  // 縁の形で、大きさ sIn〜sOut の間の帯。模様の画像はワールドの位置で貼る
+  function ringGeo(sIn, sOut){
+    const pos = new Float32Array((EDGE_N + 1) * 2 * 3), uv = new Float32Array((EDGE_N + 1) * 2 * 2), idx = [];
+    for (let i = 0; i <= EDGE_N; i++){
+      const a = i / EDGE_N * Math.PI * 2, e = edgeR[i % EDGE_N];
+      for (const [j, sc] of [[0, sOut], [1, sIn]]){
+        const x = FIELD_R + Math.cos(a) * e * sc, z = FIELD_R + Math.sin(a) * e * sc;
+        pos.set([x, 0, z], (i * 2 + j) * 3);
+        uv.set([x / WORLD, 1 - z / WORLD], (i * 2 + j) * 2);
+      }
+      if (i < EDGE_N){ const b = i * 2; idx.push(b, b + 1, b + 2, b + 1, b + 3, b + 2); }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    return geo;
+  }
+  function removeMesh(m){
+    scene.remove(m); m.geometry.dispose();
+    if (m.material.map) m.material.map.dispose();
+    m.material.dispose();
+  }
+  // 今の地面の模様を写した画像（落ちていく帯に貼る）
+  function snapTexture(src){
+    const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+    c.getContext('2d').drawImage(src, 0, 0);
+    return new THREE.CanvasTexture(c);
+  }
+  function updateCrumble(dt){
+    if (!crumble){
+      if (edgeScale <= SHRINK_MIN + 1e-6 || (shrinkT -= dt) > 0) return;
+      // 赤く点滅させる帯を出す
+      const to = Math.max(SHRINK_MIN, edgeScale - SHRINK_STEP);
+      const flash = new THREE.Mesh(ringGeo(to, edgeScale), new THREE.MeshBasicMaterial({color: C.flash, transparent: true,
+        opacity: FLASH_OPACITY, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1}));
+      flash.position.y = 0.2;
+      scene.add(flash);
+      crumble = {to, t: 0, phase: 'flash', meshes: [flash]};
+      return;
+    }
+    const q = crumble;
+    q.t += dt;
+    if (q.phase === 'flash'){
+      q.meshes[0].visible = Math.floor(q.t / BLINK) % 2 === 0;
+      if (q.t < CRUMBLE_FLASH) return;
+      // 落とす：今の模様を写した帯（表と裏）を作り、地面の画像からは帯の分を消す
+      removeMesh(q.meshes[0]);
+      const from = edgeScale;
+      const top = new THREE.Mesh(ringGeo(q.to, from), new THREE.MeshLambertMaterial({map: snapTexture(gcv), alphaTest: 0.5, side: THREE.DoubleSide}));
+      const bot = new THREE.Mesh(ringGeo(q.to, from), new THREE.MeshLambertMaterial({map: snapTexture(ucv), alphaTest: 0.5, side: THREE.DoubleSide}));
+      bot.position.y = -GROUND_T;
+      const wall = new THREE.Mesh(rim.geometry.clone(), soilMat.clone());
+      scene.add(top); scene.add(bot); scene.add(wall);
+      q.meshes = [top, bot, wall];
+      edgeScale = q.to;
+      clipField(gctx, GROUND_TEX); clipField(uctx, ucv.width);
+      groundTex.needsUpdate = true; underTex.needsUpdate = true;
+      buildRim();
+      for (let i = 0; i < pellets.length; i++) if (fieldDist(pellets[i].x, pellets[i].y) > FIELD_R - PELLET_R * 2) pellets[i] = newPellet();
+      q.phase = 'drop'; q.t = 0;
+      return;
+    }
+    const drop = FALL_G * q.t * q.t / 2;
+    q.meshes[0].position.y = -drop;
+    q.meshes[1].position.y = -GROUND_T - drop;
+    q.meshes[2].position.y = -drop;
+    if (q.t >= FALL_TIME){
+      for (const m of q.meshes) removeMesh(m);
+      crumble = null; shrinkT = SHRINK_EVERY;
+    }
+  }
+
+  // 球
+  const pelletMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(PELLET_R, 8, 6),
+    new THREE.MeshLambertMaterial({color: PELLET_COL}), PELLET_COUNT);
+  pelletMesh.frustumCulled = false;   // 全体の範囲が分からないので画面外判定で消されないようにする
+  scene.add(pelletMesh);
+  // 球の影（地面に置いた丸）
+  const pelletShadowGeo = new THREE.CircleGeometry(PELLET_R * 0.9, 16);
+  pelletShadowGeo.rotateX(-Math.PI / 2);
+  const pelletShadow = new THREE.InstancedMesh(pelletShadowGeo,
+    new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.18, depthWrite: false}), PELLET_COUNT);
+  pelletShadow.frustumCulled = false;
+  scene.add(pelletShadow);
+
+  // 球の中心の高さ：少し浮かせて上下にゆらす。位置で始まりをずらしてバラバラに動くようにする
+  let clock = 0;
+  const pelletY = (x, y) => PELLET_FLOAT + PELLET_R + PELLET_BOB * Math.sin((clock / PELLET_BOB_T + x * 0.013 + y * 0.017) * Math.PI * 2);
+
+  // 球を拾ったときの演出：拾った所で球がふくらみながら薄くなって消える
+  const pops = [];
+  for (let i = 0; i < POP_MAX; i++){
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(PELLET_R, 12, 8),
+      new THREE.MeshBasicMaterial({color: PELLET_COL, transparent: true, depthWrite: false}));
+    mesh.visible = false;
+    scene.add(mesh);
+    pops.push({mesh, t: POP_TIME});
+  }
+  function spawnPop(x, y, i){
+    const p = pops.reduce((a, b) => (b.t > a.t ? b : a));   // 空いている（一番古い）ものを使う
+    p.t = 0;
+    p.mesh.position.set(x, pelletY(x, y), y);
+    p.mesh.visible = true;
+  }
+  function updatePops(dt){
+    for (const p of pops){
+      if (p.t >= POP_TIME) continue;
+      p.t += dt;
+      const k = Math.min(1, p.t / POP_TIME);
+      p.mesh.scale.setScalar(1 + (POP_SCALE - 1) * k);
+      p.mesh.material.opacity = 1 - k;
+      if (k >= 1) p.mesh.visible = false;
+    }
+  }
+
+  // 体（地面に貼りつく平らな帯）と頭（目と影つき）。添字＝ID
+  // 帯：点ごとに左右2頂点を置き、隣どうしを三角形でつなぐ
+  function makeRibbon(color){
+    const geo = new THREE.BufferGeometry();
+    const pos = new THREE.BufferAttribute(new Float32Array(MAX_PTS * 2 * 3), 3);
+    pos.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position', pos);
+    const idx = new Uint16Array((MAX_PTS - 1) * 6);
+    for (let i = 0; i < MAX_PTS - 1; i++){
+      const a = i * 2;
+      idx.set([a, a + 1, a + 2, a + 1, a + 3, a + 2], i * 6);
+    }
+    geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color, side: THREE.DoubleSide, transparent: true, opacity: BODY_ALPHA, depthWrite: false}));
+    m.frustumCulled = false;
+    scene.add(m);
+    return m;
+  }
+  const headGeo = new THREE.SphereGeometry(HEAD_R, 20, 14);
+  const eyeGeo = new THREE.SphereGeometry(HEAD_R * 0.36, 12, 8);
+  const pupilGeo = new THREE.SphereGeometry(HEAD_R * 0.19, 10, 6);
+  const eyeMat = new THREE.MeshBasicMaterial({color: 0xffffff});
+  const pupilMat = new THREE.MeshBasicMaterial({color: 0x222222});
+  const shadowGeo = new THREE.CircleGeometry(HEAD_R * 1.1, 24);
+  const shadowMat = new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.18, depthWrite: false});
+  const snakeMeshes = [];
+  for (let id = 1; id <= CPU_COUNT + 1; id++){
+    const col = new THREE.Color(BODY_COL[id]);
+    const body = makeRibbon(col);
+    // 頭：グループに球・目・影をまとめ、進む向きに回す（グループの +x が前）
+    const group = new THREE.Group();
+    const head = new THREE.Mesh(headGeo, new THREE.MeshLambertMaterial({color: id === 1 ? C.head : BODY_COL[id]}));
+    head.position.y = HEAD_R;
+    group.add(head);
+    for (const side of [1, -1]){
+      const eye = new THREE.Mesh(eyeGeo, eyeMat);
+      eye.position.set(HEAD_R * 0.55, HEAD_R * 1.45, side * HEAD_R * 0.42);
+      const pupil = new THREE.Mesh(pupilGeo, pupilMat);
+      pupil.position.set(HEAD_R * 0.85, HEAD_R * 1.5, side * HEAD_R * 0.45);
+      group.add(eye); group.add(pupil);
+    }
+    const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.position.set(-HEAD_R * 0.2, 0.4, HEAD_R * 0.2);
+    group.add(shadow);
+    scene.add(group);
+    snakeMeshes[id] = {body, group, head, shadow};
+  }
+
+  let W = 0, H = 0;
+  function resize(){
+    W = cv.clientWidth; H = cv.clientHeight;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));   // モバイルで重くならないよう2で頭打ち
+    renderer.setSize(W, H, false);
+    camera.aspect = W / H;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  const mtx = new THREE.Matrix4();
+  // 帯の頂点を体の線に合わせる（頭側から MAX_PTS 点まで）。各点で進む向きに直角な方向の a0〜b0 の幅に広げる
+  function fillRibbon(mesh, pts, a0, b0, y){
+    const n = Math.min(pts.length, MAX_PTS), off = pts.length - n;
+    const arr = mesh.geometry.attributes.position.array;
+    let nx = 0, ny = 1;
+    for (let i = 0; i < n; i++){
+      const p = pts[off + i];
+      const a = pts[off + Math.max(0, i - 1)], b = pts[off + Math.min(n - 1, i + 1)];
+      const tx = b.x - a.x, ty = b.y - a.y, tl = Math.hypot(tx, ty);
+      if (tl > 1e-6){ nx = -ty / tl; ny = tx / tl; }
+      const o = i * 6;
+      arr[o] = p.x + nx * b0; arr[o + 1] = y; arr[o + 2] = p.y + ny * b0;
+      arr[o + 3] = p.x + nx * a0; arr[o + 4] = y; arr[o + 5] = p.y + ny * a0;
+    }
+    mesh.geometry.attributes.position.needsUpdate = true;
+    mesh.geometry.setDrawRange(0, Math.max(0, n - 1) * 6);
+  }
+  function placeSnake(s){
+    const m = snakeMeshes[s.id];
+    const show = s.alive || s.fallT < FALL_TIME;   // 落ちきって海に沈んだら消す
+    m.body.visible = m.group.visible = show;
+    if (!show) return;
+    // キャラごとに高さの層を分ける。同じ高さに2本の線があるとちらつくため
+    fillRibbon(m.body, s.pts, -BODY_W / 2, BODY_W / 2, BODY_Y + s.id * BODY_LAYER);
+    const h = headOf(s);
+    // 落ちている間は体ごと、落ちる直前の速さで前へ進みながら下へ
+    const drop = s.alive ? 0 : FALL_G * s.fallT * s.fallT / 2;
+    const fx = s.alive ? 0 : s.fallVx * s.fallT, fz = s.alive ? 0 : s.fallVy * s.fallT;
+    m.body.position.set(fx, -drop, fz);
+    m.group.position.set(h.x + fx, -drop, h.y + fz);
+    m.group.rotation.y = -s.ang;
+    // 球を拾った直後：頭が横にふくらみ縦につぶれてから戻る
+    const e = s.eatT < EAT_TIME ? Math.sin(Math.PI * s.eatT / EAT_TIME) : 0;
+    m.group.scale.set(1 + EAT_SCALE * e, 1 - EAT_SCALE * 0.4 * e, 1 + EAT_SCALE * e);
+    m.shadow.visible = s.alive;
+  }
+
+  function draw(){
+    for (let i = 0; i < pellets.length; i++){
+      mtx.makeTranslation(pellets[i].x, pelletY(pellets[i].x, pellets[i].y), pellets[i].y);
+      pelletMesh.setMatrixAt(i, mtx);
+      mtx.makeTranslation(pellets[i].x, 0.3, pellets[i].y);
+      pelletShadow.setMatrixAt(i, mtx);
+    }
+    pelletMesh.instanceMatrix.needsUpdate = true;
+    pelletShadow.instanceMatrix.needsUpdate = true;
+    for (const s of snakes) placeSnake(s);
+    // カメラ：プレイヤーの頭を斜め上から見下ろす。体が長いほど引いて、体いっぱいの輪でも画面に収める
+    const view = Math.min(VIEW_MAX, Math.max(VIEW_MIN, player.bodyLen * VIEW_K));
+    const need = camera.aspect < 1 ? view / camera.aspect : view;
+    const dist = need / (2 * Math.tan(CAM_FOV * Math.PI / 360));
+    const tilt = CAM_TILT * Math.PI / 180;
+    const h = headOf(player);
+    camera.position.set(h.x, dist * Math.sin(tilt), h.y + dist * Math.cos(tilt));
+    camera.lookAt(h.x, 0, h.y);
+    renderer.render(scene, camera);
+  }
+
+  // ---------- ゲームループ ----------
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    clock += dt;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- 入力 ----------
+  // 指を置いた位置からドラッグした方向へ曲がる（起点は指に一定距離でついてくる）
+  let pid = null, sx = 0, sy = 0;
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (pid !== null) return;
+    pid = e.pointerId;
+    cv.setPointerCapture(pid);
+    sx = e.clientX; sy = e.clientY;
+  });
+  cv.addEventListener('pointermove', e => {
+    if (e.pointerId !== pid) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    const d = Math.hypot(dx, dy);
+    if (d < DEAD) return;
+    player.target = Math.atan2(dy, dx);
+    if (d > STICK_R){ sx = e.clientX - dx / d * STICK_R; sy = e.clientY - dy / d * STICK_R; }
+  });
+  const endPointer = e => { if (e.pointerId === pid) pid = null; };
+  cv.addEventListener('pointerup', endPointer);
+  cv.addEventListener('pointercancel', endPointer);
+
+  // PC：矢印キーで向きを決める
+  const keys = new Set();
+  function keyDir(){
+    const x = (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0);
+    const y = (keys.has('ArrowDown') ? 1 : 0) - (keys.has('ArrowUp') ? 1 : 0);
+    if (x || y) player.target = Math.atan2(y, x);
+  }
+  addEventListener('keydown', e => {
+    if (e.key.startsWith('Arrow')){ e.preventDefault(); keys.add(e.key); keyDir(); return; }
+    // ボタンにフォーカスがあるときはボタン側の動作に任せる
+    // 共有される内容の画面を出している間は、リスタートのキー操作を止める
+    if (mode === 'over' && !shareViewOpen() && (e.key === ' ' || e.key === 'Enter') && !(e.target.closest && e.target.closest('button'))){
+      e.preventDefault(); start();
+    }
+  });
+  addEventListener('keyup', e => { keys.delete(e.key); });
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, {passive:false});
+  document.addEventListener('touchmove', e => { if (pid !== null) e.preventDefault(); }, {passive:false});
+  // 共有される文面だけは選んでコピーできるようにする
+  document.addEventListener('selectstart', e => { if (!(e.target instanceof Element && e.target.closest('#share-text')) && !(e.target.parentElement && e.target.parentElement.closest('#share-text'))) e.preventDefault(); });
+  document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
+  // スマホでのダブルタップ拡大を防ぐ（ボタンのclickは止めないように除外）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    if (e.target.closest && e.target.closest('button')) return;
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, {passive:false});
+
+  // ---------- 結果画面 ----------
+  $('retry').addEventListener('pointerdown', e => e.stopPropagation());
+  $('retry').addEventListener('click', start);
+
+  function shareText(){
+    return (snakes.length) + '人中' + rank + '位' + (rank === 1 ? 'で生き残った！' : 'で脱落！') + '\n囲った回数 ' + player.loops + '回・倒した数 ' + player.kills + '\n'
+      + location.href.split(/[?#]/)[0] + '\n#かこみサバイバー';
+  }
+
+  // 結果画像：最後のゲーム画面に成績を重ねる
+  function resultCanvas(){
+    const c = document.createElement('canvas');
+    c.width = cv.width; c.height = cv.height;
+    const g = c.getContext('2d');
+    renderer.render(scene, camera);   // 描画結果を残さない設定なので、この場で描いてすぐ写す（軽くするため）
+    g.drawImage(cv, 0, 0);
+    const bh = Math.round(c.width * 0.12);
+    g.fillStyle = 'rgba(255,255,255,.9)'; g.fillRect(0, 0, c.width, bh);
+    g.fillStyle = C.fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = 'bold ' + Math.round(bh * 0.5) + 'px ' + FONT;
+    g.fillText(rank + '位', c.width / 2, bh / 2);
+    return c;
+  }
+  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function resultImageFile(c){
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);   // toBlob の非同期コールバックは避ける
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const text = shareText();
+    const c = resultCanvas();
+    const file = resultImageFile(c);
+    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    const fallback = () => {
+      navigator.clipboard?.writeText(text).catch(() => {});
+      $('share-img').src = c.toDataURL('image/png');
+      $('share-text').textContent = text;
+      $('share-view').classList.remove('hidden');
+      $('share-close').focus({ preventScroll:true });
+    };
+    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
+    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    const shareStart = performance.now();
+    const failed = err => {
+      const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
+      if (!err || err.name !== 'AbortError' || instant) fallback();
+    };
+    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ text, files: [file] }).catch(failed);
+      return;
+    }
+    // 2) 画像を渡せない共有シート: 文面のみ
+    if (navigator.share) {
+      navigator.share({ text }).catch(failed);
+      return;
+    }
+    fallback();
+  });
+  const shareViewOpen = () => !$('share-view').classList.contains('hidden');
+  const closeShareView = () => {
+    $('share-view').classList.add('hidden');
+    $('share').focus({ preventScroll:true });
+  };
+  $('share-close').addEventListener('click', closeShareView);
+  $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && shareViewOpen()) closeShareView();
+  });
+
+  start();
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

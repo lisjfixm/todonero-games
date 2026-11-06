@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/kaden-master/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>家電マスター</title>
+<meta name="description" content="調子の悪い家電を叩いて直すタイム勝負">
+<style>
+  :root{
+    --bg:#ecebe6;--fg:#222;--sub:#777;--line:#333;--panel:#fff;
+    --body:#d2cab9;--body2:#b3ab98;--dark:#2a2a2a;--metal:#9ea3a9;--lcd:#8fe3ff;
+    --sky:#8cc8f0;--grass:#6cbf5a;--sun:#f5c842;
+    --water:#6fb0e8;--cloth1:#e06a5a;--cloth2:#f2d15c;--blade:#9cc3e6;--spot:#e0503c;
+    --smoke:#7d7d7d;--elec:#7fe0ff;--elec2:#1a6fd6;--spark:#ff9a1f;--spark2:#ffd23c;--pop:#ffd23c;--flash:#ffffff;
+    --warm:#ffd23c;
+    --howto-bg:#fff; --howto-fg:#222;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:var(--bg);color:var(--fg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+    touch-action:manipulation;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  #game{position:fixed;inset:0;height:100dvh}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #hud{
+    position:absolute;left:0;right:0;top:0;margin:0 auto;max-width:420px;
+    display:flex;justify-content:space-between;pointer-events:none;
+    padding:calc(env(safe-area-inset-top,0px) + 14px) calc(env(safe-area-inset-right,0px) + 20px) 0 calc(env(safe-area-inset-left,0px) + 20px);
+    font-size:22px;font-weight:700;
+  }
+  .hidden{display:none !important}
+  #result{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);touch-action:manipulation}
+  #result .panel{background:var(--panel);border-radius:16px;padding:28px 24px;width:min(86%,320px);text-align:center}
+  #r-time{font-size:56px;font-weight:800;line-height:1.1}
+  #r-hits{font-size:16px;color:var(--sub);margin-top:8px}
+  .btns{display:flex;gap:12px;margin-top:24px}
+  button{
+    flex:1;min-height:52px;font:inherit;font-size:18px;font-weight:700;
+    border:none;border-radius:12px;background:var(--body);color:var(--fg);
+    touch-action:manipulation;cursor:pointer;
+  }
+  button.primary{background:var(--fg);color:var(--panel)}
+  button:focus-visible{outline:3px solid var(--water);outline-offset:2px}
+  .howto-open{min-height:0}   /* 上の button の min-height を「遊び方」ボタンに効かせない */
+  #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
+  #share-view .panel{background:var(--panel);border-radius:12px;padding:16px;width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y}
+  #share-img{display:block;width:100%;height:auto;border-radius:6px}
+  #share-text{white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text;font-size:14px}
+  #share-close{width:100%;flex:none}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="cv"></canvas>
+  <div id="hud">
+    <div id="count">1/5</div>
+    <div id="hits" aria-live="polite">0回</div>
+  </div>
+  <div id="result" class="hidden">
+    <div class="panel">
+      <div id="r-time" aria-live="polite"></div>
+      <div id="r-hits"></div>
+      <div class="btns">
+        <button id="share" type="button">共有</button>
+        <button id="again" type="button" class="primary">もう一回</button>
+      </div>
+    </div>
+  </div>
+  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+    <div class="panel">
+      <img id="share-img" alt="共有される結果画像">
+      <p id="share-text"></p>
+      <button id="share-close" type="button">閉じる</button>
+    </div>
+  </div>
+  <section class="howto" hidden data-pos="bottom-left">
+    <h2>遊び方</h2>
+    <p>調子の悪い家電を叩いて直すタイムアタックです。テレビ、ラジオ、扇風機、冷蔵庫、洗濯機の5台を順に直し、全部直すまでの時間と叩いた回数が結果に出ます。家電にはそれぞれ直るツボがランダムな場所に隠れていて、そこを叩くと直ります。ページを開くとすぐに計測が始まります。</p>
+    <h2>操作</h2>
+    <p>家電の本体をタップして叩きます。PC ではクリックです。結果画面では、スペースキーか Enter キーでもやり直せます。</p>
+    <h2>コツ</h2>
+    <p>ツボに近い所を叩くほど、直後の約0.8秒だけ症状が軽くなり、そのあと元に戻ります。遠すぎると全く変わりません。症状の軽くなり方を比べて、ツボの場所を絞り込んでください。叩いた回数はタイムに響かないので、ためらわずに叩くほうが速く終わります。後の家電ほどツボは小さくなります。</p>
+    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  </section>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+
+  // ---------- 定数 ----------
+  const W = 360, H = 640;          // 論理解像度（この大きさで描いて画面に合わせて拡大縮小する）
+  const CX = 180, CY = 350;        // 家電の中心位置（論理px）
+  const HINT_RANGE = 170;          // ツボからこの距離（論理px）より遠いと、叩いても全く調子が良くならない
+  const HINT_POWER = 0.85;         // ツボのすぐ近くを叩いたとき、調子の悪さをどこまで減らすか（0〜1）
+  const HOLD_TIME = 0.8;           // 叩いて良くなった状態が続く時間（秒）
+  const RECOVER_TIME = 0.9;        // そこから元の調子の悪さに戻るまでの時間（秒）
+  const FIXED_WAIT = 1.8;          // 直ってから次の家電に替わるまでの時間（秒）
+  const SPOT_MARGIN = 18;          // ツボは家電の縁からこの距離（論理px）以上内側に置く
+  const KICK_AMP = 7;              // 叩いたときに家電が揺れる大きさ（論理px）
+  const KICK_DECAY = 7;            // 叩いた揺れが収まる速さ（1/秒）
+  const SHARE_INSTANT = 0.5;       // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const FONT = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif';
+
+  // 家電ごとの設定：r = 直るツボの半径（論理px、小さいほど難しい）、shake = 調子が悪いときの震えの大きさ（論理px）
+  const SPEC = {
+    tv:     { r: 26, shake: 0 },
+    radio:  { r: 24, shake: 0 },
+    fan:    { r: 22, shake: 1.5 },
+    fridge: { r: 22, shake: 2.5 },
+    washer: { r: 20, shake: 10 },
+  };
+
+  // ---------- 演出の定数 ----------
+  const CAM_SHAKE = 8;             // 叩いたときの画面揺れ（論理px）。ツボに近いほど最大でこの2倍
+  const CAM_SHAKE_FIX = 26;        // 直ったときの画面揺れ（論理px）
+  const CAM_DECAY = 9;             // 画面揺れが収まる速さ（1/秒）
+  const SQ_K = 320, SQ_D = 14;     // 叩いたときに家電がつぶれて戻るばねの強さ・減衰
+  const ENTER_TIME = 0.7;          // 次の家電が上から落ちてくる時間（秒）
+  const SPARKS = 14;               // 1回叩いたときの火花の数（ツボに近いほど最大でこの3倍）
+  const DEBRIS = 6;                // 1回叩いたときに飛ぶネジ・部品の数
+  const CONFETTI = 140;            // 直ったときの紙吹雪の数
+  const AMBIENT_SMOKE = 5;         // 調子が最悪のとき1秒あたりに出る煙の数
+  const AMBIENT_BOLT = 2.5;        // 調子が最悪のとき1秒あたりに走る電撃の数
+  const AMBIENT_DROP = 12;         // 洗濯機の調子が最悪のとき1秒あたりに飛ぶ水しぶきの数
+  // 演出の不透明度（0〜1）。家電と砂嵐などのヒントが透けて見えるように半透明にする
+  const FX_ALPHA = {
+    burst: 0.45,     // 衝撃マーク
+    ring: 0.55,      // 衝撃波の輪
+    spark: 0.7,      // 火花
+    debris: 0.75,    // 飛び散る部品
+    confetti: 0.75,  // 紙吹雪
+    star: 0.7,       // キラキラ星
+    bolt: 0.65,      // 電撃
+    drop: 0.6,       // 水しぶき
+    rays: 0.3,       // 直った家電の後ろの後光
+    focus: 0.35,     // 直った瞬間の集中線
+    flash: 0.4,      // 画面全体のフラッシュの最大の濃さ
+  };
+  const MAX_PARTS = 1500;          // パーティクルの上限（重くならないように）
+
+  // ---------- 準備 ----------
+  const cv = $('cv'), ctx = cv.getContext('2d');
+  const css = getComputedStyle(document.documentElement);
+  const C = {};
+  ['bg','fg','sub','line','panel','body','body2','dark','metal','lcd','sky','grass','sun','water','cloth1','cloth2','blade','spot','smoke','elec','elec2','spark','spark2','pop','flash','warm']
+    .forEach(k => { C[k] = css.getPropertyValue('--' + k).trim(); });
+
+  let VW = 0, VH = 0, SC = 1, offX = 0, offY = 0;
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    VW = cv.clientWidth; VH = cv.clientHeight;
+    cv.width = Math.round(VW * dpr);
+    cv.height = Math.round(VH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    SC = Math.min(VW / W, VH / H);
+    offX = (VW - W * SC) / 2;
+    offY = (VH - H * SC) / 2;
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  // 煙・光のぼかし玉：濃さを1画素ずつ計算して書く（グラデーションはディザが入り、拡大するとノイズになる）
+  function softDot(hex, S = 128){
+    const n = parseInt(hex.replace('#', ''), 16);
+    const r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255;
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const x2 = c.getContext('2d'), img = x2.createImageData(S, S), d = img.data;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++){
+      const dx = (x + 0.5) / S * 2 - 1, dy = (y + 0.5) / S * 2 - 1, q = Math.max(0, 1 - (dx * dx + dy * dy));
+      const k = (y * S + x) * 4;
+      d[k] = r; d[k + 1] = g; d[k + 2] = b;
+      d[k + 3] = Math.round(255 * q * q * q);   // 中心ほど濃く、縁へなめらかに消える
+    }
+    x2.putImageData(img, 0, 0);
+    return c;
+  }
+  const SPR = { smoke: softDot(C.smoke), elec: softDot(C.elec), glow: softDot(C.pop), white: softDot(C.flash) };
+
+  // ツボへの近さ（0〜1）で衝撃マークの色を少しだけ変える：遠い＝黄 → 近い＝橙
+  const hexRgb = h => { const n = parseInt(h.replace('#', ''), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const HEAT = [hexRgb(C.warm), hexRgb(C.spark)];
+  function heat(c){
+    const f = Math.max(0, Math.min(1, c)), [a, b] = HEAT;
+    return `rgb(${a.map((v, j) => Math.round(v + (b[j] - v) * f)).join(',')})`;
+  }
+
+  // ---------- 描画の小道具 ----------
+  function rr(x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function circle(x, y, r){ ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); }
+  function seg(x1, y1, x2, y2){ ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+  function fillStroke(fill){ ctx.fillStyle = fill; ctx.fill(); }   // 塗りのみ（黒いフチは付けない）
+
+  // テレビの砂嵐（小さい画像を毎フレーム作り直して拡大して貼る）
+  const noiseCv = document.createElement('canvas');
+  noiseCv.width = 72; noiseCv.height = 68;
+  const nctx = noiseCv.getContext('2d');
+  const nimg = nctx.createImageData(noiseCv.width, noiseCv.height);
+  function regenNoise(){
+    const d = nimg.data;
+    for (let i = 0; i < d.length; i += 4){
+      const v = Math.random() * 255;
+      d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+    }
+    nctx.putImageData(nimg, 0, 0);
+  }
+
+  // 回転物がガクガクする動き：ときどき速さがでたらめに変わる
+  function erratic(st, dt, bad, base, wild){
+    st.timer -= dt;
+    if (st.timer <= 0){
+      st.timer = 0.08 + Math.random() * 0.25;
+      st.wild = Math.random() < 0.5 ? 0 : (Math.random() * 2 - 0.4) * wild;
+    }
+    const target = base * (1 - bad) + bad * st.wild;
+    st.speed += (target - st.speed) * Math.min(1, dt * 8);
+    st.ang += st.speed * dt;
+  }
+
+  // ---------- 家電 ----------
+  // 座標は家電の中心を (0,0) とした論理px。inside は叩ける範囲
+  const APPS = [
+    { // ブラウン管テレビ：砂嵐
+      id: 'tv', top: -120, bot: 130, hw: 140,   // 本体の上端・下端（接地面）・半分の幅（論理px）
+      init(){},
+      upd(){},
+      inside: (x, y) => x >= -140 && x <= 140 && y >= -120 && y <= 110,
+      draw(st, t, bad){
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = C.metal; ctx.lineWidth = 4;
+        seg(-10, -118, -70, -195); seg(10, -118, 60, -205);
+        ctx.fillStyle = C.body2;
+        ctx.fillRect(-110, 108, 30, 22);
+        ctx.fillRect(80, 108, 30, 22);
+        rr(-140, -120, 280, 230, 18); fillStroke(C.body);
+        // 画面
+        ctx.save();
+        rr(-124, -100, 180, 170, 22); ctx.clip();
+        ctx.fillStyle = C.sky; ctx.fillRect(-124, -100, 180, 170);
+        ctx.fillStyle = C.grass; ctx.fillRect(-124, 15, 180, 55);
+        ctx.fillStyle = C.sun; circle(5, -50, 20); ctx.fill();
+        if (bad > 0.01){
+          regenNoise();
+          ctx.imageSmoothingEnabled = false;
+          ctx.globalAlpha = bad * 0.95;
+          ctx.drawImage(noiseCv, -124, -100, 180, 170);
+          ctx.globalAlpha = bad * 0.45;
+          ctx.fillStyle = C.dark;
+          ctx.fillRect(-124, -115 + (t * 90) % 200, 180, 18);
+          ctx.globalAlpha = 1;
+          ctx.imageSmoothingEnabled = true;
+        }
+        ctx.restore();
+        circle(98, -62, 16); fillStroke(C.metal);
+        circle(98, -14, 16); fillStroke(C.metal);
+        ctx.fillStyle = C.dark;
+        for (let i = 0; i < 5; i++) ctx.fillRect(78, 28 + i * 12, 40, 4);
+      },
+    },
+    { // ラジオ：波形が乱れる
+      id: 'radio', top: -80, bot: 80, hw: 150,
+      init(){},
+      upd(){},
+      inside: (x, y) => x >= -150 && x <= 150 && y >= -80 && y <= 80,
+      draw(st, t, bad){
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.strokeStyle = C.metal; ctx.lineWidth = 10;
+        ctx.beginPath(); ctx.moveTo(-100, -78); ctx.lineTo(-100, -115); ctx.lineTo(100, -115); ctx.lineTo(100, -78); ctx.stroke();
+        rr(-150, -80, 300, 160, 20); fillStroke(C.body);
+        // スピーカー（調子が悪いとビリビリ震える）
+        const sx = bad * 2 * Math.sin(t * 70);
+        circle(-72, 0, 58); fillStroke(C.dark);
+        ctx.strokeStyle = C.metal; ctx.lineWidth = 2;
+        [45, 30, 15].forEach(r => { circle(-72 + sx, 0, r); ctx.stroke(); });
+        // 表示窓の波形
+        rr(5, -55, 125, 62, 8); fillStroke(C.dark);
+        ctx.save();
+        rr(5, -55, 125, 62, 8); ctx.clip();
+        ctx.strokeStyle = C.lcd; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let i = 0; i <= 60; i++){
+          const x = 10 + i * (115 / 60);
+          const y = -24 + Math.sin(i * 0.35 - t * 8) * 14 * (1 - 0.5 * bad) + (Math.random() - 0.5) * 44 * bad;
+          if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+        for (let i = 0; i < 4; i++){ rr(10 + i * 31, 28, 24, 20, 4); fillStroke(C.body2, 2); }
+      },
+    },
+    { // 扇風機：羽根がガクガク回る
+      id: 'fan', top: -190, bot: 184, hw: 100,
+      init(st){ st.ang = 0; st.speed = 0; st.timer = 0; st.wild = 0; },
+      upd(st, dt, bad){ erratic(st, dt, bad, 18, 10); },
+      inside: (x, y) => x * x + (y + 90) * (y + 90) <= 100 * 100
+        || (Math.abs(x) <= 10 && y >= 0 && y <= 150)
+        || (x / 95) ** 2 + ((y - 160) / 24) ** 2 <= 1,
+      draw(st, t, bad){
+        ctx.fillStyle = C.metal;
+        ctx.fillRect(-10, 0, 20, 155);
+        ctx.beginPath(); ctx.ellipse(0, 160, 95, 24, 0, 0, Math.PI * 2); fillStroke(C.body);
+        rr(30, 150, 18, 10, 3); fillStroke(C.body2, 2);
+        rr(54, 150, 18, 10, 3); fillStroke(C.body2, 2);
+        ctx.save();
+        ctx.translate(0, -90);
+        ctx.rotate(bad * 0.06 * Math.sin(t * 23));
+        circle(0, 0, 100); ctx.fillStyle = C.panel; ctx.fill();
+        ctx.fillStyle = C.blade;
+        for (let i = 0; i < 3; i++){
+          const a = st.ang + i * Math.PI * 2 / 3;
+          ctx.beginPath();
+          ctx.ellipse(Math.cos(a) * 48, Math.sin(a) * 48, 42, 22, a, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        circle(0, 0, 16); fillStroke(C.body);
+        ctx.strokeStyle = C.metal; ctx.lineWidth = 1.5;
+        for (let i = 0; i < 16; i++){
+          const a = i * Math.PI / 8;
+          seg(Math.cos(a) * 18, Math.sin(a) * 18, Math.cos(a) * 98, Math.sin(a) * 98);
+        }
+        circle(0, 0, 60); ctx.stroke();
+        circle(0, 0, 100); ctx.strokeStyle = C.metal; ctx.lineWidth = 5; ctx.stroke();
+        ctx.restore();
+      },
+    },
+    { // 冷蔵庫：温度表示がおかしい
+      id: 'fridge', top: -200, bot: 200, hw: 95,
+      init(st){ st.timer = 0; st.txt = '8℃'; },
+      upd(st, dt, bad){
+        st.timer -= dt;
+        if (st.timer <= 0){
+          st.timer = 0.07;
+          const glitch = ['8℃', '-℃', 'E8', '88', '?℃', '--', '9E', '℃℃'];
+          st.txt = Math.random() < bad ? glitch[Math.floor(Math.random() * glitch.length)] : '3℃';
+        }
+      },
+      inside: (x, y) => x >= -95 && x <= 95 && y >= -200 && y <= 190,
+      draw(st){
+        ctx.fillStyle = C.body2;
+        ctx.fillRect(-85, 188, 22, 12); ctx.fillRect(63, 188, 22, 12);
+        rr(-95, -200, 190, 390, 14); fillStroke(C.body);
+        ctx.strokeStyle = C.body2; ctx.lineWidth = 3; seg(-95, -90, 95, -90);
+        ctx.fillStyle = C.metal;
+        rr(62, -175, 9, 60, 4); fillStroke(C.metal, 2);
+        rr(62, -65, 9, 110, 4); fillStroke(C.metal, 2);
+        rr(-60, -68, 84, 42, 6); fillStroke(C.dark);
+        ctx.fillStyle = C.lcd; ctx.font = `bold 26px ${FONT}`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(st.txt, -18, -46);
+      },
+    },
+    { // 洗濯機：激しく揺れる
+      id: 'washer', top: -140, bot: 140, hw: 130,
+      init(st){ st.ang = 0; st.speed = 0; st.timer = 0; st.wild = 0; },
+      upd(st, dt, bad){ erratic(st, dt, bad, 5, 12); },
+      inside: (x, y) => x >= -130 && x <= 130 && y >= -140 && y <= 140,
+      draw(st){
+        rr(-130, -140, 260, 280, 16); fillStroke(C.body);
+        ctx.strokeStyle = C.body2; ctx.lineWidth = 3; seg(-130, -95, 130, -95);
+        rr(-112, -128, 64, 22, 4); fillStroke(C.dark, 2);
+        rr(-34, -124, 20, 14, 3); fillStroke(C.body2, 2);
+        rr(-8, -124, 20, 14, 3); fillStroke(C.body2, 2);
+        circle(88, -118, 15); fillStroke(C.metal);
+        circle(0, 25, 92); fillStroke(C.metal);
+        circle(0, 25, 70); fillStroke(C.dark);
+        ctx.save();
+        circle(0, 25, 70); ctx.clip();
+        ctx.fillStyle = C.water; ctx.globalAlpha = 0.85;
+        ctx.fillRect(-70, 40, 140, 60);
+        ctx.globalAlpha = 1;
+        for (let i = 0; i < 4; i++){
+          const a = st.ang + i * Math.PI / 2;
+          circle(Math.cos(a) * 38, 25 + Math.sin(a) * 38, 16);
+          ctx.fillStyle = i % 2 ? C.cloth2 : C.cloth1; ctx.fill();
+        }
+        ctx.restore();
+      },
+    },
+  ];
+
+  // ---------- 状態 ----------
+  let state = 'enter';             // enter（落ちてくる） / playing（叩いている） / fixed（直って次を待つ） / over（結果表示）
+  let idx = 0, hits = 0, startTime = 0, finalTime = 0;
+  let st = {}, spot = { x: 0, y: 0 };
+  let hitBad = 1, hitAge = 99, fixedAge = 0, kick = 0;
+  let curOx = 0, curOy = 0, t = 0;
+  // 演出用
+  let parts = [];                  // パーティクル
+  let camShake = 0, camX = 0, camY = 0, flash = 0, focus = 0;
+  let sq = 0, sqV = 0;             // 家電のつぶれ具合（ばね）
+  let enterAge = 0, dropY = 0, landed = false, sparkleT = 0;
+
+  const spec = () => SPEC[APPS[idx].id];
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+
+  // ツボを家電の上のランダムな位置に置く（縁から SPOT_MARGIN 以上内側）
+  function pickSpot(ap){
+    const m = SPOT_MARGIN;
+    for (let i = 0; i < 5000; i++){
+      const x = (Math.random() * 2 - 1) * 160, y = (Math.random() * 2 - 1) * 220;
+      if (ap.inside(x, y) && ap.inside(x + m, y) && ap.inside(x - m, y) && ap.inside(x, y + m) && ap.inside(x, y - m)) return { x, y };
+    }
+    return { x: 0, y: 0 };
+  }
+  // 家電の上のランダムな点（煙・電撃を出す位置）
+  function randomInside(ap){
+    for (let i = 0; i < 40; i++){
+      const x = rand(-ap.hw, ap.hw), y = rand(ap.top, ap.bot);
+      if (ap.inside(x, y)) return { x, y };
+    }
+    return { x: 0, y: 0 };
+  }
+
+  function setup(i){
+    idx = i;
+    st = {};
+    APPS[idx].init(st);
+    spot = pickSpot(APPS[idx]);
+    hitBad = 1; hitAge = 99; fixedAge = 0; kick = 0;
+    state = 'enter'; enterAge = 0; dropY = -700; landed = false;
+    updateHud();
+  }
+
+  function start(){
+    document.documentElement.setAttribute('data-howto-hidden', '');
+    hits = 0;
+    startTime = performance.now();
+    parts = [];
+    $('result').classList.add('hidden');
+    setup(0);
+  }
+
+  function updateHud(){
+    $('count').textContent = `${idx + 1}/${APPS.length}`;
+    $('hits').textContent = `${hits}回`;
+  }
+
+  // 今の調子の悪さ（1 = 最悪、0 = 正常）。叩いた直後だけ近さに応じて良くなり、だんだん戻る
+  function currentBad(){
+    if (state === 'enter') return 1;
+    if (state !== 'playing') return 0;
+    if (hitAge < HOLD_TIME) return hitBad;
+    const k = Math.min(1, (hitAge - HOLD_TIME) / RECOVER_TIME);
+    return hitBad + (1 - hitBad) * k;
+  }
+
+  const timeText = () => finalTime.toFixed(1);
+
+  function showResult(){
+    state = 'over';
+    document.documentElement.removeAttribute('data-howto-hidden');
+    $('r-hits').textContent = `叩いた回数 ${hits}回`;
+    $('r-time').textContent = `${timeText()}秒`;
+    $('result').classList.remove('hidden');
+    $('again').focus({ preventScroll: true });
+    // 全部直したお祝いに紙吹雪を降らせる
+    for (let i = 0; i < CONFETTI; i++) confetti(rand(-40, W + 40), rand(-300, -10), rand(-40, 40), rand(0, 120));
+  }
+
+  // ---------- パーティクル ----------
+  function addPart(p){
+    parts.push(Object.assign({ age: 0, rot: 0, vr: 0, g: 0, drag: 0 }, p));
+    if (parts.length > MAX_PARTS) parts.splice(0, parts.length - MAX_PARTS);
+  }
+  const CONFETTI_COLORS = () => [C.cloth1, C.cloth2, C.water, C.grass, C.spot, C.blade, C.sun];
+  function confetti(x, y, vx, vy){
+    addPart({ type: 'confetti', x, y, vx, vy, g: 260, drag: 1.2, life: rand(1.8, 3), w: rand(6, 11), h: rand(4, 7),
+      rot: rand(0, 6.28), vr: rand(-12, 12), ph: rand(0, 6.28), color: pick(CONFETTI_COLORS()) });
+  }
+  function smoke(x, y, vx, vy, s0, s1, life){
+    addPart({ type: 'smoke', x, y, vx, vy, drag: 1.5, life, s0, s1, a: rand(0.35, 0.6) });
+  }
+  // ギザギザの電撃（点の列を作っておく）
+  function bolt(x, y, len){
+    const pts = [[x, y]];
+    let a = rand(0, Math.PI * 2), px = x, py = y;
+    const n = 4 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++){
+      a += rand(-1.1, 1.1);
+      px += Math.cos(a) * len / n; py += Math.sin(a) * len / n;
+      pts.push([px, py]);
+    }
+    addPart({ type: 'bolt', x, y, vx: 0, vy: 0, life: 0.14, pts });
+    addPart({ type: 'glow', spr: 'elec', x, y, vx: 0, vy: 0, life: 0.2, s0: 70, s1: 40, a: 0.9 });
+  }
+  function star(x, y, size, life){
+    addPart({ type: 'star', x, y, vx: rand(-20, 20), vy: rand(-40, -10), life, size, rot: rand(0, 1), vr: rand(-3, 3) });
+  }
+
+  // 叩いたときの演出。c = ツボへの近さ（0〜1）、fixed = 直った
+  function hitFx(wx, wy, c, fixed){
+    const p = fixed ? 1 : c;
+    const ap = APPS[idx];
+    // まんがの衝撃マーク
+    const col = fixed ? C.pop : heat(p);   // 近いほど少し橙になる
+    const n = 12, R = (fixed ? 110 : 42 + 18 * p);
+    const radii = [];
+    for (let i = 0; i < n * 2; i++) radii.push(i % 2 ? rand(0.45, 0.6) : rand(0.85, 1.1));
+    addPart({ type: 'burst', x: wx, y: wy, vx: 0, vy: 0, life: fixed ? 0.3 : 0.16, R, radii, rot: rand(0, 1), color: col });
+    // 衝撃波の輪
+    addPart({ type: 'ring', x: wx, y: wy, vx: 0, vy: 0, life: 0.35, r0: 10, r1: 80 + 40 * p, w: 8, color: C.pop });
+    // 近いほど熱く光る
+    if (!fixed && p > 0.6) addPart({ type: 'glow', spr: 'glow', x: wx, y: wy, vx: 0, vy: 0, life: 0.35, s0: 60, s1: 140, a: 0.4 * p });
+    if (fixed){
+      addPart({ type: 'ring', x: wx, y: wy, vx: 0, vy: 0, life: 0.6, r0: 20, r1: 260, w: 14, color: C.spot });
+      addPart({ type: 'ring', x: wx, y: wy, vx: 0, vy: 0, life: 0.8, r0: 20, r1: 420, w: 10, color: C.pop });
+    }
+    // 火花
+    const ns = Math.round(SPARKS * (1 + 0.6 * p)) + (fixed ? 40 : 0);
+    for (let i = 0; i < ns; i++){
+      const a = rand(0, Math.PI * 2), sp = rand(250, 650) * (1 + p * 0.25);
+      addPart({ type: 'spark', x: wx, y: wy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 900, drag: 2,
+        life: rand(0.25, 0.55), w: rand(2, 4), color: Math.random() < 0.5 ? C.spark : C.spark2 });
+    }
+    // 飛び散るネジ・部品
+    for (let i = 0; i < DEBRIS + (fixed ? 6 : 0); i++){
+      addPart({ type: 'debris', x: wx, y: wy, vx: rand(-260, 260), vy: rand(-520, -180), g: 1400,
+        life: 1.2, s: rand(5, 10), rot: rand(0, 6.28), vr: rand(-20, 20), color: Math.random() < 0.6 ? C.metal : C.body2 });
+    }
+    // 土ぼこり
+    for (let i = 0; i < 5; i++) smoke(wx, wy, rand(-120, 120), rand(-120, 40), 30, 90, rand(0.5, 0.9));
+    camShake = Math.max(camShake, fixed ? CAM_SHAKE_FIX : CAM_SHAKE * (1 + 0.4 * p));
+    sqV -= fixed ? 9 : 4 + 1.5 * p;
+    flash = Math.max(flash, fixed ? 0.85 : 0.15 + 0.1 * p);
+
+    if (fixed){
+      focus = 0.8;
+      addPart({ type: 'glow', spr: 'glow', x: wx, y: wy, vx: 0, vy: 0, life: 0.7, s0: 120, s1: 600, a: 1 });
+      for (let i = 0; i < CONFETTI; i++){
+        const a = rand(-Math.PI * 0.95, -Math.PI * 0.05), sp = rand(300, 900);
+        confetti(CX, CY + ap.top + 40, Math.cos(a) * sp, Math.sin(a) * sp);
+      }
+      for (let i = 0; i < 30; i++) star(CX + rand(-ap.hw - 40, ap.hw + 40), CY + rand(ap.top - 30, ap.bot), rand(10, 22), rand(0.6, 1.2));
+    }
+  }
+
+  // 落ちてきた家電が着地したときの土ぼこり
+  function landFx(){
+    const ap = APPS[idx], y = CY + ap.bot;
+    for (let i = 0; i < 16; i++){
+      const side = i % 2 ? 1 : -1;
+      smoke(CX + side * rand(ap.hw * 0.3, ap.hw), y - rand(0, 15), side * rand(80, 300), rand(-140, -20), rand(20, 40), rand(80, 150), rand(0.5, 1.1));
+    }
+    camShake = Math.max(camShake, 12);
+    sqV -= 5;
+  }
+
+  // 調子が悪いあいだ出続ける煙・電撃・水しぶき
+  function ambient(dt, bad){
+    const ap = APPS[idx];
+    const ax = CX + curOx, ay = CY + curOy + dropY;
+    if (Math.random() < AMBIENT_SMOKE * bad * dt){
+      smoke(ax + rand(-ap.hw * 0.6, ap.hw * 0.6), ay + ap.top + 5, rand(-15, 15), rand(-70, -40), 30, 120, rand(1.2, 2));
+    }
+    if (Math.random() < AMBIENT_BOLT * bad * dt){
+      const q = randomInside(ap);
+      bolt(ax + q.x, ay + q.y, rand(35, 70));
+      for (let i = 0; i < 5; i++){
+        const a = rand(0, Math.PI * 2), sp = rand(100, 300);
+        addPart({ type: 'spark', x: ax + q.x, y: ay + q.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 700, drag: 2,
+          life: rand(0.15, 0.35), w: 2, color: C.elec2 });
+      }
+    }
+    if (ap.id === 'washer' && Math.random() < AMBIENT_DROP * bad * dt){
+      const a = rand(-Math.PI, 0);
+      addPart({ type: 'drop', x: ax + Math.cos(a) * 92, y: ay + 25 + Math.sin(a) * 92,
+        vx: Math.cos(a) * rand(100, 220), vy: Math.sin(a) * rand(150, 300) - 80, g: 900, life: 1, s: rand(3, 6) });
+    }
+  }
+
+  // 家電の拡大縮小（つぶれ）。接地面を基準につぶす
+  const squashX = () => 1 - Math.max(-0.3, Math.min(0.3, sq)) * 0.6;
+  const squashY = () => 1 + Math.max(-0.3, Math.min(0.3, sq));
+
+  // ---------- 入力 ----------
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (state !== 'playing') return;
+    const ap = APPS[idx];
+    const r = cv.getBoundingClientRect();
+    const lx = (e.clientX - r.left - offX) / SC - camX, ly = (e.clientY - r.top - offY) / SC - camY;
+    const ax = CX + curOx, ay = CY + curOy + dropY;
+    const x = (lx - ax) / squashX(), y = (ly - (ay + ap.bot)) / squashY() + ap.bot;
+    if (!ap.inside(x, y)) return;
+    hits++;
+    kick = 1;
+    const d = Math.hypot(x - spot.x, y - spot.y);
+    if (d <= spec().r){
+      state = 'fixed';
+      fixedAge = 0;
+      if (idx === APPS.length - 1) finalTime = (performance.now() - startTime) / 1000;
+      hitFx(lx, ly, 1, true);
+    } else {
+      const c = Math.max(0, 1 - d / HINT_RANGE);
+      hitBad = 1 - HINT_POWER * c;
+      hitAge = 0;
+      hitFx(lx, ly, c, false);
+    }
+    updateHud();
+  });
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+
+  $('again').addEventListener('click', start);
+  document.addEventListener('keydown', e => {
+    if (!$('share-view').classList.contains('hidden')) return;
+    if (state === 'over' && (e.key === ' ' || e.key === 'Enter') && document.activeElement !== $('share')){
+      e.preventDefault();
+      start();
+    }
+  });
+
+  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    if (e.target instanceof Element && e.target.closest('#share-view')) return;
+    const now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+  document.addEventListener('selectstart', e => {
+    if (e.target instanceof Element && e.target.closest('#share-text')) return;
+    e.preventDefault();
+  });
+
+  // ---------- 共有 ----------
+  function shareText(){
+    const url = location.href.split(/[?#]/)[0];
+    return `${hits}回叩いて全ての家電を${timeText()}秒で直した！\n${url}\n#家電マスター`;
+  }
+  function resultCanvas(){
+    const c = document.createElement('canvas');
+    c.width = 800; c.height = 500;
+    const g = c.getContext('2d');
+    g.fillStyle = C.bg; g.fillRect(0, 0, 800, 500);
+    g.fillStyle = C.fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = `bold 44px ${FONT}`; g.fillText('家電マスター', 400, 100);
+    g.font = `800 150px ${FONT}`; g.fillText(`${timeText()}秒`, 400, 260);
+    g.fillStyle = C.sub; g.font = `bold 36px ${FONT}`;
+    g.fillText(`叩いた回数 ${hits}回`, 400, 410);
+    return c;
+  }
+  function resultImageFile(c){
+    const bin = atob(c.toDataURL('image/png').split(',')[1]);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return new File([buf], 'result.png', { type: 'image/png' });
+  }
+  $('share').addEventListener('pointerdown', e => e.stopPropagation());
+  $('share').addEventListener('click', () => {
+    const text = shareText();
+    const c = resultCanvas();
+    const file = resultImageFile(c);
+    // 共有シートが無い・使えない環境：文面をコピーし、共有される内容を画面に出す
+    const fallback = () => {
+      navigator.clipboard?.writeText(text).catch(() => {});
+      $('share-img').src = c.toDataURL('image/png');
+      $('share-text').textContent = text;
+      $('share-view').classList.remove('hidden');
+      $('share-close').focus({ preventScroll: true });
+    };
+    // 失敗、または押してすぐのキャンセル扱いは共有シートが出なかったとみなす
+    const shareStart = performance.now();
+    const failed = err => {
+      const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
+      if (!err || err.name !== 'AbortError' || instant) fallback();
+    };
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      navigator.share({ text, files: [file] }).catch(failed);
+      return;
+    }
+    if (navigator.share){
+      navigator.share({ text }).catch(failed);
+      return;
+    }
+    fallback();
+  });
+  const closeShareView = () => {
+    $('share-view').classList.add('hidden');
+    $('share').focus({ preventScroll: true });
+  };
+  $('share-close').addEventListener('click', closeShareView);
+  $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('share-view').classList.contains('hidden')) closeShareView();
+  });
+
+  // ---------- 更新・描画 ----------
+  // 落下の跳ね返り（0〜1）
+  function easeOutBounce(k){
+    const n = 7.5625, d = 2.75;
+    if (k < 1 / d) return n * k * k;
+    if (k < 2 / d) return n * (k -= 1.5 / d) * k + 0.75;
+    if (k < 2.5 / d) return n * (k -= 2.25 / d) * k + 0.9375;
+    return n * (k -= 2.625 / d) * k + 0.984375;
+  }
+
+  function update(dt){
+    t += dt;
+    hitAge += dt;
+    kick *= Math.exp(-KICK_DECAY * dt);
+    camShake *= Math.exp(-CAM_DECAY * dt);
+    camX = (Math.random() * 2 - 1) * camShake;
+    camY = (Math.random() * 2 - 1) * camShake;
+    flash = Math.max(0, flash - dt * 3);
+    focus = Math.max(0, focus - dt);
+    sqV += (-SQ_K * sq - SQ_D * sqV) * dt;
+    sq += sqV * dt;
+
+    const ap = APPS[idx];
+    const bad = currentBad();
+    ap.upd(st, dt, bad, t);
+
+    // 調子の悪さによる震え ＋ 叩いたときの揺れ
+    const amp = spec().shake * bad;
+    curOx = amp * Math.sin(t * 41) + KICK_AMP * kick * Math.sin(t * 55);
+    curOy = amp * 0.6 * Math.cos(t * 33);
+
+    if (state === 'enter'){
+      enterAge += dt;
+      const k = Math.min(1, enterAge / ENTER_TIME);
+      dropY = -700 * (1 - easeOutBounce(k));
+      if (!landed && k > 1 / 2.75){ landed = true; landFx(); }
+      if (k >= 1){ dropY = 0; state = 'playing'; }
+    }
+    if (state === 'playing') ambient(dt, bad);
+    if (state === 'fixed' || state === 'over'){
+      // 直った家電のまわりでキラキラが光る
+      sparkleT -= dt;
+      if (sparkleT <= 0){
+        sparkleT = 0.07;
+        star(CX + rand(-ap.hw - 30, ap.hw + 30), CY + rand(ap.top - 30, ap.bot), rand(8, 16), rand(0.5, 0.9));
+      }
+    }
+    if (state === 'fixed'){
+      fixedAge += dt;
+      if (fixedAge >= FIXED_WAIT){
+        if (idx < APPS.length - 1) setup(idx + 1);
+        else showResult();
+      }
+    }
+
+    parts.forEach(p => {
+      p.age += dt;
+      p.vx *= Math.max(0, 1 - p.drag * dt);
+      p.vy *= Math.max(0, 1 - p.drag * dt);
+      p.vy += p.g * dt;
+      if (p.type === 'confetti') p.x += Math.sin(p.age * 7 + p.ph) * 40 * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.rot += p.vr * dt;
+    });
+    parts = parts.filter(p => p.age < p.life);
+  }
+
+  function polyStar(x, y, n, rOut, rIn, rot){
+    ctx.beginPath();
+    for (let i = 0; i < n * 2; i++){
+      const r = i % 2 ? rIn : rOut, a = rot + i * Math.PI / n;
+      const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
+      if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+    }
+    ctx.closePath();
+  }
+
+  function drawPart(p){
+    const k = p.age / p.life;
+    switch (p.type){
+      case 'spark': {
+        ctx.globalAlpha = FX_ALPHA.spark * (1 - k);
+        ctx.strokeStyle = p.color; ctx.lineWidth = p.w; ctx.lineCap = 'round';
+        seg(p.x, p.y, p.x - p.vx * 0.035, p.y - p.vy * 0.035);
+        break;
+      }
+      case 'debris': {
+        ctx.globalAlpha = FX_ALPHA.debris * Math.min(1, (1 - k) * 3);
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2);
+        ctx.restore();
+        break;
+      }
+      case 'smoke': {
+        const s = p.s0 + (p.s1 - p.s0) * k;
+        ctx.globalAlpha = p.a * (1 - k);
+        ctx.drawImage(SPR.smoke, p.x - s / 2, p.y - s / 2, s, s);
+        break;
+      }
+      case 'glow': {
+        const s = p.s0 + (p.s1 - p.s0) * k;
+        ctx.globalAlpha = p.a * (1 - k);
+        ctx.drawImage(SPR[p.spr], p.x - s / 2, p.y - s / 2, s, s);
+        break;
+      }
+      case 'confetti': {
+        ctx.globalAlpha = FX_ALPHA.confetti * Math.min(1, (1 - k) * 4);
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.scale(1, Math.cos(p.age * 9 + p.ph));   // 紙がひらひら裏返る
+        ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+        break;
+      }
+      case 'star': {
+        const s = p.size * Math.sin(Math.PI * k);
+        ctx.globalAlpha = FX_ALPHA.star;
+        polyStar(p.x, p.y, 4, s, s * 0.35, p.rot);
+        ctx.fillStyle = C.pop; ctx.fill();
+        break;
+      }
+      case 'ring': {
+        const r = p.r0 + (p.r1 - p.r0) * (1 - (1 - k) * (1 - k));
+        ctx.globalAlpha = FX_ALPHA.ring * (1 - k);
+        circle(p.x, p.y, r);
+        ctx.strokeStyle = p.color; ctx.lineWidth = p.w * (1 - k) + 1; ctx.stroke();
+        break;
+      }
+      case 'burst': {
+        const s = k < 0.3 ? 0.6 + k / 0.3 * 0.5 : 1.1 - (k - 0.3) * 0.3;
+        ctx.globalAlpha = FX_ALPHA.burst * (k < 0.7 ? 1 : (1 - k) / 0.3);
+        ctx.beginPath();
+        p.radii.forEach((rr2, i) => {
+          const a = p.rot + i * Math.PI / (p.radii.length / 2);
+          const px = p.x + Math.cos(a) * p.R * rr2 * s, py = p.y + Math.sin(a) * p.R * rr2 * s;
+          if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+        });
+        ctx.closePath();
+        ctx.fillStyle = p.color; ctx.fill();
+        polyStar(p.x, p.y, 8, p.R * 0.45 * s, p.R * 0.25 * s, p.rot);
+        ctx.fillStyle = C.flash; ctx.fill();
+        break;
+      }
+      case 'bolt': {
+        ctx.globalAlpha = FX_ALPHA.bolt * (Math.random() < 0.3 ? 0.3 : 1);   // チカチカ点滅
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        [[7, C.elec2], [3, C.elec], [1.2, C.flash]].forEach(([w, col]) => {
+          ctx.beginPath();
+          p.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+          ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke();
+        });
+        break;
+      }
+      case 'drop': {
+        ctx.globalAlpha = FX_ALPHA.drop * (1 - k);
+        circle(p.x, p.y, p.s); ctx.fillStyle = C.water; ctx.fill();
+        break;
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function draw(){
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, VW, VH);
+    ctx.save();
+    ctx.translate(offX, offY);
+    ctx.scale(SC, SC);
+    ctx.translate(camX, camY);
+
+    const ap = APPS[idx];
+    const ax = CX + curOx, ay = CY + curOy + dropY;
+
+    // 直った家電の後ろで回る後光
+    if (state === 'fixed' || state === 'over'){
+      ctx.globalAlpha = FX_ALPHA.rays * (state === 'over' ? 1 : Math.min(1, fixedAge / 0.25));
+      ctx.fillStyle = C.sun;
+      const n = 16, R = 900;
+      for (let i = 0; i < n; i++){
+        const a0 = t * 0.6 + i * Math.PI * 2 / n;
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(ax + Math.cos(a0) * R, ay + Math.sin(a0) * R);
+        ctx.lineTo(ax + Math.cos(a0 + Math.PI / n) * R, ay + Math.sin(a0 + Math.PI / n) * R);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.globalAlpha = 0.5;
+      ctx.drawImage(SPR.glow, ax - 260, ay - 260, 520, 520);
+      ctx.globalAlpha = 1;
+    }
+
+    // 着地点の影
+    ctx.globalAlpha = 0.18 * Math.max(0.2, 1 + dropY / 700);
+    ctx.fillStyle = C.line;
+    ctx.beginPath(); ctx.ellipse(CX, CY + ap.bot + 4, ap.hw * 0.9, 10, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.save();
+    ctx.translate(ax, ay + ap.bot);
+    ctx.scale(squashX(), squashY());
+    ctx.translate(0, -ap.bot);
+    ap.draw(st, t, currentBad());
+    // 直ったら、ツボがどこだったかを赤丸で見せる
+    if (state === 'fixed' || state === 'over'){
+      circle(spot.x, spot.y, spec().r);
+      ctx.strokeStyle = C.spot; ctx.lineWidth = 4; ctx.stroke();
+    }
+    ctx.restore();
+
+    parts.forEach(drawPart);
+
+    // 直った瞬間の集中線
+    if (focus > 0){
+      ctx.globalAlpha = FX_ALPHA.focus * Math.min(1, focus / 0.3);
+      ctx.fillStyle = C.line;
+      for (let i = 0; i < 70; i++){
+        const a = i * Math.PI * 2 / 70 + Math.random() * 0.05;
+        const r0 = rand(220, 300), r1 = 900, wd = rand(0.004, 0.012);
+        ctx.beginPath();
+        ctx.moveTo(ax + Math.cos(a) * r0, ay + Math.sin(a) * r0);
+        ctx.lineTo(ax + Math.cos(a - wd) * r1, ay + Math.sin(a - wd) * r1);
+        ctx.lineTo(ax + Math.cos(a + wd) * r1, ay + Math.sin(a + wd) * r1);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+
+    // 画面全体のフラッシュ
+    if (flash > 0){
+      ctx.globalAlpha = FX_ALPHA.flash * Math.min(1, flash);
+      ctx.fillStyle = C.flash;
+      ctx.fillRect(0, 0, VW, VH);
+      ctx.globalAlpha = 1;
+    }
+  }
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  start();
+  requestAnimationFrame(loop);
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>

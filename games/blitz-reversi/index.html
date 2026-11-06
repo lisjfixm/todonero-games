@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script id="frame-guard">
+(function () {
+  if (window.top === window.self) return;
+  var allowed = ['x282665.com', 'www.x282665.com'];
+  var host = '';
+  try {
+    host = window.top.location.hostname;
+  } catch (e) {
+    var a = location.ancestorOrigins;
+    if (a && a.length) host = new URL(a[a.length - 1]).hostname;
+    else if (document.referrer) host = new URL(document.referrer).hostname;
+  }
+  if (allowed.indexOf(host) !== -1) return;
+  if (window.stop) window.stop();
+  var url = location.origin + location.pathname;
+  document.documentElement.innerHTML =
+    '<head><meta charset="utf-8"></head><body style="margin:0;padding:24px;font:16px sans-serif;background:#fff;color:#000">' +
+    '<p>このゲームは作者に無断で掲載されています。</p>' +
+    '<p>正規の公開ページ：<a href="https://x282665.com/games/blitz-reversi/'&#32;+&#32;url&#32;+&#32;'" target="_blank" rel="noopener">' + url + '</a></p></body>';
+})();
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-41RSZLP1YQ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-41RSZLP1YQ');
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>超速リバーシ</title>
+<meta name="description" content="順番なしで同時に石を置くリバーシ">
+<style>
+:root{--bg:#123516;--fg:#eee;--sub:#ccc;--green:#2e7d32;--line:#123d15;--black:#111;--white:#f5f5f5;
+      --ui:#111;--uiFg:#fff;--howto-bg:#123516;--howto-fg:#eee} /* ボタン・パネルなどUIの色 */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;display:flex;justify-content:center;touch-action:manipulation;overflow:hidden}
+main{--tray:clamp(48px,10dvh,110px);--tally:30px;width:100%;max-width:420px;height:100dvh;padding:8px 0;display:grid;grid-template-rows:1fr auto 1fr;justify-items:center}
+.side{display:flex;flex-direction:column;align-items:center;width:100%}
+.side.top{justify-content:flex-end}
+.side.bottom{justify-content:flex-start}
+.tally{height:var(--tally);display:flex;align-items:center;gap:24px;font-size:22px;font-weight:700;flex:none;visibility:hidden}
+.tally.on{visibility:visible}
+.board{--n:8;position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));grid-template-rows:repeat(var(--n),minmax(0,1fr));aspect-ratio:1;width:min(calc(100% - 32px),calc(100dvh - 2 * var(--tray) - var(--tally) - 24px));background:var(--green);border:3px solid var(--line)}
+.cell{min-width:0;min-height:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.cell.lastc{border-right:0}
+.cell.lastr{border-bottom:0}
+.disc{display:block;aspect-ratio:1;border-radius:50%}
+.disc.o{background:var(--white)} .disc.x{background:var(--black)}
+.cell .disc{width:80%}
+.cell{position:relative}
+.cell .guide{position:absolute;left:10%;top:10%;opacity:.35;pointer-events:none}
+.cell .guide.near{opacity:.8}
+.cell .disc.uncounted{opacity:.25}
+.cell .disc.counting{outline:3px solid var(--fg);outline-offset:1px}
+.tray{display:flex;justify-content:center;align-items:center;height:var(--tray);flex:none}
+.piece{width:var(--pieceIdle);cursor:grab;touch-action:none;opacity:.3;position:relative;z-index:2}
+.piece.dragging{width:var(--piece)} /* 掴んだら盤上の石と同じ大きさに戻す */
+.piece.auto{cursor:default;pointer-events:none}
+.piece.ready{opacity:1}
+.piece.dragging{cursor:grabbing;z-index:3}
+.hero{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:5;pointer-events:none;background:rgba(0,0,0,.5)}
+.hero[hidden]{display:none}
+.heroText{display:flex;font-size:min(20vw,15dvh,120px);font-weight:700;color:var(--white);text-shadow:0 0 24px rgba(255,255,255,.7)}
+.heroText span{display:inline-block;opacity:0;animation:heroIn .45s cubic-bezier(.2,1.5,.4,1) forwards}
+.heroText span:nth-child(2){animation-delay:.12s}
+.heroText span:nth-child(3){animation-delay:.24s}
+.heroText span:nth-child(4){animation-delay:.36s}
+@keyframes heroIn{from{opacity:0;transform:scale(3.5) rotate(-18deg)}to{opacity:1;transform:none}}
+.count,.panel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px;text-align:center}
+.count{font-size:min(30vw,22dvh,180px);font-weight:700;line-height:1;background:color-mix(in srgb,var(--ui) 70%,transparent);color:var(--uiFg);pointer-events:none;z-index:2}
+.count small{font-size:18px;font-weight:400}
+.panel{background:color-mix(in srgb,var(--ui) 85%,transparent);color:var(--uiFg);z-index:2}
+.panel p{margin:0;font-size:min(9vw,5dvh,36px);line-height:1.3;white-space:pre-line}
+.count[hidden],.panel[hidden]{display:none}
+.start{font:inherit;font-size:17px;padding:12px;border:1px solid var(--uiFg);border-radius:6px;background:var(--ui);color:var(--uiFg);cursor:pointer}
+.start[hidden],.setup[hidden],.ends[hidden],.panel p[hidden]{display:none}
+.ends{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.close{position:absolute;top:4px;right:6px;font:inherit;font-size:24px;line-height:1;padding:6px 10px;border:0;background:none;color:var(--uiFg);cursor:pointer}
+.setup{display:flex;flex-direction:column;align-items:center;gap:10px}
+.title{margin:0 auto;padding-bottom:12px;font-size:min(11vw,6dvh,40px);line-height:1;font-style:italic}
+.title[hidden]{display:none}
+.seg{display:flex}
+.seg button{font:inherit;font-size:15px;padding:8px 12px;border:1px solid var(--uiFg);background:var(--ui);color:var(--uiFg);cursor:pointer}
+.seg button+button{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--uiFg);color:var(--ui)}
+.seg[hidden]{display:none}
+.setup label{font-size:15px;display:flex;align-items:center;gap:6px;cursor:pointer}
+.size{flex-direction:column;gap:4px}
+.size input{width:200px;max-width:60vw;accent-color:var(--uiFg)}
+</style>
+</head>
+<body>
+<main>
+  <div class="side top">
+    <h1 class="title" id="title">超速リバーシ</h1>
+    <div class="tally"><span id="tallyX">黒 0</span><span id="tallyO">白 0</span></div>
+    <div class="tray"><div class="piece disc x" id="pieceX"></div></div>
+  </div>
+  <div class="board" id="board">
+    <div class="count" id="count" hidden aria-live="assertive"><small id="countLabel"></small><span id="countNum"></span></div>
+    <div class="panel" id="panel">
+      <p id="status" aria-live="polite" hidden></p>
+      <div class="setup" id="setup">
+        <div class="seg" role="group" aria-label="モード">
+          <button data-mode="cpu" aria-pressed="true">CPU対戦</button>
+          <button data-mode="pvp" aria-pressed="false">対人戦</button>
+        </div>
+        <div class="seg" role="group" aria-label="CPUの強さ" id="levelSeg">
+          <button data-level="weak" aria-pressed="false">よわい</button>
+          <button data-level="normal" aria-pressed="true">ふつう</button>
+          <button data-level="strong" aria-pressed="false">つよい</button>
+        </div>
+        <label class="size"><span>盤面 <output id="sizeOut">8×8</output></span>
+          <input type="range" id="size" min="0" max="4" step="1" value="3">
+        </label>
+        <button class="start" id="go">スタート</button>
+        <button class="start" id="howtoBtn" type="button" data-howto-open>遊び方</button>
+      </div>
+      <div class="ends" id="ends" hidden>
+        <button class="start" id="next">もう一回</button>
+        <button class="start" id="toSetup">設定に戻る</button>
+        <button class="start" id="share">共有</button>
+        <button class="close" id="close" aria-label="閉じて盤面を見る">✕</button>
+      </div>
+    </div>
+  </div>
+  <div class="side bottom">
+    <div class="tray"><div class="piece disc o" id="pieceO"></div></div>
+  </div>
+</main>
+<div class="hero" id="hero" hidden><div class="heroText" id="heroText"><span>完</span><span>全</span><span>王</span><span>者</span></div></div>
+<section class="howto" hidden data-pos="none">
+  <h2>遊び方</h2>
+  <p>手番のないリバーシです。カウントダウンのあとは、両者が同時に、好きな速さで石を置いていきます。置けるのは相手の石を1枚以上裏返せるマスだけです。どちらも置けなくなると終わり、石の多いほうが勝ちます。同数なら自動で再戦になります。スタート画面で CPU の強さか対人戦、盤面の大きさを選べます。</p>
+  <h2>操作</h2>
+  <p>下のトレイの白い石を指でドラッグし、置きたいマスの近くで離します。持っている間は置けるマスに薄い石が出て、近くのマスへ吸い付きます。対人戦では上のトレイの黒い石をもう1人が動かし、2人同時に操作できます。PC ではマウスのドラッグで置きます。</p>
+  <h2>コツ</h2>
+  <p>角の石は裏返されないので、空いていれば先に取る価値があります。相手が石を運んでいる間にそのマスを取れば、狙いを崩せます。盤上をすべて自分の色にすると「完全王者」の演出が出ます。</p>
+  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+</section>
+<script>
+(() => {
+  // CPUの強さ（[最小, 最大] の範囲で毎回ランダム）
+  //  cross:×を盤面の端から端まで運ぶ時間(ms) / grab:次の×を掴むまでの間(ms)
+  //  look:運びながら盤面を見直す間隔(ms)
+  //  noise:置き場所の評価のブレ（0で常に最善）
+  const CPU_LEVELS={
+    weak:  {cross:[500,1000],grab:[300,1000],look:[250,600], noise:1.2},
+    normal:{cross:[380,750], grab:[120,600], look:[150,450], noise:0.8},
+    strong:{cross:[320,520], grab:[80,280],  look:[80,220],  noise:0.4},
+  };
+  const REMATCH_MS=1500;      // 「仕切り直し」を表示してから再戦するまで(ms)
+  const COUNT_MS=1800;        // 終局時に石を数え上げる演出の時間(ms)
+  const COUNT_END_MS=600;     // 数え終わってから結果を出すまで(ms)
+  const HERO_MS=2200;         // 「完全王者」を表示する時間(ms)
+  // 選べる盤面サイズ。リバーシは偶数盤が前提だが、1×1だけ例外で許可
+  const SIZES=[1,4,6,8,10];
+  const SNAP=0.8;             // 吸着する距離（マスの大きさに対する倍率）
+  const RESULT_DELAY_MS=800;  // 結果の文字を出すまで(ms)
+  const COUNTDOWN=3;          // 表示するカウント（3→2→1）
+  const COUNTDOWN_MS=1500;    // 実際にかける合計時間(ms)
+  const $=id=>document.getElementById(id);
+  const boardEl=$('board'), statusEl=$('status'), nextBtn=$('next'), setupEl=$('setup');
+  const pieces={o:$('pieceO'), x:$('pieceX')};
+  const names={o:'あなた',x:'CPU'};
+
+  let mode='cpu', level='normal', size=8;
+  let cells=[], board=[], playing=false, cpuTimer=0, cpuRaf=0, endTimer=0, countTimer=0, heroTimer=0;
+  const tallyEls={o:$('tallyO'), x:$('tallyX')}, tallyBox=document.querySelector('.tally');
+
+  const countEl=$('count'), countNum=$('countNum'), panelEl=$('panel');
+
+  // ---- リバーシのルール ----
+  const DIRS=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  const opp=m=>m==='o'?'x':'o';
+  const inside=(r,c)=>r>=0&&r<size&&c>=0&&c<size;
+
+  // マスiにmを置いたときに裏返る駒（空なら置けない）
+  function flipsOf(i,m){
+    if(board[i]) return [];
+    const r0=Math.floor(i/size), c0=i%size, res=[];
+    for(const [dr,dc] of DIRS){
+      const run=[];
+      let r=r0+dr, c=c0+dc;
+      while(inside(r,c) && board[r*size+c]===opp(m)){ run.push(r*size+c); r+=dr; c+=dc; }
+      if(run.length && inside(r,c) && board[r*size+c]===m) res.push(...run);
+    }
+    return res;
+  }
+  // 盤面に石が1つもない時（1×1の盤）はどこにでも置ける
+  const isEmptyBoard=()=>!board.some(Boolean);
+  const canPlace=(i,m)=>!board[i] && (isEmptyBoard() || flipsOf(i,m).length>0);
+  const hasMove=m=>board.some((_,i)=>canPlace(i,m));
+
+  function initBoard(){
+    board=Array(size*size).fill(null);
+    if(size<4) return; // 1×1は初期配置の4個が置けないので空から始める
+    const h=Math.floor(size/2);
+    board[(h-1)*size+h-1]='o'; board[h*size+h]='o';
+    board[(h-1)*size+h]='x';   board[h*size+h-1]='x';
+  }
+
+  function buildBoard(){
+    cells.forEach(c=>c.remove());
+    cells=[];
+    boardEl.style.setProperty('--n',size);
+    for(let i=0;i<size*size;i++){
+      const c=document.createElement('div');
+      c.className='cell'; c.dataset.i=i;
+      if(i%size===size-1) c.classList.add('lastc');
+      if(i>=size*(size-1)) c.classList.add('lastr');
+      boardEl.insertBefore(c,countEl);
+      cells.push(c);
+    }
+    board.forEach((_,i)=>render(i));
+    fitPiece();
+  }
+
+  // トレイの駒を盤上の石と同じ大きさにする
+  function fitPiece(){
+    const w=(cells[0]?.getBoundingClientRect().width||0)*0.8;
+    const tray=parseFloat(getComputedStyle(document.querySelector('.tray')).height)||0;
+    const st=document.documentElement.style;
+    // トレイからはみ出して盤面に重ならないよう、どちらも同じ上限で頭打ちにする
+    const cap=tray*0.95;
+    st.setProperty('--piece',Math.min(w,cap)+'px');       // 掴んでいる間（盤上の石と同じ）
+    st.setProperty('--pieceIdle',Math.min(w*2,cap)+'px'); // 待機中は2倍
+  }
+  addEventListener('resize',fitPiece);
+
+  // ---- ドラッグ操作（トレイから。ポインターごとに独立）----
+  const drags=new Map();
+
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て
+  // ドラッグが奪われるのを防ぐ
+  const isDraggable=t=>t instanceof Element && !!t.closest('.piece');
+  document.addEventListener('touchstart',e=>{ if(isDraggable(e.target)) e.preventDefault(); },{passive:false});
+  document.addEventListener('touchmove',e=>{ if(drags.size) e.preventDefault(); },{passive:false});
+  document.addEventListener('selectstart',e=>e.preventDefault());
+  document.addEventListener('contextmenu',e=>{ if(isDraggable(e.target)) e.preventDefault(); });
+
+  for(const m of ['o','x']){
+    pieces[m].addEventListener('pointerdown',e=>{
+      if(m==='x'&&mode==='cpu') return;
+      const el=pieces[m];
+      if(!playing||el.classList.contains('dragging')) return;
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      const r=el.getBoundingClientRect();
+      const cw=cells[0].getBoundingClientRect().width;
+      drags.set(e.pointerId,{el,m,
+        x0:e.clientX, y0:e.clientY,            // 掴んだ位置
+        cx0:r.left+r.width/2, cy0:r.top+r.height/2, // 掴んだ時の石の中心
+        centers:cells.map(c=>{const b=c.getBoundingClientRect();return [b.left+b.width/2,b.top+b.height/2];}),
+        lim:cw*SNAP, snap:null});
+      el.classList.add('dragging');
+      updateGuides();
+    });
+  }
+  document.addEventListener('pointermove',e=>{
+    const d=drags.get(e.pointerId);
+    if(!d) return;
+    const dx=e.clientX-d.x0, dy=e.clientY-d.y0;
+    d.el.style.transform=`translate(${dx}px,${dy}px)`; // 石はカーソルにそのまま追従
+    const s=snapTarget(d,d.cx0+dx,d.cy0+dy);
+    d.snap=s?s.i:null;                                  // 離した時に入るマス
+    markSnap();
+  });
+  document.addEventListener('pointerup',e=>{
+    const d=drags.get(e.pointerId);
+    if(!d) return;
+    const to=d.snap;
+    release(e.pointerId);
+    if(playing && to!==null) place(to,d.m);
+  });
+
+  // 石の中心に一番近い「置けるマス」（一定距離内のみ）。離した時の判定に使う
+  function snapTarget(d,x,y){
+    let best=null, bestD=Infinity;
+    for(let i=0;i<d.centers.length;i++){
+      if(!canPlace(i,d.m)) continue;
+      const dx=d.centers[i][0]-x, dy=d.centers[i][1]-y, dist=Math.hypot(dx,dy);
+      if(dist<bestD){ bestD=dist; best={i,dx,dy}; }
+    }
+    return bestD<=d.lim ? best : null;
+  }
+  // 吸着中のマスのガイドを濃くする
+  function markSnap(){
+    const on=new Set([...drags.values()].map(d=>d.snap).filter(v=>v!==null));
+    cells.forEach((c,i)=>{
+      const g=c.querySelector('.guide');
+      if(g) g.classList.toggle('near',on.has(i));
+    });
+  }
+  document.addEventListener('pointercancel',e=>release(e.pointerId));
+
+  function release(id){
+    const d=drags.get(id);
+    if(!d) return;
+    drags.delete(id);
+    d.el.style.transform='';
+    d.el.classList.remove('dragging');
+    updateGuides();
+  }
+  function releaseAll(){ [...drags.keys()].forEach(release); }
+
+  // ドラッグ中の色の石を置けるマスに半透明のガイドを出す
+  function updateGuides(){
+    boardEl.querySelectorAll('.guide').forEach(g=>g.remove());
+    if(!playing) return;
+    const ms=new Set([...drags.values()].map(d=>d.m));
+    for(const m of ms){
+      board.forEach((_,i)=>{
+        if(!canPlace(i,m)) return;
+        const g=document.createElement('span');
+        g.className='disc guide '+m;
+        cells[i].appendChild(g);
+      });
+    }
+  }
+
+  // ---- 進行 ----
+  setupEl.querySelectorAll('.seg button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      btn.parentElement.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===btn));
+      if(btn.dataset.mode){ mode=btn.dataset.mode; $('levelSeg').hidden = mode!=='cpu'; }
+      if(btn.dataset.level) level=btn.dataset.level;
+    });
+  });
+  $('size').addEventListener('input',e=>{
+    size=SIZES[+e.target.value];
+    $('sizeOut').textContent=`${size}×${size}`;
+    initBoard(); buildBoard();
+  });
+  $('go').addEventListener('click',()=>{
+    names.o = mode==='cpu' ? 'あなた' : 'プレイヤー1';
+    names.x = mode==='cpu' ? 'CPU' : 'プレイヤー2';
+    pieces.x.classList.toggle('auto',mode==='cpu');
+    setupEl.hidden=true; $('title').hidden=true;
+    startGame();
+  });
+  nextBtn.addEventListener('click',startGame);
+  // ✕：パネルを閉じて終了時の盤面を見せる。画面をタップで戻る
+  let viewing=false;
+  $('close').addEventListener('click',()=>{
+    panelEl.hidden=true;
+    setTimeout(()=>{ viewing=true; },0);
+  });
+  document.addEventListener('pointerdown',e=>{
+    if(!viewing) return;
+    e.preventDefault(); e.stopPropagation();
+    viewing=false;
+    panelEl.hidden=false;
+  },true);
+
+  // 結果をXに投稿する（文面を入れた投稿画面を開くだけ）
+  let shareText='';
+  $('share').addEventListener('click',()=>{
+    const btn=$('share');
+    const file=boardImageFile();
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({text:shareText, files:[file]}).catch(()=>{}); // 文面＋盤面画像
+      return;
+    }
+    if(navigator.share){
+      navigator.share({text:shareText}).catch(()=>{});               // 画像非対応なら文面のみ
+      return;
+    }
+    // 共有シートがない環境（PCのブラウザなど）は文面をコピー
+    navigator.clipboard?.writeText(shareText).then(()=>{
+      btn.textContent='コピーしました';
+      setTimeout(()=>{ btn.textContent='共有'; },1500);
+    }).catch(()=>{});
+  });
+
+  // 今の盤面をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  function boardImageFile(){
+    const px=64, pad=10, w=size*px;
+    const c=document.createElement('canvas');
+    c.width=c.height=w+pad*2;
+    const g=c.getContext('2d');
+    const v=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    g.fillStyle=v('--line'); g.fillRect(0,0,c.width,c.height);
+    g.fillStyle=v('--green'); g.fillRect(pad,pad,w,w);
+    g.strokeStyle=v('--line'); g.lineWidth=2;
+    for(let i=1;i<size;i++){
+      g.beginPath(); g.moveTo(pad+i*px,pad); g.lineTo(pad+i*px,pad+w);
+      g.moveTo(pad,pad+i*px); g.lineTo(pad+w,pad+i*px); g.stroke();
+    }
+    board.forEach((m,i)=>{
+      if(!m) return;
+      g.fillStyle = m==='o' ? v('--white') : v('--black');
+      g.beginPath();
+      g.arc(pad+(i%size+0.5)*px, pad+(Math.floor(i/size)+0.5)*px, px*0.4, 0, Math.PI*2);
+      g.fill();
+    });
+    const bin=atob(c.toDataURL('image/png').split(',')[1]);
+    const buf=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
+    return new File([buf],'reversi.png',{type:'image/png'});
+  }
+
+  $('toSetup').addEventListener('click',()=>{
+    $('ends').hidden=true; statusEl.hidden=true;
+    clearTimeout(endTimer); clearCount();
+    initBoard(); buildBoard();
+    setupEl.hidden=false; $('title').hidden=false;
+  });
+
+  function startGame(){
+    clearTimeout(endTimer); clearCount();
+    initBoard(); buildBoard();
+    panelEl.hidden=true;
+    $('countLabel').textContent=`${size}×${size}`;
+    let n=COUNTDOWN;
+    countNum.textContent=n; countEl.hidden=false;
+    const t=setInterval(()=>{
+      n--;
+      if(n>0){ countNum.textContent=n; return; }
+      clearInterval(t);
+      countEl.hidden=true;
+      beginPlay();
+    },COUNTDOWN_MS/COUNTDOWN);
+  }
+
+  function beginPlay(){
+    playing=true;
+    pieces.o.classList.add('ready'); pieces.x.classList.add('ready');
+    if(mode==='cpu') cpuTimer=setTimeout(cpuDrag,rand(CPU_LEVELS[level].grab));
+  }
+
+  function render(i){
+    const c=cells[i];
+    if(!c) return;
+    c.textContent='';
+    const m=board[i];
+    if(!m) return;
+    const mk=document.createElement('span');
+    mk.className='disc '+m;
+    c.appendChild(mk);
+  }
+
+  // 1枚以上裏返せるマスにだけ置ける（順番はなし）
+  function place(i,m){
+    if(!playing||!canPlace(i,m)) return;
+    const f=flipsOf(i,m);
+    board[i]=m; render(i);
+    f.forEach(j=>{ board[j]=m; render(j); });
+    // 両者とも置けなくなったら終局（盤面が埋まった場合も含む）
+    if(!hasMove('o') && !hasMove('x')) end();
+    else updateGuides();
+  }
+
+  function end(){
+    playing=false;
+    clearTimeout(cpuTimer); cancelAnimationFrame(cpuRaf);
+    releaseAll();
+    pieces.x.style.transform=''; pieces.x.classList.remove('dragging');
+    for(const m of ['o','x']) pieces[m].classList.remove('ready');
+    // 数え上げは盤面が最後まで埋まった場合のみ。
+    // 完全制覇（盤上が全部同じ色）ならマスが埋まっていなくても「完全王者」を出す。
+    const after=()=>{ perfectWinner() ? playHero(showResult) : showResult(); };
+    if(board.every(Boolean)) countUp(after);
+    else after();
+  }
+
+  // 終局時の数え上げ演出：左上から順に石を1枚ずつ明るくして枚数を足していく
+  function countUp(done){
+    const order=[...board.keys()].filter(i=>board[i]);
+    const discOf=i=>cells[i].querySelector('.disc:not(.guide)');
+    order.forEach(i=>discOf(i).classList.add('uncounted'));
+    const n={o:0,x:0};
+    showTally(n);
+    tallyBox.classList.add('on');
+    let k=0, prev=null;
+    const step=()=>{
+      if(prev) prev.classList.remove('counting');
+      if(k>=order.length){ countTimer=setTimeout(done,COUNT_END_MS); return; }
+      const d=discOf(order[k]);
+      d.classList.remove('uncounted'); d.classList.add('counting');
+      prev=d;
+      n[board[order[k]]]++; showTally(n);
+      k++;
+      countTimer=setTimeout(step,COUNT_MS/order.length);
+    };
+    step();
+  }
+  function showTally(n){
+    tallyEls.x.textContent=`黒 ${n.x}`;
+    tallyEls.o.textContent=`白 ${n.o}`;
+  }
+  function clearCount(){
+    clearTimeout(countTimer); clearHero();
+    tallyBox.classList.remove('on');
+  }
+
+  // 盤上の石が全部同じ色になった時のプレイヤー（空きマスは残っていてよい）
+  // CPU対戦では白＝プレイヤーのみ、対人戦は黒白どちらでも
+  function perfectWinner(){
+    const ds=board.filter(Boolean);
+    const first=ds[0];
+    if(!ds.every(v=>v===first)) return null;
+    if(mode==='cpu' && first!=='o') return null;
+    return first;
+  }
+
+  // 「完全王者」の演出
+  function playHero(done){
+    const h=$('hero');
+    h.hidden=false;
+    const t=$('heroText');
+    t.style.animation='none'; t.offsetWidth; t.style.animation=''; // 再生し直す
+    [...t.children].forEach(s=>{ s.style.animation='none'; s.offsetWidth; s.style.animation=''; });
+    heroTimer=setTimeout(()=>{ h.hidden=true; done(); },HERO_MS);
+  }
+  function clearHero(){ clearTimeout(heroTimer); $('hero').hidden=true; }
+
+  function showResult(){
+    const n={o:board.filter(v=>v==='o').length, x:board.filter(v=>v==='x').length};
+    const tally=`黒 ${n.x} : 白 ${n.o}`;
+    if(n.o===n.x){
+      // 引き分けは仕切り直して自動で再戦
+      statusEl.textContent=`${tally}\n仕切り直し`;
+      statusEl.hidden=false;
+      $('ends').hidden=true;
+      panelEl.hidden=false;
+      endTimer=setTimeout(startGame,REMATCH_MS);
+      return;
+    }
+    const w=n.o>n.x?'o':'x';
+    const head = mode==='cpu' ? (w==='o'?'勝利':'敗北') : (w==='x'?'黒の勝利':'白の勝利');
+    shareText=`${head}${perfectWinner()===w?'（完全王者！）':''}\n`
+      +`盤面${size}×${size} : ${tally}\n${location.href}\n#超速リバーシ`;
+    endTimer=setTimeout(()=>{
+      statusEl.textContent=`${tally}\n${names[w]}の勝ち`;
+      statusEl.hidden=false;
+      $('ends').hidden=false;
+      panelEl.hidden=false;
+    },RESULT_DELAY_MS);
+  }
+
+  // 初期表示の盤面
+  initBoard();
+  buildBoard();
+
+  // ---- CPU：×をトレイからマスまでドラッグして置く ----
+  // 運んでいる間も一定間隔で盤面を見直し、置けなくなったり
+  // より良いマスがあれば向きを変える。
+  let order=[];
+  function cpuDrag(){
+    if(!playing) return;
+    const el=pieces.x;
+    el.style.transform='';
+    el.classList.add('dragging'); // 運んでいる間は人と同じく盤上の石と同じ大きさ
+    const retry=()=>{
+      el.style.transform='';
+      el.classList.remove('dragging');
+      if(playing) cpuTimer=setTimeout(cpuDrag,rand(CPU_LEVELS[level].grab));
+    };
+    const home=el.getBoundingClientRect();
+    const hx=home.left+home.width/2, hy=home.top+home.height/2;
+    order=shuffle([...board.keys()]);
+    const crossMs=rand(CPU_LEVELS[level].cross);
+    let x=0, y=0, last=performance.now(), i, lookAt=0;
+    const step=now=>{
+      if(!playing) return;
+      if(now>=lookAt){
+        i=chooseCpu();
+        lookAt=now+rand(CPU_LEVELS[level].look);
+      }
+      if(i===undefined){ retry(); return; } // 置ける場所がない：待って見直す
+      const r=cells[i].getBoundingClientRect();
+      const tx=r.left+r.width/2-hx, ty=r.top+r.height/2-hy;
+      const speed=boardEl.getBoundingClientRect().width/crossMs;
+      const mv=speed*(now-last); last=now;
+      const d=Math.hypot(tx-x,ty-y);
+      if(d<=mv){
+        place(i,'x'); // 既に置けなくなっていたら置けずに戻る
+        retry();
+        return;
+      }
+      x+=(tx-x)/d*mv; y+=(ty-y)/d*mv;
+      el.style.transform=`translate(${x}px,${y}px)`;
+      cpuRaf=requestAnimationFrame(step);
+    };
+    cpuRaf=requestAnimationFrame(step);
+  }
+
+  function rand([a,b]){ return a+Math.random()*(b-a); }
+
+  function shuffle(a){
+    for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+    return a;
+  }
+
+  // マスの位置の価値：角は高く、空いた角の隣は低く、辺はやや高い
+  function weight(i){
+    const e=size-1, r=Math.floor(i/size), c=i%size;
+    const edge=r===0||r===e||c===0||c===e;
+    if((r===0||r===e)&&(c===0||c===e)) return 100;
+    for(const cr of [0,e]) for(const cc of [0,e]){
+      if(Math.abs(r-cr)<=1 && Math.abs(c-cc)<=1 && !board[cr*size+cc]) return edge?-20:-40;
+    }
+    return edge?10:1;
+  }
+
+  function chooseCpu(){
+    let best, bestScore=-Infinity;
+    for(const i of order){
+      if(!canPlace(i,'x')) continue;
+      const f=flipsOf(i,'x').length;
+      const sc=weight(i)+f+(Math.random()*2-1)*CPU_LEVELS[level].noise*60;
+      if(sc>bestScore){ bestScore=sc; best=i; }
+    }
+    return best;
+  }
+})();
+</script>
+<script src="../../common/js/howto.js" defer></script>
+</body>
+</html>
