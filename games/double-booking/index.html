@@ -57,7 +57,7 @@ body{
 #game{
   position:relative;width:100%;max-width:420px;margin:0 auto;
   height:100vh;height:100dvh;display:flex;flex-direction:column;
-  /* ノッチ・ホームバー・角丸を避けて、画面はすべてセーフエリアの内側に収める（下はホームバーから少し離す） */
+  /* ノッチ・ホームバー・角丸を避けて、畫面はすべてセーフエリアの内側に収める（下はホームバーから少し放開） */
   padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
   padding-left:env(safe-area-inset-left,0px);
   padding-right:env(safe-area-inset-right,0px);
@@ -71,7 +71,7 @@ body{
 #detail{font-size:15px;color:var(--sub)}
 #over button{min-width:180px;min-height:48px;font-size:18px;font-weight:bold;border-radius:8px;border:none;background:var(--ev);color:var(--evtext);font-family:inherit}
 #over button#share{background:var(--bg);color:var(--ev);border:2px solid var(--ev)}
-/* 右上のモード切り替え（結果の画面の上にも出すので #over より後ろに置いている） */
+/* 右上のモード切り替え（結果の畫面の上にも出すので #over より後ろに置いている） */
 #mode{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:calc(env(safe-area-inset-right,0px) + 8px);min-height:44px;padding:0 10px;font-size:12px;font-weight:bold;border-radius:8px;border:2px solid var(--ev);background:var(--bg);color:var(--ev);font-family:inherit}
 button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 </style>
@@ -85,18 +85,18 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     <div id="detail"></div>
     <button id="next" type="button">次の日へ</button>
     <button id="endless" type="button">エンドレスモード</button>
-    <button id="retry" type="button">もう一回</button>
+    <button id="retry" type="button">再來一次</button>
     <button id="share" type="button">分享</button>
   </div>
   <button id="mode" type="button" class="hidden"></button>
   <section class="howto" data-pos="bottom-left" hidden>
     <h2>玩法</h2>
-    <p>空き時間の少ない1日の予定表に、上下に動き続ける予定をねじ込むゲームです。隙間に収まる位置で押せば次の予定へ進み、全部入れるとその日はクリアです。既存の予定に重なると崩れて失敗し、通常はその日の最初から重新開始ます。月曜から金曜へ進むほど動きは速くなり、隙間の余裕は40分から15分まで減ります。金曜日を終えると、何日続くかを競うエンドレスモードも遊べます。</p>
+    <p>空き時間の少ない1日の予定表に、上下に動き続ける予定をねじ込む遊戲。隙間に収まる位置で押せば次の予定へ進み、全部入れるとその日はクリアです。既存の予定に重なると崩れて失敗し、通常はその日の最初から重新開始ます。月曜から金曜へ進むほど動きは速くなり、隙間の余裕は40分から15分まで減ります。金曜日を終えると、何日続くかを競うエンドレスモードも遊べます。</p>
     <h2>操作</h2>
-    <p>予定表をタップすると、動いている予定を今の位置で右の欄へ押し込みます。PC ではクリックのほか、スペースキーや Enter キーでも押し込めます。</p>
-    <h2>コツ</h2>
+    <p>予定表を點擊すると、動いている予定を今の位置で右の欄へ押し込みます。PC では點擊のほか、スペース鍵や Enter 鍵でも押し込めます。</p>
+    <h2>訣竅</h2>
     <p>制限時間はないので、何往復か見てから押せます。緑の2本の線が予定の上端と下端なので、両方が隙間に入る瞬間を狙いましょう。左の列には次の予定が同じ縮尺で並びます。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script>
@@ -144,14 +144,14 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   const POS_FIX = 0.6;           // めり込みを押し戻す割合
   const POS_SLOP = 0.5;          // この量（px）まではめり込みを許す
   const SETTLE_SPEED = 60;       // これより遅くなった箱は止まったとみなす（px/秒）
-  const WALL_SIDE_OUT = 0.5;     // 左右の見えない壁を画面の外へずらす量（1日の予定の箱の幅に対する割合）
-  const WALL_TOP_OUT = 60;       // 上の見えない壁を画面の外へずらす量（px）
-  const WALL_FLOOR_OUT = 20;     // 床を画面の外へずらす量（px）
+  const WALL_SIDE_OUT = 0.5;     // 左右の見えない壁を畫面の外へずらす量（1日の予定の箱の幅に対する割合）
+  const WALL_TOP_OUT = 60;       // 上の見えない壁を畫面の外へずらす量（px）
+  const WALL_FLOOR_OUT = 20;     // 床を畫面の外へずらす量（px）
   const CRASH_AFTER = 0.5;       // 崩れた箱が全部止まってから結果を出すまでの時間（秒）
   const CRASH_MAX = 4;           // ぶつかってから結果を出すまでの最長時間（秒）
-  const SHOT_DELAY = 0.1;        // ぶつかってから分享画像用の画面を撮るまでの時間（秒）
-  const SHAKE_TIME = 0.4;        // 予定が崩れるたびに画面が揺れる時間（秒）
-  const SHAKE_AMP = 12;          // 画面の揺れの大きさ（px）。時間とともに小さくなる
+  const SHOT_DELAY = 0.1;        // ぶつかってから分享画像用の畫面を撮るまでの時間（秒）
+  const SHAKE_TIME = 0.4;        // 予定が崩れるたびに畫面が揺れる時間（秒）
+  const SHAKE_AMP = 12;          // 畫面の揺れの大きさ（px）。時間とともに小さくなる
   const QUEUE_W = 80;            // 左端の「剩餘の予定」の列の幅
   const AXIS_W = 40;             // 時刻欄の幅
   const LANE_RATE = 0.36;        // 動く予定の欄の幅（時刻欄を除いた幅に対する割合）
@@ -176,8 +176,8 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   // ---------- 状態 ----------
   let stage = 0;         // 0=月 〜 4=金（エンドレスモードでは 0=1日目 で、その先も続く）
   let endless = false;   // エンドレスモードで遊んでいるか
-  let newBest = false;   // エンドレスモードの今回の挑戦で最長記録を更新したか
-  let evs = [];          // 1日の予定 {s:開始(分), e:終了(分), t:件名, len:長さ(分)}
+  let newBest = false;   // エンドレスモードの今回の挑戦で最長紀錄を更新したか
+  let evs = [];          // 1日の予定 {s:開始(分), e:結束(分), t:件名, len:長さ(分)}
   let queue = [];        // まだ出ていないねじ込む予定
   let req = null;        // 動いている予定 {len, t}
   let left = 0;          // この日の剩餘のねじ込む予定の数
@@ -190,13 +190,13 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   let anim = null;       // 押し込み中 {t:0〜1, s, e}
   let bodies = [];       // ぶつかった後の物理の箱。空でなければ1日の予定の代わりにこれを描く
   let crashTime = 0, goneTime = 0, physAcc = 0;
-  let crashShot = null;   // ぶつかって少し経ったときの画面（ミスしたときの分享画像に使う）
-  let shotT = -1;         // 分享画像用の画面を撮るまでの剩餘時間（秒）。負のときは待っていない
+  let crashShot = null;   // ぶつかって少し経ったときの畫面（ミスしたときの分享画像に使う）
+  let shotT = -1;         // 分享画像用の畫面を撮るまでの剩餘時間（秒）。負のときは待っていない
   let shotPending = false;   // 次の描画を分享画像用に撮る
-  let shakeT = 0;        // 画面の揺れの剩餘時間（秒）
+  let shakeT = 0;        // 畫面の揺れの剩餘時間（秒）
   let W = 0, H = 0, top = 0, bottom = 0, k = 1, axisR = 0, laneX = 0, laneW = 0, colX = 0, colW = 0;
 
-  // エンドレスモードの解放と最長記録：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  // エンドレスモードの解放と最長紀錄：瀏覽器のlocalStorageに保存（使えない環境ではその回だけ保持）
   const UNLOCK_KEY = 'doubleBooking.endlessUnlocked', BEST_KEY = 'doubleBooking.endlessBest';
   let unlocked = false;  // 金曜日までクリアしたことがあるか
   let best = 0;          // エンドレスモードで到達した最長の日数
@@ -307,8 +307,8 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     p.vx = PUSH_SPEED;
     p.noGravity = true;   // 手で押し込んでいる間は落ちない（何かに当たったら落ち始める）
     bodies.push(p);
-    // 画面の左右・上下の少し外側に見えない壁を置き、飛んだ箱が画面から消えてしまわないようにする
-    // （左右は箱の幅の半分くらい、上下も少しだけ画面の外にはみ出せる）
+    // 畫面の左右・上下の少し外側に見えない壁を置き、飛んだ箱が畫面から消えてしまわないようにする
+    // （左右は箱の幅の半分くらい、上下も少しだけ畫面の外にはみ出せる）
     const T = 200, sx = colW * WALL_SIDE_OUT;
     for (const [x, y, w, h] of [
       [-sx - T / 2, H / 2, T, H + 2 * T], [W + sx + T / 2, H / 2, T, H + 2 * T],
@@ -401,10 +401,10 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
         const c = collide(A, B);
         if (!c) continue;
         // 当たられた固定の箱は外れて弾け飛ぶ
-        // 既存の予定が崩れるたびに画面を揺らす
+        // 既存の予定が崩れるたびに畫面を揺らす
         if (A.pinned && !A.wall){ release(A); burst(A, B); shakeT = SHAKE_TIME; }
         if (B.pinned && !B.wall){ release(B); burst(B, A); shakeT = SHAKE_TIME; }
-        // 押し込んだ予定は、最初にぶつかった瞬間に往左跳ね返される。分享画像はここから少し経った画面を使う
+        // 押し込んだ予定は、最初にぶつかった瞬間に往左跳ね返される。分享画像はここから少し経った畫面を使う
         for (const P of [A, B]) if (P.kind === 'req' && P.noGravity){ bounceBack(P); shotT = SHOT_DELAY; }
         A.noGravity = false; B.noGravity = false;
         pairs.push({ A, B, ...c });
@@ -427,7 +427,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
       A.x -= n.x * corr * A.im; A.y -= n.y * corr * A.im;
       B.x += n.x * corr * B.im; B.y += n.y * corr * B.im;
     }
-    // 画面の外へ出た箱は消す
+    // 畫面の外へ出た箱は消す
     bodies = bodies.filter(b => {
       if (b.pinned) return true;
       const r = Math.hypot(b.w, b.h) / 2;
@@ -459,7 +459,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     stage = i;
     score = stageStartScore;
     const cfg = stageCfg(i);
-    // 最長記録は、その日に着いた時点で残す（途中で閉じても記録が消えないように）
+    // 最長紀錄は、その日に着いた時点で残す（途中で閉じても紀錄が消えないように）
     if (endless && i + 1 > best){ best = i + 1; newBest = true; save(BEST_KEY, best); }
     speed = cfg.speed;
     hitEv = null; anim = null; bodies = []; crashShot = null; shotT = -1; shotPending = false; shakeT = 0;
@@ -575,12 +575,12 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     drawCard(x, top + s * k + 0.5, w, Math.max(1, (e - s) * k - 1), color, lines);
   }
 
-  // noShake：画面の揺れを入れずに描く（分享画像用の画面をブレさせないため）
+  // noShake：畫面の揺れを入れずに描く（分享画像用の畫面をブレさせないため）
   function draw(noShake){
     if (!W) return;
     const cLine = css('--line'), cSub = css('--sub'), cReq = css('--req'), cEv = css('--ev');
     ctx.fillStyle = css('--bg'); ctx.fillRect(0, 0, W, H);
-    // ぶつかったときの画面の揺れ
+    // ぶつかったときの畫面の揺れ
     ctx.save();
     if (shakeT > 0 && !noShake){
       const a = SHAKE_AMP * shakeT / SHAKE_TIME;
@@ -654,7 +654,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     last = now;
     update(dt);
     draw(shotPending);
-    // ぶつかって少し経った画面を取っておく
+    // ぶつかって少し経った畫面を取っておく
     if (shotPending){
       shotPending = false;
       crashShot = document.createElement('canvas');
@@ -687,19 +687,19 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   $('next').addEventListener('click', onNext);
   $('retry').addEventListener('click', onRetry);
   $('endless').addEventListener('click', () => startRun(true));
-  // 右上のボタン：通常モードとエンドレスモードを行き来する（どちらも最初の日から）
+  // 右上の按鈕：通常モードとエンドレスモードを行き来する（どちらも最初の日から）
   $('mode').addEventListener('click', () => {
-    $('mode').blur();   // フォーカスが残ると、スペース・Enterキーでのねじ込みがこのボタンを按しまう
+    $('mode').blur();   // フォーカスが残ると、スペース・Enter鍵でのねじ込みがこの按鈕を按しまう
     startRun(!endless);
   });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   const isGameArea = t => t instanceof Element && !!t.closest('#cv');
   document.addEventListener('touchstart', e => { if (isGameArea(e.target)) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (isGameArea(e.target)) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => { if (isGameArea(e.target)) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -719,7 +719,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     return `${headline()}\n${detail}\n${url}\n#ダブルブッキング`;
   }
   // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
-  // ミスしたときは、ぶつかって少し経ったときの画面を使う
+  // ミスしたときは、ぶつかって少し経ったときの畫面を使う
   function resultImageFile(){
     const src = mode === 'over' && crashShot ? crashShot : cv;
     const dpr = src.width / W;
@@ -753,7 +753,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);

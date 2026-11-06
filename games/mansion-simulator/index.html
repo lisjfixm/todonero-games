@@ -49,7 +49,7 @@ gtag('config', 'G-41RSZLP1YQ');
     background:var(--bg);color:var(--ink);
     font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",-apple-system,system-ui,sans-serif;
     display:flex;flex-direction:column;-webkit-tap-highlight-color:transparent;
-    touch-action:manipulation;   /* スマホでボタンを連打してもダブルタップ拡大しない */
+    touch-action:manipulation;   /* スマホで按鈕を連打してもダブル點擊拡大しない */
   }
   button{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   main{
@@ -75,7 +75,7 @@ gtag('config', 'G-41RSZLP1YQ');
     flex:none;margin:12px 0 0 0;text-align:center;
     color:#8d8b84;font-size:12.5px;letter-spacing:.24em;
   }
-  #lead.off{visibility:hidden}   /* 消しても場所は残す（画面がずれないように） */
+  #lead.off{visibility:hidden}   /* 消しても場所は残す（畫面がずれないように） */
   footer{
     position:relative;
     flex:none;display:flex;align-items:center;justify-content:center;gap:26px;
@@ -93,7 +93,7 @@ gtag('config', 'G-41RSZLP1YQ');
   .ico[disabled]{opacity:.35;cursor:default}
   .ico.off{visibility:hidden}   /* 場所は残したまま隠す */
   .ico svg{width:26px;height:26px;display:block}
-  /* 表示する要素を個別に切り替えるメニュー（右端のボタンの上に出す） */
+  /* 表示する要素を個別に切り替えるメニュー（右端の按鈕の上に出す） */
   #levelMenu{
     position:absolute;right:16px;bottom:calc(100% + 10px);z-index:5;
     min-width:160px;padding:6px 4px;
@@ -131,12 +131,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <section class="howto" data-pos="top-left" hidden>
     <h2>玩法</h2>
-    <p>街の写真に光の柱を建てて、マンション広告のような画像を作るおもちゃです。勝ち負けはありません。最初は街の画像が入っていて、左端のボタンで手持ちの写真に替えられます。マンション名、ポエム、駅名、階数などは架空のものがランダムで入ります。</p>
+    <p>街の写真に光の柱を建てて、マンション広告のような画像を作るおもちゃです。贏輸はありません。最初は街の画像が入っていて、左端の按鈕で手持ちの写真に替えられます。マンション名、ポエム、駅名、階数などは架空のものが隨機で入ります。</p>
     <h2>操作</h2>
-    <p>画像を拖曳して建設予定地を決めます。印は指で隠れないよう少し上に出ます。中央の再生ボタンを押すと約4秒で建ち上がります。完成すると分享ボタンと、表示を切り替えるボタンが出ます。PC ではマウスで同じように操作できます。</p>
+    <p>画像を拖曳して建設予定地を決めます。印は手手指で隠れないよう少し上に出ます。中央の再生按鈕を按と約4秒で建ち上がります。完成すると分享按鈕と、表示を切り替える按鈕が出ます。PC では滑鼠で同じように操作できます。</p>
     <h2>楽しみ方</h2>
     <p>再生するたびに名前やポエム、柱の色が変わるので、気に入るまで建て直せます。切り替えのメニューでは路線やポエム、注意書きなどを個別に消せます。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </main>
 
@@ -181,11 +181,11 @@ gtag('config', 'G-41RSZLP1YQ');
   const shareBtn=document.getElementById('share');
   const lead=document.getElementById('lead');
   const levelBtn=document.getElementById('level');
-  // 表示する要素（右端のボタンのメニューで個別に切り替える）
+  // 表示する要素（右端の按鈕のメニューで個別に切り替える）
   const show={light:true, route:true, poem:true, name:true, spec:true, station:true, note:true};
   const levelMenu=document.getElementById('levelMenu');
   let played=false;
-  // 柱の色（決定のたびにランダム）
+  // 柱の色（確定のたびに隨機）
   let hue=205;
   // 0.1%で虹色。KONAMIコマンドを入れた次は確定
   let rainbow=false, rainbowNext=false, colorTime=0;
@@ -291,7 +291,7 @@ gtag('config', 'G-41RSZLP1YQ');
   for(const cb of levelMenu.querySelectorAll('input[data-show]')){
     cb.addEventListener('change',()=>{ show[cb.dataset.show]=cb.checked; applyShow(); });
   }
-  // メニューの外をタップしたら關閉
+  // メニューの外を點擊したら關閉
   document.addEventListener('pointerdown',e=>{
     if(levelMenu.classList.contains('hide')) return;
     if(levelMenu.contains(e.target)||levelBtn.contains(e.target)) return;
@@ -387,7 +387,7 @@ gtag('config', 'G-41RSZLP1YQ');
     hz=detectHorizon();
     cv.classList.remove('hide');
     load1.classList.add('hide'); bar.classList.remove('hide'); lead.classList.remove('off');
-    pt={x:cv.width/2, y:IH/2};        // 最初から中央を指定した状態にする
+    pt={x:cv.width/2, y:IH/2};        // 最初から中央を手手指定した状態にする
     if(!played) go.classList.add('notice');
     mode='edit'; go.disabled=false; poem=null; levelBtn.classList.add('off'); closeMenu(); shareBtn.classList.add('off');
     say(''); cancelAnimationFrame(raf); raf=requestAnimationFrame(loop);
@@ -411,7 +411,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup',()=>{dragging=false;});
   cv.addEventListener('pointercancel',()=>{dragging=false;});
 
-  const TOUCH_OFFSET=64;                 // 指で隠れないよう、指より上に置く（画面上のpx）
+  const TOUCH_OFFSET=64;                 // 手手指で隠れないよう、手手指より上に置く（畫面上のpx）
   function setPoint(e){
     const r=cv.getBoundingClientRect();
     const off=(e.pointerType==='touch'||e.pointerType==='pen') ? TOUCH_OFFSET*(cv.height/r.height) : 0;
@@ -433,7 +433,7 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   function loop(now){
-    if(mode==='edit'){                            // 予定地マーカーを動かす
+    if(mode==='edit'){                            // 予定地マーカーを移動
       draw(null,now/1000);
       raf=requestAnimationFrame(loop);
       return;
@@ -560,7 +560,7 @@ gtag('config', 'G-41RSZLP1YQ');
     e=e||0;
     colorTime=e;
 
-    // 街を落とす
+    // 街を掉落
     const dim=cl(t/0.22)*0.66;
     ctx.fillStyle='rgba(6,9,18,'+dim.toFixed(3)+')';
     ctx.fillRect(0,0,cv.width,IH);

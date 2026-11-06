@@ -55,7 +55,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #cv{display:block;width:100%;height:100%;touch-action:none}
   .hidden{display:none !important}
 
-  /* 画面に浮かぶ操作ボタン */
+  /* 畫面に浮かぶ操作按鈕 */
   .ui-btn{
     display:flex;align-items:center;justify-content:center;gap:8px;
     min-width:44px;height:44px;padding:0 16px;border:none;border-radius:22px;
@@ -89,7 +89,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #dbg-list #custom-go:disabled{opacity:.6}
   #kvg-credit{grid-column:1/-1;margin:8px 8px 0;font-size:10px;line-height:16px;color:#fffa}
   #dbg-list button:focus-visible{outline:2px solid #fff;outline-offset:-2px}
-  /* 開発者向け：筆順データが無く字の画像から推定しているとき、画面の左上の隅にだけ背景とわずかに違う色の小さな四角を出す */
+  /* 開発者向け：筆順データが無く字の画像から推定しているとき、畫面の左上の隅にだけ背景とわずかに違う色の小さな四角を出す */
   #guess-mark{position:absolute;top:0;left:0;width:4px;height:4px;background:var(--guess-mark);pointer-events:none}
   #done{
     position:absolute;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));
@@ -114,13 +114,13 @@ gtag('config', 'G-41RSZLP1YQ');
   .big.sub{background:#fff3;color:#fff}
   .big:focus-visible{outline:2px solid #fff;outline-offset:2px}
 
-  /* 分享できない環境で出す画面 */
+  /* 分享できない環境で出す畫面 */
   #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);touch-action:none}
   #share-view .panel{
     width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;
     padding:16px;border-radius:16px;background:var(--bg);display:flex;flex-direction:column;gap:16px;
   }
-  #share-img{display:block;width:auto;max-width:100%;max-height:50dvh;align-self:center;border-radius:8px}   /* 小さい画面でも關閉ボタンまで収める */
+  #share-img{display:block;width:auto;max-width:100%;max-height:50dvh;align-self:center;border-radius:8px}   /* 小さい畫面でも關閉按鈕まで収める */
   #share-text{margin:0;white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text;font-size:14px}
   #share-close{align-self:center}
 </style>
@@ -132,7 +132,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="dbg-list" class="hidden" role="group" aria-label="出題一覧">
     <div id="custom-row">
       <input id="custom-char" type="text" maxlength="4" autocomplete="off" placeholder="好きな字" aria-label="書きたい字">
-      <button id="custom-go" type="button">決定</button>
+      <button id="custom-go" type="button">確定</button>
     </div>
     <p id="kvg-credit">筆順データ：KanjiVG（CC BY-SA 3.0）</p>
   </div>
@@ -143,7 +143,7 @@ gtag('config', 'G-41RSZLP1YQ');
     <canvas id="judge-cv" aria-hidden="true"></canvas>
     <p id="score" class="sr" aria-live="polite"></p>
     <div id="result-btns" class="row">
-      <button id="again" class="big" type="button">もう一回</button>
+      <button id="again" class="big" type="button">再來一次</button>
       <button id="share" class="big sub" type="button">分享</button>
     </div>
   </div>
@@ -157,12 +157,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
 <section class="howto" data-pos="top-left" hidden>
   <h2>玩法</h2>
-  <p>半紙に薄く出たお手本をなぞり、筆で漢字を1文字書くゲームです。字は永・大・山・心・水から選ばれます。筆は乾いた状態で始まるので、まず奥の硯の墨だまりに穂先を浸してください。「完成」を押すと100点満点で採点され、特選から努力賞までの賞が決まります。</p>
+  <p>半紙に薄く出たお手本をなぞり、筆で漢字を1文字書く遊戲。字は永・大・山・心・水から選ばれます。筆は乾いた状態で開始ので、まず奥の硯の墨だまりに穂先を浸してください。「完成」を按と100点満点で採点され、特選から努力賞までの賞が決まります。</p>
   <h2>操作</h2>
-  <p>スマホでは指を動かすと筆が動き、指を止めて少し長押しすると筆が下りて、そのまま動かせば線が引けます。指を離すと筆は上がります。PC ではマウスで筆を動かし、ボタンを按いる間だけ書けます。</p>
-  <h2>コツ</h2>
-  <p>ゆっくり動かすと筆が沈んで線が太くなり、速いと細くなります。採点の半分近くは画の終わり方で、とめは太さを保って止め、はらいは細く抜き、はねは先を細く跳ねると高く評価されます。墨が減るとかすれるので、途中で硯に戻って補いましょう。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p>スマホでは手手指を移動と筆が動き、手手指を止めて少し長押しすると筆が下りて、そのまま動かせば線が引けます。手手指を放開と筆は上がります。PC では滑鼠で筆を動かし、按鈕を按いる間だけ書けます。</p>
+  <h2>訣竅</h2>
+  <p>ゆっくり移動と筆が沈んで線が太くなり、速いと細くなります。採点の半分近くは画の終わり方で、とめは太さを保って止め、はらいは細く抜き、はねは先を細く跳ねると高く評価されます。墨が減少とかすれるので、途中で硯に戻って補いましょう。</p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -217,9 +217,9 @@ gtag('config', 'G-41RSZLP1YQ');
   ];
   const KVG_TIMEOUT = 6;               // 読み込みを待つ最長の秒数
   const KVG_SIZE = 109;                // KanjiVG の座標の大きさ
-  const KVG_STEP = 3;                  // KanjiVG の線から点を取る間隔（KanjiVG の座標で）
-  const KVG_HARAI = '㇒㇏㇇㇀㇓㇋';    // はらいで終わる画の種類（撇・捺・横撇・提など）
-  const KVG_HANE = '㇚㇆㇂㇃㇟㇉㇌㇈㇁㇖㇙㇊';   // はねで終わる画の種類（鉤）
+  const KVG_STEP = 3;                  // KanjiVG の線から点を取得間隔（KanjiVG の座標で）
+  const KVG_HARAI = '㇒㇏㇇㇀㇓㇋';    // はらいで結束画の種類（撇・捺・横撇・提など）
+  const KVG_HANE = '㇚㇆㇂㇃㇟㇉㇌㇈㇁㇖㇙㇊';   // はねで結束画の種類（鉤）
   const HOOK_ANGLE = 70;               // 線の終わり近くでこの角度（度）以上曲がっていたら、そこからをはねとみなす
   // 字の画像から推定するとき
   const SK_DS = 3;                     // 細線化するときの縮小率（何pxを1マスにするか）
@@ -243,9 +243,9 @@ gtag('config', 'G-41RSZLP1YQ');
   const CAM_ELEV = 62;                 // 見下ろす角度（度、90で真上）
   const CAM_LOOK = V3(0, 0, -0.45);    // カメラが向く点
   const LIGHT_AMB = 0.55;              // まわりからの光の強さ
-  const LIGHT_SUN = 0.42;              // 影を落とす光の強さ
-  const FIT_X = 0.92, FIT_Y = 0.88;    // 半紙と硯を画面のどこまで大きく映すか（画面の半分に対する割合）
-  const BOTTOM_SPACE = 100;            // 決定ボタンのために画面の下に空ける高さ（px）
+  const LIGHT_SUN = 0.42;              // 影を掉落光の強さ
+  const FIT_X = 0.92, FIT_Y = 0.88;    // 半紙と硯を畫面のどこまで大きく映すか（畫面の半分に対する割合）
+  const BOTTOM_SPACE = 100;            // 確定按鈕のために畫面の下に空ける高さ（px）
 
   // 腕（見た目だけ。肘は手首と肩から計算する）
   const UPPER_LEN = 3.0;               // 上腕の長さ
@@ -255,11 +255,11 @@ gtag('config', 'G-41RSZLP1YQ');
   const ELBOW_POLE = V3(1, -0.15, 0.35);    // 肘が張り出す向き
 
   // 手先ラグドール（手首より先は物理で揺れる）
-  // 書道の持ち方（双鉤法）：人差し指・中指を軸の向こう側に掛け、親指を手前から当てて挟む。薬指・小指は手前から添える
-  // 手のモデルの座標：x 親指側、y 手の甲側、z 指先側、原点が手首
-  const HAND_GRIP = V3(0.15, -0.62, 1.33);   // モデルの中で筆の軸が通る点（人差し指の先と親指の先の間）
-  const GRIP_UP = V3(1, 0.36, 0).normalize(); // モデルの中で筆の軸が往上向かう向き（親指側。甲側へ少し傾けて手のひらをやや伏せる）
-  const FINGER_FWD = V3(-0.55, 0, -0.82);    // 指先が向く水平の向き（左奥）
+  // 書道の持ち方（双鉤法）：人差し手手指・中手手指を軸の向こう側に掛け、親手手指を手前から当てて挟む。薬手手指・小手手指は手前から添える
+  // 手のモデルの座標：x 親手手指側、y 手の甲側、z 手手指先側、原点が手首
+  const HAND_GRIP = V3(0.15, -0.62, 1.33);   // モデルの中で筆の軸が通る点（人差し手手指の先と親手手指の先の間）
+  const GRIP_UP = V3(1, 0.36, 0).normalize(); // モデルの中で筆の軸が往上向かう向き（親手手指側。甲側へ少し傾けて手のひらをやや伏せる）
+  const FINGER_FWD = V3(-0.55, 0, -0.82);    // 手手指先が向く水平の向き（左奥）
   const HAND_LEN = HAND_GRIP.length();       // 手首から筆を握る位置までの長さ
   // 手首→握りの向き（筆をまっすぐ立てたときの持ち方から計算する。力を抜くとこの向きへ戻ろうとする）
   const HAND_DIR = (() => {
@@ -292,16 +292,16 @@ gtag('config', 'G-41RSZLP1YQ');
   const BR_SEG = 14, BR_RAD = 12;      // 穂の形の細かさ（長さ方向・まわり方向の分割数）
 
   // 操作
-  const FOLLOW_K = 85;                 // 手首が指を追いかけるバネの強さ（小さいほど遅れてついてくる）
+  const FOLLOW_K = 85;                 // 手首が手手指を追いかけるバネの強さ（小さいほど遅れてついてくる）
   const FOLLOW_DAMP = 2 * Math.sqrt(FOLLOW_K) * 0.52; // 手首の追従の減衰（小さいほど行き過ぎて返回）
-  const LIFT = 0.55;                   // 指を離しているときに筆を持ち上げる高さ
+  const LIFT = 0.55;                   // 手手指を離しているときに筆を持ち上げる高さ
   const PRESS_MIN = 0.04;              // 速く動かしているときの押し込み
   const PRESS_MAX = 0.26;              // 止めているときの押し込み
   const SPEED_FULL = 2.5;              // この速さ（単位/秒）以上で押し込みが最も浅くなる
   const PRESS_RATE = 3;                // 押し込みが変わる速さ（1/秒）
   const ARRIVE_DIST = 0.12;            // 手首が目標にこの距離まで近づいてから筆を下ろす
-  const LONG_PRESS = 0.35;             // タッチ：指をこの秒数止めると書き始める
-  const LONG_PRESS_SLOP = 8;           // タッチ：この距離（px）までの指の揺れは止めているとみなす
+  const LONG_PRESS = 0.35;             // タッチ：手手指をこの秒数止めると書き始める
+  const LONG_PRESS_SLOP = 8;           // タッチ：この距離（px）までの手手指の揺れは止めているとみなす
   const TARGET_R = 0.07;               // タッチ：筆を下ろす位置の印の半径
   const TARGET_IN = 0.7;               // タッチ：印の輪の内側の半径（TARGET_R に対する割合）。長押しのゲージも同じ輪に重ねる
   const GAUGE_SEG = 64;                // ゲージの輪の分割数
@@ -315,7 +315,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const INK_R_MIN = 0.012;             // 穂先が触れただけのときの線の半径
   const INK_R_PER = 0.30;              // 押し込み1あたりの線の半径の増え
   const STAMP_GAP = 0.3;               // 線を描くときの点の間隔（半径に対する割合）
-  const INK_USE = 1.6;                   // 書いた長さ×線の半径 1あたりに減る筆の墨の量（含ませきった状態=1）
+  const INK_USE = 1.6;                   // 書いた長さ×線の半径 1あたりに減少筆の墨の量（含ませきった状態=1）
   const KASURE_START = 0.35;           // 筆の墨がこの量より少なくなると、かすれる
   const BRISTLES = 56;                 // かすれを描くときの穂の毛の数
   const KASURE_EDGE = 0.4;             // 縁の毛ほど先に墨が切れる度合い
@@ -353,12 +353,12 @@ gtag('config', 'G-41RSZLP1YQ');
   const RANKS = [[90, '特選'], [80, '金賞'], [70, '銀賞'], [60, '銅賞'], [45, '佳作'], [0, '努力賞']];   // 点数の下限と賞
   const GRADE_MARK = ['×', '△', '○', '◎'];
   const END_NAME = { tome: 'とめ', hane: 'はね', harai: 'はらい' };
-  // 演出の時間割（秒）：半紙が出る → 画の終わりごとに朱で評価を書く → 印 → 点数を数え上げる → ボタン
+  // 演出の時間割（秒）：半紙が出る → 画の終わりごとに朱で評価を書く → 印 → 点数を数え上げる → 按鈕
   const JUDGE = { paperIn: 0.4, marks: 0.5, markGap: 0.3, markIn: 0.15, stampAfter: 0.3, stampIn: 0.18, countAfter: 0.3, count: 0.6, endAfter: 0.2 };
   const MARKS_MAX = 2.4;               // 評価を出し切るまでの最長の秒数
   const STAMP_ONE = 0.2;               // 印の大きさ（半紙の幅に対する割合）：1文字のとき
   const STAMP_MULTI = 0.14;            // 印の大きさ：複数の字のとき
-  const MARK_OUT = 0.12;               // 評価を書く位置：画の終わりから字の外側へ離す量（字の枠に対する割合）
+  const MARK_OUT = 0.12;               // 評価を書く位置：画の終わりから字の外側へ放開量（字の枠に対する割合）
 
   // 分享
   const SHARE_INSTANT = 0.5;           // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
@@ -640,7 +640,7 @@ gtag('config', 'G-41RSZLP1YQ');
       return xi >= 0 && yi >= 0 && xi < TEX_W && yi < TEX_H && d[(yi * TEX_W + xi) * 4 + 3] > 100;
     };
     const R = Math.round(SNAP_R * CELL), maxRun = MODEL_PX * SNAP_RUN;
-    // 細かく打ち直した点を、横切る向きに見て一番近い墨の帯の中心へ動かす
+    // 細かく打ち直した点を、横切る向きに見て一番近い墨の帯の中心へ移動
     const n = Math.max(2, Math.ceil(path.len / SNAP_STEP));
     const hookIdx = Math.round(path.hookFrom / path.len * n);
     let pts = [];
@@ -751,7 +751,7 @@ gtag('config', 'G-41RSZLP1YQ');
     surf.ctx.fill();
   }
   // かすれ：穂を細い毛の束として、墨が残っている毛だけが前の位置から今の位置まで線を拉。
-  // 墨が減るほど、縁の毛から・毛ごとにまだらに途切れて、運筆の向きに沿った筋になる。(nx, nz)：線の進む向きに直交する向き
+  // 墨が減少ほど、縁の毛から・毛ごとにまだらに途切れて、運筆の向きに沿った筋になる。(nx, nz)：線の進む向きに直交する向き
   function kasureLine(a, x, z, r, nx, nz, L){
     const R0 = Math.max(0.8, a.r * surf.k), R1 = Math.max(0.8, r * surf.k);
     const c = brushInk / KASURE_START;
@@ -794,7 +794,7 @@ gtag('config', 'G-41RSZLP1YQ');
         if (lastStamp.fresh){ lastStamp.nx = nx; lastStamp.nz = nz; }
         kasureLine(lastStamp, x, z, r, nx, nz, lastStamp.L + d * surf.k);
       }
-      // 書いた分だけ墨が減る（かすれてくると紙に移る墨も減る）
+      // 書いた分だけ墨が減少（かすれてくると紙に移る墨も減少）
       brushInk = Math.max(0, brushInk - INK_USE * r * d * (brushInk < KASURE_START ? 0.5 : 1));
       lastStamp = { x, z, r, nx, nz, L: lastStamp.L + d * surf.k, fresh: lastStamp.fresh && d <= 0.002 };   // L：この筆の運びで書いた長さ（px）
     }
@@ -926,7 +926,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const DRY = new THREE.Color(css('--dry')), WET = new THREE.Color(css('--bristle'));   // 乾いた穂・墨を含んだ穂の色
 
   // ---------- 手先ラグドール ----------
-  const W = V3(0, 0, 0);            // 手首（プレイヤーが動かす点）
+  const W = V3(0, 0, 0);            // 手首（プレイヤーが移動点）
   const wV = V3(0, 0, 0);           // 手首の速さ
   const wT = V3(0, 0, 0);           // 手首の目標
   const S = V3(0, 0, 0), E = V3(0, 0, 0);   // 肩・肘（見た目用）
@@ -944,7 +944,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const aim = V3(0, 0, 0);          // 穂先を置きたい紙の上の点
   const prevAim = V3(0, 0, 0);
   let aimSpeed = 0;
-  let pressing = false;             // 指（マウス）を按いる
+  let pressing = false;             // 手手指（滑鼠）を按いる
   let arrived = false;              // 押したあと手首が目標に着いた（着いてから筆を下ろす）
   let pressAmt = 0;                 // いまの押し込み
   let still = 0.5;                  // 止まっている度合い（0〜1）
@@ -1126,7 +1126,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function updateMeshes(){
     targetMark.visible = touchMode && state === 'playing';
     targetMark.position.set(aim.x, groundAt(aim.x, aim.z) + 0.005, aim.z);
-    // 書いている間は赤い輪のまま（指を離すと灰色に返回）
+    // 書いている間は赤い輪のまま（手手指を放開と灰色に返回）
     const holdRate = pressing ? 1 : Math.min(1, holdT / LONG_PRESS);
     gauge.visible = targetMark.visible && holding && (pressing || holdRate > GAUGE_SHOW);   // なぞっている最中のちらつきは出さない
     gauge.position.copy(targetMark.position);
@@ -1153,7 +1153,7 @@ gtag('config', 'G-41RSZLP1YQ');
     bristle.material.color.copy(DRY).lerp(WET, Math.min(1, brushInk / KASURE_START));
   }
 
-  // ---------- 画面サイズ・カメラ ----------
+  // ---------- 畫面サイズ・カメラ ----------
   const corners = [
     V3(-PAPER_W / 2, 0, PAPER_D / 2), V3(PAPER_W / 2, 0, PAPER_D / 2), V3(-PAPER_W / 2, 0, -PAPER_D / 2), V3(PAPER_W / 2, 0, -PAPER_D / 2),
     V3(SX0, RIM_H, SZ0), V3(SX1, RIM_H, SZ0)
@@ -1170,7 +1170,7 @@ gtag('config', 'G-41RSZLP1YQ');
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    // 下は決定ボタンの分を空け、その上の範囲に半紙と硯が収まる距離を探す（遠近があるので数回くり返して合わせる）
+    // 下は確定按鈕の分を空け、その上の範囲に半紙と硯が収まる距離を探す（遠近があるので数回くり返して合わせる）
     camera.clearViewOffset();
     const top = FIT_Y, bottom = Math.min(0, -1 + 2 * BOTTOM_SPACE / h);
     const half = (top - bottom) / 2;
@@ -1187,7 +1187,7 @@ gtag('config', 'G-41RSZLP1YQ');
       dist *= Math.max(xExt / FIT_X, (yMax - yMin) / 2 / half);
     }
     placeCamera(dist);
-    // 映る範囲の真ん中が、空けた範囲の真ん中に来るよう画面をずらす
+    // 映る範囲の真ん中が、空けた範囲の真ん中に来るよう畫面をずらす
     const shift = ((top + bottom) / 2 - (yMin + yMax) / 2) * h / 2;
     camera.setViewOffset(w, h, 0, shift, w, h);
   }
@@ -1198,12 +1198,12 @@ gtag('config', 'G-41RSZLP1YQ');
   const ndc = new THREE.Vector2();
   const deskPlane = new THREE.Plane(V3(0, 1, 0), 0);
   let activeId = null;
-  // タッチ：指を動かすと筆を下ろす位置（印）が動き、その場で長押しすると書き始める
+  // タッチ：手手指を移動と筆を下ろす位置（印）が動き、その場で長押しすると書き始める
   let touchMode = false;            // 最後の操作がタッチ
-  let holding = false;              // 指を置いている（まだ書いていない）
+  let holding = false;              // 手手指を置いている（まだ書いていない）
   let holdX = 0, holdY = 0, holdT = 0;
 
-  // 画面上の点が指す机の上の位置
+  // 畫面上の点が手手指す机の上の位置
   function deskHit(e, out){
     const r = cv.getBoundingClientRect();
     ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
@@ -1216,7 +1216,7 @@ gtag('config', 'G-41RSZLP1YQ');
       THREE.MathUtils.clamp(z, SZ0 - 0.1, PAPER_D / 2 + MOVE_MARGIN)
     );
   }
-  // マウス：指している所へ筆を動かす。タッチ：指を動かした分だけ筆を動かす（指で隠れず、触れた所へ飛ばない）
+  // 滑鼠：手手指している所へ筆を移動。タッチ：手手指を動かした分だけ筆を移動（手手指で隠れず、触れた所へ飛ばない）
   const touchFrom = V3(0, 0, 0), aimFrom0 = V3(0, 0, 0), _hit = V3(0, 0, 0);
   function aimFrom(e){
     if (!deskHit(e, _hit)) return;
@@ -1231,13 +1231,13 @@ gtag('config', 'G-41RSZLP1YQ');
     cv.setPointerCapture(e.pointerId);
     touchMode = e.pointerType === 'touch';
     if (touchMode){
-      // 指を置いた所と今の筆の位置を覚え、ここからの指の動きの分だけ筆を動かす
+      // 手手指を置いた所と今の筆の位置を覚え、ここからの手手指の動きの分だけ筆を移動
       if (!deskHit(e, touchFrom)) touchFrom.copy(aim);
       aimFrom0.copy(aim);
     }
     aimFrom(e);
     if (touchMode){
-      // タッチはすぐには書かず、指を止めて長押しするのを待つ
+      // タッチはすぐには書かず、手手指を止めて長押しするのを待つ
       holding = true;
       holdX = e.clientX; holdY = e.clientY; holdT = 0;
     } else {
@@ -1253,9 +1253,9 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointermove', e => {
     if (state !== 'playing') return;
     if (e.pointerType === 'mouse') touchMode = false;
-    // マウスは按いなくても筆を動かせる（タッチは置いている指だけ）
+    // 滑鼠は按いなくても筆を動かせる（タッチは置いている手手指だけ）
     if (e.pointerId === activeId || (activeId === null && e.pointerType === 'mouse')) aimFrom(e);
-    // 長押しを待っている間に指が動いたら、その場所から数え直す
+    // 長押しを待っている間に手手指が動いたら、その場所から数え直す
     if (e.pointerId === activeId && holding && !pressing && Math.hypot(e.clientX - holdX, e.clientY - holdY) > LONG_PRESS_SLOP){
       holdX = e.clientX; holdY = e.clientY; holdT = 0;
     }
@@ -1269,7 +1269,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', release);
   cv.addEventListener('pointercancel', release);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   const isPlayArea = t => t instanceof Element && !!t.closest('#cv');
   document.addEventListener('touchstart', e => { if (isPlayArea(e.target)) e.preventDefault(); }, { passive: false });
   document.addEventListener('touchmove', e => { if (activeId !== null) e.preventDefault(); }, { passive: false });
@@ -1277,7 +1277,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!(e.target instanceof Element && e.target.closest('#share-text, input'))) e.preventDefault();
   });
   document.addEventListener('contextmenu', e => { if (isPlayArea(e.target)) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     if (e.target instanceof Element && e.target.closest('#share-text')) return;
@@ -1294,7 +1294,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const sp = aim.distanceTo(prevAim) / Math.max(dt, 1e-4);
     prevAim.copy(aim);
     aimSpeed += (sp - aimSpeed) * Math.min(1, dt * 12);
-    // 止めるほど深く押し込み（とめ）、速く動かすほど浅くなる（はらい）
+    // 止めるほど深く押し込み（とめ）、速く移動ほど浅くなる（はらい）
     const target = THREE.MathUtils.clamp(1 - aimSpeed / SPEED_FULL, 0, 1);
     still += (target - still) * Math.min(1, dt * PRESS_RATE);
     pressAmt = PRESS_MIN + (PRESS_MAX - PRESS_MIN) * still;
@@ -1415,7 +1415,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 進行 ----------
-  // pick を渡すとその字にする（デバッグ用）。渡さなければ前と違う字をランダムに選ぶ
+  // pick を渡すとその字にする（デバッグ用）。渡さなければ前と違う字を隨機に選ぶ
   function newRound(pick){
     let c = pick;
     if (!c) do { c = CHARS[Math.floor(Math.random() * CHARS.length)]; } while (c === char && CHARS.length > 1);
@@ -1501,7 +1501,7 @@ gtag('config', 'G-41RSZLP1YQ');
     chars.forEach((c, i) => g.fillText(c, 0, (i - (chars.length - 1) / 2) * fs * 1.05));
     g.restore();
   }
-  // 時刻 t の評価画面を描く（半紙は画面いっぱい、下に点数）
+  // 時刻 t の評価畫面を描く（半紙は畫面いっぱい、下に点数）
   function drawJudge(g, W, H, t){
     g.fillStyle = css('--bg');
     g.fillRect(0, 0, W, H);
@@ -1543,7 +1543,7 @@ gtag('config', 'G-41RSZLP1YQ');
       const k = clamp01((t - tl.stamp) / JUDGE.stampIn);
       g.save();
       g.globalAlpha = k;
-      // 1文字は右上、複数の字は字に重ならないよう左下の隅へ小さめに押す（作品の落款の位置）
+      // 1文字は右上、複数の字は字に重ならないよう左下の隅へ小さめに按（作品の落款の位置）
       const multi = [...char].length > 1, base = multi ? STAMP_MULTI : STAMP_ONE;
       const size = pw * base * (1 + 0.7 * (1 - easeOut(k)));
       if (multi) shuStamp(g, px + pw * 0.1, py + ph - pw * 0.1, size);
@@ -1563,7 +1563,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function updateJudge(dt){
     judgeT += dt;
     if (judgeT >= timeline().end) $('result-btns').classList.remove('wait');
-    // キャンバスの大きさを画面に合わせる
+    // キャンバスの大きさを畫面に合わせる
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = judgeCv.clientWidth, h = judgeCv.clientHeight;
     if (judgeCv.width !== Math.round(w * dpr) || judgeCv.height !== Math.round(h * dpr)){
@@ -1604,7 +1604,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     analyzing = false;
     $('custom-go').disabled = false;
-    $('custom-go').textContent = '決定';
+    $('custom-go').textContent = '確定';
     $('custom-char').value = '';
     $('custom-char').blur();
     newRound(c);
@@ -1617,7 +1617,7 @@ gtag('config', 'G-41RSZLP1YQ');
     $('dbg').setAttribute('aria-expanded', String(open));
   }
   $('dbg').addEventListener('click', () => toggleDbg($('dbg-list').classList.contains('hidden')));
-  $('again').addEventListener('click', () => { newRound(char); aim.copy(START_AIM); });   // もう一回は同じ字で
+  $('again').addEventListener('click', () => { newRound(char); aim.copy(START_AIM); });   // 再來一次は同じ字で
   document.addEventListener('keydown', e => {
     if (!$('share-view').classList.contains('hidden')) return;
     if (state === 'over' && (e.key === ' ' || e.key === 'Enter') && document.activeElement !== $('share')){
@@ -1631,7 +1631,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const url = location.href.split(/[?#]/)[0];
     return `「${char}」${rank} ${score}点\n${url}\n${HASHTAG}`;
   }
-  // 分享画像：評価の演出が終わった時の画面と同じもの
+  // 分享画像：評価の演出が終わった時の畫面と同じもの
   function resultCanvas(){
     const W0 = 600, H0 = Math.round(W0 * TEX_H / TEX_W) + 100, c = mkCanvas(W0, H0);
     drawJudge(c.getContext('2d'), W0, H0, timeline().end);
@@ -1648,7 +1648,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 分享シートが無い・使えない環境：文面をコピーし、分享される内容を画面に出す
+    // 3) 分享シートが無い・使えない環境：文面をコピーし、分享される内容を畫面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');

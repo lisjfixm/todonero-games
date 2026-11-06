@@ -44,7 +44,7 @@ gtag('config', 'G-41RSZLP1YQ');
     --floor:#c9cecc; --floor-grout:#a9afad;          /* 床（30cm角のグレーのタイル） */
     /* ホルダー（金属）と紙 */
     --metal:#3b3c3f; --metal-ink:#f2f2f0; --core:#c9a77c; --paper:#ffffff; --paper-flower:#ff5f95;
-    /* 結果画面（ティッシュラッシュと同じ色合い） */
+    /* 結果畫面（ティッシュラッシュと同じ色合い） */
     --panel:#f6f2ea; --ink:#2f3d36; --accent:#5f8a74;
     --howto-bg:#f6f2ea; --howto-fg:#2f3d36;
   }
@@ -58,7 +58,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   #game{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto}
   canvas{display:block;width:100%;height:100%;touch-action:none}
-  /* 隠しコマンド（4隅を同時に押さえる）の指がボタンや結果画面の上にあっても、ブラウザの拡大などに取られないように */
+  /* 隠しコマンド（4隅を同時に押さえる）の手手指が按鈕や結果畫面の上にあっても、瀏覽器の拡大などに取られないように */
   #mute,#flip,#over{touch-action:none}
   #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(30,36,32,.45)}
   #over .panel{
@@ -115,7 +115,7 @@ gtag('config', 'G-41RSZLP1YQ');
     background:rgba(246,242,234,.88);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.15);
   }
   #mute svg{width:24px;height:24px;display:block}
-  /* ロールの向きの切り替え（ミュートボタンの下） */
+  /* ロールの向きの切り替え（ミュート按鈕の下） */
   #flip{
     position:absolute;top:calc(env(safe-area-inset-top,0px) + 64px);right:calc(env(safe-area-inset-right,0px) + 10px);
     width:44px;height:44px;padding:0;border:0;border-radius:50%;cursor:pointer;
@@ -136,7 +136,7 @@ gtag('config', 'G-41RSZLP1YQ');
       <p id="result-time">0.00秒</p>
       <p id="result-best">ベスト 0.00秒</p>
       <button id="share" type="button">分享</button>
-      <button id="retry" type="button">もう一回</button>
+      <button id="retry" type="button">再來一次</button>
     </div>
   </div>
   <button id="mute" type="button" aria-label="効果音" aria-pressed="false"></button>
@@ -150,12 +150,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <section class="howto" data-pos="top-left" hidden>
     <h2>玩法</h2>
-    <p>ロールに巻かれた25mのトイレットペーパーを、できるだけ速く全部引き出すタイムアタックです。紙をつかんだ瞬間に計測が始まり、出し切ったところでタイムが決まります。剩餘の長さはホルダーのふたに表示され、ベストタイムはこのブラウザに保存されます。</p>
+    <p>ロールに巻かれた25mのトイレットペーパーを、できるだけ速く全部引き出すタイムアタックです。紙をつかんだ瞬間に計測が始まり、出し切ったところでタイムが決まります。剩餘の長さはホルダーのふたに表示され、ベストタイムはこの瀏覽器に會儲存。</p>
     <h2>操作</h2>
-    <p>ロールから床までの紙のあたりに指を置き、往下滑動すると紙が出ます。往上動かしても紙は戻りません。PC ではマウスの拖曳で同じように遊べます。右上のボタンでは、効果音のオンとオフや、紙を前と壁側のどちらに垂らすかを切り替えられます。</p>
-    <h2>コツ</h2>
-    <p>指を動かしたまま離すと、その勢いでロールが回り続けて紙が出ていきます。指を止めてから離すと勢いは付きません。回っているロールは紙をつかむと止まるので、勢いのあるうちはつかみ直しを少し待つのも手です。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>ロールから床までの紙のあたりに手手指を置き、往下滑動すると紙が出ます。往上動かしても紙は戻りません。PC では滑鼠の拖曳で同じように遊べます。右上の按鈕では、効果音のオンとオフや、紙を前と壁側のどちらに垂らすかを切り替えられます。</p>
+    <h2>訣竅</h2>
+    <p>手手指を動かしたまま放開と、その勢いでロールが回り続けて紙が出ていきます。手手指を止めてから放開と勢いは付きません。回っているロールは紙をつかむと止まるので、勢いのあるうちはつかみ直しを少し待つのも手です。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -176,8 +176,8 @@ gtag('config', 'G-41RSZLP1YQ');
   const START_HANG = 1.6;          // 始めに垂れている紙の長さ
 
   // 引き出し
-  const FLING = 1.0;               // 指を離したときの指の速さをロールに伝える割合
-  const FLING_MAX = 50;            // 指を離したときの紙の速さの上限（単位/秒）
+  const FLING = 1.0;               // 手手指を離したときの手手指の速さをロールに伝える割合
+  const FLING_MAX = 50;            // 手手指を離したときの紙の速さの上限（単位/秒）
   const ROLL_FRICTION = 2.0;       // ロールの回転が止まっていく強さ（一定分）
   const ROLL_DRAG = 0.9;           // ロールの回転が止まっていく強さ（速いほど強く効く分）
 
@@ -196,7 +196,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const RATTLE_SPEED = 40;         // この紙の速さ（単位/秒）で一番よく跳ねる
   const PAPER_GAP = 0.012;         // ロールから出た紙をロールの表面から浮かせる距離（1.2mm）
   const PAPER_WRAP = 2.6;          // 紙がロールの外周に沿う角度（ラジアン、前の真横から上を越えて後ろまで。約150°）。
-                                   // 紙の端はカメラから見えないロールの後ろ側で終わる
+                                   // 紙の端はカメラから見えないロールの後ろ側で結束
   const PAPER_WRAP_UNDER = 4.9;    // 壁側に垂らすときの巻き付く角度（後ろの真横から上・前を回って、前の真横の約100°下まで）
   const BEND_H = 0.6;                     // 垂れた紙が床の紙へなめらかに曲がり込む高さ（6cm）
   const HEAP_H = 1.2;                     // 全部出し切ったときの、山の真ん中の盛り上がり（12cm。折り重なりの分はこれとは別）
@@ -204,7 +204,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // 見た目
   const TISSUE_GLOW = 0.15;        // 紙の陰の明るさの底上げ
   const PAPER_EXPOSURE = 1.6;      // 紙だけ明るい所をなだらかに丸めて白飛びを防ぐ
-  // 紙の凹凸（ノーマルマップ）の強さ：場所ごとに別々に調整できる
+  // 紙の凹凸（ノーマルマップ）の強さ：場所ごとに各自に調整できる
   const ROLL_NORMAL_SCALE = 0.5;   // ホルダーのロール
   const HANG_NORMAL_SCALE = 1.0;   // ロールから垂れている紙
   const FLOOR_NORMAL_SCALE = 0.5;  // 床にたまった紙
@@ -225,15 +225,15 @@ gtag('config', 'G-41RSZLP1YQ');
   const SHARE_INSTANT = 0.5;       // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   const FLOWER_RATE = 0.01;        // 紙がお花柄になる確率（1回ごと）
   // 隠しコマンド：入れると次の回は必ずお花柄
-  const SECRET_KEYS = '1029384756';   // PC：この順に数字キーを押す
-  const CORNER_SIZE = 80;             // スマホ：画面の4隅のこの範囲（px）を同時に押さえる
+  const SECRET_KEYS = '1029384756';   // PC：この順に数字鍵を按
+  const CORNER_SIZE = 80;             // スマホ：畫面の4隅のこの範囲（px）を同時に押さえる
   const CORNER_HOLD = 5;              // スマホ：4隅を押さえ続ける時間（秒）
   const BOUNCE_VOL = 0.4;          // 跳ねたロールが棒に落ちたときのコトッという音の最大音量
   const CHIME_VOL = 0.22;          // 出し切ったときの音の音量
 
-  // カメラ：ふたの文字と床の着地点が必ず画面に収まる、いちばん近い距離を計算して決める
+  // カメラ：ふたの文字と床の着地点が必ず畫面に収まる、いちばん近い距離を計算して決める
   const FOV = 40;
-  const FRAME_MARGIN = 14;         // 画面の端から空けるすき間（px）。上はミュートボタンの下からこの分空ける
+  const FRAME_MARGIN = 14;         // 畫面の端から空けるすき間（px）。上はミュート按鈕の下からこの分空ける
   const CAM_TARGET = new THREE.Vector3(0, 3.4, 1.0);   // 計算の出発点（実際の注視点は計算で上下に動く）
   const CAM_DIR = new THREE.Vector3(0.45, 0.22, 1).normalize();   // 少し右上から見る
 
@@ -261,7 +261,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 200);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  // 照明は「影を落とす光」と「影を落とさない光」に分けて、影の濃さを調整できるようにする
+  // 照明は「影を掉落光」と「影を落とさない光」に分けて、影の濃さを調整できるようにする
   const sunFill = new THREE.DirectionalLight(0xfff8ef, SUN_POWER * (1 - SHADOW_STRENGTH));
   sunFill.position.set(4, 10, 8);
   scene.add(sunFill);
@@ -396,7 +396,7 @@ gtag('config', 'G-41RSZLP1YQ');
   rod.position.set(0, ROD_Y, ROLL_Z);
   scene.add(rod);
 
-  // ふた：ちょうつがいから前へのびる板と、その先で下に折れた板。ロールの上に乗っていて、
+  // ふた：ちょうつがいから上一頁のびる板と、その先で下に折れた板。ロールの上に乗っていて、
   // ロールが細くなると下がり、跳ねると一緒に持ち上がる。前の板に剩餘の長さを印刷する
   const LID_LEN = 1.05;    // ちょうつがいから前の端までの長さ（前に折れた板がロールの前の上に乗る長さ）
   const LID_T = 0.04;      // 板の厚み
@@ -578,7 +578,7 @@ gtag('config', 'G-41RSZLP1YQ');
     [0.34, 0.52, 'blue', 1.0], [0.68, 0.70, 'pink', 1.1], [0.16, 0.80, 'blue', 0.85], [0.86, 0.86, 'pink', 0.75]
   ];
   // 紙の色はトーンマッピングで大きく白っぽくなるので、テクスチャの色は濃いめにしてある
-  //（紙 #ff5f95 は画面では薄いピンク #e4bbcc 前後に見える）。ピンクの花は紙より濃く見えるようにする
+  //（紙 #ff5f95 は畫面では薄いピンク #e4bbcc 前後に見える）。ピンクの花は紙より濃く見えるようにする
   const FLOWER_COLORS = { pink:'#c2335f', blue:'#7ea6d6' };
   function drawFlowers(g, S, vertical){
     FLOWERS.forEach(([a, w, col, k], i) => {
@@ -702,7 +702,7 @@ gtag('config', 'G-41RSZLP1YQ');
   strip.castShadow = true;
   scene.add(strip);
 
-  // 床にたまった紙の点（いちばん古い先端から順に、増える一方）
+  // 床にたまった紙の点（いちばん古い先端から順に、增加一方）
   const pileX = new Float32Array(MAXP), pileY = new Float32Array(MAXP), pileZ = new Float32Array(MAXP);
   const pileWX = new Float32Array(MAXP), pileWY = new Float32Array(MAXP), pileWZ = new Float32Array(MAXP), pileS = new Float32Array(MAXP);
   let pileN = 0;
@@ -719,7 +719,7 @@ gtag('config', 'G-41RSZLP1YQ');
       fold:f, foldLen:f, loop:rnd(LOOP_MIN, LOOP_MAX), twist:0, twistTo:rnd(-TWIST_MAX, TWIST_MAX)
     };
   }
-  // たまった紙の山の高さ：真ん中ほど高く、出した量が増えるほど高くなる
+  // たまった紙の山の高さ：真ん中ほど高く、出した量が增加ほど高くなる
   const heapAt = (x, z) => {
     const r = Math.hypot(x - LAND_X, z - landZ) / PILE_R;
     return HEAP_H * Math.min(1, gen.len / TOTAL) * Math.max(0, 1 - r * r);
@@ -860,7 +860,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let rustleGain = null, rustleFilter = null;
   let muted = false;
 
-  // ブラウザの自動再生制限があるので、最初の操作のときに音を使えるようにする
+  // 瀏覽器の自動再生制限があるので、最初の操作のときに音を使えるようにする
   function ensureAudio(){
     if (!actx){
       const AC = window.AudioContext || window.webkitAudioContext;
@@ -957,7 +957,7 @@ gtag('config', 'G-41RSZLP1YQ');
     });
   }
 
-  // ミュートボタン
+  // ミュート按鈕
   const ICON_ON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>'
     + '<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   const ICON_OFF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>'
@@ -975,7 +975,7 @@ gtag('config', 'G-41RSZLP1YQ');
   });
   updateMuteButton();
 
-  // ロールの向きの切り替えボタン（アイコンは今の向き：左の線が壁、丸がロール、縦線が垂れた紙）
+  // ロールの向きの切り替え按鈕（アイコンは今の向き：左の線が壁、丸がロール、縦線が垂れた紙）
   function flipIcon(u){
     const px = u ? 8 : 18;
     return '<svg viewBox="0 0 24 24" aria-hidden="true">'
@@ -1007,18 +1007,18 @@ gtag('config', 'G-41RSZLP1YQ');
   let dropped = false;     // 出し切って、垂れていた紙が床に落ちたか
   let dirty = true;        // 紙の帯を作り直す必要があるか
   let bounceY = 0, bounceV = 0;   // ロールの跳ね（棒に乗っている位置からの高さと速さ）
-  let grab = null;         // 引っぱっている指 {id, y, vy, tm}
+  let grab = null;         // 引っぱっている手手指 {id, y, vy, tm}
   let perPx = 0.01;        // ロールの位置での「1pxあたりの3D距離」
 
   const rollRadius = () => Math.sqrt(CORE_R * CORE_R + (ROLL_R * ROLL_R - CORE_R * CORE_R) * (1 - pulled / TOTAL));
 
-  // ベストタイム：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  // ベストタイム：瀏覽器のlocalStorageに保存（使えない環境ではその回だけ保持）
   const BEST_KEY = 'toiletPaperRush.bestTime';
   let bestTime = 0;
   try { bestTime = parseFloat(localStorage.getItem(BEST_KEY)) || 0; } catch(e) {}
   function saveBest(){ try { localStorage.setItem(BEST_KEY, String(bestTime)); } catch(e) {} }
 
-  // ---------- 画面サイズ ----------
+  // ---------- 畫面サイズ ----------
   function resize(){
     W = cv.clientWidth; H = cv.clientHeight;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -1027,7 +1027,7 @@ gtag('config', 'G-41RSZLP1YQ');
     camera.updateProjectionMatrix();
     const tanHalf = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
 
-    // 画面に必ず入れる点：ふた（文字の板）の四隅と、床の着地点のまわり
+    // 畫面に必ず入れる点：ふた（文字の板）の四隅と、床の着地点のまわり
     const hw = HOLD_W / 2 + 0.05;
     // ふたは太いロールが跳ねたときに一番上がるので、跳ねていないときと一番跳ねたときの両方の姿勢で角の位置を出す
     const lidPts = [];
@@ -1049,8 +1049,8 @@ gtag('config', 'G-41RSZLP1YQ');
       [-1.0, 0, LAND_Z_UNDER], [1.0, 0, LAND_Z_UNDER]   // 向きを切り替えてもカメラが動かないよう、両方の着地点を入れる
     ].map(p => new THREE.Vector3(...p)));
 
-    // 使える範囲（-1〜1 の画面座標）。上はミュートボタンにかからないようにする
-    // 上の端は右上のボタン（ミュート・ロールの向き）の下
+    // 使える範囲（-1〜1 の畫面座標）。上はミュート按鈕にかからないようにする
+    // 上の端は右上の按鈕（ミュート・ロールの向き）の下
     const cr = cv.getBoundingClientRect(), mr = $('flip').getBoundingClientRect();
     const topPx = Math.max(FRAME_MARGIN, mr.bottom - cr.top + FRAME_MARGIN);
     const lim = {
@@ -1064,7 +1064,7 @@ gtag('config', 'G-41RSZLP1YQ');
       camera.lookAt(target);
       camera.updateMatrixWorld();
     };
-    // 点が画面のどこに来るか（上下の端・左右のはみ出し）
+    // 点が畫面のどこに来るか（上下の端・左右のはみ出し）
     const measure = () => {
       let yMin = Infinity, yMax = -Infinity, xMax = 0;
       must.forEach(p => {
@@ -1086,7 +1086,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
       dist = hi;
       place(dist);
-      // 点の上下の真ん中が、使える範囲の真ん中に来るよう注視点を上下に動かす
+      // 点の上下の真ん中が、使える範囲の真ん中に来るよう注視点を上下に移動
       const m = measure();
       const off = (m.yMax + m.yMin) / 2 - (lim.top + lim.bottom) / 2;
       target.y += off * dist * tanHalf;
@@ -1180,7 +1180,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 入力 ----------
-  // 指を置ける範囲：ロールから床までの、紙の幅のまわりの縦の帯（指で掴みやすいよう広めに）
+  // 手手指を置ける範囲：ロールから床までの、紙の幅のまわりの縦の帯（手手指で掴みやすいよう広めに）
   function canGrab(x, y){
     const R = rollRadius();
     const pts = [
@@ -1200,7 +1200,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
     if (state === 'over' || grab) return;
-    // スマホで画面の隅に置いた指は、隠しコマンド用として紙をつかまない
+    // スマホで畫面の隅に置いた手手指は、隠しコマンド用として紙をつかまない
     if (e.pointerType === 'touch' && cornerOf(e.clientX, e.clientY) >= 0) return;
     const p = localPos(e);
     if (!canGrab(p.x, p.y)) return;
@@ -1219,7 +1219,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const now = performance.now();
     const dtm = Math.max((now - grab.tm) / 1000, 1 / 240);
     const dy = p.y - grab.y;
-    // 指の下向きの速さ（px/秒）をならして覚えておく：離したときの勢いに使う
+    // 手手指の下向きの速さ（px/秒）をならして覚えておく：離したときの勢いに使う
     grab.vy = grab.vy * 0.5 + (dy / dtm) * 0.5;
     grab.tm = now; grab.y = p.y;
     // 往下動かした分だけ紙が出る（往上動かしても紙は戻らない）
@@ -1228,7 +1228,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   const release = e => {
     if (!grab || e.pointerId !== grab.id) return;
-    // 指を離したら、その勢いでロールが回り続ける（止まってから離したら勢いは無し）
+    // 手手指を離したら、その勢いでロールが回り続ける（止まってから離したら勢いは無し）
     const fresh = performance.now() - grab.tm < 80;
     speed = fresh ? Math.min(FLING_MAX, Math.max(0, grab.vy * perPx * FLING)) : 0;
     grab = null;
@@ -1239,7 +1239,7 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('pointerup', release);
   document.addEventListener('pointercancel', release);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
   document.addEventListener('touchmove', e => { if (grab) e.preventDefault(); }, { passive:false });
   // （分享される文面だけは選んでコピーできるようにする）
@@ -1255,18 +1255,18 @@ gtag('config', 'G-41RSZLP1YQ');
     if (state === 'ready') setPattern(true);
     else flowerNext = true;
   }
-  // PC：数字キーを SECRET_KEYS の順に押す
-  let keyLog = '';   // 直近に押したキー（SECRET_KEYS の長さぶん）
+  // PC：数字鍵を SECRET_KEYS の順に按
+  let keyLog = '';   // 直近に押した鍵（SECRET_KEYS の長さぶん）
   document.addEventListener('keydown', e => {
     keyLog = (keyLog + (e.key.length === 1 ? e.key : ' ')).slice(-SECRET_KEYS.length);
     if (keyLog !== SECRET_KEYS) return;
     keyLog = '';
     secretCommand();
   });
-  // スマホ：ゲーム画面の4隅を同時に CORNER_HOLD 秒押さえ続ける
-  const cornerTouches = new Map();   // 隅を押さえている指（pointerId → 隅の番号）
+  // スマホ：ゲーム畫面の4隅を同時に CORNER_HOLD 秒押さえ続ける
+  const cornerTouches = new Map();   // 隅を押さえている手手指（pointerId → 隅の番号）
   let cornerTimer = 0;
-  let cornerGesture = false;         // 2つ以上の隅を同時に押さえた（指を離したときのボタンの反応を止める）
+  let cornerGesture = false;         // 2つ以上の隅を同時に押さえた（手手指を離したときの按鈕の反応を止める）
   function cornerOf(x, y){
     const g = $('game').getBoundingClientRect();
     const l = x < g.left + CORNER_SIZE, r = x > g.right - CORNER_SIZE, t = y < g.top + CORNER_SIZE, b = y > g.bottom - CORNER_SIZE;
@@ -1290,12 +1290,12 @@ gtag('config', 'G-41RSZLP1YQ');
   };
   document.addEventListener('pointerup', cornerRelease, true);
   document.addEventListener('pointercancel', cornerRelease, true);
-  // 右上の隅にはミュート・ロールの向きのボタンがあるので、隅を押さえたあと指を離してもボタンが反応しないようにする
+  // 右上の隅にはミュート・ロールの向きの按鈕があるので、隅を押さえたあと手手指を離しても按鈕が反応しないようにする
   document.addEventListener('click', e => {
     if (cornerGesture){ e.preventDefault(); e.stopPropagation(); }
   }, true);
 
-  // PC：結果画面ではスペース / Enter でもう一回
+  // PC：結果畫面ではスペース / Enter で再來一次
   document.addEventListener('keydown', e => {
     if (state === 'over' && !$('over').classList.contains('hidden') && $('share-view').classList.contains('hidden')
       && (e.key === ' ' || e.key === 'Enter') && document.activeElement !== $('share')){
@@ -1338,7 +1338,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を畫面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1347,8 +1347,8 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-close').focus({ preventScroll:true });
     };
     // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
-    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内瀏覽器等）。
+    // 分享シートを開いてから自己で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
@@ -1382,17 +1382,17 @@ gtag('config', 'G-41RSZLP1YQ');
   function loop(now){
     const dt = Math.min((now - last) / 1000, 1 / 30);
     last = now;
-    // 指を離している間は、ロールが惰性で回って紙が出続ける
+    // 手手指を離している間は、ロールが惰性で回って紙が出続ける
     if (!grab && state === 'playing' && speed > 0){
       speed = Math.max(0, speed - (ROLL_FRICTION + ROLL_DRAG * speed) * dt);
       pull(speed * dt);
     }
-    // 効果音用の紙の速さ（指で引いているときも含む）
+    // 効果音用の紙の速さ（手手指で引いているときも含む）
     const soundSpeed = (pulled - lastPulled) / Math.max(dt, 1e-3);
     lastPulled = pulled;
     updateRustle(state === 'over' ? 0 : soundSpeed);
 
-    // ロールの跳ね：指を離して勢いよく回っているときにカタカタ跳ねる。紙を引いている間は下に押さえられて跳ねない
+    // ロールの跳ね：手手指を離して勢いよく回っているときにカタカタ跳ねる。紙を引いている間は下に押さえられて跳ねない
     // 跳ねられる高さ：芯の内側の下が棒に当たるまで。ただしロールの上がふたに当たらない範囲
     const BOUNCE_MAX = Math.max(0, Math.min(2 * (CORE_R - ROD_R) - 0.02, HINGE_Y - 0.01 - (ROLL_Y + rollRadius())));
     if (grab){

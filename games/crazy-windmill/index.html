@@ -102,17 +102,17 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="start"><button id="startBtn" class="big">開始</button><button class="big" type="button" data-howto-open>玩法</button></div>
   <div id="result" class="hidden" aria-live="assertive">
     <h2 id="resTitle"></h2>
-    <button id="retry" class="big">もう一回</button>
+    <button id="retry" class="big">再來一次</button>
     <button id="share" class="big">分享</button>
   </div>
   <section class="howto" data-pos="none" hidden>
     <h2>玩法</h2>
-    <p>迷路の中を歩き回り、鍵を拾って出口から脱出する一人称のホラーゲームです。鍵は迷路のどこかにランダムに置かれ、鍵を持って出口の扉の前に立つと脫逃成功です。うろつく風車に捕まると終わりですが、「もう一回」で迷路の最初からやり直せます。</p>
+    <p>迷路の中を歩き回り、鍵を拾って出口から脱出する一人称のホラー遊戲。鍵は迷路のどこかに隨機に置かれ、鍵を持って出口の扉の前に立つと脫逃成功です。うろつく風車に捕まると終わりですが、「再來一次」で迷路の最初からやり直せます。</p>
     <h2>操作</h2>
-    <p>画面の左半分を拖曳すると移動、右半分を拖曳すると視点が動きます。右上のメニューでは音量と視点の感度を変えられ、開いている間はゲームが止まります。PC では WASD か上下キーで移動し、左右キーかマウスの拖曳で向きを変え、Esc キーでメニューを開きます。</p>
-    <h2>コツ</h2>
+    <p>畫面の左半分を拖曳すると移動、右半分を拖曳すると視点が動きます。右上のメニューでは音量と視点の感度を変えられ、開いている間はゲームが止まります。PC では WASD か上下鍵で移動し、左右鍵か滑鼠の拖曳で向きを変え、Esc 鍵でメニューを開きます。</p>
+    <h2>訣竅</h2>
     <p>風車の手の回転が速くなるのが危険の前触れです。2秒ほどで立ち止まって3秒間見回し、このとき見通せる場所にいると、歩く速さの3倍で襲ってきます。回転が速くなったら壁の陰に入りましょう。見通せる場所にいるだけで、前触れまでの時間も早く進みます。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -136,7 +136,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const PLAYER_R = 0.3;          // プレイヤーの当たり半径
   const EYE_H = 1.55;            // 目の高さ
   const LOOK_SENS = 0.006;       // 視点拖曳の感度
-  const TURN_SPEED = 2.2;        // ←→キーの旋回速度（rad/s）
+  const TURN_SPEED = 2.2;        // ←→鍵の旋回速度（rad/s）
   const PITCH_MAX = 1.1;         // 上下の視点の限界
   const STICK_R = 48;            // スティックの最大半径（px）
 
@@ -174,7 +174,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // 効果音
   const HUM_VOL = 0.025;         // 蛍光灯のジーッという音の大きさ（ずっと鳴る）
   const STEP_DIST = 1.5;         // この距離歩くごとに足音を1回鳴らす
-  const STEP_PITCH = 0.03;       // 足音の高さを1歩ごとにランダムに変える幅（0.03 = ±3%）
+  const STEP_PITCH = 0.03;       // 足音の高さを1歩ごとに隨機に変える幅（0.03 = ±3%）
   const STEP_VOL = 0.8;          // 足音（カーペットを歩く音）の大きさ
   const PICK_VOL = 0.15;         // アイテムを拾ったときの音の大きさ
 
@@ -182,7 +182,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const NOISE_ALPHA = 0.06;      // ノイズの濃さ（0〜1）
   const NOISE_FPS = 24;          // ノイズが切り替わる回数（1秒あたり）
   const NOISE_FRAMES = 8;        // あらかじめ作っておくノイズ画像の枚数（使い回して負荷を抑える）
-  const RES_SCALE = 0.7;         // 画面の描画解像度（縦横それぞれ、画面の大きさに対する割合）。小さいほど荒くなる
+  const RES_SCALE = 0.7;         // 畫面の描画解像度（縦横それぞれ、畫面の大きさに対する割合）。小さいほど荒くなる
   const FOG_NEAR = 1, FOG_FAR = 24;   // 霧で完全に見えなくなる距離（導入で開始から扉が見えるように）
   // 色味（リミナルスペース風：黄ばんだ壁紙・くすんだカーペット・白っぽい天井、遠くは暗い黄色にかすむ）
   const TEMP_WALL_TINT = 0xd8d2c4;    // 消える壁（W）：壁紙に掛ける色（普通の壁より少しだけくすませる）
@@ -227,9 +227,9 @@ gtag('config', 'G-41RSZLP1YQ');
   const ITEMS = {
     note:  { id: 'note',  icon: '📄', name: '破れたメモ', text: '"認識"されたら終わり', noInv: true },   // noInv: 持ち物に表示しない
     key:   { id: 'key',   icon: '🔑', name: '錆びた鍵',   text: '鍵を手に入れた' },
-    photo: { id: 'photo', icon: '📷', name: '古い写真',   text: '誰かがこちらを指さしている。' },
+    photo: { id: 'photo', icon: '📷', name: '古い写真',   text: '誰かがこちらを手手指さしている。' },
   };
-  const MAZE_ITEMS = ['key'];     // 迷路にランダムに置くアイテム（鍵がないと出口の扉が開かない）
+  const MAZE_ITEMS = ['key'];     // 迷路に隨機に置くアイテム（鍵がないと出口の扉が開かない）
 
   // 導入の部屋の地図（1文字＝1マス。上が奥）
   //   # 壁・柱   . 床   S 開始   D 扉（触れると次の部屋へ）
@@ -268,7 +268,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // 次のエリアへ移るときの暗転（秒）：だんだん暗く → 真っ暗のまま切り替え → だんだん明るく
   const WARP_FADE_OUT = 0.5, WARP_HOLD = 0.2, WARP_FADE_IN = 0.6;
   const EXIT_DOOR_W = 1.0, EXIT_DOOR_H = 2.1;   // 迷路の出口の扉の大きさ（m）
-  const EXIT_LIGHT_OFFSET = 0.6; // 出口の扉の前の天井ライトを、扉の面からどれだけ離すか（m）。マスの中心（1.2m）より扉寄り
+  const EXIT_LIGHT_OFFSET = 0.6; // 出口の扉の前の天井ライトを、扉の面からどれだけ放開か（m）。マスの中心（1.2m）より扉寄り
   const DOOR_REACH = 0.7;        // 扉の面からこの距離まで近づくと扉を調べる
   const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
   const UI_FONT = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif';
@@ -294,7 +294,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const l = new THREE.PointLight(CEIL_LIGHT_COLOR, 0, CEIL_LIGHT_DIST, 2);
     scene.add(l);
     ceilLights.push(l);
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(CEIL_PANEL_W, CEIL_PANEL_D), new THREE.MeshBasicMaterial({ color: CEIL_LIGHT_COLOR }));   // 1枚ずつ点滅できるよう別々の素材
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(CEIL_PANEL_W, CEIL_PANEL_D), new THREE.MeshBasicMaterial({ color: CEIL_LIGHT_COLOR }));   // 1枚ずつ点滅できるよう各自の素材
     p.rotation.x = Math.PI / 2;   // 下向き
     p.visible = false;
     scene.add(p);
@@ -346,7 +346,7 @@ gtag('config', 'G-41RSZLP1YQ');
     cam.aspect = w / h;
     cam.updateProjectionMatrix();
   }
-  // ノイズ：3D画面と同じ荒さの画像を数枚作っておき、順不同に切り替えて重ねる
+  // ノイズ：3D畫面と同じ荒さの画像を数枚作っておき、順不同に切り替えて重ねる
   const noiseCv = $('noise'), nctx = noiseCv.getContext('2d');
   noiseCv.style.opacity = String(NOISE_ALPHA);
   let noiseFrames = [], noiseT = 0;
@@ -495,13 +495,13 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 風車（敵） ----------
   const mill = {
-    // g: 位置／head: 向きを持つ球の頭／bill: 常にプレイヤーを向く指の板（ring を回して風車にする）
+    // g: 位置／head: 向きを持つ球の頭／bill: 常にプレイヤーを向く手手指の板（ring を回して風車にする）
     g: new THREE.Group(), head: new THREE.Group(), bill: new THREE.Group(), ring: new THREE.Group(), face: null, fingers: [], heading: 0,
     // still: 動かない（導入）／gone: 消えた／state: 'wander'＝通常モード、'chase'＝認識モード
     x: 0, z: 0, spin: SPIN_SPEED, still: false, gone: false, phase: 'idle', flashT: 0, modeT: 0, state: 'wander', meter: 0, lost: 0, path: [], repath: 0, lastX: 0, lastZ: 0,
   };
   (() => {
-    // 指は顔と同じく光の影響を受ける材質にする（暗い所で指だけ明るく浮かないように）
+    // 手手指は顔と同じく光の影響を受ける材質にする（暗い所で手手指だけ明るく浮かないように）
     const mk = (tex, size) => new THREE.Mesh(
       new THREE.PlaneGeometry(size, size),
       new THREE.MeshPhongMaterial({ map: tex, transparent: true, alphaTest: 0.1, specular: 0x000000 })
@@ -520,7 +520,7 @@ gtag('config', 'G-41RSZLP1YQ');
     mill.face = new THREE.Mesh(headGeo, [rimMat, mill.faceMat, rimMat]);   // [側面, 前の面, 後ろの面]
     mill.head.add(mill.face);
     mill.g.add(mill.head);
-    // 上・左・右・下に指を置いて風車の羽根に見立てる（指は平らな絵文字のまま、常にプレイヤーの方を向ける）
+    // 上・左・右・下に手手指を置いて風車の羽根に見立てる（手手指は平らな絵文字のまま、常にプレイヤーの方を向ける）
     const pos = [[0, 0.8], [-0.8, 0], [0.8, 0], [0, -0.8]];
     pos.forEach(([x, y], i) => {
       const m = mk(TX.fingers[i], 0.6);
@@ -539,7 +539,7 @@ gtag('config', 'G-41RSZLP1YQ');
     scene.add(mill.g);
   })();
 
-  // 認識したら顔が 🫪（歪んだ顔）に、指が 🫵（こちらに向けた指）に変わって振り向く
+  // 認識したら顔が 🫪（歪んだ顔）に、手手指が 🫵（こちらに向けた手手指）に変わって振り向く
   function setMillLook(angry){
     mill.angry = angry;
     mill.faceMat.map = angry ? TX.flush : TX.grin;
@@ -734,7 +734,7 @@ gtag('config', 'G-41RSZLP1YQ');
     buildAO();
   }
 
-  // アイテムを置く（placeItem はマス指定、placeItemAt は位置（m）指定）
+  // アイテムを置く（placeItem はマス手手指定、placeItemAt は位置（m）手手指定）
   function placeItemAt(id, x, z){
     const def = ITEMS[id];
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: ITEM_TX[id], transparent: true, alphaTest: 0.1 }));
@@ -787,7 +787,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
     // 風車：動かない（通常モード）
     mill.still = true;
-    mill.ring.visible = false;   // 導入の最初は指がなく、顔だけ
+    mill.ring.visible = false;   // 導入の最初は手手指がなく、顔だけ
     [mill.x, mill.z] = mid(marks.C);
 
     // 天井の蛍光灯：風車を中心に前後左右対称に8個
@@ -821,7 +821,7 @@ gtag('config', 'G-41RSZLP1YQ');
     cells = [];
     for (let y = 1; y < gh; y += 2) for (let x = 1; x < gw; x += 2) cells.push([x, y]);
 
-    // 出口：外周のセルのうち、ランダムな地点から一番遠い所
+    // 出口：外周のセルのうち、隨機な地点から一番遠い所
     const r = cells[Math.random() * cells.length | 0];
     const edge = cells.filter(([x, y]) => x === 1 || y === 1 || x === gw - 2 || y === gh - 2);
     const ex = farthest(bfsDist(r[0], r[1]), edge);
@@ -873,7 +873,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const ms = far[Math.random() * far.length | 0];
     mill.x = center(ms[0]); mill.z = center(ms[1]);
 
-    // アイテム：開始・出口・風車の初期位置以外のマスにランダムに置く
+    // アイテム：開始・出口・風車の初期位置以外のマスに隨機に置く
     const used = new Set([start, ex, ms].map(([x, y]) => x + ',' + y));
     const spots = cells.filter(([x, y]) => !used.has(x + ',' + y)).sort(() => Math.random() - 0.5);
     MAZE_ITEMS.forEach((id, i) => placeItem(id, spots[i][0], spots[i][1]));
@@ -959,7 +959,7 @@ gtag('config', 'G-41RSZLP1YQ');
     mill.path = fromChase ? pathTo(tileOf(mill.lastX), tileOf(mill.lastZ)) : [];
   }
 
-  // 見た目の更新：位置、頭の向き、指の板をプレイヤーへ向ける
+  // 見た目の更新：位置、頭の向き、手手指の板をプレイヤーへ向ける
   function placeMill(){
     mill.g.position.set(mill.x, MILL_Y, mill.z);
     // 震え：見た目の位置だけを毎フレームわずかにずらす（当たり判定などの位置は動かさない）
@@ -970,7 +970,7 @@ gtag('config', 'G-41RSZLP1YQ');
       mill.g.position.x += r(); mill.g.position.y += r(); mill.g.position.z += r();
     }
     mill.head.rotation.y = mill.heading;
-    // 認識時の指（🫵）は、回転しても上下の向きが変わらないよう回転を打ち消す
+    // 認識時の手手指（🫵）は、回転しても上下の向きが変わらないよう回転を打ち消す
     const upright = mill.angry ? -mill.ring.rotation.z : 0;
     mill.fingers.forEach(m => { m.rotation.z = upright; });
     mill.g.updateMatrixWorld();
@@ -1171,8 +1171,8 @@ gtag('config', 'G-41RSZLP1YQ');
       o.start(t + dt); o.stop(t + dt + 0.16);
     });
   }
-  // ブラウザは画面に触れるまで音を出させないので、触れるたびに音を出せる状態か確かめる
-  // （スマホでは指を離したときやクリックのときでないと許可されないことがあるため、いくつもの操作で試す）
+  // 瀏覽器は畫面に触れるまで音を出させないので、触れるたびに音を出せる状態か確かめる
+  // （スマホでは手手指を離したときや點擊のときでないと許可されないことがあるため、いくつもの操作で試す）
   const unlock = () => {
     initAudio();
     if (!actx || actx.state === 'running') return;
@@ -1183,7 +1183,7 @@ gtag('config', 'G-41RSZLP1YQ');
     src.connect(actx.destination); src.start(0);
   };
   ['pointerdown','pointerup','touchend','click','keydown'].forEach(t => document.addEventListener(t, unlock, true));
-  // 別のアプリやタブから戻ったときに止まっていたら再開する
+  // 別のアプリやタブから戻ったときに止まっていたら繼續する
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && actx && actx.state !== 'running') actx.resume();
   });
@@ -1255,7 +1255,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const keys = new Set();
   const stick = $('stick'), knob = $('knob');
 
-  // タッチ：左半分＝移動スティック、右半分＝視点。マウス：拖曳で視点
+  // タッチ：左半分＝移動スティック、右半分＝視点。滑鼠：拖曳で視点
   cv.addEventListener('pointerdown', e => {
     if (state !== 'playing') return;
     e.preventDefault();
@@ -1296,7 +1296,7 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive: false });
   document.addEventListener('selectstart', e => e.preventDefault());
   cv.addEventListener('contextmenu', e => e.preventDefault());
@@ -1352,7 +1352,7 @@ gtag('config', 'G-41RSZLP1YQ');
     });
   }
 
-  // ダイアログを出している間はゲームを止め、タップ（またはSpace/Enter）で次の行へ進む
+  // ダイアログを出している間はゲームを止め、點擊（またはSpace/Enter）で次の行へ進む
   let dlgQueue = [], dlgDone = null;
   function showDialog(lines, onDone){
     dlgQueue = lines.slice();
@@ -1389,7 +1389,7 @@ gtag('config', 'G-41RSZLP1YQ');
       renderInv();
       if (stage === 'intro'){
         // 紙を拾うと風車がこちらを向く（目が合うと演出が進み、最後に風車と壁が消える）
-        if (it.def.id === 'note'){ mill.phase = 'stare'; mill.ring.visible = true; }   // メモを取ると指が現れる
+        if (it.def.id === 'note'){ mill.phase = 'stare'; mill.ring.visible = true; }   // メモを取得と手手指が現れる
       }
       showDialog([it.def.text]);
       return;
@@ -1439,7 +1439,7 @@ gtag('config', 'G-41RSZLP1YQ');
     state = 'playing';
   }
 
-  // 開始画面：ボタンを押したら始める（このタップで音も出せるようになる）
+  // 開始畫面：按鈕を押したら始める（この點擊で音も出せるようになる）
   function startGame(){
     if (state !== 'start') return;
     $('start').classList.add('hidden');
@@ -1471,7 +1471,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 2) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 2) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);

@@ -96,25 +96,25 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     <button id="snd" type="button" aria-label="効果音" aria-pressed="true">🔊</button>
     <section class="howto" data-pos="top-left" hidden>
       <h2>玩法</h2>
-      <p>好きな文字を串に刺し、炭火で焼いて食べる遊びです。勝ち負けはありません。8文字まで入力でき、画像のボタンから写真を切り抜いて1文字として刺すこともできます。「食べる」を押すと、全体の焼き加減が生焼けから完璧、まっくろこげまでの7段階で出ます。</p>
+      <p>好きな文字を串に刺し、炭火で焼いて食べる遊びです。贏輸はありません。8文字まで入力でき、画像の按鈕から写真を切り抜いて1文字として刺すこともできます。「食べる」を按と、全体の焼き加減が生焼けから完璧、まっくろこげまでの7段階で出ます。</p>
       <h2>操作</h2>
-      <p>「刺す」のあと串を拖曳して火の往上運び、「ひっくり返す」で裏も焼きます。食べるときは文字を點擊かじります。PC は矢印キーで動かし、スペースで返し、Enter で食べます。</p>
-      <h2>コツ</h2>
+      <p>「刺す」のあと串を拖曳して火の往上運び、「ひっくり返す」で裏も焼きます。食べるときは文字を點擊かじります。PC は矢印鍵で動かし、スペースで返し、Enter で食べます。</p>
+      <h2>訣竅</h2>
       <p>網の真ん中ほど火が強く、評価には表と裏の両方が入ります。細い線の文字は早く焼け、太い文字は芯に火が通りにくいので、火の当て方を変えてみてください。</p>
-      <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+      <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
     </section>
   </div>
   <div id="controls" class="hidden">
     <button id="flip" type="button" class="sub">ひっくり返す</button>
     <button id="eat" type="button">食べる</button>
   </div>
-  <!-- 画像の切り取り：指でなぞって囲んだ形で切り取る（なぞらずに決定すると画像全体） -->
+  <!-- 画像の切り取り：手手指でなぞって囲んだ形で切り取得（なぞらずに確定すると画像全体） -->
   <div id="cropView" class="hidden" role="dialog" aria-label="画像の切り取り">
-    <canvas id="cropCv" aria-label="切り取る形をなぞる"></canvas>
+    <canvas id="cropCv" aria-label="切り取得形をなぞる"></canvas>
     <div id="cropBar">
       <button id="cropCancel" type="button" class="sub">キャンセル</button>
       <button id="cropAuto" type="button" class="sub" aria-pressed="false">自動切り抜き</button>
-      <button id="cropOk" type="button">決定</button>
+      <button id="cropOk" type="button">確定</button>
     </div>
   </div>
   <div id="eatBar" class="hidden">
@@ -147,8 +147,8 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   const SKEWER_FIT = 5.4;    // 文字を並べた長さがこれに収まるように文字の大きさを決める
   const THICK = 0.14;        // 文字の厚み（文字の大きさに対する割合）
   const LAYERS = 7;          // 厚みを出すために重ねる板の枚数
-  const KEY_STEP = 0.15;     // 矢印キー1回で串が動く量
-  const SHOW_HALF_W = 3.15;  // 画面の横幅に収める範囲（真ん中からの距離）
+  const KEY_STEP = 0.15;     // 矢印鍵1回で串が動く量
+  const SHOW_HALF_W = 3.15;  // 畫面の横幅に収める範囲（真ん中からの距離）
   const CAM_FOV = 40;        // カメラの縦の画角（度）
   const CAM_ELEV = 66;       // カメラの見下ろす角度（度）
 
@@ -184,7 +184,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   const DRIP_FLARE = 3;        // 脂が炭に落ちたときに燃え上がる炎の粒の数
   const COAL_TOP = -0.42;      // 炭の表面の高さ（脂がここまで落ちたら燃える）
   const STEAM = 40;            // 湯気の数（同時に出ている上限）
-  const STEAM_RATE = 10;       // 最大火力で焼いているとき、1文字から1秒に出る湯気の数（焼けて水気が抜けるほど減る）
+  const STEAM_RATE = 10;       // 最大火力で焼いているとき、1文字から1秒に出る湯気の数（焼けて水気が抜けるほど減少）
 
   const BEST = 0.6;          // ちょうどいい焼け具合の中心
   const BEST_RANGE = 0.5;    // 中心からこれだけずれたら0点
@@ -219,15 +219,15 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   const LABEL_TIME = 0.9;    // 焼き加減の文字が浮かんで消える時間
 
   // 食べるときの背景のぼかし（串を持ち上げるのに合わせてぼけていく）
-  const BLUR_SCALE = 0.5;    // ぼかす画像の解像度（画面に対する割合。小さいほど軽くてよくぼける）
+  const BLUR_SCALE = 0.5;    // ぼかす画像の解像度（畫面に対する割合。小さいほど軽くてよくぼける）
   const BLUR_STEP = 1.8;     // 1回のぼかしの広がり（ぼかす画像の画素数）
   const BLUR_PASSES = 3;     // ぼかしを重ねる回数（多いほど強くぼける）
   const FINISH_DELAY = 0.7;  // 最後の文字を食べてから「ごちそうさま」を出すまで（秒）
   const BYE_TIME = 1.8;      // 「ごちそうさま」を出してから最初に返回まで（秒）
-  const EAT_CLOSE = 0.28;    // 食べるときに串をカメラへ寄せる割合（文字が少ないとき。多いと画面に収まるまでしか寄せない）
+  const EAT_CLOSE = 0.28;    // 食べるときに串をカメラへ寄せる割合（文字が少ないとき。多いと畫面に収まるまでしか寄せない）
   const EAT_MARGIN = 0.25;   // 食べるときに串の両端に空ける余白
 
-  // 食べる（タップした所をかじる）
+  // 食べる（點擊した所をかじる）
   const BITE_R = 0.2;        // ひと口の半径（文字の枠の大きさに対する割合）
   // ひと口の形は毎回変わる不規則な形（円をゆがませ、縁に歯形のでこぼこを付ける）
   const BITE_SIZE_VAR = 0.25;  // ひと口の大きさのばらつき（±の割合）
@@ -300,14 +300,14 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   }
 
   // ---------- 効果音 ----------
-  // 音声ファイルは使わず Web Audio で合成する。ブラウザの自動再生制限があるので、最初の操作で鳴らせるようにする
+  // 音声ファイルは使わず Web Audio で合成する。瀏覽器の自動再生制限があるので、最初の操作で鳴らせるようにする
   const SE_VOLUME = 0.7;       // 全体の音量
-  const TOUCH_VOLUME = 0.45;   // スマホなど（指で操作する端末）での全体の音量の倍率（スピーカーが近くて大きく聞こえるため）
+  const TOUCH_VOLUME = 0.45;   // スマホなど（手手指で操作する端末）での全体の音量の倍率（スピーカーが近くて大きく聞こえるため）
   const IS_TOUCH = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
   const masterVol = () => SE_VOLUME * (IS_TOUCH ? TOUCH_VOLUME : 1);
   const SIZZLE_VOL = 0.22;     // 焼ける音（ジュー）の最大音量
   const FIRE_VOL = 1.0;        // 火が燃える音（いつも流れている）の音量
-  const SIZZLE_POP_RATE = 9;   // 焼いているときに増えるパチパチの1秒あたりの回数（最大火力）
+  const SIZZLE_POP_RATE = 9;   // 焼いているときに增加パチパチの1秒あたりの回数（最大火力）
   const SOUND_KEY = 'mojiKushiyaki.sound';
   const sfx = (() => {
     let ac = null, master = null, noiseBuf = null, sizzle = null, on = true, level = 0, popAcc = 0;
@@ -322,7 +322,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
       noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
       const d = noiseBuf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-      // 焼ける音：高い所だけを残したノイズを流しっぱなしにして、音量だけ動かす
+      // 焼ける音：高い所だけを残したノイズを流しっぱなしにして、音量だけ移動
       const src = ac.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
       const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2200;
       const pk = ac.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 5200; pk.gain.value = 6;
@@ -432,7 +432,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   const GRADE_POP_TIME = 1.8;   // 焼き上がりの評価を出して消えるまでの時間（秒）
   let gradeTimer = 0;
   // 焼き上がった直後（串を持ち上げ終わったとき）に、7段階の評価を大きく出して消す
-  // 画面の上の方に大きな文字を出して消す（焼き上がりの評価・ごちそうさま）
+  // 畫面の上の方に大きな文字を出して消す（焼き上がりの評価・ごちそうさま）
   function showPop(label, text, time){
     const el = $('gradePop');
     el.querySelector('small').textContent = label;
@@ -887,7 +887,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
       if (p.life <= 0) continue;
       const kill = () => { p.life = 0; p.s.visible = false; };
       if (!p.falling){
-        // 串に付いたまま膨らむ（串を動かすと一緒に動く）
+        // 串に付いたまま膨らむ（串を移動と一緒に動く）
         const c = chars[p.ci];
         if (mode !== 'grill' || !geo || !c || c.eaten){ kill(); continue; }
         const cr = Math.cos(skewer.rotation.x);
@@ -1010,7 +1010,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   const skewer = new THREE.Group();     // 串の軸（X方向）が原点を通る
   scene.add(skewer);
   let stickMesh = null;
-  const charMeshes = [];                // タップ判定用
+  const charMeshes = [];                // 點擊判定用
 
   // 1文字を、文字の形に切り抜いた板を重ねた厚みのある塊にする。
   // 一番上の板が表（面0）、一番下の板が裏（面1）、間の板は近い方の面を暗くして側面に見せる
@@ -1019,7 +1019,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   //   焼け色 … マスごとの色だけを持つ 32×32 の小さな画像。焼けるたびにこれだけを差し替え、GPUで滑らかに引き伸ばして掛け合わせる
   //   かじった跡 … かじったときだけ描き直す白黒の画像（黒い所が消える）
   // 焼くたびに大きな画像を描き直して送ると、機種によっては送っている途中の画像が映って焼き色がチラつくので、この形にしている
-  const S2L = new Uint8Array(256);   // 画面の色（sRGB）→ 計算用の色（リニア）
+  const S2L = new Uint8Array(256);   // 畫面の色（sRGB）→ 計算用の色（リニア）
   for (let i = 0; i < 256; i++){ const v = i / 255; S2L[i] = Math.round(255 * (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))); }
   // 照り：焼け色の小さな画像の4つ目の値（a）に照りの量を入れておき、表面の細かい凹凸に当たる光として足す。
   // 照りの光は網の上で焼いているときと食べるときで文字に対して同じ向きから当たるようにする
@@ -1201,7 +1201,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   }
 
   // ---------- 背景のぼかし ----------
-  // 串以外を小さな画像に描いて縦横にぼかし、画面に貼ってから、串だけを上に重ねて描く
+  // 串以外を小さな画像に描いて縦横にぼかし、畫面に貼ってから、串だけを上に重ねて描く
   const rtOpt = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat };
   const rtA = new THREE.WebGLRenderTarget(1, 1, rtOpt), rtB = new THREE.WebGLRenderTarget(1, 1, rtOpt);
   rtA.texture.encoding = rtB.texture.encoding = THREE.sRGBEncoding;
@@ -1247,7 +1247,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
       blurMat.uniforms.tex.value = rtB.texture; blurMat.uniforms.dir.value.set(0, k / rtA.height);
       renderer.setRenderTarget(rtA); renderer.render(quadScene, quadCam);
     }
-    // 3) ぼかした背景を画面に貼る
+    // 3) ぼかした背景を畫面に貼る
     renderer.setRenderTarget(null);
     quad.material = copyMat; copyMat.uniforms.tex.value = rtA.texture;
     renderer.render(quadScene, quadCam);
@@ -1263,7 +1263,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     scene.background = bg;
   }
 
-  // ---------- 画面のリサイズ ----------
+  // ---------- 畫面のリサイズ ----------
   function resize(){
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = cv.clientWidth; H = cv.clientHeight;
@@ -1274,7 +1274,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     fxc.setTransform(dpr, 0, 0, dpr, 0, 0);
     const bw = Math.max(1, Math.round(W * dpr * BLUR_SCALE)), bh = Math.max(1, Math.round(H * dpr * BLUR_SCALE));
     rtA.setSize(bw, bh); rtB.setSize(bw, bh);
-    // 焼き台の横幅が画面に収まる距離から見下ろす
+    // 焼き台の横幅が畫面に収まる距離から見下ろす
     camera.aspect = W / H;
     const dist = SHOW_HALF_W / (camera.aspect * Math.tan(THREE.MathUtils.degToRad(CAM_FOV/2)));
     const el = THREE.MathUtils.degToRad(CAM_ELEV);
@@ -1293,7 +1293,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   resize();
 
   // 串は焼き台の外まではみ出して動かせる（どの文字でも真ん中の炎の上に持っていけるように）。
-  // 見失わないよう、少なくとも1文字は画面に残す
+  // 見失わないよう、少なくとも1文字は畫面に残す
   function clampSkewer(){
     const lim = geo.span/2 - geo.spacing/2 + SHOW_HALF_W - geo.spacing/2;
     sx = Math.max(-lim, Math.min(lim, sx));
@@ -1428,7 +1428,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
       p.m.scale.setScalar(p.size);
       p.m.material.color.copy(col).multiplyScalar(0.8 + Math.random()*0.4);
       p.m.material.opacity = 1;
-      // 画面の上下左右に広がるように飛ばし、少し手前にも出す
+      // 畫面の上下左右に広がるように飛ばし、少し手前にも出す
       const a = Math.random() * Math.PI * 2, sp = B * (1.2 + Math.random()*1.6);
       p.v.copy(camRight).multiplyScalar(Math.cos(a) * sp).addScaledVector(camUp, Math.abs(Math.sin(a)) * sp * 0.8 + B*0.8).addScaledVector(camDir, -B * Math.random());
       p.spin.set(Math.random()*12 - 6, Math.random()*12 - 6, Math.random()*12 - 6);
@@ -1464,7 +1464,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     for (const f of flashes){ f.life = 0; f.s.visible = false; }
   }
 
-  // かじったときの焼き加減の文字（画面の上に重ねた2Dのキャンバスに描く）
+  // かじったときの焼き加減の文字（畫面の上に重ねた2Dのキャンバスに描く）
   const tmpV = new THREE.Vector3();
   function drawFloats(){
     fxc.clearRect(0, 0, W, H);
@@ -1498,8 +1498,8 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     requestAnimationFrame(loop);
   }
 
-  // ---------- 画面の切り替え ----------
-  // 操作説明は画面には出さない（読み上げ用にだけ残す）
+  // ---------- 畫面の切り替え ----------
+  // 操作説明は畫面には出さない（読み上げ用にだけ残す）
   function setHint(t){ $('hint').textContent = t; }
 
   function splitChars(s){
@@ -1512,7 +1512,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   function startGrill(){
     const list = splitChars($('word').value);
     if (!list.length){ $('word').focus(); return; }
-    $('word').blur();   // スマホのキーボードを關閉
+    $('word').blur();   // スマホの鍵ボードを關閉
     word = list.join('');
     clearSkewer();
     geo = makeGeom(list.length);
@@ -1557,7 +1557,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     $('eatBar').classList.remove('hidden');
     resize();
     // カメラの近くへ持ち上げ、上の面がこちらを向くように傾ける
-    // 串全体が画面の横幅に収まる距離までだけ手前に寄せる（文字が多いと寄せられる量が減る）
+    // 串全体が畫面の横幅に収まる距離までだけ手前に寄せる（文字が多いと寄せられる量が減少）
     const dist = camera.position.distanceTo(camTarget);
     const halfW = Math.tan(THREE.MathUtils.degToRad(CAM_FOV/2)) * camera.aspect;   // 距離1あたりの見える横幅の半分
     const need = geo.span/2 + geo.B*0.2 + EAT_MARGIN;
@@ -1570,7 +1570,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     setHint('文字を點擊かじる');
   }
 
-  // ひと口の形：角度ごとの半径の表（毎回ランダムに作る）
+  // ひと口の形：角度ごとの半径の表（毎回隨機に作る）
   function makeBiteShape(){
     const size = BITE_R * (1 + (Math.random()*2 - 1) * BITE_SIZE_VAR);
     const waves = [2, 3, 5].map(k => ({ k, a: (Math.random()*2 - 1) * BITE_WOBBLE / k * 1.5, p: Math.random() * Math.PI * 2 }));
@@ -1677,12 +1677,12 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   }
 
   // ---------- 入力 ----------
-  // フォーム送信（submit）は埋め込み表示などで止められることがあるので使わず、ボタンとEnterキーで直接始める
+  // フォーム送信（submit）は埋め込み表示などで止められることがあるので使わず、按鈕とEnter鍵で直接始める
   $('stab').addEventListener('click', () => { if (mode === 'input') startGrill(); });
   // ---------- 画像を1文字として刺す ----------
-  // 選んだ画像は入力欄に🖼として入れ、🖼の並び順で画像を覚えておく（自分で打った🖼はふつうの絵文字として扱う）
+  // 選んだ画像は入力欄に🖼として入れ、🖼の並び順で画像を覚えておく（自己で打った🖼はふつうの絵文字として扱う）
   const PIC_MARK = '\u{1F5BC}';
-  let pics = [];                    // 入力欄の🖼に前から順に対応する画像（null は自分で打った🖼）
+  let pics = [];                    // 入力欄の🖼に前から順に対応する画像（null は自己で打った🖼）
   const wordEl = $('word');
   let prevWord = wordEl.value, caret = wordEl.value.length;
   const countMarks = str => str.split(PIC_MARK).length - 1;
@@ -1729,10 +1729,10 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     caret = at + PIC_MARK.length;
   }
 
-  // ---------- 画像の切り取り画面 ----------
-  // 画像の上を指でなぞると、なぞった線で囲んだ形に切り取る。なぞり直すと前の線は消える。なぞらずに決定すると画像全体を使う
+  // ---------- 画像の切り取り畫面 ----------
+  // 画像の上を手手指でなぞると、なぞった線で囲んだ形に切り取得。なぞり直すと前の線は消える。なぞらずに確定すると画像全体を使う
   const CROP_MAX = 1024;      // 切り取り用に縮める画像の大きさの上限(px)（大きな写真でも軽く動くように）
-  const CROP_PAD = 16;        // 画面の端と画像の間の余白
+  const CROP_PAD = 16;        // 畫面の端と画像の間の余白
   const CROP_MIN_AREA = 0.002;   // 囲んだ面積が画像のこの割合より小さければ、なぞっていないものとみなす
   const cropCv = $('cropCv'), cropX = cropCv.getContext('2d');
   let crop = null;   // { img: 縮めた画像, pts: なぞった点（画像の座標）, done: なぞり終わったか, s, ox, oy: 表示の倍率と位置 }
@@ -1746,7 +1746,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     crop = { img, pts: [], done: false, s: 1, ox: 0, oy: 0, drawing: false, auto: null };
     setAutoMode(false);
     $('cropView').classList.remove('hidden');
-    document.documentElement.setAttribute('data-howto-hidden', '');   // 切り取り画面の上に重ねない
+    document.documentElement.setAttribute('data-howto-hidden', '');   // 切り取り畫面の上に重ねない
     layoutCrop();
   }
   function closeCrop(){
@@ -1840,9 +1840,9 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   });
   const endStroke = () => { if (!crop || !crop.drawing) return; crop.drawing = false; crop.done = true; drawCrop(); };
   cropCv.addEventListener('pointerup', endStroke);
-  cropCv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });   // なぞるときに画面が動かないように
+  cropCv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });   // なぞるときに畫面が動かないように
   cropCv.addEventListener('pointercancel', endStroke);
-  // 決定：囲んだ形（なければ画像全体）を、形の外接する四角の大きさで切り出す
+  // 確定：囲んだ形（なければ画像全体）を、形の外接する四角の大きさで切り出す
   $('cropOk').addEventListener('click', () => {
     if (!crop) return;
     let out = crop.img;
@@ -1860,7 +1860,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     placePic(out);
   });
   $('cropCancel').addEventListener('click', closeCrop);
-  // 自動切り抜き：押すと、画像を押した所を中心に物の形を自動で囲む状態になる（再來一次押すと、なぞって囲む状態に返回）
+  // 自動切り抜き：按と、画像を押した所を中心に物の形を自動で囲む状態になる（再來一次按と、なぞって囲む状態に返回）
   let autoMode = false;
   function setAutoMode(on){ autoMode = on; $('cropAuto').setAttribute('aria-pressed', String(on)); }
   $('cropAuto').addEventListener('click', () => setAutoMode(!autoMode));
@@ -1942,7 +1942,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     }
     return th / bins * max;
   }
-  // level：広げる段階（0が最初。切り抜いた所を再來一次押すたびに1ずつ上がり、物とみなす色の範囲を緩める）
+  // level：広げる段階（0が最初。切り抜いた所を再來一次按たびに1ずつ上がり、物とみなす色の範囲を緩める）
   // method：前と同じ求め方で広げるときに渡す（-1 なら順に試す）
   function autoOutline(cr, px, py, level = 0, method = -1){
     const D = cr.auto || (cr.auto = autoData(cr.img));
@@ -2013,7 +2013,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     if (!base) return null;
     let res = base.mask, grow = 0;
     if (level > 0){
-      // 色の範囲を緩める（広すぎるときは1段階ずつ戻す）うえで、形も少しふくらませて、押すたびに必ず広がるようにする
+      // 色の範囲を緩める（広すぎるときは1段階ずつ戻す）うえで、形も少しふくらませて、按たびに必ず広がるようにする
       let r = null;
       for (let lv = level; lv > 0 && !r; lv--) r = tryMethod(used, lv);
       if (r) res = r.mask;
@@ -2144,10 +2144,10 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
       const p = planeHit(e);
       if (!p) return;
       cv.setPointerCapture(e.pointerId);
-      // 指で文字が隠れないよう、触った位置からの移動量で動かす
+      // 手手指で文字が隠れないよう、触った位置からの移動量で移動
       drag = { id:e.pointerId, p0:p, sx0:sx, sz0:sz };
     } else if (mode === 'eat' && !(lift && clock - lift.t0 < LIFT_TIME)){
-      // タップした所にある文字の、その位置をかじる（手前の板から順に、かじれる身があるか調べる）
+      // 點擊した所にある文字の、その位置をかじる（手前の板から順に、かじれる身があるか調べる）
       setRay(e);
       const hits = ray.intersectObjects(charMeshes.filter(m => !chars[m.userData.ci].eaten));
       for (const h of hits){
@@ -2170,7 +2170,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
   document.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => {
@@ -2179,7 +2179,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   });
   cv.addEventListener('contextmenu', e => e.preventDefault());
 
-  // PC：矢印キーで串を動かす / スペースでひっくり返す / Enterで食べる
+  // PC：矢印鍵で串を移動 / スペースでひっくり返す / Enterで食べる
   document.addEventListener('keydown', e => {
     if (e.target instanceof Element && e.target.closest('input,button')) return;
     if (mode === 'grill'){
@@ -2208,8 +2208,8 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
     return new File([buf], name, { type:'image/png' });
   }
-  // 食べている途中の画面をそのまま画像にする。
-  // 3Dの画面は描いた直後でないと読み取れないので、その場で描き直してから、浮かんでいる文字の層も重ねて写す
+  // 食べている途中の畫面をそのまま画像にする。
+  // 3Dの畫面は描いた直後でないと読み取れないので、その場で描き直してから、浮かんでいる文字の層も重ねて写す
   function eatImageFile(){
     render();
     drawFloats();
@@ -2230,13 +2230,13 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   }
-  // 食べている途中の分享：今の画面の画像
+  // 食べている途中の分享：今の畫面の画像
   $('eatShare').addEventListener('pointerdown', e => e.stopPropagation());
   $('eatShare').addEventListener('click', () => {
     if (mode !== 'eat') return;

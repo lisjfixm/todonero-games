@@ -110,18 +110,18 @@ gtag('config', 'G-41RSZLP1YQ');
       <p id="result-time">0.00秒</p>
       <p id="result-best">ベスト 0.00秒</p>
       <button id="share" type="button">分享</button>
-      <button id="retry" type="button">もう一回</button>
+      <button id="retry" type="button">再來一次</button>
     </div>
   </div>
   <button id="mute" type="button" aria-label="効果音" aria-pressed="false"></button>
   <section class="howto" hidden>
     <h2>玩法</h2>
-    <p>箱に入った50枚のティッシュを、できるだけ速く全部引き抜くタイムアタックです。最初の1枚に触れた瞬間に計測が始まり、50枚目を抜いたところでタイムが決まります。ベストタイムはこのブラウザに保存され、結果は画像つきで分享できます。</p>
+    <p>箱に入った50枚のティッシュを、できるだけ速く全部引き抜くタイムアタックです。最初の1枚に触れた瞬間に計測が始まり、50枚目を抜いたところでタイムが決まります。ベストタイムはこの瀏覽器に保存され、結果は画像つきで分享できます。</p>
     <h2>操作</h2>
-    <p>箱から出ているティッシュに指を置き、往上滑動すると1枚抜けます。1回の滑動で抜けるのは1枚だけなので、1枚ごとに指を離して掴み直してください。PC ではマウスの拖曳で同じように遊べます。</p>
-    <h2>コツ</h2>
-    <p>途中で指を離しても、引き出した分はそのまま剩餘、続きから引けます。大きく振り上げるより、一定の短い距離をテンポよく繰り返すほうがタイムは縮みます。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>箱から出ているティッシュに手手指を置き、往上滑動すると1枚抜けます。1回の滑動で抜けるのは1枚だけなので、1枚ごとに手手指を離して掴み直してください。PC では滑鼠の拖曳で同じように遊べます。</p>
+    <h2>訣竅</h2>
+    <p>途中で手手指を離しても、引き出した分はそのまま剩餘、続きから引けます。大きく振り上げるより、一定の短い距離をテンポよく繰り返すほうがタイムは縮みます。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -131,8 +131,8 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 定数 ----------
   const TOTAL = 50;        // 箱に入っているティッシュの枚数
-  const PULL_DIST = 110;   // 1枚が抜けるまでに往上拉距離（画面上のpx）
-  const SWAY = 0.5;        // 指の横移動にティッシュの先端がついていく割合
+  const PULL_DIST = 110;   // 1枚が抜けるまでに往上拉距離（畫面上のpx）
+  const SWAY = 0.5;        // 手手指の横移動にティッシュの先端がついていく割合
   // 箱とティッシュの大きさ（3D空間の単位）
   const BOX_W = 2.4, BOX_H = 0.7, BOX_D = 1.2;   // 横幅・高さ（厚み）・奥行き
 
@@ -148,7 +148,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const REST_H = 0.45;     // 何もしていないとき箱から出ている部分の高さ
   const T_BASE = 0.62;     // 根元の半幅（取り出し口に沿って横に広がっている）
   const T_TIP = 0.06;      // 何もしていないときの先端の半幅（ふんわりした山になる）
-  const T_PINCH = 0.12;    // 引っぱっているときの先端（指でつまんだ所）の半幅
+  const T_PINCH = 0.12;    // 引っぱっているときの先端（手手指でつまんだ所）の半幅
   const T_WIDE = 0.72;     // 引っぱって紙が開いたときの中ほどの半幅
   const OPEN_LEN = 0.8;    // これだけ引き出すと紙が開ききる
   const FOLD = 0.07;       // 中ほどのしわの深さ
@@ -165,7 +165,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const VARY_LEAN = 0.3;     // 先端の傾きのばらつき（左右・前後）
   const VARY_CRUMPLE = 0.04; // くしゃっとしたでこぼこの大きさ
   const VARY_EDGE = 0.15;    // 上端のふちのガタガタ具合
-  const VARY_CURL = 0.3;     // 左右の端の反り（前後どちらに反るかもランダム）
+  const VARY_CURL = 0.3;     // 左右の端の反り（前後どちらに反るかも隨機）
   const VARY_BEND = 0.15;    // 縦方向のうねり
   const VARY_PINCH = 0.8;    // 引っぱっているとき：つまんだ先端の細さのばらつき（±割合）
   const VARY_WIDE = 0.4;     // 引っぱっているとき：開く幅のばらつき（±割合）
@@ -180,22 +180,22 @@ gtag('config', 'G-41RSZLP1YQ');
   const FRICTION = 0.5;    // 床や箱に触れているときの横すべりの剩餘具合
   const ITER = 4;          // 布の形を保つ計算の繰り返し回数（多いほど伸びにくい）
   const STEP = 1 / 120;    // 落下計算の刻み（秒）
-  const FLING = 1.0;       // 引いた指の速さをティッシュに伝える割合（1で指と同じ速さで飛ぶ）
+  const FLING = 1.0;       // 引いた手手指の速さをティッシュに伝える割合（1で手手指と同じ速さで飛ぶ）
   const FLING_MAX = 12;    // 抜けた瞬間の速さの上限
-  const TIP_KICK = 1.4;    // 抜けた瞬間に先端が倒れる勢い（向きはランダム）
+  const TIP_KICK = 1.4;    // 抜けた瞬間に先端が倒れる勢い（向きは隨機）
   const SLEEP_V = 0.03;    // この速さ以下が続いたら止まったとみなす
   const SLEEP_TIME = 0.6;  // 止まったとみなすまでの時間（秒）
   const LAYER = 0.001;     // 重なったティッシュがちらつかないよう1枚ごとに浮かせる高さ
   // 効果音（すべて Web Audio で合成する）
   const SE_VOLUME = 0.8;      // 効果音全体の音量
   const RUSTLE_VOL = 0.35;    // 引っぱっているときのカサカサ音の最大音量
-  const RUSTLE_SPEED = 1500;  // この指の速さ（px/秒）でカサカサ音が最大になる
+  const RUSTLE_SPEED = 1500;  // この手手指の速さ（px/秒）でカサカサ音が最大になる
   const POP_VOL = 0.7;        // 抜けたときの「シュッ」の音量
   const CHIME_VOL = 0.22;     // 出し切ったときの音の音量
 
-  // カメラ：箱のまわりが画面に収まるよう、画面の縦横比から距離を決める
+  // カメラ：箱のまわりが畫面に収まるよう、畫面の縦横比から距離を決める
   const FOV = 40;
-  const FIT_HALF_W = 1.4;  // 画面に収める横幅の半分（小さいほど寄る）
+  const FIT_HALF_W = 1.4;  // 畫面に収める横幅の半分（小さいほど寄る）
   const CAM_DIR = new THREE.Vector3(0, 0.6, 1).normalize();  // 斜め上から見下ろす
 
   const $ = id => document.getElementById(id);
@@ -205,7 +205,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 3D ----------
   const renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true });
   renderer.setClearColor(new THREE.Color(css('--wall')));
-  // 机に箱やティッシュの影を落とす（机の上に置いてある感じを出すため）
+  // 机に箱やティッシュの影を掉落（机の上に置いてある感じを出すため）
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   // 影を受ける物は Phong（つや無し）にする。
@@ -220,7 +220,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
   // 室内灯（少し暖かい白）。影の濃さを調整するため、同じ向きの光を
-  // 「影を落とす光」と「影を落とさない光」に分ける（影の中では前者の分だけ暗くなる）
+  // 「影を掉落光」と「影を落とさない光」に分ける（影の中では前者の分だけ暗くなる）
   const SUN_POWER = 0.75;
   const SHADOW_STRENGTH = 1 / 6;   // 影の濃さ（1で真っ暗な影、0で影なし）
   const sunFill = new THREE.DirectionalLight(0xfff4e6, SUN_POWER * (1 - SHADOW_STRENGTH));
@@ -442,7 +442,7 @@ gtag('config', 'G-41RSZLP1YQ');
     path.absarc(-slotHx, 0, r, Math.PI / 2, Math.PI * 1.5, false);
     return path;
   }
-  // 平らな板の UV を、指定した幅・奥行きの範囲で 0〜1 に合わせる
+  // 平らな板の UV を、手手指定した幅・奥行きの範囲で 0〜1 に合わせる
   function fitUV(geo, w, d){
     const p = geo.attributes.position, uv = geo.attributes.uv;
     for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / w + 0.5, p.getY(i) / d + 0.5);
@@ -618,7 +618,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ノーマルマップを使うため Phong にする（つやはほぼ無し）。
-  // しわの陰が暗くなりすぎないよう、少し自分で明るさを持たせる
+  // しわの陰が暗くなりすぎないよう、少し自己で明るさを持たせる
   const tMat = new THREE.MeshPhongMaterial({
     color:new THREE.Color(css('--tissue')), side:THREE.DoubleSide,
     emissive:new THREE.Color(TISSUE_GLOW, TISSUE_GLOW, TISSUE_GLOW),
@@ -632,7 +632,7 @@ gtag('config', 'G-41RSZLP1YQ');
   tissue.castShadow = true;
   scene.add(tissue);
 
-  // 次に出てくる1枚の形をランダムに決める
+  // 次に出てくる1枚の形を隨機に決める
   const rnd = (a, b) => a + Math.random() * (b - a);
   let look;
   // 格子上の乱数を隣とならす（回数が多いほど大きなまとまりになる）
@@ -769,7 +769,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const mesh = new THREE.Mesh(geo, tMat);
     mesh.frustumCulled = false;
     mesh.castShadow = true;
-    // 自分のしわに自分の影が落ちて黒い筋になるので、ティッシュは影を受けない
+    // 自己のしわに自己の影が落ちて黒い筋になるので、ティッシュは影を受けない
     mesh.receiveShadow = false;
     scene.add(mesh);
     const p = Float32Array.from(geo.attributes.position.array);
@@ -778,7 +778,7 @@ gtag('config', 'G-41RSZLP1YQ');
       const a = CON[c * 2] * 3, b = CON[c * 2 + 1] * 3;
       rest[c] = Math.hypot(p[a] - p[b], p[a + 1] - p[b + 1], p[a + 2] - p[b + 2]);
     }
-    // 抜けた瞬間の速さ：指の勢い＋先端がランダムな向きに倒れる勢い
+    // 抜けた瞬間の速さ：手手指の勢い＋先端が隨機な向きに倒れる勢い
     const ang = Math.random() * Math.PI * 2;
     const kick = TIP_KICK * (0.6 + Math.random() * 0.4);
     const v = new Float32Array(NP * 3);
@@ -881,7 +881,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let rustleGain = null, rustleFilter = null;
   let muted = false;
 
-  // ブラウザの自動再生制限があるので、最初の操作のときに音を使えるようにする
+  // 瀏覽器の自動再生制限があるので、最初の操作のときに音を使えるようにする
   function ensureAudio(){
     if (!actx){
       const AC = window.AudioContext || window.webkitAudioContext;
@@ -894,7 +894,7 @@ gtag('config', 'G-41RSZLP1YQ');
       noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
       const d = noiseBuf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-      // 引っぱっている間のカサカサ音：雑音を流しっぱなしにして、音量を指の速さで上げ下げする
+      // 引っぱっている間のカサカサ音：雑音を流しっぱなしにして、音量を手手指の速さで上げ下げする
       const src = actx.createBufferSource();
       src.buffer = noiseBuf; src.loop = true;
       rustleFilter = actx.createBiquadFilter();
@@ -909,7 +909,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   ['pointerdown', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, ensureAudio, true));
 
-  // カサカサ音の音量を毎フレーム合わせる（指が止まったら消える）
+  // カサカサ音の音量を毎フレーム合わせる（手手指が止まったら消える）
   function updateRustle(now){
     if (!actx) return;
     let target = 0;
@@ -959,7 +959,7 @@ gtag('config', 'G-41RSZLP1YQ');
     });
   }
 
-  // ミュートボタン
+  // ミュート按鈕
   const ICON_ON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>'
     + '<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   const ICON_OFF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>'
@@ -988,13 +988,13 @@ gtag('config', 'G-41RSZLP1YQ');
   let pullExt = 0;         // いま引き出されている長さ（途中で離してもそのまま残る）
   let pullTx = 0;          // いまの先端の横ずれ（途中で離してもそのまま残る）
 
-  // ベストタイム：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  // ベストタイム：瀏覽器のlocalStorageに保存（使えない環境ではその回だけ保持）
   const BEST_KEY = 'tissueRush.bestTime';
-  let bestTime = 0;   // 0 は記録なし
+  let bestTime = 0;   // 0 は紀錄なし
   try { bestTime = parseFloat(localStorage.getItem(BEST_KEY)) || 0; } catch(e) {}
   function saveBest(){ try { localStorage.setItem(BEST_KEY, String(bestTime)); } catch(e) {} }
 
-  // ---------- 画面サイズ ----------
+  // ---------- 畫面サイズ ----------
   function resize(){
     W = cv.clientWidth; H = cv.clientHeight;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -1004,7 +1004,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const tanHalf = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
     const vHalf = Math.max(FIT_HALF_W / aspect, 1.2);
     const dist = vHalf / tanHalf;
-    // 箱が画面のやや下に来るよう、注視点を上にずらす
+    // 箱が畫面のやや下に来るよう、注視点を上にずらす
     const target = new THREE.Vector3(0, BOX_H + vHalf * 0.2, 0);
     camera.position.copy(target).addScaledVector(CAM_DIR, dist);
     camera.lookAt(target);
@@ -1059,7 +1059,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 入力 ----------
-  // 指を置ける範囲：ティッシュと箱の上部まわりを広めにとる（指で掴みやすくするため）
+  // 手手指を置ける範囲：ティッシュと箱の上部まわりを広めにとる（手手指で掴みやすくするため）
   function canGrab(x, y){
     const l = toScreen(-BOX_W / 2, BOX_H, BOX_D / 2);
     const r = toScreen(BOX_W / 2, BOX_H, BOX_D / 2);
@@ -1089,7 +1089,7 @@ gtag('config', 'G-41RSZLP1YQ');
     // 最初の1枚に触れた瞬間から計測する
     if (state === 'ready'){
       state = 'playing'; t0 = performance.now();
-      // 計測中はパネルを開けないように「玩法」ボタンを隠す
+      // 計測中はパネルを開けないように「玩法」按鈕を隠す
       document.documentElement.setAttribute('data-howto-hidden', '');
     }
   });
@@ -1097,7 +1097,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointermove', e => {
     if (!grab || e.pointerId !== grab.id) return;
     const p = localPos(e);
-    // 指の速さ（px/秒）をならして覚えておく：抜けた瞬間の勢いに使う
+    // 手手指の速さ（px/秒）をならして覚えておく：抜けた瞬間の勢いに使う
     const now = performance.now();
     const dtm = Math.max((now - grab.tm) / 1000, 1 / 240);
     grab.vx = grab.vx * 0.5 + (p.x - grab.x) / dtm * 0.5;
@@ -1105,14 +1105,14 @@ gtag('config', 'G-41RSZLP1YQ');
     grab.tm = now;
     grab.x = p.x; grab.y = p.y;
     if (grab.y0 - grab.y >= PULL_DIST){
-      // 抜けた瞬間の形のまま布にして落とす
+      // 抜けた瞬間の形のまま布にして掉落
       shapeTissue(REST_H + (grab.y0 - grab.y) * perPx, (grab.x - grab.x0) * perPx * SWAY);
       const cap = v => Math.max(-FLING_MAX, Math.min(FLING_MAX, v));
       dropTissue(cap(grab.vx * perPx * FLING), cap(-grab.vy * perPx * FLING));
       playPop();
       newLook();   // 次の1枚は別の形で出てくる
       pullExt = 0; pullTx = 0;
-      // 1枚ごとに指を離して掴み直す（1回の滑動で何枚も抜けないように）
+      // 1枚ごとに手手指を離して掴み直す（1回の滑動で何枚も抜けないように）
       grab = null;
       count++;
       if (count >= TOTAL) finish();
@@ -1120,7 +1120,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   });
 
-  // 指を離したら掴みを解除する。キャンバスで拾えなかった場合に備えて document とキャプチャ解除でも拾う
+  // 手手指を離したら掴みを解除する。キャンバスで拾えなかった場合に備えて document とキャプチャ解除でも拾う
   const release = e => { if (grab && e.pointerId === grab.id) grab = null; };
   cv.addEventListener('pointerup', release);
   cv.addEventListener('pointercancel', release);
@@ -1128,13 +1128,13 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('pointerup', release);
   document.addEventListener('pointercancel', release);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
   document.addEventListener('touchmove', e => { if (grab) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
   cv.addEventListener('contextmenu', e => e.preventDefault());
 
-  // PC：結果画面ではスペース / Enter でもう一回
+  // PC：結果畫面ではスペース / Enter で再來一次
   document.addEventListener('keydown', e => {
     if (state === 'over' && (e.key === ' ' || e.key === 'Enter') && document.activeElement !== $('share')){
       e.preventDefault();
@@ -1182,7 +1182,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);

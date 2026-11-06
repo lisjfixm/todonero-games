@@ -34,7 +34,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
 <title>包圍倖存者</title>
-<meta name="description" content="体で地面を囲んで落とすサバイバル">
+<meta name="description" content="体で地面を囲んで掉落サバイバル">
 <style>
 :root{
   /* 地面（市松模様の2色） / 文字 */
@@ -77,7 +77,7 @@ button{flex:1;min-height:48px;font-size:18px;font-weight:800;border:none;border-
 button.sub{background:#fff;color:var(--p-body);border:2px solid var(--p-body)}
 button:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.2)}
 button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
-.howto-open{min-height:0}   /* 上の button の min-height を「玩法」ボタンに効かせない */
+.howto-open{min-height:0}   /* 上の button の min-height を「玩法」按鈕に効かせない */
 #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);touch-action:none}
 #share-view.hidden{display:none}
 #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y}
@@ -96,7 +96,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
       <p id="resScore"></p>
       <p id="resSub"></p>
       <div class="btns">
-        <button id="retry">もう一回</button>
+        <button id="retry">再來一次</button>
         <button id="share" class="sub">分享</button>
       </div>
     </div>
@@ -110,12 +110,12 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   </div>
   <section class="howto" hidden data-pos="top-left">
     <h2>玩法</h2>
-    <p>自分の体で地面を囲み、囲んだ床を海へ落として生き残るサバイバルゲームです。CPU4人を合わせた5人で戦い、最後の1人になれば1位です。頭の下の床がなくなると海に落ちて脱落し、順位と囲った回数、倒した数が結果に出ます。</p>
+    <p>自己の体で地面を囲み、囲んだ床を海へ落として生き残るサバイバル遊戲。CPU4人を合わせた5人で戦い、最後の1人になれば1位です。頭の下の床がなくなると海に落ちて脱落し、順位と囲った回数、倒した数が結果に出ます。</p>
     <h2>操作</h2>
-    <p>指を置いて拖曳した方向へ頭が曲がります。頭は止まらずに進み続けます。PC ではマウスの拖曳か矢印キーです。</p>
-    <h2>コツ</h2>
-    <p>自分の体を横切ると輪が閉じ、内側の床が赤く点滅して約0.7秒後に落ちます。落ちるのは床の上に頭があるときだけなので、点滅中に抜ければ助かります。球を拾うと体が伸びて、大きく囲めるようになります。開始30秒後からは10秒ごとに外側が崩れるので、端に長くいるのは危険です。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>手手指を置いて拖曳した方向へ頭が曲がります。頭は止まらずに進み続けます。PC では滑鼠の拖曳か矢印鍵です。</p>
+    <h2>訣竅</h2>
+    <p>自己の体を横切ると輪が閉じ、内側の床が赤く点滅して約0.7秒後に落ちます。落ちるのは床の上に頭があるときだけなので、点滅中に抜ければ助かります。球を拾うと体が伸びて、大きく囲めるようになります。開始30秒後からは10秒ごとに外側が崩れるので、端に長くいるのは危険です。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -164,11 +164,11 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   const BLINK = 0.12;        // 赤い点滅の切り替え間隔（秒）
   const FLASH_OPACITY = 0.55;// 赤の濃さ
   const PIECE_RES = 2;       // 落ちる床の模様を描く細かさ（1単位あたりのpx）
-  const VIEW_MAX = WORLD / 2;  // 画面に映す幅の最大値（いちばん引いたとき。ステージ全体の半分の幅）
-  const VIEW_MIN = 380;      // 画面に映す幅の最小値（ワールド単位）
-  const VIEW_K = 0.45;       // 画面に映す幅 = 今の体の長さ × VIEW_K（体いっぱいの輪でも画面に収まるように）
+  const VIEW_MAX = WORLD / 2;  // 畫面に映す幅の最大値（いちばん引いたとき。ステージ全体の半分の幅）
+  const VIEW_MIN = 380;      // 畫面に映す幅の最小値（ワールド単位）
+  const VIEW_K = 0.45;       // 畫面に映す幅 = 今の体の長さ × VIEW_K（体いっぱいの輪でも畫面に収まるように）
   const DEAD = 8;            // 拖曳の遊び（px）
-  const STICK_R = 40;        // 拖曳の起点が指についてくる距離（px）
+  const STICK_R = 40;        // 拖曳の起点が手手指についてくる距離（px）
   const GRID_STEP = 50;      // 地面のマス目の間隔（動いているのが分かるように）
   // ----- 3D表示 -----
   const GROUND_T = 10;       // 地面の厚み（穴から断面が見える）
@@ -185,17 +185,17 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 
   // ----- CPU -----
   const CPU_COUNT = 4;            // CPUの数
-  const CPU_SPAWN_GAP = 180;      // CPUが出てくるとき、プレイヤーの頭から最低これだけ離す
+  const CPU_SPAWN_GAP = 180;      // CPUが出てくるとき、プレイヤーの頭から最低これだけ放開
   const WALL_MARGIN = 80;         // CPUはこれよりフィールドの端に近づくと中央へ向きを変える
   const CPU_HOLE_MARGIN = 5;      // CPUは穴の縁からこの距離を空けて進む
-  const CPU_LOOK_T = 0.6;         // CPUはこの秒数先まで自分の動き（曲がりきれるか）を予測し、穴や海に落ちる向きを避ける
+  const CPU_LOOK_T = 0.6;         // CPUはこの秒数先まで自己の動き（曲がりきれるか）を予測し、穴や海に落ちる向きを避ける
   const CPU_LOOP_MIN = 0.55;      // CPUが作る四角い輪の周りの長さ（今の体の長さに対する割合、最小）
   const CPU_LOOP_MAX = 0.8;       // 同（最大）。1に近いほど大きく囲うが、尻尾が足りず輪が閉じにくくなる
   const CPU_WANDER_MIN = 0.8;     // 輪を作る合間にうろつく時間（秒、最小）
   const CPU_WANDER_MAX = 2.0;     // 同（最大）
   const CPU_FOOD_DIST = 150;      // うろついている間、この距離内の球を拾いに行く
-  // ----- CPUの狩り（相手の頭の周りをぐるっと回って囲む）。強さはここで調整 -----
-  const CPU_HUNT_RANGE = 520;     // この距離内に相手の頭があれば狩りに行く
+  // ----- CPUの狩り（對手の頭の周りをぐるっと回って囲む）。強さはここで調整 -----
+  const CPU_HUNT_RANGE = 520;     // この距離内に對手の頭があれば狩りに行く
   const CPU_HUNT_CHANCE = 1;    // 0.3秒ごとの判定で狩りを始める確率
   const CPU_HUNT_TIME = 10;        // 1回の狩りを続ける最大の秒数
   const CPU_PLAYER_BIAS = 0.25;    // プレイヤーを狙いやすくする（距離にこの倍率をかけて比べる。小さいほどプレイヤー優先）
@@ -203,11 +203,11 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   const CPU_ORBIT_MIN = 32;       // 囲む円の半径の最小（曲がれる小ささの限界）
   const CPU_ORBIT_MAX = 110;      // 囲む円の半径の最大
   const CPU_HUNT_SPEED = 1;       // 狩りの最中のCPUの速さ（プレイヤーの何倍か。1＝プレイヤーと同じ）
-  const CPU_LEAD = 0.35;          // 相手の動きをこの秒数先まで読んで、その位置を囲む（CPUごとに0.3〜1.3倍にばらつかせる）
+  const CPU_LEAD = 0.35;          // 對手の動きをこの秒数先まで読んで、その位置を囲む（CPUごとに0.3〜1.3倍にばらつかせる）
   const CPU_MAX_ON_PLAYER = 2;    // 同時にプレイヤーを狙うCPUの数の上限（全員で同じ動きをしないように）
   const CPU_HUNT_REST_MIN = 1;    // 狩りが終わってから次の狩りまで休む秒数（最小）
   const CPU_HUNT_REST_MAX = 3;    // 同（最大）
-  const CPU_CLOSE_DIST = 110;      // 自分の体のこの距離内に、相手の頭を囲える近道があれば体に向かって輪を閉じに行く
+  const CPU_CLOSE_DIST = 110;      // 自己の体のこの距離内に、對手の頭を囲える近道があれば体に向かって輪を閉じに行く
   const CPU_CLOSE_SCAN = 0.1;
   const CPU_OPEN_MIN = 110;       // 進む向きの先の空き（穴や海までの距離）がこれより短ければ、もっと空いている向きへ移る
   const CPU_RAY_MAX = 300;        // 空きを調べる距離の上限     // その近道を探す間隔（秒）
@@ -256,7 +256,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   // 地面の模様と裏面の画像の組（描き方は同じで大きさだけ違う）
   const views = () => [[gctx, groundTex, GROUND_TEX], [uctx, underTex, GROUND_TEX / 2]];
   const uctx = ucv.getContext('2d', { willReadFrequently: true });
-  // ---------- フィールドの縁（試合ごとにランダムな形） ----------
+  // ---------- フィールドの縁（試合ごとに隨機な形） ----------
   // 角度ごとの縁までの半径。いくつかの波を重ねた形を、半径の (1-EDGE_DEPTH)〜1 に収める
   const edgeR = new Float32Array(EDGE_N);
   function makeEdge(){
@@ -294,7 +294,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     g.closePath(); g.fill();
   }
   // 穴が増えた範囲（マス単位）だけ地面の模様から抜き、その範囲だけGPUに送り直す
-  // （毎回まるごと描き直して送るとカクつくため。穴は増える一方なので差分だけでよい）
+  // （毎回まるごと描き直して送るとカクつくため。穴は增加一方なので差分だけでよい）
   function digView(poly, bx, by, bw, bh){
     for (const [g, tex, size] of views()){
       const k = size / WORLD, kc = size / GRID;
@@ -329,7 +329,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   let snakes = [], player, mode, deathReason, rank = 0, pellets = [];
   let overTimer = -1;   // 0以上なら、この秒数のあとに結果を出す（落ちるアニメを見せてから）
 
-  // 穴でない場所にランダムに球を置く
+  // 穴でない場所に隨機に球を置く
   function newPellet(){
     let x = 0, y = 0;
     for (let i = 0; i < 30; i++){
@@ -434,7 +434,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     }
     return false;
   }
-  // 円の下にある穴を作ったキャラ（倒した数に入れる相手）
+  // 円の下にある穴を作ったキャラ（倒した数に入れる對手）
   function footMaker(x, y){
     for (const [ux, uy] of FOOT_PTS){
       const m = holeMaker(x + ux * FOOT_R, y + uy * FOOT_R);
@@ -571,14 +571,14 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     if (gx < 0 || gy < 0 || gx >= mask.bw || gy >= mask.bh) return false;
     return mask.d[(gy * mask.bw + gx) * 4 + 3] >= 128;
   }
-  // 点滅が終わった床を落とす：穴にして、上にいた頭は一緒に落ちる
+  // 点滅が終わった床を掉落：穴にして、上にいた頭は一緒に落ちる
   function dropPending(q){
     const {bx, by, bw, bh} = q.mask;
     for (const gi of q.cells){ pend[gi] = 0; counts[q.owner.id]++; setCell(gi, q.owner.id); }
     tctx.putImageData(timg, 0, 0, bx, by, bw, bh);
     digView(q.poly, bx, by, bw, bh);
     for (let i = 0; i < pellets.length; i++) if (holeAt(pellets[i].x, pellets[i].y)) pellets[i] = newPellet();
-    // 床の切れ端（表面と裏面）を作って落とす
+    // 床の切れ端（表面と裏面）を作って掉落
     removePiece(q);
     q.meshes.push(pieceMesh(q.tcv2, q.x0, q.y0, q.w, q.h, 0, new THREE.MeshLambertMaterial({alphaTest: 0.5})));
     q.meshes.push(pieceMesh(q.mcv, q.x0, q.y0, q.w, q.h, -GROUND_T, new THREE.MeshLambertMaterial({color: C.soilDark, alphaTest: 0.5, side: THREE.DoubleSide})));
@@ -627,17 +627,17 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     return acc;
   }
 
-  // 倒れたら復活しない。削った穴も残る（サバイバル：最後の1人になったら勝ち）
+  // 倒れたら復活しない。削った穴も残る（サバイバル：最後の1人になったら贏）
   // 倒れると海に落ちていく（fallT が落ちはじめてからの秒数）。結果は落ちきってから出す
-  // by は倒した相手（その相手が作った穴・床で落ちたとき）。自分の穴なら倒した数には入れない
+  // by は倒した對手（その對手が作った穴・床で落ちたとき）。自己の穴なら倒した数には入れない
   function kill(s, reason, by){
     if (by && by !== s) by.kills++; else by = null;
     s.alive = false;
     s.fallT = 0;
-    // 落ちる直前の速さ（向きと大きさ）を覚えておき、落ちている間もその速さで前へ進ませる
+    // 落ちる直前の速さ（向きと大きさ）を覚えておき、落ちている間もその速さで上一頁進ませる
     s.fallVx = dirX(s.ang) * speedOf(s); s.fallVy = dirY(s.ang) * speedOf(s);
     updateHud();
-    // CPUが減ったら知らせる（プレイヤーが倒したときは「たおした！」）。勝ちが決まったときは出さない
+    // CPUが減ったら知らせる（プレイヤーが倒したときは「たおした！」）。贏が決まったときは出さない
     if (s.cpu && player.alive && aliveCount() > 1) showToast(s, by === player ? 'たおした！' : '淘汰！');
     if (!s.cpu){ rank = aliveCount() + 1; deathReason = reason; overTimer = FALL_TIME; }
     else if (player.alive && aliveCount() === 1){ rank = 1; deathReason = 'win'; overTimer = FALL_TIME; }
@@ -658,7 +658,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     const v = speedOf(s);
     const bx = ax + dirX(s.ang) * v * dt, by = ay + dirY(s.ang) * v * dt;
 
-    // 自分の体と交差したら、交点から頭までの体が作る輪の内側の地面を削る
+    // 自己の体と交差したら、交点から頭までの体が作る輪の内側の地面を削る
     let hitJ = -1, hitT = 2;
     for (let j = n - 2 - SKIP; j >= 0; j--){
       const t = segHit(ax, ay, bx, by, pts[j].x, pts[j].y, pts[j + 1].x, pts[j + 1].y);
@@ -675,7 +675,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     }
 
     head.x = bx; head.y = by;
-    // 頭の下の円に床がまったくなくなったら海に落ちる（中心がフィールドの外なら外へ、穴ならその穴を作った相手が倒したことになる）
+    // 頭の下の円に床がまったくなくなったら海に落ちる（中心がフィールドの外なら外へ、穴ならその穴を作った對手が倒したことになる）
     if (!supported(bx, by)){
       if (fieldDist(bx, by) > FIELD_R) kill(s, 'wall'); else kill(s, 'fall', footMaker(bx, by));
       return;
@@ -842,7 +842,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 
   // 囲む円の半径（体の長さで決まる）
   const orbitR = s => Math.min(CPU_ORBIT_MAX, s.bodyLen * CPU_ORBIT_FILL * s.fill / (2 * Math.PI));
-  // 狙う相手を選んで狩りを始める（プレイヤーを優先）
+  // 狙う對手を選んで狩りを始める（プレイヤーを優先）
   function startHunt(s, h){
     if (orbitR(s) < CPU_ORBIT_MIN) return false;   // 体が短すぎて囲めない
     let best = null, bd = Infinity;
@@ -863,11 +863,11 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     s.orbitDir = Math.abs(cross) < 1e-3 ? s.dirPref : (cross >= 0 ? 1 : -1);
     return true;
   }
-  // 狩り：相手の少し先の位置を中心に、体で一周できる大きさの円を描いて回る。一周すると輪が閉じて囲める
+  // 狩り：對手の少し先の位置を中心に、体で一周できる大きさの円を描いて回る。一周すると輪が閉じて囲める
   function hunt(s, dt, h){
     const o = s.prey;
     s.huntT -= dt;
-    // 輪を閉じた・相手がいない・時間切れなら終わり。閉じた輪から外へ抜ける
+    // 輪を閉じた・對手がいない・時間切れなら終わり。閉じた輪から外へ抜ける
     if (!o || !o.alive || s.loops !== s.huntLoops || s.huntT <= 0){
       wander(s); s.scan = rand(CPU_HUNT_REST_MIN, CPU_HUNT_REST_MAX);
       if (o) s.target = Math.atan2(h.y - headOf(o).y, h.x - headOf(o).x);
@@ -892,7 +892,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     }
     return inside;
   }
-  // 輪を關閉近道：自分の体の近い所へまっすぐ向かえば、相手の頭を囲んだ輪ができるか。できるならその点を返す
+  // 輪を關閉近道：自己の体の近い所へまっすぐ向かえば、對手の頭を囲んだ輪ができるか。できるならその点を返す
   function closeShortcut(s, h){
     const pts = s.pts, n = pts.length;
     let best = null, bd = CPU_CLOSE_DIST;
@@ -909,7 +909,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   function plan(s, dt){
     const h = headOf(s);
     s.t -= dt;
-    // 相手の頭を囲める近道があれば、何をしていても体に向かって輪を閉じに行く
+    // 對手の頭を囲める近道があれば、何をしていても体に向かって輪を閉じに行く
     s.closeScan = (s.closeScan || 0) - dt;
     if (s.closeScan <= 0){ s.closeScan = CPU_CLOSE_SCAN; s.closeTo = closeShortcut(s, h); }
     if (s.closeTo){
@@ -930,7 +930,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     }
     if (s.st === 'hunt'){ hunt(s, dt, h); return; }
     if (s.st === 'wander'){
-      // 近くに相手の頭があれば（確率で）狩りに行く
+      // 近くに對手の頭があれば（確率で）狩りに行く
       s.scan -= dt;
       if (s.scan <= 0){
         s.scan = 0.3;
@@ -978,7 +978,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     }
   }
 
-  // CPUが減ったら少しの間出す（減った相手の色の丸と剩餘人数つき）
+  // CPUが減ったら少しの間出す（減った對手の色の丸と剩餘人数つき）
   let toastTimer = 0;
   function showToast(o, msg){
     const t = $('toast');
@@ -1159,7 +1159,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     if (q.phase === 'flash'){
       q.meshes[0].visible = Math.floor(q.t / BLINK) % 2 === 0;
       if (q.t < CRUMBLE_FLASH) return;
-      // 落とす：今の模様を写した帯（表と裏）を作り、地面の画像からは帯の分を消す
+      // 掉落：今の模様を写した帯（表と裏）を作り、地面の画像からは帯の分を消す
       removeMesh(q.meshes[0]);
       const from = edgeScale;
       const top = new THREE.Mesh(ringGeo(q.to, from), new THREE.MeshLambertMaterial({map: snapTexture(gcv), alphaTest: 0.5, side: THREE.DoubleSide}));
@@ -1189,7 +1189,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   // 球
   const pelletMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(PELLET_R, 8, 6),
     new THREE.MeshLambertMaterial({color: PELLET_COL}), PELLET_COUNT);
-  pelletMesh.frustumCulled = false;   // 全体の範囲が分からないので画面外判定で消されないようにする
+  pelletMesh.frustumCulled = false;   // 全体の範囲が分からないので畫面外判定で消されないようにする
   scene.add(pelletMesh);
   // 球の影（地面に置いた丸）
   const pelletShadowGeo = new THREE.CircleGeometry(PELLET_R * 0.9, 16);
@@ -1315,7 +1315,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     // キャラごとに高さの層を分ける。同じ高さに2本の線があるとちらつくため
     fillRibbon(m.body, s.pts, -BODY_W / 2, BODY_W / 2, BODY_Y + s.id * BODY_LAYER);
     const h = headOf(s);
-    // 落ちている間は体ごと、落ちる直前の速さで前へ進みながら往下
+    // 落ちている間は体ごと、落ちる直前の速さで上一頁進みながら往下
     const drop = s.alive ? 0 : FALL_G * s.fallT * s.fallT / 2;
     const fx = s.alive ? 0 : s.fallVx * s.fallT, fz = s.alive ? 0 : s.fallVy * s.fallT;
     m.body.position.set(fx, -drop, fz);
@@ -1337,7 +1337,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     pelletMesh.instanceMatrix.needsUpdate = true;
     pelletShadow.instanceMatrix.needsUpdate = true;
     for (const s of snakes) placeSnake(s);
-    // カメラ：プレイヤーの頭を斜め上から見下ろす。体が長いほど引いて、体いっぱいの輪でも画面に収める
+    // カメラ：プレイヤーの頭を斜め上から見下ろす。体が長いほど引いて、体いっぱいの輪でも畫面に収める
     const view = Math.min(VIEW_MAX, Math.max(VIEW_MIN, player.bodyLen * VIEW_K));
     const need = camera.aspect < 1 ? view / camera.aspect : view;
     const dist = need / (2 * Math.tan(CAM_FOV * Math.PI / 360));
@@ -1360,7 +1360,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   }
 
   // ---------- 入力 ----------
-  // 指を置いた位置から拖曳した方向へ曲がる（起点は指に一定距離でついてくる）
+  // 手手指を置いた位置から拖曳した方向へ曲がる（起点は手手指に一定距離でついてくる）
   let pid = null, sx = 0, sy = 0;
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
@@ -1381,7 +1381,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   cv.addEventListener('pointerup', endPointer);
   cv.addEventListener('pointercancel', endPointer);
 
-  // PC：矢印キーで向きを決める
+  // PC：矢印鍵で向きを決める
   const keys = new Set();
   function keyDir(){
     const x = (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0);
@@ -1390,21 +1390,21 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   }
   addEventListener('keydown', e => {
     if (e.key.startsWith('Arrow')){ e.preventDefault(); keys.add(e.key); keyDir(); return; }
-    // ボタンにフォーカスがあるときはボタン側の動作に任せる
-    // 分享される内容の画面を出している間は、リ開始のキー操作を止める
+    // 按鈕にフォーカスがあるときは按鈕側の動作に任せる
+    // 分享される内容の畫面を出している間は、リ開始の鍵操作を止める
     if (mode === 'over' && !shareViewOpen() && (e.key === ' ' || e.key === 'Enter') && !(e.target.closest && e.target.closest('button'))){
       e.preventDefault(); start();
     }
   });
   addEventListener('keyup', e => { keys.delete(e.key); });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, {passive:false});
   document.addEventListener('touchmove', e => { if (pid !== null) e.preventDefault(); }, {passive:false});
   // 分享される文面だけは選んでコピーできるようにする
   document.addEventListener('selectstart', e => { if (!(e.target instanceof Element && e.target.closest('#share-text')) && !(e.target.parentElement && e.target.parentElement.closest('#share-text'))) e.preventDefault(); });
   document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（ボタンのclickは止めないように除外）
+  // スマホでのダブル點擊拡大を防ぐ（按鈕のclickは止めないように除外）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     if (e.target.closest && e.target.closest('button')) return;
@@ -1413,7 +1413,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     lastTouchEnd = now;
   }, {passive:false});
 
-  // ---------- 結果画面 ----------
+  // ---------- 結果畫面 ----------
   $('retry').addEventListener('pointerdown', e => e.stopPropagation());
   $('retry').addEventListener('click', start);
 
@@ -1422,7 +1422,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
       + location.href.split(/[?#]/)[0] + '\n#かこみサバイバー';
   }
 
-  // 結果画像：最後のゲーム画面に成績を重ねる
+  // 結果画像：最後のゲーム畫面に成績を重ねる
   function resultCanvas(){
     const c = document.createElement('canvas');
     c.width = cv.width; c.height = cv.height;
@@ -1449,7 +1449,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を畫面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1458,8 +1458,8 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
       $('share-close').focus({ preventScroll:true });
     };
     // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
-    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内瀏覽器等）。
+    // 分享シートを開いてから自己で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;

@@ -57,7 +57,7 @@ body{
 }
 #game{
   position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;
-  display:flex;flex-direction:column;justify-content:center;   /* 表示をまとめて画面の縦中央に寄せる */
+  display:flex;flex-direction:column;justify-content:center;   /* 表示をまとめて畫面の縦中央に寄せる */
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 #head{display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 16px}
@@ -71,29 +71,29 @@ body{
 #board{width:100%;aspect-ratio:1;flex:0 1 auto;min-height:0;position:relative;touch-action:none}
 /* 描画は盤面より一回り大きく取り、浮いたピースや完成演出の波紋が盤面の外まで出せるようにする */
 #cv{position:absolute;left:-20%;top:-20%;width:140%;height:140%;display:block;touch-action:none}
-/* 結果は画面全体に重ねるパネル */
+/* 結果は畫面全体に重ねるパネル */
 #result{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));text-align:center;background:var(--bg)}
 #result.hidden{display:none}
 #rtitle{font-size:26px;font-weight:800;letter-spacing:.04em}
-/* ステージ名の横の再生ボタン：押すと1日を暮らす演出を再來一次見る */
+/* ステージ名の横の再生按鈕：按と1日を暮らす演出を再來一次見る */
 .rhead{display:flex;align-items:center;justify-content:center;gap:10px}
 #replay{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:2px solid var(--fg);border-radius:50%;background:var(--plate);color:var(--fg)}
 #rcv{display:block;width:min(100%,46dvh);aspect-ratio:1;margin:4px auto 0}
 .btns{display:flex;gap:10px;width:100%;margin-top:8px}
-/* ステージ一覧：押すとそのパターンで遊ぶ。今のステージは枠で示す */
+/* ステージ一覧：按とそのパターンで遊ぶ。今のステージは枠で示す */
 #toSelect{width:100%;min-height:52px;margin-top:10px;border:0;border-radius:999px;background:none;color:var(--fg);font-weight:700;font-size:16px;font-family:inherit;letter-spacing:.06em;text-decoration:underline;text-underline-offset:4px}
 .stages{width:100%}
 .stages .lbl{font-size:12px;color:var(--sub);letter-spacing:.15em;margin-bottom:8px}
 .stages .list{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 .stages button{min-height:44px;padding:0 16px;border:2px solid transparent;border-radius:999px;background:var(--plate);color:var(--fg);font-weight:700;font-size:14px;line-height:1;font-family:inherit;box-shadow:0 1px 3px var(--shadow)}
 .stages button.make{border:2px dashed var(--sub);box-shadow:none;background:none}
-/* 起動時のステージ選択画面：縦に大きく並べる */
+/* 起動時のステージ選択畫面：縦に大きく並べる */
 #select{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:calc(20px + env(safe-area-inset-top,0px)) 24px calc(20px + env(safe-area-inset-bottom,0px));background:var(--bg);text-align:center}
 #select.hidden{display:none}
 #select .lbl{font-size:13px;margin-bottom:14px}
 #select .list{flex-direction:column;flex-wrap:nowrap;gap:10px}
 #select button{min-height:56px;font-size:17px}
-/* ステージを作る画面（項目が多いときは縦にスクロール） */
+/* ステージを作る畫面（項目が多いときは縦にスクロール） */
 #editor,#mine{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(20px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px));background:var(--bg)}
 #editor.hidden,#mine.hidden{display:none}
 #editor h2,#mine h2{margin:0;text-align:center;font-size:24px;font-weight:800;letter-spacing:.04em}
@@ -127,7 +127,7 @@ body{
 #codeMsg,#impMsg{min-height:18px;margin-top:6px;font-size:13px;text-align:center;color:var(--sub)}
 #impMsg.err{color:var(--warn)}
 #edel{display:block;margin:18px auto 0;min-height:44px;padding:0 18px;border:0;background:none;color:var(--warn);font-weight:700;font-size:14px;font-family:inherit}
-/* 自分で作ったステージの一覧（3つまで） */
+/* 自己で作ったステージの一覧（3つまで） */
 .slot{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:10px 10px 10px 16px;border-radius:14px;background:var(--plate);box-shadow:0 1px 3px var(--shadow)}
 .slot .info{flex:1;min-width:0;text-align:left}
 .slot .sname{font-weight:800;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -162,7 +162,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     </div>
     <canvas id="rcv"></canvas>
     <div class="btns">
-      <button id="retry" type="button">もう一回</button>
+      <button id="retry" type="button">再來一次</button>
       <button id="share" type="button">分享</button>
     </div>
     <button id="toSelect" type="button">ステージ選択に返回</button>
@@ -174,8 +174,8 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     </div>
   </div>
   <div id="mine" class="hidden">
-    <h2>自分で作る</h2>
-    <div class="note">作ったステージは3つまでブラウザに保存されます</div>
+    <h2>自己で作る</h2>
+    <div class="note">作ったステージは3つまで瀏覽器に會儲存</div>
     <div id="slots"></div>
     <div class="codebox">
       <div class="lbl">コードを讀取</div>
@@ -200,7 +200,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
       <button id="eplay" type="button">この予定で遊ぶ</button>
     </div>
     <div class="codebox">
-      <div class="lbl">分享コード（相手の「コードを讀取」に貼ると同じステージが作れます）</div>
+      <div class="lbl">分享コード（對手の「コードを讀取」に貼ると同じステージが作れます）</div>
       <div class="coderow">
         <input id="code-out" type="text" readonly aria-label="分享コード">
         <button id="codeCopy" type="button">コピー</button>
@@ -211,12 +211,12 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
   </div>
 <section class="howto" data-pos="none" hidden>
   <h2>玩法</h2>
-  <p>24時間の時計盤に、決められた予定を1つずつはめていくゲームです。予定は円のまわりを回っていて、タップした所で止まります。先に置いた予定と重なると、その予定が前後へ押し出されます。全部置くと、キャラクターがその通りに1日を暮らす様子が流れ、円グラフが結果に剩餘ます。点数はありません。</p>
+  <p>24時間の時計盤に、決められた予定を1つずつはめていく遊戲。予定は円のまわりを回っていて、點擊した所で止まります。先に置いた予定と重なると、その予定が前後へ押し出されます。全部置くと、キャラクターがその通りに1日を暮らす様子が流れ、円グラフが結果に剩餘ます。点数はありません。</p>
   <h2>操作</h2>
-  <p>ステージを選び、止めたい所でタップします。PC はスペースか Enter でも止められます。暮らす様子はタップで飛ばせます。カスタムステージでは予定の名前と長さを決めて3つまで保存でき、コードで人に渡せます。ただし暮らす様子は流れません。</p>
+  <p>ステージを選び、止めたい所で點擊します。PC はスペースか Enter でも止められます。暮らす様子は點擊で飛ばせます。カスタムステージでは予定の名前と長さを決めて3つまで保存でき、コードで人に渡せます。ただし暮らす様子は流れません。</p>
   <h2>楽しみ方</h2>
   <p>予定は後半ほど速く回り、1周1.4秒が最後は0.6秒まで縮みます。睡眠が昼に来れば、キャラクターも昼に眠ります。わざと変な時間割を組んでも楽しめます。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 </div>
 <script>
@@ -229,7 +229,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
   // 1個目は SPIN_SEC_FIRST、最後は SPIN_SEC_LAST で、後半の予定ほど速く回る
   const SPIN_SEC_FIRST = 1.4;
   const SPIN_SEC_LAST = 0.6;
-  const STOP_COOLDOWN = 0.2;  // 止めた直後の誤タップで次の予定まで止まらないようにする時間（秒）
+  const STOP_COOLDOWN = 0.2;  // 止めた直後の誤點擊で次の予定まで止まらないようにする時間（秒）
   const SNAP_SEC = 0.45;      // 止めたピースがハマり、被った予定が押し出される演出の長さ（秒）
   const DONE_SEC = 1.4;       // 全部置き終わってから結果を出すまでの完成演出の長さ（秒）
   const LIFT = 1.06;          // 回っているピースは盤面より少し大きく描いて浮かせる。止めるとハマって1倍になる
@@ -238,7 +238,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
   const MIN_SEG_SEC = 1.3;    // 短い予定でも、何をしているか分かるようにこの秒数は映す
   const PLAY_HOLD = 0.8;      // 24時になってから結果を出すまでの間（秒）
   const REVEAL_SEC = 0.5;     // 円グラフから場面に切り替わる長さ（秒）
-  // 1日の予定のパターン。遊ぶたびにこの中から1つをランダムに選ぶ。
+  // 1日の予定のパターン。遊ぶたびにこの中から1つを隨機に選ぶ。
   // 並び順に1つずつ回る。start はそのパターンで想定している開始時刻（分、今は使っていない）、dur は長さ（分）。
   // dur の合計は必ず24時間（1440分）にする（ぴったり埋まらないと押し出しの計算が合わない）
   const h = (hh, mm = 0) => hh * 60 + mm;
@@ -296,11 +296,11 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
       { name:'自由時間',     start:h(19),     dur:60,  color:'--free'    },
     ]},
   ];
-  // 自分で作るステージ：項目の色は上から順にこの並びで割り当てる
+  // 自己で作るステージ：項目の色は上から順にこの並びで割り当てる
   const CUSTOM_COLORS = ['--sleep','--work','--free','--lunch','--study','--club','--shop','--movie','--game','--prep','--commute','--bake','--nap'];
   const CUSTOM_DEFAULT = [ { name:'睡眠', dur:480 }, { name:'仕事', dur:480 }, { name:'自由時間', dur:480 } ];
-  const CUSTOM_KEY = 'dailySchedule.customs';  // 作ったステージ（3つまで）をまとめてブラウザに保存する
-  const OLD_KEY = 'dailySchedule.custom';      // 以前の1つだけ保存していたときのキー（読み込んで引き継ぐ）
+  const CUSTOM_KEY = 'dailySchedule.customs';  // 作ったステージ（3つまで）をまとめて瀏覽器に保存する
+  const OLD_KEY = 'dailySchedule.custom';      // 以前の1つだけ保存していたときの鍵（読み込んで引き継ぐ）
   const CUSTOM_MAX = 3;                        // 保存できるステージの数
   const STEP = 15;                             // 長さの単位（分）
   const HOLD_DELAY = 0.4;                      // ＋−を押し続けたとき、連続で変わり始めるまでの時間（秒）
@@ -329,7 +329,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
   let placed = [];        // 止めた予定の開始時刻（分）
   let cooldown = 0;
   let shiftFrom = [];      // ずれる前の開始時刻（演出用）
-  let shiftT = 1;          // ハマる・ずれる演出の進み具合（0〜1、1で完了）
+  let shiftT = 1;          // ハマる・ずれる演出の進み具合（0〜1、1で完成）
   let snapIdx = -1;        // いまハマっている最中のピース
 
   // pt: 遊ぶパターン
@@ -375,8 +375,8 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
   const mid = i => placed[i] + ACTS[i].dur / 2;
 
   // 置いた予定 n と重なる下の予定をずらす。
-  // n の中心より後ろにある予定は後ろへ、前にある予定は前へ押し出し、
-  // 押された予定がさらに別の予定に被ればそれも同じ向きに押す。
+  // n の中心より後ろにある予定は後ろへ、前にある予定は上一頁押し出し、
+  // 押された予定がさらに別の予定に被ればそれも同じ向きに按。
   // 反対側でぶつかった場合も含め、各予定は重ならなくなる最小限しか動かさない
   function pushAway(n){
     const c = mid(n), half = ACTS[n].dur / 2;
@@ -396,18 +396,18 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     }
   }
 
-  // タイトル画面のステージ一覧。用意したステージ → 最後の「カスタムステージ」から自分で作る画面に入る
+  // タイトル畫面のステージ一覧。用意したステージ → 最後の「カスタムステージ」から自己で作る畫面に入る
   function stageButtons(){
     return PATTERNS.map((pt, i) => `<button type="button" data-stage="${i}">${esc(pt.name)}</button>`).join('')
       + `<button type="button" data-make class="make">カスタムステージ</button>`
       + `<button type="button" data-howto-open>玩法</button>`;
   }
-  // 画面を1つだけ出す（結果・起動時の選択・自分で作る・ステージを作る）
+  // 畫面を1つだけ出す（結果・起動時の選択・自己で作る・ステージを作る）
   function showPanel(id){
     ['result', 'select', 'mine', 'editor'].forEach(k => $(k).classList.toggle('hidden', k !== id));
   }
 
-  // 起動時のステージ選択画面
+  // 起動時のステージ選択畫面
   function openSelect(){
     mode = 'select';
     $('select').querySelector('.list').innerHTML = stageButtons();
@@ -417,7 +417,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
   function finish(){
     mode = 'over';
     $('rtitle').textContent = pattern.name;
-    $('replay').style.display = pattern.custom ? 'none' : '';   // 自分で作ったステージには再生ボタンを出さない
+    $('replay').style.display = pattern.custom ? 'none' : '';   // 自己で作ったステージには再生按鈕を出さない
     showPanel('result');
     updateStatus();
   }
@@ -543,7 +543,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     drawDial(g, cx, cy, r);
   }
 
-  // 結果パネルのグラフ。パネルの大きさに合わせて描き直す（押し出しの演出が終わるまでは動きも見せる）
+  // 結果パネルのグラフ。パネルの大きさに合わせて描き直す（押し出しの演出が結束までは動きも見せる）
   const rcv = $('rcv'), rctx = rcv.getContext('2d');
   function drawResult(){
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -643,7 +643,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     ['bake',    /仕込み|料理|調理|パン|自炊/],
     ['free',    /自由|休み|のんびり|趣味|スマホ/],
   ];
-  // 名前で決まらないときは、用意したステージは色で決め、自分で作ったステージは立って過ごす
+  // 名前で決まらないときは、用意したステージは色で決め、自己で作ったステージは立って過ごす
   const COLOR_KIND = { '--sleep':'sleep', '--prep':'prep', '--commute':'commute', '--work':'work', '--lunch':'eat', '--free':'free',
     '--study':'study', '--club':'club', '--shop':'shop', '--nap':'nap', '--movie':'movie', '--game':'game', '--bake':'bake' };
   function kindOf(act){
@@ -843,7 +843,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
         const w = 6 + 8 * Math.abs(Math.sin(t * 1.3 + j * 1.7));
         box(68, 38 + j * 3, w, 1.2, ac);
       }
-      box(55, 55.6, 10, 1.4, color('--sub'));           // キーボード
+      box(55, 55.6, 10, 1.4, color('--sub'));           // 鍵ボード
       chair(40, 62);
       seated(40, 62, 0.12, [[0.6, 1.35 + 0.12 * Math.sin(t * 22)], [0.62, 1.35 + 0.12 * Math.sin(t * 22 + 2)]]);
     },
@@ -1005,7 +1005,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     if (mode === 'done' && shiftT >= 1) {
       doneT += dt;
       if (doneT >= DONE_SEC) {
-        // 自分で作ったステージは1日を暮らす演出をせず、そのまま結果へ
+        // 自己で作ったステージは1日を暮らす演出をせず、そのまま結果へ
         if (pattern.custom) finish();
         else { mode = 'day'; dayT = 0; segs = buildSegs(); }
       }
@@ -1015,7 +1015,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
       if (dayT >= lifeSec() + PLAY_HOLD) finish();
     }
     if (mode !== 'playing') return;
-    if (shiftT < 1) return;   // ハマり終わるまで次のピースは回さない（止めた直後の誤タップ防止もここから数える）
+    if (shiftT < 1) return;   // ハマり結束まで次のピースは回さない（止めた直後の誤點擊防止もここから数える）
     const k = ACTS.length > 1 ? cur / (ACTS.length - 1) : 0;   // 0（1個目）〜1（最後）
     const spinSec = SPIN_SEC_FIRST + (SPIN_SEC_LAST - SPIN_SEC_FIRST) * k;
     pos = (pos + dt * DAY / spinSec) % DAY;
@@ -1033,9 +1033,9 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
 
   // ---------- 入力 ----------
   $('game').addEventListener('pointerdown', e => {
-    if (e.target.closest('button') || e.target.closest('#editor,#mine')) return;   // 作る画面の入力欄は普通に触れるようにする
+    if (e.target.closest('button') || e.target.closest('#editor,#mine')) return;   // 作る畫面の入力欄は普通に触れるようにする
     e.preventDefault();
-    if (mode === 'day') { finish(); return; }   // 1日を暮らす演出はタップで飛ばして結果へ
+    if (mode === 'day') { finish(); return; }   // 1日を暮らす演出は點擊で飛ばして結果へ
     stop();
   });
   document.addEventListener('keydown', e => {
@@ -1047,8 +1047,8 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
   });
 
   $('retry').addEventListener('pointerdown', e => e.stopPropagation());
-  $('retry').addEventListener('click', () => reset(pattern));   // もう一回は同じステージをやり直す
-  // 結果のステージ名の横の再生ボタン：1日を暮らす演出を再來一次流し、終わったら結果に返回
+  $('retry').addEventListener('click', () => reset(pattern));   // 再來一次は同じステージをやり直す
+  // 結果のステージ名の横の再生按鈕：1日を暮らす演出を再來一次流し、終わったら結果に返回
   $('replay').addEventListener('pointerdown', e => e.stopPropagation());
   $('replay').addEventListener('click', () => {
     mode = 'day';
@@ -1097,7 +1097,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
       const v = JSON.parse(localStorage.getItem(CUSTOM_KEY));
       if (Array.isArray(v)) return v.map(sanitize).filter(Boolean).slice(0, CUSTOM_MAX);
       const old = JSON.parse(localStorage.getItem(OLD_KEY));
-      const c = Array.isArray(old) && sanitize({ name: '自分の一日', items: old });
+      const c = Array.isArray(old) && sanitize({ name: '自己の一日', items: old });
       if (c) return [c];
     } catch(e) {}
     return [];
@@ -1132,7 +1132,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     } catch(e) { return null; }
   }
 
-  // ----- 自分で作る（作ったステージの一覧） -----
+  // ----- 自己で作る（作ったステージの一覧） -----
   function openMine(){
     mode = 'mine';
     $('impMsg').textContent = '';
@@ -1210,7 +1210,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     const manual = () => { $('code-out').focus(); $('code-out').select(); $('codeMsg').textContent = 'コードを長押ししてコピーしてください'; };
     if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(manual); else manual();
   });
-  // 消すボタンは誤って押さないよう、2回按消す（確認ダイアログは出さない）
+  // 消す按鈕は誤って押さないよう、2回按消す（確認ダイアログは出さない）
   let delArmed = false, delTimer = 0;
   function resetDelete(){ delArmed = false; clearTimeout(delTimer); $('edel').textContent = 'このステージを消す'; }
   $('edel').addEventListener('click', () => {
@@ -1226,7 +1226,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     openMine();
   });
 
-  // 長さは「時間」と「分」を別々の＋−で変える（時間は1時間ずつ、分は15分ずつ）
+  // 長さは「時間」と「分」を各自の＋−で変える（時間は1時間ずつ、分は15分ずつ）
   const stepper = (i, unit, label) => `
     <div class="stp">
       <button type="button" data-d="${-unit}" aria-label="${i + 1}番目を${label}減らす">−</button>
@@ -1368,7 +1368,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);
@@ -1376,14 +1376,14 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
   });
 
   // ---------- iOS対策 ----------
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   const onBoard = t => t instanceof Element && !!t.closest('#board');
   document.addEventListener('touchstart', e => { if (onBoard(e.target)) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove',  e => { if (onBoard(e.target)) e.preventDefault(); }, { passive:false });
   const isField = t => t instanceof Element && !!t.closest('input');
   document.addEventListener('selectstart', e => { if (!isField(e.target)) e.preventDefault(); });
   document.addEventListener('contextmenu', e => { if (!isField(e.target)) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（連打で拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（連打で拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();

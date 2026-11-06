@@ -59,21 +59,21 @@ gtag('config', 'G-41RSZLP1YQ');
   #game{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto}
   canvas{display:block;width:100%;height:100%;touch-action:none}
   .hidden{display:none !important}
-  /* ボタンは3D画面の上に重ね、ボタンの間のすき間は3D画面を触れるように指を通す */
+  /* 按鈕は3D畫面の上に重ね、按鈕の間のすき間は3D畫面を触れるように手手指を通す */
   #bottom{position:absolute;left:0;right:0;bottom:0;padding:0 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
   #bottom, #bottom *{pointer-events:none}
   #bottom button, #bottom input{pointer-events:auto}
-  /* 1行を左・中央・右の3列に分け、下一個進むボタン（.go）は中央、道具（.tool）は右端に置く */
+  /* 1行を左・中央・右の3列に分け、下一個進む按鈕（.go）は中央、道具（.tool）は右端に置く */
   .row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end}
   .row > .go{grid-column:2}
   .row > .tool{grid-column:3;justify-self:end}
   button{font:inherit;font-size:16px;color:#fff;background:#0008;border:none;border-radius:22px;min-height:44px;padding:0 16px;touch-action:manipulation}
   button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   button:disabled{opacity:.4}
-  /* 一手戻す：アイコンだけの丸いボタン */
+  /* 一手戻す：アイコンだけの丸い按鈕 */
   #sub{width:44px;padding:0;display:flex;align-items:center;justify-content:center}
   #toppingRow button[aria-pressed="true"]{background:#fffd;color:#000}
-  /* 生地の太さのスライダー：細い点と太い点の間を指で左右に動かす */
+  /* 生地の太さのスライダー：細い点と太い点の間を手手指で左右に移動 */
   #thickBox{display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-radius:22px;background:#0008;color:#fff}
   #thickBox svg{flex:none}
   #thick{touch-action:none;-webkit-appearance:none;appearance:none;width:120px;height:44px;margin:0;background:transparent}
@@ -85,7 +85,7 @@ gtag('config', 'G-41RSZLP1YQ');
   /* トッピングは中央にそろえて並べる（入りきらなければ次の段へ折り返す） */
   #toppingRow{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
   #toppingRow button{white-space:nowrap}
-  /* ソース：ボタンの中に色の丸。丸を押すと色を選べる */
+  /* ソース：按鈕の中に色の丸。丸を按と色を選べる */
   .sauceBox{display:flex;align-items:center;border-radius:22px;background:#0008;padding-right:9px}
   #toppingRow .sauceBox > button{background:transparent;color:#fff;padding:0 8px 0 16px}
   #toppingRow .sauceBox.on{background:#fffd}
@@ -101,7 +101,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #sauceColor::-webkit-color-swatch-wrapper{padding:0}
   #sauceColor::-webkit-color-swatch{border:none;border-radius:50%}
   #sauceColor::-moz-color-swatch{border:none;border-radius:50%}
-  /* 結果：点数とボタン */
+  /* 結果：点数と按鈕 */
   #result{display:flex;flex-direction:column;gap:12px}
   #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);touch-action:none}
   #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;background:#2c2c2c;color:#eee;border-radius:12px;padding:14px}
@@ -123,7 +123,7 @@ gtag('config', 'G-41RSZLP1YQ');
       </div>
     </div>
     <div id="tools" class="hidden">
-      <!-- ソースの色：用意した色と、自由に選ぶ色（ソースの色の丸を押すと出る） -->
+      <!-- ソースの色：用意した色と、自由に選ぶ色（ソースの色の丸を按と出る） -->
       <div id="presetRow" class="hidden">
         <button class="preset" type="button" data-color="#33190c"><span class="dot" style="background:#33190c"></span>チョコ</button>
         <button class="preset" type="button" data-color="#5e7a34"><span class="dot" style="background:#5e7a34"></span>抹茶</button>
@@ -151,7 +151,7 @@ gtag('config', 'G-41RSZLP1YQ');
     </div>
     <div id="result" class="hidden">
       <div class="row">
-        <button id="again" class="go" type="button">もう一回</button>
+        <button id="again" class="go" type="button">再來一次</button>
         <button id="share" class="tool" type="button">分享</button>
       </div>
     </div>
@@ -165,12 +165,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <section class="howto" data-pos="top-left" hidden>
     <h2>玩法</h2>
-    <p>指で描いた形の生地を油で揚げ、トッピングして皿に盛り付けるまでを3Dで楽しむ作品です。点数や制限時間はありません。「完成」を押すと仕上がりを好きな角度から眺められ、分享もできます。</p>
+    <p>手手指で描いた形の生地を油で揚げ、トッピングして皿に盛り付けるまでを3Dで楽しむ作品です。点数や制限時間はありません。「完成」を按と仕上がりを好きな角度から眺められ、分享もできます。</p>
     <h2>操作</h2>
-    <p>鍋の上をなぞると生地になり、描き終わりを描き始めに近づけると輪になります。太さはスライダーで変えられ、一度に12個まで作れます。「揚げる」のあとは、生地をタップすると跳ねて裏返り、拖曳で持ち上げて網バットに置けます。全部置くとトッピングに進み、最後に生地を皿へ運びます。PC ではマウスで同じように操作できます。</p>
+    <p>鍋の上をなぞると生地になり、描き終わりを描き始めに近づけると輪になります。太さはスライダーで変えられ、一度に12個まで作れます。「揚げる」のあとは、生地を點擊すると跳ねて裏返り、拖曳で持ち上げて網バットに置けます。全部置くとトッピングに進み、最後に生地を皿へ運びます。PC では滑鼠で同じように操作できます。</p>
     <h2>楽しみ方</h2>
     <p>片面は14秒ほどできつね色になり、長く揚げるほど濃くなって、35秒ほどで焦げ色になります。トッピングはソース、線がけ、粉砂糖、カラースプレーの4種類で、ソースと線がけは色も選べます。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 
@@ -189,7 +189,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const DOUGH_RV = 0.16;      // 生地の太さ：縦の半径（少し平たい）
   // これから描く生地の太さ（上の太さに掛ける倍率。スライダーで変える。範囲はスライダーの min / max）
   let thick = 1;
-  const THICK_PREVIEW_HOLD = 0.6;   // スライダーから指を離してから、太さの見本が消え始めるまで（秒）
+  const THICK_PREVIEW_HOLD = 0.6;   // スライダーから手手指を離してから、太さの見本が消え始めるまで（秒）
   const RING_SEG = 32;        // 生地の断面の分割数
   const CAP_SEG = 8;          // 生地の端の丸みの分割数
   const DRAW_STEP = 0.04;     // 描くときに点を足す間隔（ワールド単位）
@@ -220,14 +220,14 @@ gtag('config', 'G-41RSZLP1YQ');
   const FLAME_FLICKER = 0.25;                         // 炎のゆらぎの大きさ（長さに掛ける割合）
 
   // 持ち運び
-  const CARRY_PX = 8;         // 指がこれ以上動いたら持ち上げる（それより短ければ突く）
+  const CARRY_PX = 8;         // 手手指がこれ以上動いたら持ち上げる（それより短ければ突く）
   const CARRY_LIFT = 0.8;     // 盛り付けで持ち上げているときの高さ（網からの高さ）
   const FRY_LIFT = 2.0;       // 揚げているときに持ち上げる高さ（鍋のふちからの高さ。ぶら下がった生地が油から出て、くるっと返せる高さ）
   const RACK_CATCH = 0.45;    // 揚げた生地を網バットに置くとき、網のふちからこれだけ外で離しても網に置く
   const FRY_LIFT_K = 1.1;     // 大きい生地は、生地の大きさ（半径）のこの倍までは持ち上げる
-  const PINCH_K = 250;        // つまんだ点を指の位置へ引き寄せる強さ（ばね）
+  const PINCH_K = 250;        // つまんだ点を手手指の位置へ引き寄せる強さ（ばね）
   const PINCH_C = 28;         // つまんだ点の揺れを抑える強さ
-  const CARRY_FOLLOW = 8;     // つまんだ点が指の位置へ向かう速さの上限（単位/秒）。急に引っぱって生地が飛んでいかないように
+  const CARRY_FOLLOW = 8;     // つまんだ点が手手指の位置へ向かう速さの上限（単位/秒）。急に引っぱって生地が飛んでいかないように
   const CARRY_MAX_V = 7;      // 持っている生地が動く速さの上限（単位/秒）
   const CARRY_SPIN_DAMP = 1.2;// つまんでぶら下げている間の回転の減り方（1/秒）
   const FLOOR_K = 600;        // 網・皿・台・鍋底にめり込んだ点を押し返す強さ
@@ -252,7 +252,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // 視点
   const CAM_ELEV = 62;        // カメラの見下ろす角度（度）
   const CAM_TIME = 0.6;       // 場面が変わるときの視点の移動時間（秒）
-  const DROP_VIEW_DELAY = 1.2;// 落としてから網バットも見える画面に切り替えるまでの時間（秒）
+  const DROP_VIEW_DELAY = 1.2;// 落としてから網バットも見える畫面に切り替えるまでの時間（秒）
 
   // 物理（生地の浮き沈み）
   const PHYS_DT = 1 / 120;    // 物理の固定ステップ（秒）
@@ -280,7 +280,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const WAVE_SPEED = 2.2;     // 波が伝わる速さ（単位/秒）
   const WAVE_DAMP = 3.0;      // 波の減衰（1/秒）
   const WAVE_RESTORE = 0.3;   // 油面が平らに戻ろうとする強さ（1/秒）
-  const COUPLE = 1.2;         // 生地の上下の動きが油面を押す強さ
+  const COUPLE = 1.2;         // 生地の上下の動きが油面を按強さ
   const SHADE_H = 4.0;        // 波の山を明るく・谷を暗く見せる強さ（高さに掛ける）
   const SHADE_S = 0.6;        // 波の斜面の向きで明るさを変える強さ（傾きに掛ける）
 
@@ -308,7 +308,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const SET_MAX = 30000;      // 固まったチョコの点の数の上限（全部の生地の合計）
   const FL_D = 0.04;          // 粒どうしの間隔（これより近いと押し合う）
   const FL_H = 0.06;          // 粒どうしが影響しあう距離（粘り・まとまり）
-  const FL_STIFF = 0.4;       // 近すぎる粒を1回でどれだけ離すか（小さいほど震えにくい）
+  const FL_STIFF = 0.4;       // 近すぎる粒を1回でどれだけ放開か（小さいほど震えにくい）
   const FL_ITERS = 2;         // 押し合いの計算のくり返し回数
   const FL_COHESION = 0.05;   // 離れかけた粒どうしが引き合う強さ（まとまり）
   const FL_VISC = 0.5;        // 粘り（まわりの粒と速さをそろえる割合）
@@ -316,8 +316,8 @@ gtag('config', 'G-41RSZLP1YQ');
   const FL_ADH = 14;          // 生地や固まったチョコに貼りつく強さ（面に近い粒だけ）
   const FL_ADH_BAND = 0.06;   // 面からこの距離までの粒が貼りつく
   const FL_TOUCH = 0.015;     // 面からこの距離までの粒を「触れている」とみなす
-  const FL_FRICTION = 0.25;   // 面の近くの粒が面に沿ってすべる速さを1ステップごとに落とす割合
-  const FL_STICK = 0.96;      // 面に触れている粒が面に沿ってすべる速さを1ステップごとに落とす割合（薄い膜は剩餘、厚い所だけ流れる）
+  const FL_FRICTION = 0.25;   // 面の近くの粒が面に沿ってすべる速さを1ステップごとに掉落割合
+  const FL_STICK = 0.96;      // 面に触れている粒が面に沿ってすべる速さを1ステップごとに掉落割合（薄い膜は剩餘、厚い所だけ流れる）
   const FL_SET = 1.8;         // 冷えて動きにくくなっていく速さ（落ちてからの時間に掛ける）
   const FL_FREEZE_AGE = 1.5;  // 落ちてからこの時間がたち、面に触れてゆっくりになった粒は固まる（秒）
   const FL_FREEZE_V = 0.12;   // 固まるときの速さの上限（単位/秒）
@@ -327,7 +327,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const POUR_V = 2.5;         // 落ち口から出る速さ（単位/秒）
   const POUR_EMIT_H = 0.35;   // 落ち口の高さ（当たる面からの高さ）
   const LINE_R = 0.026;       // 線がけの線の太さ（半径）
-  const LINE_STEP = 0.02;     // 線がけで、指がこれだけ動いたら線を伸ばす
+  const LINE_STEP = 0.02;     // 線がけで、手手指がこれだけ動いたら線を伸ばす
   const LINE_JUMP = 0.35;     // 前の点からこれより離れたら（すき間をまたいだら）別の線にする
   const LINE_EMIT_H = 0.3;    // ボトルの口の高さ（当たる面からの高さ）
   const POUR_SPREAD = 0.11;   // 落ち口の太さ（半径）。いちばん細い生地の幅（横の半径 × スライダーの最小 0.5 × 2）と同じ幅にする
@@ -341,7 +341,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // 見た目
   const WOOD_REPEAT = 4;      // 調理台の木目の画像をくり返す回数（60×60の台に対して）
-  const EXPOSURE = 0.85;      // 画面全体の明るさ
+  const EXPOSURE = 0.85;      // 畫面全体の明るさ
   const SHADOW_SIZE = 2048;   // 影の細かさ（影用の画像の一辺の画素数）
   const DOUGH_BUMP = 0.004;    // 生地の表面のでこぼこの強さ
   const DOUGH_UV = 0.6;       // 生地の表面の模様の大きさ（この長さで1回くり返す）
@@ -379,7 +379,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const SPARK_SIZE = 0.7;        // きらきらの大きさ
   const SPARK_SPIN = 1.5;        // きらきらが回る速さ（ラジアン/秒）
   const SPARK_COLORS = [0xffc21a, 0xff4f8b, 0x3fb6ff, 0x6fd64a, 0xffffff];   // きらきらの色
-  const GHOST_GUARD = 400;       // 結果を出してからこの時間（ミリ秒）は分享ボタンを受け付けない（完成ボタンを離した指が按しまうのを防ぐ）
+  const GHOST_GUARD = 400;       // 結果を出してからこの時間（ミリ秒）は分享按鈕を受け付けない（完成按鈕を離した手手指が按しまうのを防ぐ）
 
   // 結果
   const SHARE_INSTANT = 0.5;  // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
@@ -403,7 +403,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const CHOCO = new THREE.Color(css('--choco')), SUGAR = new THREE.Color(css('--sugar'));
   // ソースの色：選んだ色（ピッカー）。粒には色の番号を持たせ、番号→色は palette に入れる（光の計算用の色）
-  const sauceColor = CHOCO.clone(), drizzleColor = CHOCO.clone();   // ソースと線がけの色（別々に選べる）
+  const sauceColor = CHOCO.clone(), drizzleColor = CHOCO.clone();   // ソースと線がけの色（各自に選べる）
   const palette = [CHOCO.clone().convertSRGBToLinear()];
   const PALETTE_MAX = 256;
   // いまの色の番号（初めての色なら palette に足す。いっぱいなら一番近い色を使う）
@@ -628,7 +628,7 @@ gtag('config', 'G-41RSZLP1YQ');
     ].map(([x, y]) => new THREE.Vector2(x, y));
     const dish = new THREE.Mesh(new THREE.LatheGeometry(prof, 96),
       new THREE.MeshStandardMaterial({ color: lin('--plate'), roughness: 0.12, metalness: 0, side: THREE.DoubleSide }));
-    dish.receiveShadow = true;   // 皿自身は影を落とさない（なめらかな面に自分の影の縞が出るのを防ぐ）
+    dish.receiveShadow = true;   // 皿自身は影を落とさない（なめらかな面に自己の影の縞が出るのを防ぐ）
     plateGroup.add(dish);
   }
 
@@ -766,7 +766,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 視点 ----------
   // 場面ごとに見せる範囲（奥〜手前の位置、左右の半幅、高さ）と、出しておく物
   const VIEWS = {
-    oil:   { z0: -POT_R - 0.6, z1: POT_R + 0.6, w: POT_R + 0.8, y: -0.3, show: ['pot'] },                                   // 形を描く・落とす
+    oil:   { z0: -POT_R - 0.6, z1: POT_R + 0.6, w: POT_R + 0.8, y: -0.3, show: ['pot'] },                                   // 形を描く・掉落
     fry:   { z0: -POT_R - 0.2, z1: RACK_Z + RACK_D / 2 + 0.2, w: Math.max(POT_R + 0.3, RACK_W / 2) + 0.3, y: TABLE_Y * 0.4, show: ['pot', 'rack'] },   // 揚げて網バットに上げる
     top:   { z0: RACK_Z - RACK_D / 2 - 0.2, z1: RACK_Z + RACK_D / 2 + 0.2, w: RACK_W / 2 + 0.3, y: RACK_TOP, show: ['rack'] },               // トッピング
     plate: { z0: RACK_Z - RACK_D / 2 - 0.2, z1: PLATE_Z + PLATE_R + 0.2, w: Math.max(RACK_W / 2, PLATE_R) + 0.3, y: TABLE_Y, show: ['rack', 'plate'] },   // 盛り付け
@@ -781,7 +781,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function showFor(names){
     for (const k in SETS) SETS[k].visible = names.includes(k);
   }
-  // 範囲が画面に収まるカメラ位置を出す（下のボタンの分、少し上に寄せる）
+  // 範囲が畫面に収まるカメラ位置を出す（下の按鈕の分、少し上に寄せる）
   function viewPose(name){
     const v = VIEWS[name];
     const E = THREE.MathUtils.degToRad(CAM_ELEV);
@@ -934,7 +934,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return { centers, offs, side, uv, idx, thick: t, core: cc, closed, parts: [{ core: cc, closed, thick: t }] };
   }
 
-  // タップだけのときは丸い生地（ドーナツボール）
+  // 點擊だけのときは丸い生地（ドーナツボール）
   function ballShape(p, t){
     const LAT = 24, LON = RING_SEG;
     const cnt = (LAT + 1) * LON;
@@ -1064,7 +1064,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return piece;
   }
 
-  // 落とす直前に、浮力を計算する点と回りにくさ（慣性）を用意する
+  // 掉落直前に、浮力を計算する点と回りにくさ（慣性）を用意する
   function setupBody(p){
     const pos = p.geo.attributes.position.array, n = p.shape.side.length;
     const stride = Math.max(1, Math.ceil(n / SAMPLE_MAX));
@@ -1141,7 +1141,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     return COUNTER_Y;
   }
-  // g があるときは、つまんだ点（g.anchor）を指の位置（g.target）へばねで拉
+  // g があるときは、つまんだ点（g.anchor）を手手指の位置（g.target）へばねで拉
   function bodyStep(p, dt, g){
     const q = p.pivot.quaternion, c = p.pivot.position;
     const pos = p.geo.attributes.position.array;
@@ -1155,7 +1155,7 @@ gtag('config', 'G-41RSZLP1YQ');
       vP.copy(p.angVel).cross(vR).add(p.vel);                                   // 点の速さ
       const inPot = Math.hypot(vW.x, vW.z) < POT_R;
       const f = inPot ? Math.min(1, Math.max(0, (heightAt(vW.x, vW.z) - vW.y) / SAMPLE_H + 0.5)) : 0;   // 油に沈んでいる割合
-      // 浮力（沈んだ点ほど上に押す）と抵抗（油の中ほど動きにくい）
+      // 浮力（沈んだ点ほど上に按）と抵抗（油の中ほど動きにくい）
       const drag = OIL_DRAG * f + AIR_DRAG * (1 - f);
       vFs.set(-vP.x * drag * ms, (GRAVITY * BUOY * f - vP.y * drag) * ms, -vP.z * drag * ms);
       // 鍋の壁：はみ出した分だけ内側へ押し返す
@@ -1184,11 +1184,11 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     p.submerged = sub * ms;
     if (g){
-      // つまんだ点：指の位置へ引き寄せ、揺れを抑える
+      // つまんだ点：手手指の位置へ引き寄せ、揺れを抑える
       vR.copy(g.anchor).applyQuaternion(q);
       vW.copy(c).add(vR);
       vP.copy(p.angVel).cross(vR).add(p.vel);
-      // 引っぱる先を指の位置へ近づける（一度に動く量に上限をつける）
+      // 引っぱる先を手手指の位置へ近づける（一度に動く量に上限をつける）
       vFs.copy(g.goal).sub(g.target);
       const gl = vFs.length(), gs = CARRY_FOLLOW * dt;
       if (gl > gs) g.target.addScaledVector(vFs, gs / gl); else g.target.copy(g.goal);
@@ -1316,13 +1316,13 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 状態 ----------
-  // drawing：形を描く / frying：揚げる（網バットに上げたら完了）/ topping：トッピング / plating：盛り付け / over：結果
+  // drawing：形を描く / frying：揚げる（網バットに上げたら完成）/ topping：トッピング / plating：盛り付け / over：結果
   let state = 'drawing';
   let pieces = [];            // 生地
   let stroke = null;          // 描いている途中の線 { pts, piece }
   let tool = 'sauce';
   let physAcc = 0;
-  let viewTimer = 0;          // 0より大きい間は、落とした直後の油寄りの画面のまま
+  let viewTimer = 0;          // 0より大きい間は、落とした直後の油寄りの畫面のまま
 
   // ---------- 描く ----------
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3();
@@ -1349,7 +1349,7 @@ gtag('config', 'G-41RSZLP1YQ');
     stroke.dirty = false;
   }
 
-  // ---------- 生地を置いた所の記録 ----------
+  // ---------- 生地を置いた所の紀錄 ----------
   // 描けるのは鍋の上だけなので、もう生地がある所をなぞり直しても線は伸ばさない（同じ所に生地を重ねない）
   const CG = Math.ceil(POT_R * 2 / COVER_CELL) + 1;
   const cover = new Uint8Array(CG * CG);
@@ -1364,12 +1364,12 @@ gtag('config', 'G-41RSZLP1YQ');
     return i >= 0 && j >= 0 && i < CG && j < CG && cover[j * CG + i] === 1;
   }
   const coverR = t => DOUGH_RH * t * COVER_K;
-  // 生地を取り消したときなどは、残っている生地から記録を作り直す
+  // 生地を取り消したときなどは、残っている生地から紀錄を作り直す
   function rebuildCover(){
     cover.fill(0);
     for (const d of drawn) for (const q of d.pts) markCover(q, coverR(d.thick));
   }
-  // 描いている線の自分の点は、少し前に描いた所から記録する（今描いている先っぽで自分の線をふさがないように）
+  // 描いている線の自己の点は、少し前に描いた所から紀錄する（今描いている先っぽで自己の線をふさがないように）
   const coverLag = () => Math.ceil(DOUGH_RH * thick * 2.2 / DRAW_STEP);
 
   function startStroke(x, y){
@@ -1388,7 +1388,7 @@ gtag('config', 'G-41RSZLP1YQ');
     stroke.pts.push(p);
     const lag = coverLag();
     while (stroke.marked < stroke.pts.length - lag) markCover(stroke.pts[stroke.marked++], coverR(thick));
-    stroke.dirty = true;   // 形の作り直しは1フレームに1回だけ（指の動きのたびに作ると重い）
+    stroke.dirty = true;   // 形の作り直しは1フレームに1回だけ（手手指の動きのたびに作ると重い）
     return true;
   }
   function extendStroke(list){
@@ -1557,8 +1557,8 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   }
 
-  const grabs = new Map();    // 指ごとの操作 pointerId → { piece, x0, y0, anchor, carry, ... }
-  // つまむ：触った点（生地から見た位置 g.anchor）を指の位置へ引っぱり、剩餘は重さでぶら下がる
+  const grabs = new Map();    // 手手指ごとの操作 pointerId → { piece, x0, y0, anchor, carry, ... }
+  // つまむ：触った点（生地から見た位置 g.anchor）を手手指の位置へ引っぱり、剩餘は重さでぶら下がる
   function beginCarry(g, x, y){
     const p = g.piece, piv = p.pivot;
     p.settle = null;
@@ -1575,7 +1575,7 @@ gtag('config', 'G-41RSZLP1YQ');
     g.goal = new THREE.Vector3();
     piv.updateMatrixWorld(true);
     v1.copy(g.anchor).applyQuaternion(piv.quaternion).add(piv.position);   // つまんだ点のいまの位置
-    g.target.copy(v1);                     // 引っぱる先は、つまんだ所からゆっくり指の位置へ動かす
+    g.target.copy(v1);                     // 引っぱる先は、つまんだ所からゆっくり手手指の位置へ移動
     g.goal.set(v1.x, g.planeY, v1.z);
     moveCarry(g, x, y);
   }
@@ -1588,7 +1588,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function endCarry(g){
     const p = g.piece, c = p.pivot.position;
     p.grab = null;
-    // 置き場所は、画面で指が指している網・皿の位置で決める
+    // 置き場所は、畫面で手手指が手手指している網・皿の位置で決める
     const onSurface = (y, test) => {
       carryPlane.constant = -y;
       setRay(g.sx, g.sy);
@@ -1596,7 +1596,7 @@ gtag('config', 'G-41RSZLP1YQ');
     };
     const overRack = onSurface(RACK_TOP, inRack);
     if (state === 'frying'){
-      // 持ち上げた生地の真下（または指の先）が網バットのあたりなら網に置く。網のふちから少し外でもよい
+      // 持ち上げた生地の真下（または手手指の先）が網バットのあたりなら網に置く。網のふちから少し外でもよい
       const nearRack = (x, z) => Math.abs(x) < RACK_W / 2 + RACK_CATCH && Math.abs(z - RACK_Z) < RACK_D / 2 + RACK_CATCH;
       if (overRack || nearRack(g.goal.x, g.goal.z) || nearRack(c.x, c.z)){ placeOn(p, 'rack'); checkFried(); return; }
       // 網バットの外で離したら鍋の中へ戻す（そのまま油に落ちる）
@@ -1605,7 +1605,7 @@ gtag('config', 'G-41RSZLP1YQ');
       p.mode = 'oil';
       return;
     }
-    // 盛り付け：離した所にそのまま落とす（見えない壁があるので皿・網バットの外へは出ない）
+    // 盛り付け：離した所にそのまま掉落（見えない壁があるので皿・網バットの外へは出ない）
     p.mode = 'fall';
     p.fallT = 0; p.restT = 0;
     updateButtons();
@@ -1660,7 +1660,7 @@ gtag('config', 'G-41RSZLP1YQ');
     {
       const i = near[(Math.random() * near.length) | 0];
       vN.set(dir[i * 3], dir[i * 3 + 1], dir[i * 3 + 2]);
-      // 面に沿った向きにランダムに寝かせる
+      // 面に沿った向きに隨機に寝かせる
       vTan.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).cross(vN).normalize();
       qSpr.setFromUnitVectors(Y_AXIS, vTan);
       v1.set(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]).addScaledVector(vN, 0.012 * SPR_SCALE);
@@ -1906,7 +1906,7 @@ gtag('config', 'G-41RSZLP1YQ');
     buildHash();
     buildNeighbors();
     for (let it = 0; it < FL_ITERS; it++){
-      // 押し合い（近すぎる粒を離す）と、まとまり（少し離れた粒を寄せる）
+      // 押し合い（近すぎる粒を放開）と、まとまり（少し離れた粒を寄せる）
       for (let i = 0; i < fn; i++){
         for (let t = nbS[i]; t < nbS[i + 1]; t++){
           const j = nbL[t];
@@ -1982,7 +1982,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const k = paletteIndex(sauceColor);
     streamMat.color.copy(palette[k]);
     fluidAwake = true;
-    // 指を速く動かしても途切れないように、前のフレームの落ち口から今の落ち口までの間に並べて出す
+    // 手手指を速く動かしても途切れないように、前のフレームの落ち口から今の落ち口までの間に並べて出す
     const lp = g.lastPour && performance.now() - g.lastPour.t < 200 ? g.lastPour : { x: tx, y: ey, z: tz };
     pourAcc += POUR_PPS * dt;
     const nNew = Math.floor(pourAcc);
@@ -2025,7 +2025,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const lineRay = new THREE.Raycaster();
   const vLN = new THREE.Vector3();
   function drizzle(g){
-    // 指の先の表面（網バットの上の生地か、その上のソース）
+    // 手手指の先の表面（網バットの上の生地か、その上のソース）
     setRay(g.sx, g.sy);
     const objs = [];
     for (const p of pieces) if (p.mode === 'rack'){ objs.push(p.mesh); if (p.setMesh && p.setMesh.visible) objs.push(p.setMesh); }
@@ -2165,7 +2165,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
       const v = pos.length / 3;
       pos.push(x0 + (i + sx / cnt) * cell, y0 + (j + sy / cnt) * cell, z0 + (k + sz / cnt) * cell);
-      // 向き：濃さが減る方が外
+      // 向き：濃さが減少方が外
       let gx = g[1] + g[3] + g[5] + g[7] - g[0] - g[2] - g[4] - g[6];
       let gy = g[2] + g[3] + g[6] + g[7] - g[0] - g[1] - g[4] - g[5];
       let gz = g[4] + g[5] + g[6] + g[7] - g[0] - g[1] - g[2] - g[3];
@@ -2514,7 +2514,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (sprFallMesh.instanceColor) sprFallMesh.instanceColor.needsUpdate = true;
   }
   let sugarAcc = 0, sprAcc = 0;
-  // 茶こし・瓶：指の下の生地の上に構えて、粉・スプレーを落とす
+  // 茶こし・瓶：手手指の下の生地の上に構えて、粉・スプレーを掉落
   function shake(g, dt){
     const h = pickPiece(g.sx, g.sy, p => p.mode === 'rack');
     let tx, ty, tz;
@@ -2613,7 +2613,7 @@ gtag('config', 'G-41RSZLP1YQ');
     for (const p of pieces){ donutC.add(p.pivot.getWorldPosition(v1)); n++; }
     if (n) donutC.divideScalar(n); else donutC.copy(plateC);
     orbitTgt.lerpVectors(plateC, donutC, orbit.k);
-    // 横幅が収まる距離（縦長の画面では離す）
+    // 横幅が収まる距離（縦長の畫面では放開）
     const halfW = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
     const d = (PLATE_R + 0.4) / halfW * orbit.zoom;
     const p = THREE.MathUtils.degToRad(orbit.pitch), y = THREE.MathUtils.degToRad(orbit.yaw);
@@ -2622,14 +2622,14 @@ gtag('config', 'G-41RSZLP1YQ');
     camera.position.lerp(orbitPos, k);
     camLook.lerp(orbitTgt, k);
     camera.lookAt(camLook);
-    // 指で触っていない間は自動でゆっくり回る
+    // 手手指で触っていない間は自動でゆっくり回る
     // 操作していない時間が続いたら、ゆっくり回り始める
     orbitIdle = orbitPtrs.size ? 0 : orbitIdle + dt;
     const ramp = Math.min(1, Math.max(0, (orbitIdle - AUTO_RESUME) / AUTO_EASE));
     if (orbitStart) orbit.yaw += AUTO_ROTATE * dt;   // 完成した直後は止めずに轉動（まだ操作していない）
     else orbit.yaw += AUTO_ROTATE * ramp * dt;
   }
-  // 拖曳で轉動・2本指でつまんで寄る（ホイールでも寄る）
+  // 拖曳で轉動・2本手手指でつまんで寄る（ホイールでも寄る）
   const orbitPtrs = new Map();
   let orbitIdle = 0, orbitStart = true;   // 操作していない時間（秒）、完成してからまだ一度も操作していないか
   const orbitTouched = () => { orbitIdle = 0; orbitStart = false; };
@@ -2776,7 +2776,7 @@ gtag('config', 'G-41RSZLP1YQ');
     updateButtons();
   }
 
-  // ---------- ボタン ----------
+  // ---------- 按鈕 ----------
   function updateButtons(){
     const main = state === 'drawing' || state === 'topping' || state === 'plating';
     $('main').classList.toggle('hidden', !main);
@@ -2802,7 +2802,7 @@ gtag('config', 'G-41RSZLP1YQ');
     $('drizzleBox').classList.toggle('on', t === 'drizzle');
   }
   for (const b of document.querySelectorAll('.topBtn')) b.addEventListener('click', () => { selectTool(b.dataset.tool); showPresets(false); });
-  // ソース・線がけの色：色の丸を押すと用意した色が出て、選ぶとその色になる。「好きな色」はカラーピッカーで選ぶ
+  // ソース・線がけの色：色の丸を按と用意した色が出て、選ぶとその色になる。「好きな色」はカラーピッカーで選ぶ
   let presetFor = 'sauce';   // いま色を選んでいるのはソースか線がけか
   function setSauceColor(hex){
     (presetFor === 'drizzle' ? drizzleColor : sauceColor).set(hex);
@@ -2826,18 +2826,18 @@ gtag('config', 'G-41RSZLP1YQ');
   $('sauceColor').addEventListener('input', e => setSauceColor(e.target.value));
   $('sauceColor').addEventListener('change', e => { setSauceColor(e.target.value); showPresets(false); });
 
-  // ---------- 画面の操作 ----------
+  // ---------- 畫面の操作 ----------
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
-    showPresets(false);   // 色を選ぶ所は、画面に触ったら關閉
+    showPresets(false);   // 色を選ぶ所は、畫面に触ったら關閉
     const id = e.pointerId, x = e.clientX, y = e.clientY;
     if (state === 'drawing'){
-      if (grabs.size) return;   // 描くのは1本指だけ
+      if (grabs.size) return;   // 描くのは1本手手指だけ
       cv.setPointerCapture(id);
       grabs.set(id, { x, y });
       startStroke(x, y);
     } else if (state === 'frying'){
-      // 生地に触れたら：動かさずに離すと突く、動かすと持ち上げる
+      // 生地に触れたら：動かさずに放開と突く、移動と持ち上げる
       const h = pickPiece(x, y, p => p.mode === 'oil');
       if (!h) return;
       cv.setPointerCapture(id);
@@ -2885,16 +2885,16 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', release);
   cv.addEventListener('pointercancel', release);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
   document.addEventListener('touchmove', e => { if (grabs.size) e.preventDefault(); }, { passive: false });
   document.addEventListener('selectstart', e => { if (!(e.target instanceof Element && e.target.closest('#share-text'))) e.preventDefault(); });
   cv.addEventListener('contextmenu', e => e.preventDefault());
 
-  // PC：Space＝揚げる／盛り付けへ／完成／もう一回、Enter＝一手戻す／もう一回（突く・運ぶ・トッピングはマウス）
+  // PC：Space＝揚げる／盛り付けへ／完成／再來一次、Enter＝一手戻す／再來一次（突く・運ぶ・トッピングは滑鼠）
   document.addEventListener('keydown', e => {
     if (!$('share-view').classList.contains('hidden')) return;
-    if (e.target instanceof Element && e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return;   // ボタン自体のキー操作に任せる
+    if (e.target instanceof Element && e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return;   // 按鈕自体の鍵操作に任せる
     if (e.key === ' '){
       e.preventDefault();
       if (state === 'over') restart(); else mainAction();
@@ -2910,7 +2910,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return 'ドーナツを作った！\n'
       + location.href.split(/[?#]/)[0] + '\n#ドーナツメーカー3D';
   }
-  // 結果画像：いまの3D画面をそのまま（描いた直後に読むので同期で取れる）
+  // 結果画像：いまの3D畫面をそのまま（描いた直後に読むので同期で取れる）
   function resultCanvas(){
     renderer.render(scene, camera);
     const c = document.createElement('canvas');
@@ -2934,7 +2934,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 分享シートが無い・使えない環境：文面をコピーし、分享される内容を画面に出す
+    // 3) 分享シートが無い・使えない環境：文面をコピーし、分享される内容を畫面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');

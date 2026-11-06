@@ -46,17 +46,17 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   #game{position:fixed;inset:0}
   canvas{display:block;touch-action:none}
-  /* 上：視点の操作（左）と分享（右）。下：色・画像・指の大きさ */
+  /* 上：視点の操作（左）と分享（右）。下：色・画像・手手指の大きさ */
   #buttons{
     position:absolute;left:calc(16px + env(safe-area-inset-left));top:calc(16px + env(safe-area-inset-top));
     display:flex;
   }
-  /* 視点リセットは、視点が最初の位置から動いているときだけ「視点を動かす」の右にくっつけて出す */
+  /* 視点リセットは、視点が最初の位置から動いているときだけ「視点を移動」の右にくっつけて出す */
   #buttons #resetBtn{display:none}
   #buttons.rotated #resetBtn{display:flex;border-radius:0 22px 22px 0}
   #buttons.rotated #camBtn{border-radius:22px 0 0 22px}
   #share{position:absolute;right:calc(16px + env(safe-area-inset-right));top:calc(16px + env(safe-area-inset-top))}
-  /* 画面が狭いときは、ボタンはそのままで「指の大きさ」のスライダーだけを短くして1行に収める */
+  /* 畫面が狭いときは、按鈕はそのままで「手手指の大きさ」のスライダーだけを短くして1行に収める */
   #bottom{
     position:absolute;left:calc(16px + env(safe-area-inset-left));right:calc(16px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));
     display:flex;align-items:center;gap:8px;pointer-events:none;
@@ -66,20 +66,20 @@ gtag('config', 'G-41RSZLP1YQ');
   #sizeTool{min-width:0}
   #sizeTool svg{flex:none}
   #brushSize{flex:0 1 120px;width:120px;min-width:24px;margin:0}
-  /* 指の大きさのリング（画面の中央に正円で出す） */
+  /* 手手指の大きさのリング（畫面の中央に正円で出す） */
   #ring{position:absolute;left:50%;top:50%;border:2px solid #fffe;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-sizing:border-box}
-  /* 位置（position）は各要素ごとに指定しているので、ここでは見た目だけをそろえる */
+  /* 位置（position）は各要素ごとに手手指定しているので、ここでは見た目だけをそろえる */
   #tools label{position:relative}
   #buttons button,#tools label,#tools button,#sizeTool,#share,#share-close,#crop-buttons button{
     display:flex;align-items:center;gap:8px;
     min-width:44px;height:44px;padding:0 16px;border:none;border-radius:22px;
     background:#0008;color:#fff;font:15px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif;touch-action:manipulation;
   }
-  /* アイコンだけのボタンは正方形にする */
+  /* アイコンだけの按鈕は正方形にする */
   #tools #colorPick,#tools #undo,#share,#buttons button{width:44px;padding:0;justify-content:center}
   #buttons #howtoBtn{width:auto;padding:0 16px;margin-left:8px}
   #undo:disabled{opacity:.4}
-  /* 画像ボタンは普段はアイコンだけ。読み込めなかったときだけ横に文字を出す */
+  /* 画像按鈕は普段はアイコンだけ。読み込めなかったときだけ横に文字を出す */
   #tools #pick{min-width:44px;padding:0 11px;justify-content:center}
   #pickText:empty{display:none}
   #camBtn[aria-pressed="true"]{background:#fffd;color:#000}
@@ -94,7 +94,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #share-img{display:block;width:100%;height:auto}
   #share-text{white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text}
   #share-close{margin:0 auto}
-  /* 画像の切り取り画面 */
+  /* 画像の切り取り畫面 */
   #crop-view{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(0,0,0,.8)}
   #crop-title{margin:0;color:#fff;font:15px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
   #crop-wrap{position:relative;touch-action:none}
@@ -120,8 +120,8 @@ gtag('config', 'G-41RSZLP1YQ');
 <div id="game">
   <div id="ring" class="hidden"></div>
   <div id="buttons">
-    <!-- 視点を動かす：カメラの周りを回る矢印 -->
-    <button id="camBtn" type="button" aria-pressed="false" aria-label="視点を動かす">
+    <!-- 視点を移動：カメラの周りを回る矢印 -->
+    <button id="camBtn" type="button" aria-pressed="false" aria-label="視点を移動">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="8" y="10" width="8" height="6" rx="1"/><circle cx="12" cy="13" r="1.5"/><path d="M10.5 10l.8-1.4h1.4l.8 1.4"/>
         <path d="M4 12a8 8 0 0 1 13.7-5.6"/><path d="M18 3.4v3.3h-3.3"/>
@@ -154,10 +154,10 @@ gtag('config', 'G-41RSZLP1YQ');
         </svg>
       </button>
     </div>
-    <!-- 指の大きさ：左の小さな丸（小さい）〜右の大きな丸（大きい） -->
+    <!-- 手手指の大きさ：左の小さな丸（小さい）〜右の大きな丸（大きい） -->
     <label id="sizeTool">
       <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>
-      <input id="brushSize" type="range" min="0.015" max="0.22" step="0.005" value="0.065" aria-label="指の大きさ">
+      <input id="brushSize" type="range" min="0.015" max="0.22" step="0.005" value="0.065" aria-label="手手指の大きさ">
       <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10" fill="currentColor"/></svg>
     </label>
   </div>
@@ -185,18 +185,18 @@ gtag('config', 'G-41RSZLP1YQ');
     </div>
     <div id="crop-buttons">
       <button id="crop-cancel" type="button">キャンセル</button>
-      <button id="crop-ok" type="button">決定</button>
+      <button id="crop-ok" type="button">確定</button>
     </div>
   </div>
 </div>
 <section class="howto" hidden data-pos="none">
   <h2>玩法</h2>
-  <p>毛足のあるカーペットを指でなぞり、毛の倒れる向きの違いで模様や文字を描く作品です。手前に倒した毛は濃く、奥へ倒した毛は明るく見えます。勝ち負けや得点はありません。描いた跡はこのブラウザに自動で保存され、次に開くと続きから始まります。</p>
+  <p>毛足のあるカーペットを手手指でなぞり、毛の倒れる向きの違いで模様や文字を描く作品です。手前に倒した毛は濃く、奥へ倒した毛は明るく見えます。贏輸や得分はありません。描いた跡はこの瀏覽器に自動で保存され、次に開くと続きから始まります。</p>
   <h2>操作</h2>
-  <p>指でなぞると毛が倒れます。何本の指でも同時に描けて、PC では左拖曳です。左上のカメラのボタンを押すと、なぞる代わりに視点を回せます(PC は右拖曳でも回せます)。下のボタンで毛の色と画像を選べるほか、なぞった操作を20回まで戻せます。スライダーで指の大きさを変えられます。</p>
+  <p>手手指でなぞると毛が倒れます。何本の手手指でも同時に描けて、PC では左拖曳です。左上のカメラの按鈕を按と、なぞる代わりに視点を回せます(PC は右拖曳でも回せます)。下の按鈕で毛の色と画像を選べるほか、なぞった操作を20回まで戻せます。スライダーで手手指の大きさを変えられます。</p>
   <h2>楽しみ方</h2>
   <p>1回なぞるだけでは毛は少ししか倒れないので、同じ所を何度かなぞると濃淡がはっきりします。線を消したいときは反対向きになぞってください。画像を選ぶと、使う範囲を切り取ってカーペットの柄にできます。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -205,12 +205,12 @@ gtag('config', 'G-41RSZLP1YQ');
   const $ = id => document.getElementById(id);
 
   // ---------- 定数 ----------
-  const VIEW_SIZE = 1.8;       // 画面の短い方の辺に映るカーペットの幅（m）。小さいほど寄って見える
+  const VIEW_SIZE = 1.8;       // 畫面の短い方の辺に映るカーペットの幅（m）。小さいほど寄って見える
   const GRID = 80;             // 毛の向きを持つマスの細かさ（1mあたりのマス数）
   const SHELLS = 32;           // 毛足を表す層の数（多いほど毛がなめらかだが重い）
   const PILE_H = 0.05;         // 毛足の長さ（m）
   const LEAN = 1.2;            // 毛が完全に寝たときに毛先がずれる量（毛足の長さに対する比）
-  const TUFT_DENSITY = 80;     // 毛束の細かさ（1mあたりに並ぶ毛束の列数）。画面で毛束が見分けられる大きさにする
+  const TUFT_DENSITY = 80;     // 毛束の細かさ（1mあたりに並ぶ毛束の列数）。畫面で毛束が見分けられる大きさにする
   const TUFT_R = 0.62;         // 毛束の根元の太さ（毛束の間隔に対する半径）。0.5より大きいと根元で隣と重なり、すき間なく詰まる
   const TUFT_TAPER = 0.65;     // 毛先で毛束が細くなる割合（0＝細くならない）
   const TUFT_JITTER = 0.4;     // 毛束の生える位置のばらつき（毛束の間隔に対する割合）
@@ -220,12 +220,12 @@ gtag('config', 'G-41RSZLP1YQ');
   const FIBER_LOD = [0.3, 0.5];
   const LIGHT_DIR = [-0.4, 0.85, -0.5];   // 光が来る向き（カーペットの奥・左上から）
 
-  // なぞる指の半径は画面上の正円で決める（画面の短い辺に対する割合）。「指の大きさ」スライダーの範囲（0.015〜0.22、最初は0.065）はHTML側で指定
+  // なぞる手手指の半径は畫面上の正円で決める（畫面の短い辺に対する割合）。「手手指の大きさ」スライダーの範囲（0.015〜0.22、最初は0.065）はHTML側で手手指定
   const PATTERN_BRUSH_R = 0.12;   // 最初の模様を付けるときの半径（m、カーペット上）
-  const BRUSH_EDGE = 0.1;      // 指の縁のぼけ幅（半径に対する割合）
-  const BRUSH_POWER = 0.2;    // 指が1回通ったときに毛がなぞった向きへ倒れる割合（0〜1）
+  const BRUSH_EDGE = 0.1;      // 手手指の縁のぼけ幅（半径に対する割合）
+  const BRUSH_POWER = 0.2;    // 手手指が1回通ったときに毛がなぞった向きへ倒れる割合（0〜1）
   const STEP = 0.015;          // なぞった線をこの間隔（m）で区切って毛を倒す
-  const DIR_SMOOTH = 0.5;      // なぞる向きのなめらかさ（指の細かいぶれで毛の向きが乱れないようにする）
+  const DIR_SMOOTH = 0.5;      // なぞる向きのなめらかさ（手手指の細かいぶれで毛の向きが乱れないようにする）
   const INIT_X = 0, INIT_Z = 0.9;   // 下地の毛の倒れ方（手前向き＝毛先が見えて暗い側にそろえておく）
 
   const PATTERN_DENSITY = 1.9;         // 最初に付けておく模様の線の数（1m²あたり）
@@ -246,10 +246,10 @@ gtag('config', 'G-41RSZLP1YQ');
 
   const UNDO_MAX = 20;         // 元に戻せる回数（なぞった回数）
 
-  const SAVE_KEY = 'carpetArt';   // ブラウザに保存するときの名前（項目ごとに carpetArt.pile のように付ける）
+  const SAVE_KEY = 'carpetArt';   // 瀏覽器に保存するときの名前（項目ごとに carpetArt.pile のように付ける）
   const SAVE_DELAY = 0.5;      // 操作が止まってからこの秒数で保存する（なぞっている間に何度も保存しない）
   const SAVE_TILE = 32;        // なぞった所をこの大きさ（マス）の区画ごとに保存する
-  const SAVE_IMAGE_PX = 1024;  // 保存する画像の長い辺の上限（px）。大きいとブラウザの保存容量を超えやすい
+  const SAVE_IMAGE_PX = 1024;  // 保存する画像の長い辺の上限（px）。大きいと瀏覽器の保存容量を超えやすい
 
   // ---------- 色（CSS変数から読む） ----------
   const css = getComputedStyle(document.documentElement);
@@ -372,7 +372,7 @@ gtag('config', 'G-41RSZLP1YQ');
         vec2 g = vWorld.xz * density;
         vec2 lean = pv * leanLen * density;   // 毛先がいちばん上でずれる量（毛束の間隔を1とした値）
 
-        // 毛束が画面の数ピクセルより小さいと、毛束の並びとピクセルの並びがずれて縞の模様（モアレ）が出る。
+        // 毛束が畫面の数ピクセルより小さいと、毛束の並びとピクセルの並びがずれて縞の模様（モアレ）が出る。
         // そこで、1ピクセルに入る毛束の数を調べ、細かすぎる所では毛束を描かず、毛先の面として平均の色で描く。
         // 切り替わりの境目は、ピクセルごとにばらして目立たなくする
         vec2 fw = fwidth(g);
@@ -502,7 +502,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- カメラ ----------
   let W = 0, H = 0, azim = 0, elev = CAM_ELEV, camDist = 6;
 
-  // 画面の短い方の辺に VIEW_SIZE の幅が映る距離
+  // 畫面の短い方の辺に VIEW_SIZE の幅が映る距離
   const camDistFor = aspect => (VIEW_SIZE / 2) / (Math.tan(CAM_FOV * Math.PI / 360) * Math.min(1, aspect));
 
   function placeCamera(cam, dist, el, az){
@@ -511,8 +511,8 @@ gtag('config', 'G-41RSZLP1YQ');
     cam.updateMatrixWorld();
   }
 
-  // どの向きに視点を回しても画面がカーペットで埋まる大きさ（中心からの半径）を求める。
-  // 見下ろし角の両端で、画面の四隅に映る床の点が中心からどれだけ離れるかを調べる
+  // どの向きに視点を回しても畫面がカーペットで埋まる大きさ（中心からの半径）を求める。
+  // 見下ろし角の両端で、畫面の四隅に映る床の点が中心からどれだけ離れるかを調べる
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3();
   const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   function coverRadius(aspect){
@@ -536,7 +536,7 @@ gtag('config', 'G-41RSZLP1YQ');
     camera.aspect = W / H;
     camera.updateProjectionMatrix();
     camDist = camDistFor(camera.aspect);
-    // 画面を回転させても足りるよう、縦横を入れ替えた場合も含めて大きさを決める（足りなくなったときだけ広げる）
+    // 畫面を回転させても足りるよう、縦横を入れ替えた場合も含めて大きさを決める（足りなくなったときだけ広げる）
     const need = Math.max(coverRadius(camera.aspect), coverRadius(1 / camera.aspect));
     if (need > S) buildCarpet(need);
     placeCamera(camera, camDist, elev, azim);
@@ -556,14 +556,14 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- なぞる ----------
-  // 指の半径（画面の短い辺に対する割合）。「指の大きさ」スライダーで変える
+  // 手手指の半径（畫面の短い辺に対する割合）。「手手指の大きさ」スライダーで変える
   let brushFrac = parseFloat($('brushSize').value);
   $('brushSize').addEventListener('input', e => { brushFrac = parseFloat(e.target.value); });
-  const brushPx = () => brushFrac * Math.min(W, H);   // 指の半径（画面上のpx）
+  const brushPx = () => brushFrac * Math.min(W, H);   // 手手指の半径（畫面上のpx）
 
   // マス i の毛を、中心からの距離 dist（半径を1とした値）に応じて、なぞった向き(ux, uz)へ倒す
   function tiltCell(i, dist, ux, uz){
-    const w = BRUSH_POWER * Math.min(1, (1 - dist) / BRUSH_EDGE);   // 指の中心は一様に、縁だけ少しぼかす
+    const w = BRUSH_POWER * Math.min(1, (1 - dist) / BRUSH_EDGE);   // 手手指の中心は一様に、縁だけ少しぼかす
     px[i] += (ux - px[i]) * w;
     pz[i] += (uz - pz[i]) * w;
   }
@@ -583,20 +583,20 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   }
 
-  // 画面上の位置(sx, sy)（px）→ カーペット上の位置
+  // 畫面上の位置(sx, sy)（px）→ カーペット上の位置
   function screenToCarpet(sx, sy){
     ndc.set(sx / W * 2 - 1, -sy / H * 2 + 1);
     ray.setFromCamera(ndc, camera);
     return ray.ray.intersectPlane(pilePlane, hit) ? { x: hit.x, z: hit.z } : null;
   }
 
-  // 指でなぞる用：カーペット上の点(x, z)が映っている画面の位置を中心に、画面上の正円（半径 brushPx）の範囲の毛を倒す。
+  // 手手指でなぞる用：カーペット上の点(x, z)が映っている畫面の位置を中心に、畫面上の正円（半径 brushPx）の範囲の毛を倒す。
   // 斜めから見ているので、カーペット上では奥行き方向に長い範囲になる
   const viewProj = new THREE.Matrix4();
   function brushScreen(x, z, ux, uz){
     viewProj.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
     const e = viewProj.elements, y = PILE_H * 0.5;
-    // カーペット上の点 → 画面の位置（px）
+    // カーペット上の点 → 畫面の位置（px）
     const toScreen = (wx, wz) => {
       const cw = e[3] * wx + e[7] * y + e[11] * wz + e[15];
       return [
@@ -606,7 +606,7 @@ gtag('config', 'G-41RSZLP1YQ');
     };
     const [sx, sy] = toScreen(x, z);
     const R = brushPx();
-    // 画面上の正円を囲む四角の四隅をカーペット上に戻し、調べるマスの範囲を決める
+    // 畫面上の正円を囲む四角の四隅をカーペット上に戻し、調べるマスの範囲を決める
     let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
     for (const [ox, oy] of [[-R, -R], [R, -R], [-R, R], [R, R]]){
       const q = screenToCarpet(sx + ox, sy + oy);
@@ -649,7 +649,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 最初の模様 ----------
-  // ゆるく曲がる線をランダムになぞったのと同じ処理で、半径 R の範囲に模様を付けておく。
+  // ゆるく曲がる線を隨機になぞったのと同じ処理で、半径 R の範囲に模様を付けておく。
   // 乱数は種（seed）から作るので、同じ種なら同じ模様になる（保存では種だけを残せば済む）
   function randomPattern(seed, R){
     let a = seed >>> 0;
@@ -676,7 +676,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   }
 
-  // 画面上の位置 → カーペット上の位置（毛足の中ほどの高さの面と交わる点）
+  // 畫面上の位置 → カーペット上の位置（毛足の中ほどの高さの面と交わる点）
   const pilePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -PILE_H * 0.5);
   function carpetPoint(e){
     const r = cv.getBoundingClientRect();
@@ -685,8 +685,8 @@ gtag('config', 'G-41RSZLP1YQ');
     return ray.ray.intersectPlane(pilePlane, hit) ? { x: hit.x, z: hit.z } : null;
   }
 
-  // ---------- 指の大きさのリング ----------
-  // 「指の大きさ」スライダーを動かしている間だけ、画面の中央に、なぞる範囲と同じ大きさの正円のリングを出す
+  // ---------- 手手指の大きさのリング ----------
+  // 「手手指の大きさ」スライダーを動かしている間だけ、畫面の中央に、なぞる範囲と同じ大きさの正円のリングを出す
   function showRing(){
     const d = brushPx() * 2 + 'px';
     $('ring').style.width = $('ring').style.height = d;
@@ -795,16 +795,16 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- 入力 ----------
-  // 押さえた指（PCは左拖曳）ごとに、それぞれ別の線としてなぞる。何本の指でも同時に描ける。
-  // 「視点を動かす」ボタンを按いる間（PCは右拖曳）は、指の動きで視点を轉動
-  const strokes = new Map();    // pointerId → なぞっている指の前回の位置（カーペット上）と向き（まだ位置が無ければ null）
-  const orbits = new Map();     // pointerId → 視点を回している指の前回の画面上の位置
-  let camMode = false;          // 「視点を動かす」ボタンが押されている
+  // 押さえた手手指（PCは左拖曳）ごとに、それぞれ別の線としてなぞる。何本の手手指でも同時に描ける。
+  // 「視点を移動」按鈕を按いる間（PCは右拖曳）は、手手指の動きで視点を轉動
+  const strokes = new Map();    // pointerId → なぞっている手手指の前回の位置（カーペット上）と向き（まだ位置が無ければ null）
+  const orbits = new Map();     // pointerId → 視点を回している手手指の前回の畫面上の位置
+  let camMode = false;          // 「視点を移動」按鈕が押されている
 
   $('camBtn').addEventListener('click', () => {
     camMode = !camMode;
     $('camBtn').setAttribute('aria-pressed', String(camMode));
-    $('camBtn').setAttribute('aria-label', camMode ? 'なぞるに戻す' : '視点を動かす');
+    $('camBtn').setAttribute('aria-label', camMode ? 'なぞるに戻す' : '視点を移動');
   });
 
   // 視点を最初の位置に戻す（RESET_TIME 秒かけてなめらかに）
@@ -841,7 +841,7 @@ gtag('config', 'G-41RSZLP1YQ');
       orbits.set(e.pointerId, { x: e.clientX, y: e.clientY });
       return;
     }
-    if (strokes.size === 0) beginUndoStep();   // 1本目の指を置いたときから、全部の指を離すまでを1回分にする
+    if (strokes.size === 0) beginUndoStep();   // 1本目の手手指を置いたときから、全部の手手指を放開までを1回分にする
     const p = carpetPoint(e);
     strokes.set(e.pointerId, p ? { x: p.x, z: p.z, ux: null, uz: null } : null);
   });
@@ -849,8 +849,8 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointermove', e => {
     const pt = orbits.get(e.pointerId);
     if (pt){
-      resetAnim = null;   // 戻している途中に回し始めたら、戻すのをやめて指の操作を優先する
-      // 押さえている指の平均の動きで轉動
+      resetAnim = null;   // 戻している途中に回し始めたら、戻すのをやめて手手指の操作を優先する
+      // 押さえている手手指の平均の動きで轉動
       const n = orbits.size;
       azim -= (e.clientX - pt.x) / n * ROT_SPEED;
       elev = Math.min(ELEV_MAX, Math.max(ELEV_MIN, elev + (e.clientY - pt.y) / n * ROT_SPEED));
@@ -883,7 +883,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 還原 ----------
   // なぞり始めに毛の向きを丸ごと控えておき、なぞり終わったら、なぞった範囲だけを切り出して残す。
-  // 画面の大きさが変わってカーペットが広がっても戻せるよう、そのときのカーペットの大きさ（S）も残す
+  // 畫面の大きさが変わってカーペットが広がっても戻せるよう、そのときのカーペットの大きさ（S）も残す
   const undoStack = [];
   let undoSnap = null;   // なぞっている間の控え { gn, x, z, 範囲 }
   function beginUndoStep(){
@@ -897,7 +897,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function endUndoStep(){
     const u = undoSnap;
     undoSnap = null;
-    if (!u || u.gn !== gn || u.x1 < u.x0) return;   // 毛が倒れなかった（タップだけ等）、または途中でカーペットが作り直された
+    if (!u || u.gn !== gn || u.x1 < u.x0) return;   // 毛が倒れなかった（點擊だけ等）、または途中でカーペットが作り直された
     const w = u.x1 - u.x0 + 1, h = u.z1 - u.z0 + 1;
     const x = new Float32Array(w * h), z = new Float32Array(w * h);
     for (let r = 0; r < h; r++){
@@ -930,15 +930,15 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 画像の切り取り ----------
   // 画像を選んだあと、四角い枠で使う範囲を選ぶ。枠の中を拖曳で移動、四隅を拖曳で大きさを変える
-  const CROP_MIN = 24;         // 枠の最小の大きさ（画面上のpx）
+  const CROP_MIN = 24;         // 枠の最小の大きさ（畫面上のpx）
   const CROP_MAX_PX = 2048;    // 切り取った画像の長い辺の上限（px）
   let cropSrc = null, cropScale = 1, cropW = 0, cropH = 0;
-  let cropBox = { x: 0, y: 0, w: 0, h: 0 };   // 枠の位置と大きさ（画面上のpx、画像の左上が原点）
+  let cropBox = { x: 0, y: 0, w: 0, h: 0 };   // 枠の位置と大きさ（畫面上のpx、画像の左上が原点）
   let cropDrag = null;
 
   function openCrop(im){
     cropSrc = im;
-    // 画面に収まる大きさで画像を表示する
+    // 畫面に収まる大きさで画像を表示する
     const maxW = Math.max(100, innerWidth - 32), maxH = Math.max(100, innerHeight - 170);
     cropScale = Math.min(maxW / im.width, maxH / im.height);
     cropW = Math.round(im.width * cropScale); cropH = Math.round(im.height * cropScale);
@@ -979,7 +979,7 @@ gtag('config', 'G-41RSZLP1YQ');
       // 枠ごと移動（画像からはみ出さない）
       cropBox = { x: clampN(b.x + dx, 0, cropW - b.w), y: clampN(b.y + dy, 0, cropH - b.h), w: b.w, h: b.h };
     } else {
-      // つかんだ角だけ動かす
+      // つかんだ角だけ移動
       let l = b.x, r = b.x + b.w, t = b.y, btm = b.y + b.h;
       const c = cropDrag.corner;
       if (c.includes('w')) l = clampN(l + dx, 0, r - CROP_MIN);
@@ -997,7 +997,7 @@ gtag('config', 'G-41RSZLP1YQ');
   $('crop-cancel').addEventListener('click', closeCrop);
   $('crop-ok').addEventListener('click', () => {
     if (!cropSrc) return;
-    // 枠の範囲を元の画像の大きさで切り取る
+    // 枠の範囲を元の画像の大きさで切り取得
     const sx = cropBox.x / cropScale, sy = cropBox.y / cropScale;
     const sw = cropBox.w / cropScale, sh = cropBox.h / cropScale;
     const k = Math.min(1, CROP_MAX_PX / Math.max(sw, sh));
@@ -1016,7 +1016,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const SHARE_INSTANT = 0.5;   // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   const shareText = () => 'カーペットに模様を描いた！\n' + location.href.split(/[?#]/)[0] + '\n#カーペットアート';
 
-  // 今の画面をPNGにする。描いた直後でないとcanvasの中身が消えていることがあるので、その場で描き直して読む
+  // 今の畫面をPNGにする。描いた直後でないとcanvasの中身が消えていることがあるので、その場で描き直して読む
   function screenDataUrl(){
     if (pileDirty){ encodePile(); pileDirty = false; }
     renderer.render(scene, camera);
@@ -1035,7 +1035,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const url = screenDataUrl();
     const file = pngFile(url);
-    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（画像と文面）を畫面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = url;
@@ -1044,8 +1044,8 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-close').focus({ preventScroll:true });
     };
     // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
-    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内瀏覽器等）。
+    // 分享シートを開いてから自己で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
@@ -1074,7 +1074,7 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- 保存 ----------
-  // 今の状態をブラウザに残し、次に開いたときに続きから始める。
+  // 今の状態を瀏覽器に残し、次に開いたときに続きから始める。
   // 毛の向き・色・視点は操作が止まるたびに自動で保存する。画像は大きいので、選んだときに1回だけ保存する
   const store = {
     get(k){ try { return localStorage.getItem(SAVE_KEY + '.' + k); } catch (e){ return null; } },
@@ -1083,7 +1083,7 @@ gtag('config', 'G-41RSZLP1YQ');
   };
 
   // 毛の向きは、最初の模様の種と、なぞって変えた区画だけを残す（カーペット全体は広すぎて保存容量に入らない）。
-  // 区画の位置はカーペットの中心から数えるので、画面の大きさが変わってカーペットが広がっても同じ場所に戻せる
+  // 区画の位置はカーペットの中心から数えるので、畫面の大きさが変わってカーペットが広がっても同じ場所に戻せる
   let patternSeed = 0, patternGn = 0;   // 最初の模様の種と、そのときのマスの数
   const dirtyTiles = new Set();         // なぞって変えた区画（"横,縦"）
   function markDirty(x0, x1, z0, z1){
@@ -1235,23 +1235,23 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- iOS対策 ----------
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てなぞる操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出てなぞる操作が奪われるのを防ぐ
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
   document.addEventListener('touchmove', e => { if (strokes.size || orbits.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => {
-    // 分享の画面の文面は選んでコピーできるようにする
+    // 分享の畫面の文面は選んでコピーできるようにする
     if (e.target instanceof Node && $('share-text').contains(e.target)) return;
     e.preventDefault();
   });
-  // PCの右拖曳でメニューを出さない（分享の画面ではコピーできるよう残す）
+  // PCの右拖曳でメニューを出さない（分享の畫面ではコピーできるよう残す）
   document.addEventListener('contextmenu', e => {
     if (e.target instanceof Element && e.target.closest('#share-view')) return;
     e.preventDefault();
   });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
-    if (e.target instanceof Element && e.target.closest('#buttons,#tools,#sizeTool,#share,#share-view,#crop-view')) return;   // ボタンの連続タップ・色や画像の選択・分享の画面は止めない
+    if (e.target instanceof Element && e.target.closest('#buttons,#tools,#sizeTool,#share,#share-view,#crop-view')) return;   // 按鈕の連続點擊・色や画像の選択・分享の畫面は止めない
     const now = Date.now();
     if (now - lastTouchEnd < 350) e.preventDefault();
     lastTouchEnd = now;

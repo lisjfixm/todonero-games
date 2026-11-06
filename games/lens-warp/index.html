@@ -107,12 +107,12 @@ gtag('config', 'G-41RSZLP1YQ');
     </div>
     <section class="howto" data-pos="top-left" hidden>
       <h2>玩法</h2>
-      <p>丸いレンズを画像に重ねて、絵をゆがませるおもちゃです。勝ち負けはありません。最初は顔のイラストにレンズが1枚置かれていて、「画像を選ぶ」で手持ちの写真に替えられます。できた絵は分享でき、レンズの配置はコードにして渡せます。</p>
+      <p>丸いレンズを画像に重ねて、絵をゆがませるおもちゃです。贏輸はありません。最初は顔のイラストにレンズが1枚置かれていて、「画像を選ぶ」で手持ちの写真に替えられます。できた絵は分享でき、レンズの配置はコードにして渡せます。</p>
       <h2>操作</h2>
-      <p>レンズを拖曳すると動きます。触った直後はスライダーが出て、ゆがみと大きさを変えられます。＋のボタンで追加し、ゴミ箱をオンにして触ると消せます。目のボタンは枠を隠します。PC では矢印キーでも動かせます。</p>
+      <p>レンズを拖曳すると動きます。触った直後はスライダーが出て、ゆがみと大きさを変えられます。＋の按鈕で追加し、ゴミ箱をオンにして触ると消せます。目の按鈕は枠を隠します。PC では矢印鍵でも動かせます。</p>
       <h2>楽しみ方</h2>
       <p>プラスは膨らみ、マイナスは縮みます。プラスは50ほど、マイナスは25ほどを超えると絵が裏返り始めます。レンズを重ねると、ゆがみも重なります。</p>
-      <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+      <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
     </section>
   </div>
   <div id="controls">
@@ -132,7 +132,7 @@ gtag('config', 'G-41RSZLP1YQ');
       </button>
     </div>
   </div>
-  <!-- 分享ボタンで出す画面：画像の分享・配置の分享・配置の読み込み -->
+  <!-- 分享按鈕で出す畫面：画像の分享・配置の分享・配置の読み込み -->
   <div id="share-view" class="hidden" role="dialog" aria-label="分享">
     <div class="panel">
       <img id="share-img" alt="分享される画像">
@@ -165,15 +165,15 @@ gtag('config', 'G-41RSZLP1YQ');
   const K_MINUS = 2;            // ゆがみ-100のときの係数（0.5を超えると縁の近くで絵が折り返す）
   const SIZE_MIN = 30;          // レンズ半径の下限（CSSピクセル）
   const SIZE_DEFAULT = 90;      // 新しいレンズの半径（CSSピクセル）
-  const KEY_STEP = 8;           // 矢印キー1回でレンズが動く量（CSSピクセル）
-  const FACE_SIZE = 0.8;        // 最初に出す顔の幅（画面の短い辺に対する割合）
+  const KEY_STEP = 8;           // 矢印鍵1回でレンズが動く量（CSSピクセル）
+  const FACE_SIZE = 0.8;        // 最初に出す顔の幅（畫面の短い辺に対する割合）
   const RING_WIDTH = 2;         // 選んでいるレンズの縁の線の太さ（CSSピクセル）
   const RING_WIDTH_SUB = 1;     // 選んでいないレンズの縁の線の太さ（CSSピクセル）
   const PANEL_GAP = 8;          // レンズの縁とスライダーの箱の間隔（CSSピクセル）
-  const PANEL_MARGIN = 8;       // スライダーの箱を画面の端から離す量（CSSピクセル）
+  const PANEL_MARGIN = 8;       // スライダーの箱を畫面の端から放開量（CSSピクセル）
   const PANEL_HIDE = 2;         // 操作をやめてからスライダーの箱が消え始めるまでの時間（秒）
   const PANEL_FADE = 0.4;       // スライダーの箱がフェードアウトにかける時間（秒）
-  const STATUS_TIME = 2.5;      // 分享の画面に出すお知らせ（已複製等）を出しておく時間（秒）
+  const STATUS_TIME = 2.5;      // 分享の畫面に出すお知らせ（已複製等）を出しておく時間（秒）
   const MAX_LOAD_LENSES = 50;   // 配置のコードから讀取レンズの上限（変なコードで重くならないように）
   const SHARE_INSTANT = 0.5;    // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   const ANIM_IN = 0.3;          // レンズを追加したとき、0から元の大きさに広がるまでの時間（秒）
@@ -198,8 +198,8 @@ gtag('config', 'G-41RSZLP1YQ');
   let deleting = false;  // ゴミ箱がONのとき、触ったレンズを消す
   let showRings = true;  // レンズの枠を描くかどうか
 
-  // 画像（または顔）が画面のどこに描かれているか（CSSピクセル）
-  // 配置のコードは、画面ではなくこの範囲を基準に記録する（画面の大きさが違っても同じ所に再現できるように）
+  // 画像（または顔）が畫面のどこに描かれているか（CSSピクセル）
+  // 配置のコードは、畫面ではなくこの範囲を基準に紀錄する（畫面の大きさが違っても同じ所に再現できるように）
   let contentRect = { x: 0, y: 0, w: 1, h: 1 };
 
   // ---------- 元画像の用意 ----------
@@ -210,7 +210,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (img) {
       sctx.fillStyle = css('--bg');
       sctx.fillRect(0, 0, cw, ch);
-      // 画面に収まるように縮小して中央に置く
+      // 畫面に収まるように縮小して中央に置く
       const s = Math.min(cw / img.width, ch / img.height);
       const w = img.width * s, h = img.height * s;
       sctx.imageSmoothingQuality = 'high';
@@ -225,7 +225,7 @@ gtag('config', 'G-41RSZLP1YQ');
     src = sctx.getImageData(0, 0, cw, ch).data;
   }
 
-  // 最初に出す顔のイラスト（画像ファイルを使わずコードで描く）。大きさは画面の短い辺に合わせる
+  // 最初に出す顔のイラスト（画像ファイルを使わずコードで描く）。大きさは畫面の短い辺に合わせる
   function drawFace(c, cw, ch){
     const u = Math.min(cw, ch * 0.8) * FACE_SIZE / 2;   // 顔の半径
     const cx = cw / 2, cy = ch / 2;
@@ -408,7 +408,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // スライダーの箱を選んでいるレンズの横に置く
-  // まずレンズの下、入らなければ上、どちらも入らなければ画面内に収まる位置にずらす
+  // まずレンズの下、入らなければ上、どちらも入らなければ畫面内に収まる位置にずらす
   // 枠を非表示にしている間は、画像だけを見られるように箱も隠す
   // 操作をやめて PANEL_HIDE 秒たったら箱を隠す（何か操作するとまた出る）
   function placePanel(){
@@ -428,7 +428,7 @@ gtag('config', 'G-41RSZLP1YQ');
     p.style.top = y + 'px';
   }
 
-  // 操作のたびに呼ぶ：箱を出し、指やマウスを離してから PANEL_HIDE 秒後に隠す
+  // 操作のたびに呼ぶ：箱を出し、手手指や滑鼠を離してから PANEL_HIDE 秒後に隠す
   // （レンズを拖曳中・スライダーを押さえている間は隠さない）
   let panelShown = false, panelTimer = 0, panelHeld = false;
   function poke(){
@@ -518,7 +518,7 @@ gtag('config', 'G-41RSZLP1YQ');
     startAnim();
   }
 
-  // 指の位置にあるレンズ（重なっていたら上のもの）。無ければ -1
+  // 手手指の位置にあるレンズ（重なっていたら上のもの）。無ければ -1
   function lensAt(x, y){
     for (let i = lenses.length - 1; i >= 0; i--) {
       const l = lenses[i];
@@ -553,8 +553,8 @@ gtag('config', 'G-41RSZLP1YQ');
     requestRender();
   }
 
-  // レンズの上を触るとそのレンズを選んで動かす。レンズの外を触ると選んでいるレンズを動かす
-  // 指の真下にレンズが来ると見えなくなるので、触った位置へ飛ばさず指の移動量だけ動かす
+  // レンズの上を触るとそのレンズを選んで移動。レンズの外を触ると選んでいるレンズを移動
+  // 手手指の真下にレンズが来ると見えなくなるので、触った位置へ飛ばさず手手指の移動量だけ移動
   const drags = new Map();
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
@@ -592,10 +592,10 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', endDrag);
   cv.addEventListener('pointercancel', endDrag);
 
-  // PC：矢印キーで選んでいるレンズを動かす（スライダー操作中はスライダーに任せる）
+  // PC：矢印鍵で選んでいるレンズを移動（スライダー操作中はスライダーに任せる）
   document.addEventListener('keydown', e => {
     if (e.target instanceof HTMLInputElement) return;
-    if (!$('share-view').classList.contains('hidden')) return;  // 分享内容の画面を出している間は動かさない
+    if (!$('share-view').classList.contains('hidden')) return;  // 分享内容の畫面を出している間は動かさない
     const step = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
     if (!step || !lenses[selected]) return;
     e.preventDefault();
@@ -642,7 +642,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (msg) statusTimer = setTimeout(() => { $('share-status').textContent = ''; }, STATUS_TIME * 1000);
   }
 
-  // 分享ボタン：どの端末でも分享の画面を出す。分享画像はここで作っておく
+  // 分享按鈕：どの端末でも分享の畫面を出す。分享画像はここで作っておく
   let shareFile = null;
   $('share').addEventListener('pointerdown', e => e.stopPropagation());
   $('share').addEventListener('click', () => {
@@ -667,8 +667,8 @@ gtag('config', 'G-41RSZLP1YQ');
         .catch(() => setStatus('この環境では分享できません'));
     };
     // 分享シートが出なかったときは fallback へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
-    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内瀏覽器等）。
+    // 分享シートを開いてから自己で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
@@ -802,7 +802,7 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- 画像の読み込み ----------
-  // blob: のURLを<img>に渡す方式は、表示する環境（プレビュー画面など）によっては
+  // blob: のURLを<img>に渡す方式は、表示する環境（プレビュー畫面など）によっては
   // 読み込みが禁止されていて全部失敗するので使わない。
   // まず createImageBitmap でファイルから直接作り、使えなければ data: URL で読む
   function loadImage(file){
@@ -821,7 +821,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return viaDataUrl();
   }
 
-  // ラベルで包んだinputを直接タップさせる（JSからclick()で開くより環境差が出にくい）
+  // ラベルで包んだinputを直接點擊させる（JSからclick()で開くより環境差が出にくい）
   $('file').addEventListener('change', e => {
     const input = e.target;
     const f = input.files && input.files[0];
@@ -833,27 +833,27 @@ gtag('config', 'G-41RSZLP1YQ');
       buildSource();
       render();
     }).catch(() => {
-      // 読めない形式（PCのブラウザでのHEICなど）のとき、何も起きないように見えないよう知らせる
+      // 読めない形式（PCの瀏覽器でのHEICなど）のとき、何も起きないように見えないよう知らせる
       $('pickText').textContent = 'この画像は読み込めません';
       setTimeout(() => { $('pickText').textContent = '画像を選ぶ'; }, 1500);
     }).finally(() => { input.value = ''; });
   });
 
   // ---------- iOS対策 ----------
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive: false });
   document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive: false });
-  // 分享の画面の入力欄だけは文字を選べるようにする（コードのコピー・貼り付けのため）
+  // 分享の畫面の入力欄だけは文字を選べるようにする（コードのコピー・貼り付けのため）
   document.addEventListener('selectstart', e => {
     if (e.target instanceof Node && $('share-view').contains(e.target)) return;
     e.preventDefault();
   });
   document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
 
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
-    // 画像選択のボタンは止めない（止めるとタップが届かずファイル選択が開かない）
+    // 画像選択の按鈕は止めない（止めると點擊が届かずファイル選択が開かない）
     if (e.target instanceof Element && e.target.closest('#pick')) return;
     const now = Date.now();
     if (now - lastTouchEnd < 350) e.preventDefault();

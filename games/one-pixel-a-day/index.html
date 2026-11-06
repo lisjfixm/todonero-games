@@ -42,7 +42,7 @@ gtag('config', 'G-41RSZLP1YQ');
   body{
     background:var(--bg);color:var(--fg);
     font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
-    touch-action:manipulation;              /* ダブルタップ拡大を殺す */
+    touch-action:manipulation;              /* ダブル點擊拡大を殺す */
     -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   }
   #app{display:flex;flex-direction:column;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;padding-top:env(safe-area-inset-top,0px)}
@@ -71,16 +71,16 @@ gtag('config', 'G-41RSZLP1YQ');
     <canvas id="cv" aria-label="キャンバス"></canvas>
     <section class="howto" data-pos="top-right" hidden>
       <h2>玩法</h2>
-      <p>32×32マスのキャンバスを、訪れた人みんなで1マスずつ塗っていく分享お絵かきです。勝ち負けや完成はありません。1マス塗ると体力を1使います。体力は最大16で、60分に1ずつ回復します。他の人が塗った色は数秒ごとに届きます。</p>
+      <p>32×32マスのキャンバスを、訪れた人みんなで1マスずつ塗っていく分享お絵かきです。贏輸や完成はありません。1マス塗ると體力を1使います。體力は最大16で、60分に1ずつ回復します。他の人が塗った色は数秒ごとに届きます。</p>
       <h2>操作</h2>
-      <p>マスを點擊選び、16色から色を選んで「塗る」を押します。1本指の拖曳で移動し、2本指で拡大します。PC はホイールで拡大し、矢印キーでマスを動かし、Enter かスペースで塗り、Esc で選択を解除できます。</p>
+      <p>マスを點擊選び、16色から色を選んで「塗る」を押します。1本手手指の拖曳で移動し、2本手手指で拡大します。PC はホイールで拡大し、矢印鍵でマスを動かし、Enter かスペースで塗り、Esc で選択を解除できます。</p>
       <h2>楽しみ方</h2>
-      <p>塗ってあるマスも上から塗り替えられます。体力は回線ごとに決まるので、1マスずつ、どこに置くか考えながら少しずつ絵を育ててください。</p>
-      <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+      <p>塗ってあるマスも上から塗り替えられます。體力は回線ごとに決まるので、1マスずつ、どこに置くか考えながら少しずつ絵を育ててください。</p>
+      <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
     </section>
   </div>
   <div id="controls">
-    <div id="stamina"><div id="stBar" aria-hidden="true"></div><span id="stText" aria-label="体力"></span></div>
+    <div id="stamina"><div id="stBar" aria-hidden="true"></div><span id="stText" aria-label="體力"></span></div>
     <div id="palette" role="group" aria-label="色"></div>
     <button id="paint" type="button" disabled>塗る</button>
   </div>
@@ -94,7 +94,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const SIZE = 32;                     // マス数（縦横）。PHP側の SIZE と合わせる
   const POLL_MS = 5000;                // 他の人の変更を取りに行く間隔（ミリ秒）
   const MAX_SCALE = 40;                // 最大拡大率（1マスあたりのCSSピクセル）
-  const TAP_SLOP = 8;                  // この距離以内で指を離したらタップ扱い（px）
+  const TAP_SLOP = 8;                  // この距離以内で手手指を離したら點擊扱い（px）
   const WHEEL_ZOOM = 0.0015;           // PCのホイール拡大の効き
   const MIN_MARK = 10;                 // 選択枠の最小サイズ（縮小時でも見えるように）（px）
   // 色はパレット番号で保存する（数はPHP側の COLORS と合わせる。0番が初期色）
@@ -116,10 +116,10 @@ gtag('config', 'G-41RSZLP1YQ');
   let sel = null;                  // 選択中のマス {x, y}
   let color = 5;                   // 最初は赤（黒だと下絵の線と見分けがつきにくいため）
 
-  // 体力：本体はサーバー（回線ごと）。手元では次の回復時刻を覚えて秒読みし、
+  // 體力：本体はサーバー（回線ごと）。手元では次の回復時刻を覚えて秒読みし、
   // 時刻が来たら1増やして見せる（ずれてもサーバーから取り直した時に揃う）
   let stamina = 0, staminaMax = 16;
-  let regenMs = 0;                 // 体力1の回復にかかる時間（ミリ秒）
+  let regenMs = 0;                 // 體力1の回復にかかる時間（ミリ秒）
   let nextAt = 0;                  // 次に1回復する時刻（Date.now() 基準。満タンなら0）
   const canPaint = () => mode === 'ready' && stamina > 0;
 
@@ -129,7 +129,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const mm = String(m).padStart(h ? 2 : 1, '0'), ss = String(sec).padStart(2, '0');
     return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
   }
-  // 回復時刻が来ていたら手元の体力を進める（1秒ごとに呼ぶ）
+  // 回復時刻が来ていたら手元の體力を進める（1秒ごとに呼ぶ）
   function tickStamina(){
     let changed = false;
     while (nextAt && regenMs > 0 && Date.now() >= nextAt && stamina < staminaMax) {
@@ -167,7 +167,7 @@ gtag('config', 'G-41RSZLP1YQ');
     clampView();
     requestDraw();
   }
-  // 画面より小さい時は中央に置き、大きい時は端が内側に入り込まないようにする
+  // 畫面より小さい時は中央に置き、大きい時は端が内側に入り込まないようにする
   function clampView(){
     const s = SIZE * scale;
     ox = s <= W ? (W - s) / 2 : Math.min(0, Math.max(W - s, ox));
@@ -204,19 +204,19 @@ gtag('config', 'G-41RSZLP1YQ');
     ctx.lineWidth = 1; ctx.strokeStyle = '#fff'; ctx.strokeRect(mx - 0.5, my - 0.5, m + 1, m + 1);
   }
 
-  // ---------- 画面の文言・ボタン ----------
+  // ---------- 畫面の文言・按鈕 ----------
   function updateUI(){
     paintBtn.disabled = !(canPaint() && sel && !busy);
     let msg;
     if (mode === 'loading') msg = '載入中…';
     else if (mode === 'error') msg = '通信できませんでした';
-    else if (stamina <= 0) msg = `体力がありません（あと ${fmtRemain(nextAt - Date.now())} で1回復）`;
-    else if (!sel) msg = '塗るマスを點擊ください（2本指で拡大）';
+    else if (stamina <= 0) msg = `體力がありません（あと ${fmtRemain(nextAt - Date.now())} で1回復）`;
+    else if (!sel) msg = '塗るマスを點擊ください（2本手手指で拡大）';
     else msg = `(${sel.x + 1}, ${sel.y + 1}) 色を選んで「塗る」`;
     if (statusEl.textContent !== msg) statusEl.textContent = msg;
     for (const b of paletteEl.children) b.setAttribute('aria-pressed', String(+b.dataset.c === color));
 
-    // 体力ゲージ：マス目の数は上限ぶん、たまっている数だけ色を付ける
+    // 體力ゲージ：マス目の数は上限ぶん、たまっている数だけ色を付ける
     if (stBar.children.length !== staminaMax) {
       stBar.replaceChildren(...Array.from({ length: staminaMax }, () => {
         const d = document.createElement('div'); d.className = 'st'; return d;
@@ -224,7 +224,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     [...stBar.children].forEach((d, i) => d.classList.toggle('on', i < stamina));
     const t = mode !== 'ready' ? '' :
-      `体力 ${stamina}/${staminaMax}` + (nextAt ? `　回復まで ${fmtRemain(nextAt - Date.now())}` : '　満タン');
+      `體力 ${stamina}/${staminaMax}` + (nextAt ? `　回復まで ${fmtRemain(nextAt - Date.now())}` : '　満タン');
     if (stText.textContent !== t) stText.textContent = t;
   }
 
@@ -282,7 +282,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 入力（Pointer Events） ----------
   const ptrs = new Map();   // pointerId → 位置
-  let tapOk = false;        // 1本指で動かさずに離したらマス選択
+  let tapOk = false;        // 1本手手指で動かさずに離したらマス選択
   const local = e => { const r = cv.getBoundingClientRect(); return { x:e.clientX - r.left, y:e.clientY - r.top }; };
 
   function selectAt(p){
@@ -296,7 +296,7 @@ gtag('config', 'G-41RSZLP1YQ');
     e.preventDefault();
     cv.setPointerCapture(e.pointerId);
     const p = local(e);
-    tapOk = ptrs.size === 0;   // 2本目が置かれたらタップではない
+    tapOk = ptrs.size === 0;   // 2本目が置かれたら點擊ではない
     ptrs.set(e.pointerId, { x:p.x, y:p.y, x0:p.x, y0:p.y });
   });
   cv.addEventListener('pointermove', e => {
@@ -308,11 +308,11 @@ gtag('config', 'G-41RSZLP1YQ');
     if (Math.hypot(q.x - q.x0, q.y - q.y0) > TAP_SLOP) tapOk = false;
     const after = [...ptrs.values()];
     if (after.length === 1) {
-      // 1本指：移動
+      // 1本手手指：移動
       ox += after[0].x - before[0].x; oy += after[0].y - before[0].y;
       clampView(); requestDraw();
     } else {
-      // 2本指：2点の中点を中心に拡大し、中点の動きぶん移動
+      // 2本手手指：2点の中点を中心に拡大し、中点の動きぶん移動
       const [a0, b0] = before, [a1, b1] = after;
       const d0 = Math.hypot(b0.x - a0.x, b0.y - a0.y), d1 = Math.hypot(b1.x - a1.x, b1.y - a1.y);
       const m0x = (a0.x + b0.x) / 2, m0y = (a0.y + b0.y) / 2;
@@ -337,7 +337,7 @@ gtag('config', 'G-41RSZLP1YQ');
     zoomAt(p.x, p.y, Math.exp(-e.deltaY * WHEEL_ZOOM));
   }, { passive:false });
 
-  // PC：矢印キーでマス移動、Enter/スペースで塗る、Escで選択解除
+  // PC：矢印鍵でマス移動、Enter/スペースで塗る、Escで選択解除
   document.addEventListener('keydown', e => {
     const dir = { ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,-1], ArrowDown:[0,1] }[e.key];
     if (dir) {
@@ -353,14 +353,14 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て
   // キャンバスの操作が奪われるのを防ぐ
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
   document.addEventListener('touchmove', e => { if (ptrs.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
   cv.addEventListener('contextmenu', e => e.preventDefault());
 
-  // ---------- パレットとボタン ----------
+  // ---------- パレットと按鈕 ----------
   PALETTE.forEach((c, i) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'sw'; b.dataset.c = String(i);
@@ -379,7 +379,7 @@ gtag('config', 'G-41RSZLP1YQ');
   load();
   // 他の人の変更を取り込む（裏にある間は止める）
   setInterval(() => { if (!document.hidden) load(); }, POLL_MS);
-  // 体力の秒読み表示と回復
+  // 體力の秒読み表示と回復
   setInterval(() => { if (!document.hidden) tickStamina(); }, 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 })();

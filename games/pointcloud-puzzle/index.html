@@ -79,12 +79,12 @@ gtag('config', 'G-41RSZLP1YQ');
 <div id="done">Level Complete</div>
 <section class="howto" hidden data-pos="top-right">
   <h2>玩法</h2>
-  <p>宙に浮かぶ20万個の点のかたまりを回し、動物の写真が見える角度を探すパズルです。点は球や立方体、星形など5種類の立体に並んでいます。正解の角度から約4度以内に合わせるとステージ完了となり、次の立体へ進みます。5つ解くと最初の形に戻り、正解の角度は毎回変わります。時間制限や失敗はありません。</p>
+  <p>宙に浮かぶ20万個の点のかたまりを回し、動物の写真が見える角度を探すパズルです。点は球や立方体、星形など5種類の立体に並んでいます。正解の角度から約4度以内に合わせるとステージ完成となり、次の立体へ進みます。5つ解くと最初の形に戻り、正解の角度は毎回変わります。時間制限や失敗はありません。</p>
   <h2>操作</h2>
-  <p>スマホは指で、PC はマウスで拖曳すると回せます。動かしながら離すと、しばらく惰性で回り続けます。</p>
+  <p>スマホは手手指で、PC は滑鼠で拖曳すると回せます。動かしながら放開と、しばらく惰性で回り続けます。</p>
   <h2>楽しみ方</h2>
-  <p>判定は指を離したときと、押さえたまま1秒止めたときに行われます。惰性で回っている間は判定されないので、絵が見えてきたら指を置いたまま細かく合わせてください。正解から遠い向きほど色がばらばらに崩れるので、色のまとまりを手がかりに回せます。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p>判定は手手指を離したときと、押さえたまま1秒止めたときに行われます。惰性で回っている間は判定されないので、絵が見えてきたら手手指を置いたまま細かく合わせてください。正解から遠い向きほど色がばらばらに崩れるので、色のまとまりを手がかりに回せます。</p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -148,7 +148,7 @@ gtag('config', 'G-41RSZLP1YQ');
   var SWAY_SPEED = 1.2;  // 揺らぎの速さ(rad/s)
   var SWIRL_AMP = 0.9;   // 飛来・散開中のうねりの振幅
   var SWIRL_SPEED = 1.5; // うねりの渦の速さ(rad/s)
-  var SCRAMBLE_START = 130 * Math.PI / 180; // 真裏からこの角度差で色崩しが始まる(緩やかに)
+  var SCRAMBLE_START = 130 * Math.PI / 180; // 真裏からこの角度差で色崩しが開始(緩やかに)
   var SCRAMBLE_FULL = 30 * Math.PI / 180;   // 真裏からこの角度差で完全に崩れる
 
   // ステージ順の画像: 球=柴犬, 立方体=レッサーパンダ, 正四面体=コンゴウインコ,
@@ -184,7 +184,7 @@ gtag('config', 'G-41RSZLP1YQ');
       'varying vec2 vUv;',
       'void main() {',
       '  vUv = uv;',
-      '  gl_Position = vec4(position.xy, 0.9999, 1.0);', // 画面全面に固定
+      '  gl_Position = vec4(position.xy, 0.9999, 1.0);', // 畫面全面に固定
       '}'
     ].join('\n'),
     fragmentShader: [
@@ -207,7 +207,7 @@ gtag('config', 'G-41RSZLP1YQ');
   var altColors = new Float32Array(POINT_COUNT * 3); // 裏側表示用のシャッフル色
   var dirs = new Float32Array(POINT_COUNT * 3);   // 正解視線の方向(揺らぎ用)
   var phases = new Float32Array(POINT_COUNT);     // 揺らぎの位相
-  var fars = new Float32Array(POINT_COUNT * 3);   // 飛来・散開の画面外の出発点
+  var fars = new Float32Array(POINT_COUNT * 3);   // 飛来・散開の畫面外の出発点
 
   var geo = new THREE.BufferGeometry();
   var posAttr = new THREE.BufferAttribute(scatters, 3);
@@ -251,7 +251,7 @@ gtag('config', 'G-41RSZLP1YQ');
       'uniform float uSwirlSpeed;',
       'varying vec3 vColor;',
       'void main() {',
-      '  // uForm: 0 = 画面外(aFar), 1 = 球上の定位置。飛来・散開はこの補間で行う',
+      '  // uForm: 0 = 畫面外(aFar), 1 = 球上の定位置。飛来・散開はこの補間で行う',
       '  vec3 base = mix(aFar, position, uForm);',
       '  // 飛来・散開中のうねり: 経路に直交する渦成分(両端で0なので定位置や絵には影響しない)',
       '  float arc = sin(uForm * 3.14159265);',
@@ -266,7 +266,7 @@ gtag('config', 'G-41RSZLP1YQ');
       '  vec4 mv = modelViewMatrix * vec4(p, 1.0);',
       '  gl_Position = projectionMatrix * mv;',
       '  gl_PointSize = uSize * (5.0 / max(-mv.z, 0.8));', // カメラ付近を通過する際の巨大化を防ぐ
-      '  // 点ごとにランダムなしきい値で本来の色/シャッフル色を切り替える(中間色を作らない)',
+      '  // 点ごとに隨機なしきい値で本来の色/シャッフル色を切り替える(中間色を作らない)',
       '  float sw = step(aPhase * 0.159155, uScramble);', // aPhase(0..2π)を0..1の乱数として流用
       '  vColor = mix(aColor, aAltColor, sw);',
       '}'
@@ -288,8 +288,8 @@ gtag('config', 'G-41RSZLP1YQ');
   var goalDir = new THREE.Vector3(0, 0, 1);
   var cDir = new THREE.Vector3(0, 0, -1); // ローカル空間の正解視点方向(buildで毎ステージ再抽選)
   var camLocal = new THREE.Vector3();  // ローカル空間の正解カメラ位置
-  var rightL = new THREE.Vector3();    // 正解視点から見た画面右(ローカル)
-  var upL = new THREE.Vector3();       // 正解視点から見た画面上(ローカル)
+  var rightL = new THREE.Vector3();    // 正解視点から見た畫面右(ローカル)
+  var upL = new THREE.Vector3();       // 正解視点から見た畫面上(ローカル)
   var fwd = new THREE.Vector3();
   var solved = false;
   var goalQuat = new THREE.Quaternion();
@@ -305,13 +305,13 @@ gtag('config', 'G-41RSZLP1YQ');
       var l2 = cDir.lengthSq();
       if (l2 > 1 || l2 < 1e-4) continue;
       cDir.normalize();
-      // 現在の姿勢で表裏どちらの正解も向いていないことを確認(約60°以上離す)
+      // 現在の姿勢で表裏どちらの正解も向いていないことを確認(約60°以上放開)
       fwd.copy(cDir).applyQuaternion(points.quaternion);
       var startAngle = fwd.angleTo(goalDir);
       if (startAngle > 1.0 && startAngle < Math.PI - 1.0) break;
     }
     camLocal.copy(cDir).multiplyScalar(CAM_DIST);
-    // 正解視点での画面右・画面上に相当するローカル基底
+    // 正解視点での畫面右・畫面上に相当するローカル基底
     var hint = Math.abs(cDir.y) > 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
     rightL.crossVectors(hint, cDir).normalize();
     upL.crossVectors(cDir, rightL).normalize();
@@ -398,7 +398,7 @@ gtag('config', 'G-41RSZLP1YQ');
       dirs[i * 3] = d.x; dirs[i * 3 + 1] = d.y; dirs[i * 3 + 2] = d.z;
       phases[i] = Math.random() * Math.PI * 2;
 
-      // 飛来・散開の出発点: 定位置から放射方向に10〜20ユニット外側(画面外)
+      // 飛来・散開の出発点: 定位置から放射方向に10〜20ユニット外側(畫面外)
       var jx = p.x + (Math.random() - 0.5) * 0.6;
       var jy = p.y + (Math.random() - 0.5) * 0.6;
       var jz = p.z + (Math.random() - 0.5) * 0.6;
@@ -430,12 +430,12 @@ gtag('config', 'G-41RSZLP1YQ');
     farAttr.needsUpdate = true;
   }
 
-  // ---------- 入力(マウス / タッチで拖曳回転) ----------
+  // ---------- 入力(滑鼠 / タッチで拖曳回転) ----------
   var dragging = false, lastX = 0, lastY = 0;
   var ROT_SPEED = 0.006; // rad / px
   var INERTIA_DAMPING = 3.0; // 慣性の減衰の強さ(大きいほどすぐ止まる)
-  var HOLD_JUDGE_MS = 1000;  // タップ中、この時間静止したらクリア判定
-  var velX = 0, velY = 0, lastMoveTime = 0; // 指の速度(px/s)
+  var HOLD_JUDGE_MS = 1000;  // 點擊中、この時間静止したらクリア判定
+  var velX = 0, velY = 0, lastMoveTime = 0; // 手手指の速度(px/s)
   var lastStirTime = 0, stillJudged = false; // 静止判定用
   var dq = new THREE.Quaternion();
   var AX_X = new THREE.Vector3(1, 0, 0);
@@ -460,12 +460,12 @@ gtag('config', 'G-41RSZLP1YQ');
     var dx = x - lastX, dy = y - lastY;
     lastX = x; lastY = y;
     rotateBy(dx, dy);
-    // 指が実際に動いたら静止タイマーをリセット(微細なブレは無視)
+    // 手手指が実際に動いたら静止タイマーをリセット(微細なブレは無視)
     if (Math.abs(dx) + Math.abs(dy) >= 2) {
       lastStirTime = performance.now();
       stillJudged = false;
     }
-    // 直近の指の速度を推定(平滑化して外れ値を抑える)
+    // 直近の手手指の速度を推定(平滑化して外れ値を抑える)
     var now = performance.now();
     var dtm = Math.max((now - lastMoveTime) / 1000, 1e-3);
     velX = velX * 0.5 + (dx / dtm) * 0.5;
@@ -479,7 +479,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (performance.now() - lastMoveTime > 120) { velX = 0; velY = 0; }
     velX = Math.max(-1000, Math.min(1000, velX));
     velY = Math.max(-1000, Math.min(1000, velY));
-    trySolve(); // クリア判定は指を離したときのみ
+    trySolve(); // クリア判定は手手指を離したときのみ
   }
 
   var canvas = renderer.domElement;
@@ -490,7 +490,7 @@ gtag('config', 'G-41RSZLP1YQ');
   canvas.addEventListener('touchmove', function (e) { e.preventDefault(); var t = e.touches[0]; onMove(t.clientX, t.clientY); }, { passive: false });
   window.addEventListener('touchend', onUp);
 
-  // ---------- クリア判定(指を離したとき、またはタップ中に1秒静止したとき) ----------
+  // ---------- クリア判定(手手指を離したとき、または點擊中に1秒静止したとき) ----------
   function trySolve() {
     if (solved || phase !== 'play') return;
     if (currentAngle() > SNAP_ANGLE) return;
@@ -565,7 +565,7 @@ gtag('config', 'G-41RSZLP1YQ');
       velX *= damp; velY *= damp;
     }
 
-    // タップしたまま1秒静止した場合もクリア判定を行う(静止期間ごとに1回)
+    // 點擊したまま1秒静止した場合もクリア判定を行う(静止期間ごとに1回)
     if (dragging && !stillJudged && performance.now() - lastStirTime >= HOLD_JUDGE_MS) {
       stillJudged = true;
       trySolve();
@@ -579,7 +579,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (phase === 'intro') {
       phaseT += dt / INTRO_DURATION;
       if (phaseT >= 1) { phaseT = 1; phase = 'play'; }
-      material.uniforms.uForm.value = easeOutExpo(phaseT); // 画面外から滑空して球になる
+      material.uniforms.uForm.value = easeOutExpo(phaseT); // 畫面外から滑空して球になる
     } else if (phase === 'solvedWait') {
       phaseT += dt;
       if (phaseT >= COMPLETE_WAIT) {

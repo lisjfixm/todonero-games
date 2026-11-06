@@ -89,7 +89,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 #ovList li{display:flex;gap:14px;justify-content:space-between}
 #ovList .hr{color:var(--hr);font-weight:bold}
 button{min-width:220px;min-height:48px;font-size:18px;font-weight:bold;border:0;border-radius:12px;background:var(--btn);color:var(--btn-fg);font-family:inherit;touch-action:manipulation;box-shadow:0 2px 0 rgba(0,0,0,.3)}
-/* 控えめなボタン（やめる・返回など） */
+/* 控えめな按鈕（やめる・返回など） */
 button.sub{background:var(--btn-sub);color:var(--fg);box-shadow:inset 0 0 0 2px var(--btn-line)}
 button small{display:block;font-size:12px;font-weight:normal;opacity:.75}
 #menu button{min-width:260px;min-height:64px}
@@ -135,24 +135,24 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   <div id="showDlg" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="showTitle">
     <h2 id="showTitle">書き出したコード</h2>
     <input id="codeOut" type="text" readonly aria-label="書き出したコード">
-    <p>自動でコピーできなかったので、長押し（PCは右クリック）でコピーしてください</p>
+    <p>自動でコピーできなかったので、長押し（PCは右點擊）でコピーしてください</p>
     <button id="showClose" type="button">關閉</button>
   </div>
   <div id="ov" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
     <h2 id="ovTitle"></h2>
     <ul id="ovList"></ul>
-    <button id="retry" type="button">もう一回</button>
+    <button id="retry" type="button">再來一次</button>
     <button id="share" type="button" class="sub">分享</button>
     <button id="toMenu" type="button" class="sub">やめる</button>
   </div>
   <section class="howto" hidden data-pos="none">
     <h2>玩法</h2>
-    <p>変化する球をバットの芯でとらえ、ホームランを狙う野球ゲームです。プレイモードは用意された5球を打ち、ホームランの本数が結果になります。エンドレスモードはホームラン以外になると終わり、連続本数に挑みます。Editモードでは線を引いて5球の魔球を作ってコードに書き出せ、コード入力からその5球を打てます。</p>
+    <p>変化する球をバットの芯でとらえ、ホームランを狙う野球遊戲。プレイモードは用意された5球を打ち、ホームランの本数が結果になります。エンドレスモードはホームラン以外になると終わり、連続本数に挑みます。Editモードでは線を引いて5球の魔球を作ってコードに書き出せ、コード入力からその5球を打てます。</p>
     <h2>操作</h2>
-    <p>指でなぞるとバットの芯が動き、指を離すとスイングします。PC ではマウスで芯を動かしてクリックで振るか、矢印キーとスペースキーで操作します。</p>
-    <h2>コツ</h2>
-    <p>芯の中心に近いほど打球は速く、高く上がります。フェンスはセンターが100m、両翼が88mです。打つのが早いと往左、遅いと往右飛び、左右に45度より外へ飛ぶとファウルです。球は線の上を一定の速さで進むので、指を置いたまま通り道に芯を合わせ、離す瞬間だけに集中してください。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>手手指でなぞるとバットの芯が動き、手手指を放開とスイングします。PC では滑鼠で芯を動かして點擊で振るか、矢印鍵とスペース鍵で操作します。</p>
+    <h2>訣竅</h2>
+    <p>芯の中心に近いほど打球は速く、高く上がります。フェンスはセンターが100m、両翼が88mです。打つのが早いと往左、遅いと往右飛び、左右に45度より外へ飛ぶとファウルです。球は線の上を一定の速さで進むので、手手指を置いたまま通り道に芯を合わせ、放開瞬間だけに集中してください。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script>
@@ -160,21 +160,21 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   'use strict';
   const $ = id => document.getElementById(id);
 
-  // ---------- 画面配置（画面の高さに対する割合） ----------
+  // ---------- 畫面配置（畫面の高さに対する割合） ----------
   const PLATE_Y = 0.84;      // ホームベースの位置
   const MOUND_Y = 0.50;      // マウンドの位置
 
   // ---------- 投球（px・秒） ----------
-  const ZONE_X = 40;         // ストライクゾーンの横幅の半分
-  const ZONE_Y = 22;         // ストライクゾーンの高さの半分
-  const ZONE_OFFSET = 40;    // ストライクゾーンの中心（ホームベースからこの分だけ上）
+  const ZONE_X = 40;         // 好球ゾーンの横幅の半分
+  const ZONE_Y = 22;         // 好球ゾーンの高さの半分
+  const ZONE_OFFSET = 40;    // 好球ゾーンの中心（ホームベースからこの分だけ上）
   const PITCH_SPEED = 450;   // 球速（px/秒）。描いた速さに関係なく、線の上を一定の速さで進む
   const MIN_PATH = 60;       // これより短い線は球にしない
   const RESAMPLE = 4;        // 線を等間隔に打ち直す間隔（px）
   const SMOOTH = 3;          // 手ぶれをならす強さ（前後この点数で平均する）
-  const ZONE_NG_TIME = 1.2;  // ストライクにならない線を描いたとき、ゾーンの枠を赤く点滅させる時間（秒）
+  const ZONE_NG_TIME = 1.2;  // 好球にならない線を描いたとき、ゾーンの枠を赤く点滅させる時間（秒）
   const ZONE_NG_BLINK = 0.2; // 点滅の間隔（秒）
-  const OUT_MARGIN = 20;     // 線の終わりからはまっすぐ進み、画面の外へこの分だけ出たら1球おしまい（px）
+  const OUT_MARGIN = 20;     // 線の終わりからはまっすぐ進み、畫面の外へこの分だけ出たら1球おしまい（px）
 
   // ---------- バッター（px・秒） ----------
   const MEET = 30;           // バットの芯からこの距離以内でボールに当たる
@@ -191,9 +191,9 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   const PITCHER_SCALE = 1.7; // ピッチャーを描く大きさ（倍）
   const BATTER_LEG = 28;     // バッターの足の長さ（px）
   const SLEEVE = 0.4;        // バッターの半袖の長さ（肩から手までのうちの割合）
-  const MOVE_UP = 40;        // バッターが前（ピッチャー側）に出られる範囲（px）。左右は画面の端まで動ける
+  const MOVE_UP = 40;        // バッターが前（ピッチャー側）に出られる範囲（px）。左右は畫面の端まで動ける
   const MOVE_DOWN = 40;      // バッターが下に動ける範囲
-  const KEY_STEP = 6;        // 矢印キー1回で動く量
+  const KEY_STEP = 6;        // 矢印鍵1回で動く量
 
   // ---------- 打球 ----------
   const EXIT_MIN = 26;       // 打球速度の最小（m/s、芯のふちで当たったとき）
@@ -215,16 +215,16 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   const BALL_R = 5;          // ボールの半径（px。投げた球はずっとこの大きさ、打球は地面にあるときこの大きさ）
   const BALL_GROW = 0.1;     // 高さ1mごとに大きく見せる量（px。高く上がるほどカメラに近づくので大きく）
   const BOUNCE = 0.35;       // 着地したときに跳ね返る強さ（縦）
-  const BOUNCE_KEEP = 0.8;   // 着地したときに残る前へ進む勢い
+  const BOUNCE_KEEP = 0.8;   // 着地したときに残る上一頁進む勢い
   const WALL_BOUNCE = 0.35;  // フェンス・スタンドに当たって跳ね返る強さ
   const WALL_KEEP = 0.7;     // フェンス・スタンドに当たったあとに残る勢い
   const ROLL_DECEL = 5;      // 転がるときの減速（m/s²。一定の強さでブレーキがかかり、じわじわ止まらない）
   const HR_FADE = 0.3;       // ホームランがスタンドに入ってから消えるまで（秒、打球の時間で）
-  const FLIGHT_EVEN = 0.7;   // 画面上の打球の速さをどれだけならすか（0：計算どおり 1：画面上で一定の速さ）
-                             // 奥へ飛ぶほど画面上の動きが小さくなり、急に止まったように見えるのを防ぐ
+  const FLIGHT_EVEN = 0.7;   // 畫面上の打球の速さをどれだけならすか（0：計算どおり 1：畫面上で一定の速さ）
+                             // 奥へ飛ぶほど畫面上の動きが小さくなり、急に止まったように見えるのを防ぐ
   const LAND_EASE = 0.25;    // 着地した後、見せる速さを計算どおりへ戻していく時間の目安（秒）
   const AIR_MAX = 2.6;       // 着地までを見せる時間の上限（秒）
-  const CAM_ANCHOR_Y = 0.45; // 打球を追いかけるとき、ボールを画面のどの高さに置くか（上からの割合）
+  const CAM_ANCHOR_Y = 0.45; // 打球を追いかけるとき、ボールを畫面のどの高さに置くか（上からの割合）
   const CAM_ZOOM_FAR = 0.6;  // 打球が遠くへ行ったときのカメラの倍率（1より小さいと引いて広く映す）
   const CAM_ZOOM_DIST = 80;  // この距離（m）で倍率がいちばん変わる
   const CAM_EASE = 6;        // カメラが追いつく速さ（大きいほどすぐ追いつく）
@@ -236,10 +236,10 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   const HITFX_TIME = 0.35;   // 打った瞬間のエフェクトを見せる時間（秒）
   const HITFX_RAYS = 12;     // 打った瞬間に飛び散る光の線の数
   const HITFX_SIZE = 70;     // 打った瞬間のエフェクトの広がり（px。芯の真ん中で打ったとき）
-  const HIT_SHAKE = 16;      // 打った瞬間の画面の揺れ（px。芯の真ん中で打ったとき。芯のふちでも4割は揺れる）
+  const HIT_SHAKE = 16;      // 打った瞬間の畫面の揺れ（px。芯の真ん中で打ったとき。芯のふちでも4割は揺れる）
   const HR_RESULT_TIME = 2.6;// ホームランのときに結果を表示しておく時間（秒。お祝いを見せるため長め）
-  const CONFETTI_POP = 70;   // ホームランのとき、画面の左右の下からはじき出す紙吹雪の数（片側）
-  const CONFETTI_RAIN = 90;  // ホームランのとき、画面の上から降らせる紙吹雪の数
+  const CONFETTI_POP = 70;   // ホームランのとき、畫面の左右の下からはじき出す紙吹雪の数（片側）
+  const CONFETTI_RAIN = 90;  // ホームランのとき、畫面の上から降らせる紙吹雪の数
   const CONFETTI_GRAV = 900; // 紙吹雪にかかる重力（px/s²）
   const CONFETTI_DRAG = 1.6; // 紙吹雪の空気抵抗（ひらひら落ちるように）
   const FIREWORKS = 4;       // ホームランのときに打ち上げる花火の数
@@ -248,7 +248,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
 
   // ---------- 球のコード ----------
   // 線を等間隔の歩幅で区切り、1歩ごとに「どの向きに進むか」を64方向の1文字で表す。
-  // 歩幅はピッチャーの手からゾーンまでの距離に対する割合なので、画面の大きさが違う端末でも同じ形の球になる。
+  // 歩幅はピッチャーの手からゾーンまでの距離に対する割合なので、畫面の大きさが違う端末でも同じ形の球になる。
   // 形式：[形式の番号][1球目の歩数][1球目の向き…][2球目の歩数][2球目の向き…]…[検査用の1文字]
   const CODE_VER = 2;        // コードの形式の番号（形式を変えたら上げる）
   const CODE_STEP = 0.08;    // 1歩の長さ（ピッチャーの手からゾーンまでの距離に対する割合。約20px）
@@ -259,7 +259,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   const GAUGE_LOW = 20;      // 描ける線の剩餘がこの割合（%）以下になったらゲージを赤くする
 
   // ---------- 球場の描き方（真上から見た図。単位はm） ----------
-  const MOUND_DIST = 18.4;   // ホームからマウンドまで（m）。画面の PLATE_Y〜MOUND_Y がこの長さになる縮尺で描く
+  const MOUND_DIST = 18.4;   // ホームからマウンドまで（m）。畫面の PLATE_Y〜MOUND_Y がこの長さになる縮尺で描く
   const BASE_DIST = 27.4;    // 塁間（m）
   const INFIELD_ARC = 29;    // 内野の土の外周（マウンドからの半径、m）
   const FOUL_ROOM = 9;       // ファウルラインからスタンドまでの幅（m）
@@ -267,7 +267,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   const STANDS_W = 14;       // スタンドの幅（m）
   const TRACK_W = 4;         // フェンス沿いの土（m）
   const WALL_W = 2;          // フェンスの厚さ（m）
-  const OUTSIDE = 20000;     // 球場の外を塗る広さ（画面のpx。打球がどこまで飛んでも切れないように）
+  const OUTSIDE = 20000;     // 球場の外を塗る広さ（畫面のpx。打球がどこまで飛んでも切れないように）
   const BOX_SCALE = 3;       // ホームベースとバッターボックスの大きさ（実物の何倍で描くか）
   const PLATE_W = 0.432;     // ホームベースの幅（m、実物）
   const BOX_W = 1.22;        // バッターボックスの幅（m、実物）
@@ -276,7 +276,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   const HOME_DIRT = 6.5;     // ホームまわりの土の半径（m。大きくしたバッターボックスが収まるように）
 
 
-  // ---------- 画面 ----------
+  // ---------- 畫面 ----------
   const cv = $('cv'), ctx = cv.getContext('2d');
   let W = 0, H = 0, cx = 0, plateY = 0, moundY = 0, zoneY = 0, handX = 0, handY = 0;
   function resize(){
@@ -293,7 +293,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     clampSweet();
   }
 
-  // 1mが画面で何pxか（ホームからマウンドまでが画面の配置と同じ長さになる縮尺）
+  // 1mが畫面で何pxか（ホームからマウンドまでが畫面の配置と同じ長さになる縮尺）
   const pxPerM = () => (plateY - moundY) / MOUND_DIST;
 
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -301,7 +301,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   ['--back','--grass','--wall','--wall-top','--track','--stands','--concourse','--line','--dirt','--ball','--shadow','--pitcher','--batter','--pitcher-skin','--pitcher-hair','--pitcher-shirt','--pitcher-pants','--batter-shirt','--batter-tights','--bat','--path','--zone','--hitfx','--meet','--zone-ng','--fg','--cf1','--cf2','--cf3','--cf4','--cf5','--cf6']
     .forEach(k => { COL[k] = css(k); });
 
-  // 球場の位置（ホームからの距離m・角度）→ 画面の位置（真上から見た図なので、縮尺はどこでも同じ）
+  // 球場の位置（ホームからの距離m・角度）→ 畫面の位置（真上から見た図なので、縮尺はどこでも同じ）
   function fieldToScreen(r, deg){
     const R = r * pxPerM(), a = deg * Math.PI / 180;
     return { x: cx + Math.sin(a) * R, y: plateY - Math.cos(a) * R };
@@ -316,7 +316,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   let mode = 'menu', timer = 0;
   let zoneNgAt = -1e9;
   let hitFx = null;      // 打った瞬間のエフェクト { x, y, t, q, rays }
-  let confetti = [];     // ホームランのお祝いの紙吹雪・花火の火花（画面の座標）
+  let confetti = [];     // ホームランのお祝いの紙吹雪・花火の火花（畫面の座標）
   let fireworkQueue = []; // これから打ち上げる花火 { at: 剩餘秒, x, y }   // ゾーンの枠を赤く点滅させ始めた時刻
   let sweet = null;          // バッターのバットの芯の位置
   let stroke = null;         // 描いている線 [{x,y}]
@@ -324,7 +324,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   let pitch = null;          // 投げている球 { pts:[{x,y,t}], T, vx, vy, t }
   let swingAt = null, swingElapsed = 0, resolved = false;
   let flight = null;
-  // カメラ（打球を追いかけるときだけ動く）：画面上のこの点を、画面の (W/2, H*CAM_ANCHOR_Y) に zoom 倍で映す
+  // カメラ（打球を追いかけるときだけ動く）：畫面上のこの点を、畫面の (W/2, H*CAM_ANCHOR_Y) に zoom 倍で映す
   let cam = { x: 0, y: 0, zoom: 1 };
   const camHome = () => ({ x: W / 2, y: H * CAM_ANCHOR_Y, zoom: 1 });
 
@@ -334,8 +334,8 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
 
   // プレイモード
   let play = null;           // { balls, order, k, hr }
-  let lastPlayCode = '';     // 「もう一回」で同じコードを使うため
-  let lastEndless = false;   // 「もう一回」で同じモードにするため
+  let lastPlayCode = '';     // 「再來一次」で同じコードを使うため
+  let lastEndless = false;   // 「再來一次」で同じモードにするため
 
   function clampSweet(){
     sweet.x = Math.max(0, Math.min(W, sweet.x));
@@ -398,17 +398,17 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     const e = p.pts[p.pts.length - 1];
     return { x: e.x + p.vx * (t - p.T), y: e.y + p.vy * (t - p.T) };
   }
-  // 線を通り過ぎた後、画面の外まで出たか
+  // 線を通り過ぎた後、畫面の外まで出たか
   function ballGone(p){
     if (p.t <= p.T) return false;
     const b = ballPos(p, p.t);
     return b.x < -OUT_MARGIN || b.x > W + OUT_MARGIN || b.y < -OUT_MARGIN || b.y > H + OUT_MARGIN;
   }
-  // 球（線＋その後のまっすぐ）が、画面の外へ出るまでにストライクゾーンを通るか
+  // 球（線＋その後のまっすぐ）が、畫面の外へ出るまでに好球ゾーンを通るか
   function passesZone(p){
     const x0 = cx - ZONE_X, x1 = cx + ZONE_X, y0 = zoneY - ZONE_Y, y1 = zoneY + ZONE_Y;
     const dt = 1 / 900;   // 1回に進むのは0.5px程度なので、ゾーンの角をかすめても取りこぼさない
-    const tEnd = p.T + (W + H) * 2 / PITCH_SPEED;   // まっすぐ進んで画面の外に出るまでに十分な時間
+    const tEnd = p.T + (W + H) * 2 / PITCH_SPEED;   // まっすぐ進んで畫面の外に出るまでに十分な時間
     for (let t = 0; t <= tEnd; t += dt){
       const b = ballPos(p, t);
       if (b.x >= x0 && b.x <= x1 && b.y >= y0 && b.y <= y1) return true;
@@ -480,7 +480,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     return balls.length && balls.length <= BALLS ? balls : null;
   }
 
-  // ---------- 画面の切り替え ----------
+  // ---------- 畫面の切り替え ----------
   function clearBall(){
     stroke = null; pitch = null; flight = null; hitFx = null;
     swingAt = null; resolved = false;
@@ -514,7 +514,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     mode = 'eaim';
     refreshEdit();
   }
-  // 編集中の画面の表示をそろえる
+  // 編集中の畫面の表示をそろえる
   function refreshEdit(){
     const inEdit = mode === 'eaim' || mode === 'edraw' || mode === 'epreview';
     $('slots').classList.toggle('hidden', !inEdit);
@@ -534,7 +534,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     $('back').disabled = mode !== 'eaim';
     $('preview').disabled = mode !== 'eaim' || !slots[cur];
     $('export').disabled = mode !== 'eaim' || slots.some(s => !s);   // 5球そろったら書き出せる
-    // まだ書き出せないときは、何球描けたかと理由をボタンに出す
+    // まだ書き出せないときは、何球描けたかと理由を按鈕に出す
     const filled = slots.filter(Boolean).length;
     if (filled < BALLS) $('export').innerHTML = `匯出 ${filled}/${BALLS}<small>${BALLS}球描くと書き出せます</small>`;
     else if ($('export').textContent !== '已複製') $('export').textContent = '匯出';
@@ -543,9 +543,9 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     // 描いた線をいったんコードにしてから戻したものを保存する（分享したときと同じ形で見えるように）
     const dirs = encodeBall(makePitch(stroke).pts);
     stroke = null;
-    // ストライクゾーンを通らない球は保存しない（前に描いた球はそのまま残す）
+    // 好球ゾーンを通らない球は保存しない（前に描いた球はそのまま残す）
     if (ballInZone(dirs)) slots[cur] = dirs;
-    else { $('msg').textContent = 'ストライクになりません'; $('msg').className = 'warn'; zoneNgAt = performance.now(); }
+    else { $('msg').textContent = '好球になりません'; $('msg').className = 'warn'; zoneNgAt = performance.now(); }
     mode = 'eaim';
     refreshEdit();
   }
@@ -588,7 +588,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   $('showClose').addEventListener('click', () => $('showDlg').classList.add('hidden'));
   function copyText(text, btn, label){
     const done = () => { btn.textContent = '已複製'; setTimeout(() => { btn.textContent = label; }, 1500); };
-    // 1) 選択してコピー（ボタンを押した処理の中でそのまま行うので、多くの環境で通る）
+    // 1) 選択してコピー（按鈕を押した処理の中でそのまま行うので、多くの環境で通る）
     if (copyByTextarea(text)){ done(); return; }
     // 2) クリップボードAPI
     if (navigator.clipboard && window.isSecureContext){
@@ -614,7 +614,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     if (!code.trim()){ $('codeErr').textContent = 'コードを入力してください'; return; }
     const balls = decodeBundle(code);
     if (!balls){ $('codeErr').textContent = 'コードが正しくありません'; return; }
-    if (codePurpose === 'load' && !balls.every(ballInZone)){ $('codeErr').textContent = 'ストライクゾーンを通らない球があります'; return; }
+    if (codePurpose === 'load' && !balls.every(ballInZone)){ $('codeErr').textContent = '好球ゾーンを通らない球があります'; return; }
     $('codeDlg').classList.add('hidden');
     $('codeIn').blur();
     if (codePurpose === 'load'){
@@ -650,7 +650,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     clearBall();
     mode = 'bwait'; timer = 0;
     $('hud').classList.remove('hidden');
-    $('bar').classList.add('hidden');   // プレイ中は下のボタンを出さない
+    $('bar').classList.add('hidden');   // プレイ中は下の按鈕を出さない
     updateHud();
   }
   // エンドレスモードの次の球（同じ球が2回続かないように選ぶ）
@@ -691,7 +691,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     const v = EXIT_MIN + (EXIT_MAX - EXIT_MIN) * Math.pow(q, 0.7);
     const la = BEST_ANGLE - ANGLE_DROP * Math.pow(1 - q, 2);
     const th = dy / MEET * SPRAY_MAX;   // ボールがまだ芯より上（手前に来ていない）＝打つのが早い → 往左
-    // バットに当たった位置（画面）→ 球場の位置（m）。そこから打球を計算する
+    // バットに当たった位置（畫面）→ 球場の位置（m）。そこから打球を計算する
     const ppm = pxPerM();
     const x0 = (b.x - cx) / ppm, z0 = (plateY - b.y) / ppm - HIT_Y * HEIGHT_K;
     flight = simulate(v, la, th, x0, z0);
@@ -720,7 +720,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
       if (!crossed && Math.abs(ang) <= FOUL_ANGLE && r >= fenceAt(ang)){
         crossed = true;
         if (y < WALL_H){
-          // フェンスに当たったら、その場で真下に落とす
+          // フェンスに当たったら、その場で真下に掉落
           wall = true;
           for (let yy = y; yy > 0; yy -= 0.15) pts.push({ x, y: yy, z });
           y = 0;
@@ -802,7 +802,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
       col: cfColor(), life: spark ? rnd(0.7, 1.1) : rnd(2.2, 3.2), age: 0, spark });
   }
   function celebrate(){
-    // 画面が白く光る
+    // 畫面が白く光る
     const fl = $('flash');
     fl.classList.remove('on'); void fl.offsetWidth; fl.classList.add('on');
     // 左右の下からクラッカーのようにはじき出す
@@ -894,9 +894,9 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     return `${head}\n${url}\n#ぼくらのホームランダービー`;
   }
   // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）。
-  // 結果画面に出ている部分（ホームランの数と1球ずつの結果）を、画面の見た目のまま切り出す
+  // 結果畫面に出ている部分（ホームランの数と1球ずつの結果）を、畫面の見た目のまま切り出す
   function resultImageFile(){
-    const S = 2;                                   // 画像を画面の何倍の細かさで作るか
+    const S = 2;                                   // 画像を畫面の何倍の細かさで作るか
     const base = cv.getBoundingClientRect();
     const rel = el => { const r = el.getBoundingClientRect(); return { x: r.left - base.left, y: r.top - base.top, w: r.width, h: r.height }; };
     const t = rel($('ovTitle')), l = rel($('ovList'));
@@ -906,7 +906,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     const c = document.createElement('canvas');
     c.width = Math.round((x1 - x0) * S); c.height = Math.round((y1 - y0) * S);
     const g = c.getContext('2d');
-    // 背景：いまのゲーム画面の同じ場所を、結果画面と同じように暗くして敷く
+    // 背景：いまのゲーム畫面の同じ場所を、結果畫面と同じように暗くして敷く
     const dpr = cv.width / W;
     g.drawImage(cv, x0 * dpr, y0 * dpr, (x1 - x0) * dpr, (y1 - y0) * dpr, 0, 0, c.width, c.height);
     g.fillStyle = css('--panel'); g.fillRect(0, 0, c.width, c.height);
@@ -914,9 +914,9 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     // 結果一覧の下地
     g.fillStyle = css('--card');
     g.beginPath();
-    if (g.roundRect) g.roundRect(l.x, l.y, l.w, l.h, 12); else g.rect(l.x, l.y, l.w, l.h);   // 古いブラウザは角を丸めない
+    if (g.roundRect) g.roundRect(l.x, l.y, l.w, l.h, 12); else g.rect(l.x, l.y, l.w, l.h);   // 古い瀏覽器は角を丸めない
     g.fill();
-    // 文字：画面に出ている位置・大きさ・色のまま描く
+    // 文字：畫面に出ている位置・大きさ・色のまま描く
     const text = (el, align) => {
       const st = getComputedStyle(el), r = rel(el);
       g.font = `${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;
@@ -945,7 +945,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);
@@ -959,9 +959,9 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   $('goCode').addEventListener('click', () => { $('menu').classList.add('hidden'); openCodeDlg('play'); });
 
   // ---------- 入力 ----------
-  // Editモード：指（マウス）で線を拉と、ピッチャーの手からその線の形の球になる
-  // プレイモード：PCはバットの芯がマウスカーソルに重なるように動いてクリックでスイング、
-  //              スマホは指でなぞった分だけ動いて、指を離すとスイング
+  // Editモード：手手指（滑鼠）で線を拉と、ピッチャーの手からその線の形の球になる
+  // プレイモード：PCはバットの芯が滑鼠カーソルに重なるように動いて點擊でスイング、
+  //              スマホは手手指でなぞった分だけ動いて、手手指を放開とスイング
   const drags = new Map();
   let usingKeyboard = false;
   const localPos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
@@ -1035,14 +1035,14 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     }
   });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   // （コードの入力欄・表示欄だけは、コピー・貼り付けのために選択・長押しメニューを使えるようにする）
   const isTextField = t => t instanceof Element && !!t.closest('input,textarea');
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
   document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => { if (!isTextField(e.target)) e.preventDefault(); });
   document.addEventListener('contextmenu', e => { if (!isTextField(e.target)) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -1084,7 +1084,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
       if (timer >= (play.results[play.results.length - 1]?.isHr ? HR_RESULT_TIME : RESULT_TIME)) afterResult();
     }
     updateCamera(dt);
-    // 描ける線の剩餘のゲージ：満タンから描いた分だけ減る。空になるとそれ以上線が伸びない
+    // 描ける線の剩餘のゲージ：満タンから描いた分だけ減少。空になるとそれ以上線が伸びない
     const showGauge = mode === 'eaim' || mode === 'edraw';
     $('gauge').classList.toggle('hidden', !showGauge || !$('codeDlg').classList.contains('hidden'));
     if (showGauge){
@@ -1104,7 +1104,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   }
 
   // 球場を図形で描く（真上から見た図。どこまで拡大しても荒れない）
-  // 位置は m で考え、ホームを原点、センター方向を +z とした座標 (x, z) を画面に写す
+  // 位置は m で考え、ホームを原点、センター方向を +z とした座標 (x, z) を畫面に写す
   const W2S = (x, z) => ({ x: cx + x * pxPerM(), y: plateY - z * pxPerM() });
   const polar = (r, deg) => ({ x: Math.sin(deg * Math.PI / 180) * r, z: Math.cos(deg * Math.PI / 180) * r });
   function pathTo(pts, close){
@@ -1144,7 +1144,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     // グラウンド（芝）
     pathTo(ground, true);
     ctx.fillStyle = COL['--grass']; ctx.fill();
-    // フェンス沿いの土（フェンスの線に沿って太く引き、グラウンドの外にはみ出す分は切り取る）
+    // フェンス沿いの土（フェンスの線に沿って太く引き、グラウンドの外にはみ出す分は切り取得）
     ctx.save();
     pathTo(ground, true); ctx.clip();          // グラウンドの内側だけに塗る
     pathTo(fence, false);
@@ -1181,7 +1181,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     circleAt(0, mz, 2.8, COL['--dirt']);
 
     // ホームまわり（ホームベースとバッターボックス）は実物の寸法を BOX_SCALE 倍して描く。
-    // 原点はホームベースの後ろのとがった角（ファウルラインが始まるところ）
+    // 原点はホームベースの後ろのとがった角（ファウルラインが開始ところ）
     const S = BOX_SCALE;
     const boxIn = (PLATE_W / 2 + BOX_GAP) * S, boxOut = boxIn + BOX_W * S;       // 箱の内側・外側の線（横）
     const plateMid = PLATE_W / 2 * S;                                            // ホームベースの前後の真ん中
@@ -1214,7 +1214,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   }
 
   function drawZone(){
-    // ストライクにならない線を描いた直後は、赤で点滅させる
+    // 好球にならない線を描いた直後は、赤で点滅させる
     const ng = (performance.now() - zoneNgAt) / 1000;
     const red = ng < ZONE_NG_TIME && Math.floor(ng / ZONE_NG_BLINK) % 2 === 0;
     ctx.strokeStyle = COL[red ? '--zone-ng' : '--zone']; ctx.lineWidth = red ? 4 : 3;
@@ -1259,7 +1259,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     ctx.fillRect(bx + 3, hy + 6, 10, BATTER_LEG);
     ctx.beginPath(); ctx.arc(bx, hy - 52, 13, 0, Math.PI * 2); ctx.fill();   // 頭
 
-    // 絵は3枚：構え（肩にかついで後ろへ寝かせる）→ 振っている（前へ真横。当たる瞬間はこの絵）→ 振り抜いた
+    // 絵は3枚：構え（肩にかついで後ろへ寝かせる）→ 振っている（上一頁真横。当たる瞬間はこの絵）→ 振り抜いた
     const swung = swingAt !== null && (mode === 'pitch' || mode === 'flight' || mode === 'result');
     const pose = !swung ? 0 : swingElapsed < SWING_DELAY + SWING_HOLD ? 1 : 2;
     const ang = [BAT_REST, 0, BAT_FOLLOW][pose];
@@ -1309,18 +1309,18 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     ctx.beginPath(); ctx.arc(b.x, b.y, BALL_R, 0, Math.PI * 2); ctx.fill();
   }
 
-  // 打球の高さ1mを画面で何px上に描くか（地面と同じ縮尺 × HEIGHT_K）
+  // 打球の高さ1mを畫面で何px上に描くか（地面と同じ縮尺 × HEIGHT_K）
   function heightScale(r){
     return pxPerM() * HEIGHT_K;
   }
-  // 打球の点 → 画面上のボールの位置と、その真下の地面の位置
+  // 打球の点 → 畫面上のボールの位置と、その真下の地面の位置
   function flightScreen(p){
     const R = Math.hypot(p.x, p.z);
     const g = fieldXZ(p.x, p.z);                    // ボールの真下の地面
     return { x: g.x, y: g.y - p.y * heightScale(R), gy: g.y, R };
   }
-  // 着地までの見せ方の時間割を作る。計算どおりの時間と、画面上で進んだ距離を混ぜて、
-  // 画面上の速さがなるべくそろうようにする
+  // 着地までの見せ方の時間割を作る。計算どおりの時間と、畫面上で進んだ距離を混ぜて、
+  // 畫面上の速さがなるべくそろうようにする
   function prepareFlightTimeline(fl){
     flight = fl;
     const n = fl.landIdx;
@@ -1420,7 +1420,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     // カメラの外側に見える部分も、奥の色で塗っておく
     ctx.fillStyle = COL['--back']; ctx.fillRect(0, 0, W, H);
     ctx.save();
-    // 打った瞬間は画面を少し揺らす
+    // 打った瞬間は畫面を少し揺らす
     if (hitFx){
       const a = HIT_SHAKE * (0.4 + 0.6 * hitFx.q) * Math.pow(1 - hitFx.t / HITFX_TIME, 1.5);
       ctx.translate((Math.random() * 2 - 1) * a, (Math.random() * 2 - 1) * a);
@@ -1429,7 +1429,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     ctx.scale(cam.zoom, cam.zoom);
     ctx.translate(-cam.x, -cam.y);
     drawField();
-    if (!play) drawZone();   // 打つとき（プレイモード）はストライクゾーンを出さない
+    if (!play) drawZone();   // 打つとき（プレイモード）は好球ゾーンを出さない
     drawPitcher();
     const editing = mode === 'eaim' || mode === 'edraw' || mode === 'epreview';
     if (!editing) drawBatter();   // Editモードでは打者は出さない
@@ -1450,7 +1450,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     if (flight && (mode === 'flight' || mode === 'result')) drawFlightBall();
     if (hitFx) drawHitFx();
     ctx.restore();
-    drawConfetti();   // 紙吹雪は画面に貼りつけて描く（カメラに合わせて動かない）
+    drawConfetti();   // 紙吹雪は畫面に貼りつけて描く（カメラに合わせて動かない）
   }
 
   // ---------- ループ ----------

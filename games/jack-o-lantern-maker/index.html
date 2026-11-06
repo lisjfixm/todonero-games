@@ -75,12 +75,12 @@ body{
 .btn{min-width:132px;min-height:52px;padding:0 22px;border:1px solid var(--line);border-radius:26px;
   background:var(--panel);color:var(--fg);font:inherit;font-size:17px;font-weight:700;touch-action:manipulation}
 .btn:disabled{opacity:.4}
-/* アイコンだけのボタン（重新開始） */
+/* アイコンだけの按鈕（重新開始） */
 .iconBtn{min-width:52px;width:52px;padding:0;display:flex;align-items:center;justify-content:center}
 .iconBtn svg{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 /* 太さのスライダー：左に小さい丸、右に大きい丸 */
 .sizeRow{display:flex;align-items:center;gap:12px;width:min(340px,100%)}
-/* 並べたカボチャをタップしたときのメニュー */
+/* 並べたカボチャを點擊したときのメニュー */
 #pkMenu{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--panel);border-top:1px solid var(--line);
   padding:12px calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));touch-action:manipulation}
 .mrow{display:flex;align-items:center;gap:12px;width:min(340px,100%);font-size:15px}
@@ -102,7 +102,7 @@ body{
 #width:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .sw{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);padding:0;touch-action:manipulation}
 .sw[aria-pressed="true"],.sw.on{border:4px solid var(--fg)}
-/* カラーピッカーも色の丸ボタンと同じ形にする。好きな色を選ぶまでは虹色で、色の丸と見分けられるようにする */
+/* カラーピッカーも色の丸按鈕と同じ形にする。好きな色を選ぶまでは虹色で、色の丸と見分けられるようにする */
 input.sw{-webkit-appearance:none;appearance:none;cursor:pointer;overflow:hidden;
   background:conic-gradient(#f44,#fd4,#4f4,#4ff,#44f,#f4f,#f44)}
 input.sw::-webkit-color-swatch-wrapper{padding:0}
@@ -112,18 +112,18 @@ input.sw.on::-webkit-color-swatch{opacity:1}
 input.sw.on::-moz-color-swatch{opacity:1}
 .btn:focus-visible,.sw:focus-visible,#share-close:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .hidden{display:none !important}
-/* 切り替えのあと、ボタンは下からふわっと出す */
+/* 切り替えのあと、按鈕は下からふわっと出す */
 .bar:not(.hidden),#pickTitle:not(.hidden){animation:barIn .3s ease-out}
-/* 右上の階段ボタン：階段を消しているときは斜線を出す */
+/* 右上の階段按鈕：階段を消しているときは斜線を出す */
 #stairBtn{position:absolute;top:calc(env(safe-area-inset-top, 0px) + 12px);right:calc(env(safe-area-inset-right, 0px) + 12px);touch-action:none}
 #lightBtn{position:absolute;top:calc(env(safe-area-inset-top, 0px) + 12px);right:calc(env(safe-area-inset-right, 0px) + 72px);touch-action:none}
 #lightBtn .slash{display:none}
 #lightBtn[aria-pressed="false"] .slash{display:inline}
 #stairBtn .slash{display:none}
 #stairBtn[aria-pressed="false"] .slash{display:inline}
-/* 最初の画面の見出し */
+/* 最初の畫面の見出し */
 #pickTitle{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top, 0px) + 28px);text-align:center;font-size:24px;font-weight:700;letter-spacing:.05em;pointer-events:none}
-/* 狭い画面では見出しが左上の「玩法」ボタンに重なるので、その往下ずらす */
+/* 狭い畫面では見出しが左上の「玩法」按鈕に重なるので、その往下ずらす */
 @media (max-width:370px){#pickTitle{top:calc(env(safe-area-inset-top, 0px) + 62px)}}
 @keyframes barIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);touch-action:none}
@@ -180,12 +180,12 @@ input.sw.on::-moz-color-swatch{opacity:1}
   </div>
   <section class="howto" hidden data-pos="top-left">
     <h2>玩法</h2>
-    <p>かぼちゃを彫って光を灯し、夜の玄関先に飾る作品です。勝ち負けや時間制限はありません。4種類から1つ選んで彫り、光の色を選んで飾ります。30個まで並べられ、このブラウザに保存されます。</p>
+    <p>かぼちゃを彫って光を灯し、夜の玄関先に飾る作品です。贏輸や時間制限はありません。4種類から1つ選んで彫り、光の色を選んで飾ります。30個まで並べられ、この瀏覽器に會儲存。</p>
     <h2>操作</h2>
-    <p>かぼちゃの表面をなぞると切れ、書き始めの近くまで戻して囲むと中がくり抜かれ、タップすると丸い穴が開きます。かぼちゃの外を拖曳すると回せます。飾った後は拖曳で移動し、タップで回転、大きさ、刪除の調整ができます。背景の拖曳で見る向きが変わり、2本指で拡大と移動ができます。PC ではホイールで拡大し、Shift を押しながらの拖曳で移動します。</p>
+    <p>かぼちゃの表面をなぞると切れ、書き始めの近くまで戻して囲むと中がくり抜かれ、點擊すると丸い穴が開きます。かぼちゃの外を拖曳すると回せます。飾った後は拖曳で移動し、點擊で回転、大きさ、刪除の調整ができます。背景の拖曳で見る向きが変わり、2本手手指で拡大と移動ができます。PC ではホイールで拡大し、Shift を押しながらの拖曳で移動します。</p>
     <h2>楽しみ方</h2>
-    <p>光は4色のほかに好きな色も選べます。かぼちゃは別のかぼちゃの上に重ねられます。右上のボタンで家の電気を消すと周りが暗くなり、かぼちゃの光が引き立ちます。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>光は4色のほかに好きな色も選べます。かぼちゃは別のかぼちゃの上に重ねられます。右上の按鈕で家の電気を消すと周りが暗くなり、かぼちゃの光が引き立ちます。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -201,18 +201,18 @@ input.sw.on::-moz-color-swatch{opacity:1}
   const RIM_PX = 2;           // 切り口のまわりに見える果肉の幅（px）
   const CLOSE_PX = 36;        // 書き終わりが書き始めにこの距離（px）まで戻ったら、囲んだ中をくり抜く
   const MIN_STEP_PX = 2;      // 線の点を足す最小の間隔（px）
-  const STROKE_STEP_PX = 3;   // 指の動きの点の間を、皮の絵の上でこの間隔（px）ごとに補う
+  const STROKE_STEP_PX = 3;   // 手手指の動きの点の間を、皮の絵の上でこの間隔（px）ごとに補う
   const GUIDE_PX = 3;         // 書いている途中の線の最低の太さ（px）
   const INNER_SCALE = 0.92;   // 内側の果肉の大きさ（外側に対する比）。これが皮の厚みになる
   const ROT_SPEED = 0.01;     // 拖曳1pxあたりの回転（ラジアン）
-  const KEY_SPEED = 1.6;      // 矢印キーを按いる間の回転の速さ（ラジアン/秒）
+  const KEY_SPEED = 1.6;      // 矢印鍵を按いる間の回転の速さ（ラジアン/秒）
   const TILT_MAX = 0.6;       // 掘るときに前後へ傾けられる角度（ラジアン）
   const LIGHT_POWER = 6;      // 中の光の強さ
   const LIGHT_GLOW = 0.35;    // 中の果肉が光の色で光って見える強さ（0〜1）
   const LANTERN_RANGE = 9;    // 中の光が届く距離（遠くなるほど暗くなり、ここで0になる）
   const MAX_LANTERNS = 32;    // 同時に光らせられるカボチャの数
   const FLICKER_AMOUNT = 0.07; // ろうそくのような光の明るさの揺れ幅（0〜1）
-  const FX_CHIPS = 6, FX_MAX_CHIPS = 26;  // 掘ったときに飛ぶ破片の数（線が長いほど増える）と上限
+  const FX_CHIPS = 6, FX_MAX_CHIPS = 26;  // 掘ったときに飛ぶ破片の数（線が長いほど增加）と上限
   const FX_PUFFS = 8;         // 掘ったときに舞う粉の数
   const FX_SPEED = 2.2, FX_UP = 1.6;  // 破片が飛ぶ速さと、上向きの勢い
   const FX_GRAVITY = 9;       // 破片が落ちる重さ
@@ -246,25 +246,25 @@ input.sw.on::-moz-color-swatch{opacity:1}
   const FOG_NIGHT = [12, 50]; // 夜のときの霧の始まりと終わり。遠くの景色ほど闇に溶ける
   const ZOOM_MIN = 0.4, ZOOM_MAX = 2.5;    // 並べた所を見るときの寄り・引きの範囲（倍）
   const EL_MIN = 0.08, EL_MAX = 1.25;      // 並べた所を見るときの見下ろす角度の範囲（ラジアン）
-  const TAP_PX = 10;          // これ以上動いたらタップではなく拖曳とみなす（px）
+  const TAP_PX = 10;          // これ以上動いたら點擊ではなく拖曳とみなす（px）
   const T_PICK = 0.9;         // 選ぶ→掘る の演出の長さ（秒）
   const T_NIGHT = 1.3;        // 掘る→光 の演出の長さ（秒）
   const T_PUT = 1.5;          // 光→並べる の演出の長さ（秒）
   const T_BACK = 1.3;         // 並べる→選ぶ の演出の長さ（秒）
   const HOP_PICK = 0.6;       // 選んだカボチャが真ん中へ跳ねる高さ
   const HOP_PUT = 1.4;        // 飾るときに置き場所へ跳ねる高さ
-  const SINK = 2.8;           // 選ぶ画面の見本を床の往下沈める深さ
-  const VIEW_MARGIN_W = 5, VIEW_MARGIN_H = 4.5;  // 並べた画面で、カボチャのまわりにとる余白（大きいほど引きで見る）
+  const SINK = 2.8;           // 選ぶ畫面の見本を床の往下沈める深さ
+  const VIEW_MARGIN_W = 5, VIEW_MARGIN_H = 4.5;  // 並べた畫面で、カボチャのまわりにとる余白（大きいほど引きで見る）
   const FLOOR_TILE = 6;       // 床の木目の画像1枚ぶんの大きさ（カボチャの直径がおよそ2）
   const GRASS_TILE = 4;       // 草の画像1枚ぶんの大きさ
   const GRASS_BLADES = 2600;  // 草の画像に描く葉の数
   const PATH_W = 4;           // 扉までの道の幅
   const PATH_STONE = 1.1, PATH_GAP = 0.18;  // 敷石の奥行きとすき間
   const PATH_END = 14;        // 道の手前の端
-  const PAN_LIMIT = 20, PAN_FRONT = 18;  // 並べた画面で移動できる範囲（左右、手前）
+  const PAN_LIMIT = 20, PAN_FRONT = 18;  // 並べた畫面で移動できる範囲（左右、手前）
   const HOUSE_OFF_DIM = 0.3;  // 家の電気を消したときの夜の明るさ（ついているときを1として）
   const HOUSE_OFF_GLOW = 0.04; // 家の電気を消したときの窓とランプの明るさ
-  const SIDE_PUSH = 1.0;      // 段の前や横の面に拖曳したとき、面から手前へ出す距離
+  const SIDE_PUSH = 1.0;      // 段の前や横の面に拖曳したとき、面から手上一頁出す距離
   const STACK_SINK = 0.15;    // 重ねたとき、下のカボチャのてっぺんのくぼみに沈む深さ
   const STACK_REACH = 0.75;   // 下のカボチャの大きさに対して、この割合より中心が近ければ上に載る
   const OUTLINE_SCALE = 1.06;  // 選んでいるカボチャの輪郭の太さ（カボチャに対する大きさの比）
@@ -278,7 +278,7 @@ input.sw.on::-moz-color-swatch{opacity:1}
     { sy:0.60, size:1.18, ribs:14, rib:0.09, dimple:0.30, c:2 },  // 平たく大きい
     { sy:0.82, size:0.95, ribs:9,  rib:0.06, dimple:0.22, c:3 },  // 白
   ];
-  // 選ぶ画面での置き場所
+  // 選ぶ畫面での置き場所
   const SAMPLE_POS = [[-1.35, -1.2], [1.35, -1.2], [-1.35, 1.2], [1.35, 1.2]];
   // 中の光（名前は読み上げ用）
   const LIGHT_NAMES = ['ろうそく', '赤', '緑', '紫'];
@@ -298,7 +298,7 @@ input.sw.on::-moz-color-swatch{opacity:1}
   const sun = new THREE.DirectionalLight(0xffffff, 1);
   sun.position.set(3, 6, 5);
   scene.add(hemi, sun);
-  // 玄関ランプの明かり（並べる画面の景色といっしょに、夜になるにつれて灯る）
+  // 玄関ランプの明かり（並べる畫面の景色といっしょに、夜になるにつれて灯る）
   const porchLight = new THREE.PointLight(0xffd590, 0, 18, 2);
   scene.add(porchLight);
   // 床：木目のテクスチャを敷きつめる
@@ -316,7 +316,7 @@ input.sw.on::-moz-color-swatch{opacity:1}
   // 球を溝のある形にする。種類ごとに一度だけ作って使い轉動
   const geoCache = new Map();
   const SEAM_ROT = new THREE.Matrix4().makeRotationY(-Math.PI / 2);  // 絵のつなぎ目を後ろに回し、正面を掘りやすくする
-  // 球の上の点 (x,y,z) をカボチャの形に動かす
+  // 球の上の点 (x,y,z) をカボチャの形に移動
   function deform(t, x, y, z, out){
     const phi = Math.atan2(z, x);
     const cl = Math.sqrt(Math.max(0, 1 - y * y));                        // 上下の端ほど0
@@ -401,7 +401,7 @@ uniform vec4 lanternRect[MAX_LANTERNS];
 uniform sampler2D lanternCookie;
 uniform float lanternRange;
 uniform int lanternOwn;        // この面を持つカボチャ自身の光の番号（なければ -1）
-uniform float lanternOwnVis;   // 自分の光の当たり方（内側の面=1、外側の面=0）
+uniform float lanternOwnVis;   // 自己の光の当たり方（内側の面=1、外側の面=0）
 varying vec3 vLanternWorld;
 `;
   const LANTERN_LOOP = `
@@ -442,7 +442,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
       .replace('#include <common>', '#include <common>\n' + LANTERN_DECL)
       .replace('#include <lights_fragment_begin>', '#include <lights_fragment_begin>\n' + LANTERN_LOOP);
   }
-  // 材質を中の光で照らされるようにする。own=持ち主のカボチャの光の番号、ownVis=自分の光の当たり方
+  // 材質を中の光で照らされるようにする。own=持ち主のカボチャの光の番号、ownVis=自己の光の当たり方
   function useLanterns(mat, own, ownVis){
     mat.userData.lanternOwn = own;
     mat.userData.lanternOwnVis = ownVis;
@@ -525,7 +525,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   const LAND_Y = (STEPS + 1) * RISE;                         // 玄関前の踊り場の高さ
   const WALL_Z = STAIR_FRONT - STEPS * TREAD - LAND_D;       // 家の壁の位置
   // その場所の床の高さ（階段の段の上なら段の高さ）
-  let stairsOn = true;  // 階段を出しているか（右上のボタンで消せる。踊り場は残る）
+  let stairsOn = true;  // 階段を出しているか（右上の按鈕で消せる。踊り場は残る）
   function floorY(x, z){
     if (Math.abs(x) > STAIR_W / 2 || z > STAIR_FRONT || z < WALL_Z) return 0;
     const k = Math.min(STEPS + 1, Math.ceil((STAIR_FRONT - z) / TREAD));
@@ -585,7 +585,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     sceneryMats.push(m);
     return m;
   };
-  const glowMats = [];  // 窓とランプ：自分で光る（ブルームで光がにじむ）
+  const glowMats = [];  // 窓とランプ：自己で光る（ブルームで光がにじむ）
   const glowMat = (name, k) => {
     const m = new THREE.MeshBasicMaterial({ color: new THREE.Color(css(name)).multiplyScalar(k), transparent: true });
     m.userData.base = m.color.clone();  // 電気を消したり点けたりするときの元の色
@@ -795,7 +795,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     const skinTex = new THREE.CanvasTexture(skinView);
     const maskTex = new THREE.CanvasTexture(mask);
 
-    // 中の光で照らすときの、このカボチャ自身の光の番号（毎フレーム決まる。外側の面には自分の光は当たらない）
+    // 中の光で照らすときの、このカボチャ自身の光の番号（毎フレーム決まる。外側の面には自己の光は当たらない）
     const ownU = { value: -1 };
     const outer = new THREE.Mesh(geo, useLanterns(new THREE.MeshStandardMaterial({ map: skinTex, alphaMap: maskTex, alphaTest: 0.5, roughness: 0.55 }), ownU, 0));
     const inner = new THREE.Mesh(geo, useLanterns(new THREE.MeshStandardMaterial({ color: css('--flesh-' + c), alphaMap: maskTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.85 }), ownU, 1));
@@ -1053,7 +1053,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     }
   }
 
-  // 書いた線で切る。書き始めの近くまで戻っていたら、囲んだ中をくり抜く。点が1つ（タップ）なら丸い穴
+  // 書いた線で切る。書き始めの近くまで戻っていたら、囲んだ中をくり抜く。点が1つ（點擊）なら丸い穴
   function cutStroke(pk, pts){
     const a = pts[0], b = pts[pts.length - 1];
     let len = 0;
@@ -1112,7 +1112,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   // 穴の縁を穴の絵からなぞって（マーチングスクエア）、縁ごとに外皮から果肉までの四角い壁を立てる
   const MS_EDGES = [[], [3,0], [0,1], [3,1], [1,2], [3,0,1,2], [0,2], [3,2], [3,2], [0,2], [0,1,3,2], [1,2], [3,1], [0,1], [3,0], []];
   function buildWall(pk){
-    // 穴のある行だけを調べる（全体を調べると切るたびに待たされ、ボタンの反応が遅れるため）
+    // 穴のある行だけを調べる（全体を調べると切るたびに待たされ、按鈕の反応が遅れるため）
     let y0 = TEX_H, y1 = -1;
     for (const c of pk.cuts){ y0 = Math.min(y0, c.y0 - 1); y1 = Math.max(y1, c.y1 + 1); }
     y0 = Math.max(0, Math.floor(y0)); y1 = Math.min(TEX_H - 1, Math.ceil(y1));
@@ -1161,7 +1161,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   // ---------- 状態 ----------
   let phase = 'select';     // select（選ぶ）/ carve（掘る）/ light（光を選ぶ）/ display（並べる）
   let work = null;          // 作っているカボチャ
-  const samples = [];       // 選ぶ画面のカボチャ
+  const samples = [];       // 選ぶ畫面のカボチャ
   const displayList = [];   // 並べたカボチャ
   const orbit = { target: new THREE.Vector3(), az: 0, el: 0.26, span: 4, spanH: 2.4, zoom: 1 };
   let W = 1, H = 1;
@@ -1174,11 +1174,11 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     slitPx = Number(widthInput.value);
     showSizePreview();
   });
-  // 指やマウスを離したら、または他を触ったらプレビューを消す
+  // 手手指や滑鼠を離したら、または他を触ったらプレビューを消す
   for (const ev of ['pointerup', 'pointercancel', 'blur']) widthInput.addEventListener(ev, hideSizePreview);
 
-  // 削る太さのプレビュー：画面の中心に見えているカボチャの表面に、今の太さで削ったときの丸を実際の大きさで重ねる
-  // （皮の絵の上の幅を、その場所のカボチャの丸みとカメラの距離で画面上の大きさに直す）
+  // 削る太さのプレビュー：畫面の中心に見えているカボチャの表面に、今の太さで削ったときの丸を実際の大きさで重ねる
+  // （皮の絵の上の幅を、その場所のカボチャの丸みとカメラの距離で畫面上の大きさに直す）
   function showSizePreview(){
     const el = $('sizePreview');
     if (phase !== 'carve' || !work || anim){ el.classList.add('hidden'); return; }
@@ -1189,7 +1189,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     ray.setFromCamera(ndc, camera);
     const h = ray.intersectObject(work.outer, false)[0];
     if (!h){ el.classList.add('hidden'); return; }
-    // 当たった所に、削るときと同じ半径の円を画面に正対させて描く（溝の斜面に合わせると細長く見えるため）
+    // 当たった所に、削るときと同じ半径の円を畫面に正対させて描く（溝の斜面に合わせると細長く見えるため）
     const R = brushR(work.ti, slitPx);
     const t1 = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
     const t2 = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
@@ -1212,7 +1212,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     samples.push(pk);
   });
 
-  // 光の色のボタン（よく使う色）と、好きな色を選ぶカラーピッカー
+  // 光の色の按鈕（よく使う色）と、好きな色を選ぶカラーピッカー
   const presetColors = LIGHT_NAMES.map((name, i) => css('--light-' + i).toLowerCase());
   const presetButtons = LIGHT_NAMES.map((name, i) => {
     const b = document.createElement('button');
@@ -1247,7 +1247,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     picker.classList.toggle('on', !preset);
   }
 
-  // ---------- 画面の切り替え ----------
+  // ---------- 畫面の切り替え ----------
   // 部屋（0）と夜（1）の色と明るさ。切り替えのときは間をなめらかにつなぐ
   const envOf = night => ({
     bg: new THREE.Color(css(night ? '--night' : '--room')),
@@ -1266,7 +1266,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     ground.material.color.copy(a.ground).lerp(b.ground, n);
     hemi.color.copy(a.sky).lerp(b.sky, n);
     hemi.groundColor.copy(a.earth).lerp(b.earth, n);
-    const dark = 1 - (1 - (houseLights ? 1 : HOUSE_OFF_DIM)) * n;  // 家の電気を消すと夜の明るさをさらに落とす
+    const dark = 1 - (1 - (houseLights ? 1 : HOUSE_OFF_DIM)) * n;  // 家の電気を消すと夜の明るさをさらに掉落
     hemi.intensity = (a.amb + (b.amb - a.amb) * n) * dark;
     sun.color.copy(a.sun).lerp(b.sun, n);
     sun.intensity = (a.sunI + (b.sunI - a.sunI) * n) * dark;
@@ -1303,7 +1303,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   }
 
   // ---------- 切り替え演出 ----------
-  // 演出の間はボタンを隠し、操作を受け付けない。step(経過秒) を毎フレーム呼び、終わったら done()
+  // 演出の間は按鈕を隠し、操作を受け付けない。step(経過秒) を毎フレーム呼び、終わったら done()
   let anim = null;
   function play(dur, step, done){
     closeMenu();
@@ -1478,7 +1478,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     pkRot.value = Math.round(deg);
     pkScale.value = Math.round(pk.userScale * 100);
     $('pkMenu').classList.remove('hidden');
-    $('showBar').classList.add('hidden');  // メニューを開いている間は下のボタンと入れ替える
+    $('showBar').classList.add('hidden');  // メニューを開いている間は下の按鈕と入れ替える
   }
   function closeMenu(){
     if (!menuPk) return;
@@ -1497,7 +1497,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   });
   pkScale.addEventListener('change', savePumpkins);
   $('pkClose').addEventListener('click', closeMenu);
-  // 選んだカボチャを片付ける。最後の1個を消したら選ぶ画面へ返回
+  // 選んだカボチャを片付ける。最後の1個を消したら選ぶ畫面へ返回
   $('pkDelete').addEventListener('click', () => {
     if (!menuPk || anim) return;
     const pk = menuPk;
@@ -1561,14 +1561,14 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   }
 
   // ---------- ブルーム（明るい所の光をにじませる） ----------
-  // 画面をいったん画像に描き、明るい所だけ抜き出して縮めながらぼかし、元の画面に足して表示する
+  // 畫面をいったん画像に描き、明るい所だけ抜き出して縮めながらぼかし、元の畫面に足して表示する
   const gl2 = renderer.capabilities.isWebGL2;
   // 1より明るい色を残せる画像が使えれば使う（ろうそくの光の芯だけが強くにじむ）。使えなければ普通の画像で近い見た目にする
   const hdrOK = gl2 ? renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float')
                     : renderer.extensions.has('OES_texture_half_float') && renderer.extensions.has('EXT_color_buffer_half_float');
   const rtType = hdrOK ? THREE.HalfFloatType : THREE.UnsignedByteType;
   const rtOpt = { type: rtType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false };
-  // 画面の画像は、画面に直接描くときと同じようにふちのギザギザを消す（WebGL2のとき）
+  // 畫面の画像は、畫面に直接描くときと同じようにふちのギザギザを消す（WebGL2のとき）
   const sceneRT = gl2 ? new THREE.WebGLMultisampleRenderTarget(1, 1, { type: rtType }) : new THREE.WebGLRenderTarget(1, 1, { type: rtType });
   const bloomA = [], bloomB = [];
   for (let i = 0; i < BLOOM_LEVELS; i++){ bloomA.push(new THREE.WebGLRenderTarget(1, 1, rtOpt)); bloomB.push(new THREE.WebGLRenderTarget(1, 1, rtOpt)); }
@@ -1607,7 +1607,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
       }`,
     depthTest: false, depthWrite: false,
   });
-  // 元の画面に、ぼかした光を足す
+  // 元の畫面に、ぼかした光を足す
   const compMat = new THREE.ShaderMaterial({
     uniforms: { tScene: { value: null }, tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, strength: { value: 1 } },
     vertexShader: POST_VS,
@@ -1634,7 +1634,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
       bloomA[i].setSize(bw, bh); bloomB[i].setSize(bw, bh);
     }
   }
-  // 1コマ描く：画面を画像に描く → 明るい所を抜き出す → 段階ごとにぼかす → 足して表示
+  // 1コマ描く：畫面を画像に描く → 明るい所を抜き出す → 段階ごとにぼかす → 足して表示
   function renderFrame(){
     renderer.setRenderTarget(sceneRT);
     renderer.render(scene, camera);
@@ -1666,12 +1666,12 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
 
   // ---------- カメラ ----------
   const camT = new THREE.Vector3();  // カメラが見ている点
-  // 幅 halfW・高さ halfH が画面に収まる距離
+  // 幅 halfW・高さ halfH が畫面に収まる距離
   function fitDist(halfW, halfH){
     const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     return Math.max(halfH / tv, halfW / (tv * camera.aspect));
   }
-  // 画面ごとのカメラの位置と見る点
+  // 畫面ごとのカメラの位置と見る点
   function camPose(p){
     const t = new THREE.Vector3();
     let el, az = 0, d;
@@ -1695,7 +1695,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   function updateCamera(){
     camera.aspect = W / H;
     camera.updateProjectionMatrix();
-    if (anim) return;  // 演出の間は演出がカメラを動かす
+    if (anim) return;  // 演出の間は演出がカメラを移動
     if ((phase === 'carve' || phase === 'light') && !work) return;
     applyPose(camPose(phase));
   }
@@ -1720,8 +1720,8 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     setRay(e);
     return ray.intersectObjects(list, false)[0] || null;
   }
-  // 指の下にある床（階段の段の上面か地面）の点
-  // 段の前や横の面に当たったら、その面から手前へ少し出した所にする（突き抜けて奥の地面に飛ばないように）
+  // 手手指の下にある床（階段の段の上面か地面）の点
+  // 段の前や横の面に当たったら、その面から手上一頁少し出した所にする（突き抜けて奥の地面に飛ばないように）
   function floorHit(e){
     setRay(e);
     const h = ray.intersectObjects(stairsOn ? [stairsMesh, landingMesh, ground] : [ground], false)[0];
@@ -1737,10 +1737,10 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
 
 
 
-  const ptrs = new Map();   // 按いる指（pointerId → 位置）
+  const ptrs = new Map();   // 按いる手手指（pointerId → 位置）
   let drag = null;          // 今の操作 {mode: tap/cut/rot/orbit/move/pinch, ...}
   const pinchMid = () => { const [a, b] = [...ptrs.values()]; return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
-  // 画面を移動する：指の動きに合わせて、見ている点を床に沿ってずらす
+  // 畫面を移動する：手手指の動きに合わせて、見ている点を床に沿ってずらす
   const panR = new THREE.Vector3(), panF = new THREE.Vector3();
   function panBy(dx, dy){
     const k = 2 * camera.position.distanceTo(camT) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / H;  // 1pxが何m分か
@@ -1759,7 +1759,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     cv.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY });
     if (ptrs.size === 2){
-      // 2本目の指：書きかけの線は捨てる。並べる画面ではつまんで寄り・引き
+      // 2本目の手手指：書きかけの線は捨てる。並べる畫面ではつまんで寄り・引き
       if (drag && drag.mode === 'cut' && work) redrawView(work, false);
       drag = phase === 'display' ? { mode: 'pinch', d0: Math.max(1, pinchDist()), z0: orbit.zoom, mid: pinchMid() } : null;
       return;
@@ -1788,7 +1788,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
         const carried = stackAbove(pk).map(o => ({ o, dx: o.root.position.x - pk.root.position.x, dy: o.root.position.y - pk.root.position.y, dz: o.root.position.z - pk.root.position.z }));
         drag = { mode: 'move', id, pk, carried, ox: pk.root.position.x - f.x, oz: pk.root.position.z - f.z };
       } else {
-        // 右ボタンかShiftを押しながらの拖曳は画面の移動、それ以外は見る向きを轉動
+        // 右按鈕かShiftを押しながらの拖曳は畫面の移動、それ以外は見る向きを轉動
         drag = { mode: e.button === 2 || e.shiftKey ? 'pan' : 'orbit', id };
       }
     }
@@ -1803,7 +1803,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     if (drag.mode === 'pinch'){
       if (ptrs.size < 2) return;
       orbit.zoom = clamp(drag.z0 * drag.d0 / Math.max(1, pinchDist()), ZOOM_MIN, ZOOM_MAX);
-      // 2本指を一緒に動かしたら画面を移動する
+      // 2本手手指を一緒に動かしたら畫面を移動する
       const m = pinchMid();
       panBy(m.x - drag.mid.x, m.y - drag.mid.y);
       drag.mid = m;
@@ -1847,7 +1847,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
       // 階段の段の上に載せる（段の高さはその場所の床の高さ）
       const x = clamp(f.x + drag.ox, -FIELD, FIELD), z = clamp(f.z + drag.oz, WALL_Z + 1.3, FIELD_FRONT);
       const others = displayList.filter(o => o !== drag.pk && !drag.carried.some(c => c.o === o));
-      // 指がほかのカボチャの上にあれば、そのカボチャの真上に載せる（床に映した位置では奥の床に置かれてしまうため）
+      // 手手指がほかのカボチャの上にあれば、そのカボチャの真上に載せる（床に映した位置では奥の床に置かれてしまうため）
       const hp = hitPumpkin(e, others.map(o => o.outer));
       let px = x, pz = z;
       if (hp){ const base = hp.object.userData.pk; px = base.root.position.x; pz = base.root.position.z; }
@@ -1865,7 +1865,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     if (drag.mode === 'pinch'){ drag = null; return; }
     if (drag.id !== e.pointerId) return;
     const tapped = !cancelled && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < TAP_PX;
-    // 並べたカボチャを動かさずに離したらメニューを開く。何もない所をタップしたら關閉
+    // 並べたカボチャを動かさずに離したらメニューを開く。何もない所を點擊したら關閉
     if (drag.mode === 'move' && tapped){ openMenu(drag.pk); drag = null; return; }
     if (drag.mode === 'move'){ settleAll(); savePumpkins(); }  // 動かし終わったら置き場所を保存
     if (drag.mode === 'orbit' && tapped) closeMenu();
@@ -1874,7 +1874,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
       if (h){ drag = null; selectToCarve(h.object.userData.pk); return; }
     }
     if (drag.mode === 'cut' && work){
-      if (!cancelled) cutStroke(work, drag.pts);  // 動かさずに離したら（タップ）丸い穴
+      if (!cancelled) cutStroke(work, drag.pts);  // 動かさずに離したら（點擊）丸い穴
       else redrawView(work, false);
     }
     drag = null;
@@ -1888,7 +1888,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     updateCamera();
   }, { passive: false });
 
-  // 矢印キー：掘る・光を選ぶときはカボチャを轉動、並べたときは見る向きを変える
+  // 矢印鍵：掘る・光を選ぶときはカボチャを轉動、並べたときは見る向きを変える
   const keys = new Set();
   document.addEventListener('keydown', e => {
     if (!$('share-view').classList.contains('hidden')){
@@ -1899,7 +1899,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
       closeMenu();
       return;
     }
-    if (e.target instanceof HTMLInputElement) return;  // スライダーを操作しているときは矢印キーをスライダーに任せる
+    if (e.target instanceof HTMLInputElement) return;  // スライダーを操作しているときは矢印鍵をスライダーに任せる
     if (e.key.startsWith('Arrow')){ keys.add(e.key); e.preventDefault(); }
   });
   document.addEventListener('keyup', e => keys.delete(e.key));
@@ -1919,7 +1919,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     }
   }
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   const onCanvas = t => t instanceof Element && !!t.closest('#cv');
   document.addEventListener('touchstart', e => { if (onCanvas(e.target)) e.preventDefault(); }, { passive: false });
   document.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive: false });
@@ -1928,8 +1928,8 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     if (!(el && el.closest('#share-text'))) e.preventDefault();  // 分享の文面だけは選んでコピーできるようにする
   });
   document.addEventListener('contextmenu', e => { if (onCanvas(e.target)) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
-  // ボタンとスライダーは除く：続けて押したときや、切った直後に押したときのタップまで取り消してしまうため
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // 按鈕とスライダーは除く：続けて押したときや、切った直後に押したときの點擊まで取り消してしまうため
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     if (e.target instanceof Element && e.target.closest('button, input, #share-view')) return;
@@ -1942,7 +1942,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   function shareText(){
     return `カボチャを${displayList.length}個掘った\n${location.href.split(/[?#]/)[0]}\n#ジャック・オー・ランタンメーカー`;
   }
-  // 並べた所をそのまま画像にする（描いた直後なら画面の中身を写せる）
+  // 並べた所をそのまま画像にする（描いた直後なら畫面の中身を写せる）
   function resultCanvas(){
     renderFrame();
     const src = renderer.domElement;
@@ -1963,7 +1963,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 分享シートが無い・使えない環境：文面をコピーし、分享される内容を画面に出す
+    // 3) 分享シートが無い・使えない環境：文面をコピーし、分享される内容を畫面に出す
     const fallback = () => {
       if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1996,7 +1996,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   $('share-close').addEventListener('click', closeShareView);
   $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
 
-  // ---------- 保存（並べたカボチャをブラウザに残す） ----------
+  // ---------- 保存（並べたカボチャを瀏覽器に残す） ----------
   // 画像ではなく、種類・削った線・光の色・置き場所・向き・大きさを保存し、開いたときに削り直して戻す
   const SAVE_KEY = 'pumpkinCarving3d.pumpkins';
   const STAIRS_KEY = 'pumpkinCarving3d.stairs';
@@ -2014,7 +2014,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   function loadSaved(){
     try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { return null; }
   }
-  // 1個ずつ削り直して並べる（まとめてやると画面が止まるので、1個ごとに一息つく）
+  // 1個ずつ削り直して並べる（まとめてやると畫面が止まるので、1個ごとに一息つく）
   function setStairs(on){
     stairsOn = on;
     stairsMesh.visible = nosingMesh.visible = landingMesh.visible = landNosingMesh.visible = on;

@@ -116,7 +116,7 @@ gtag('config', 'G-41RSZLP1YQ');
 </head>
 <body>
 <div id="wrap">
-  <canvas id="cv" width="480" height="720" tabindex="0" aria-label="ソフトボディのうんちが落ちてくる画面"></canvas>
+  <canvas id="cv" width="480" height="720" tabindex="0" aria-label="ソフトボディのうんちが落ちてくる畫面"></canvas>
   <div id="count" aria-live="polite">0個</div>
   <div id="tools">
     <button id="book" type="button">図鑑</button>
@@ -137,12 +137,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
 <section class="howto" data-pos="none" hidden>
   <h2>玩法</h2>
-  <p>タップした位置の上から、やわらかいうんこが落ちてきて積み重なっていくおもちゃです。勝ち負けや時間制限はなく、落とした数だけカウントが増えます。5色の通常の種類に加えて、でかめ、顔つき、ゴールデンなど17の特殊な種類が低い確率で混ざり、はじめて出ると図鑑に載ります。</p>
+  <p>點擊した位置の上から、やわらかいうんこが落ちてきて積み重なっていくおもちゃです。贏輸や時間制限はなく、落とした数だけカウントが増えます。5色の通常の種類に加えて、でかめ、顔つき、ゴールデンなど17の特殊な種類が低い確率で混ざり、はじめて出ると図鑑に載ります。</p>
   <h2>操作</h2>
-  <p>何もない所をタップすると1個落ち、うんこを押さえて拖曳すると掴んで動かせます。「流す」で全部を排水口へ吸い込み、「図鑑」で種類と出現率を確認できます。PC はマウスで同じように遊べ、スペースキーか Enter でも落とせます。</p>
+  <p>何もない所を點擊すると1個落ち、うんこを押さえて拖曳すると掴んで動かせます。「流す」で全部を排水口へ吸い込み、「図鑑」で種類と出現率を確認できます。PC は滑鼠で同じように遊べ、スペース鍵か Enter でも落とせます。</p>
   <h2>楽しみ方</h2>
-  <p>流れている途中のものも、掴めば助け出せます。かたい、やわらかい、重いなど、動きの違う種類もあります。いちばん珍しい「めちゃくちゃでかい」の出現率は0.05%です。カウントと図鑑はこのブラウザに保存されます。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p>流れている途中のものも、掴めば助け出せます。かたい、やわらかい、重いなど、動きの違う種類もあります。いちばん珍しい「めちゃくちゃでかい」の出現率は0.05%です。カウントと図鑑はこの瀏覽器に會儲存。</p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 </div>
 <script>
@@ -179,7 +179,7 @@ const SHINES = [
   [[0.5537,0.0819], [0.7156,0.2289], [0.5848,0.3759]],
 ];
 
-// 指定パレット。個体ごとにここからランダムで1色選ぶ
+// 手手指定パレット。個体ごとにここから隨機で1色選ぶ
 const PALETTE = ['#FCE4D8', '#FBD87F', '#FF82A9', '#B5F8FE', '#10FFCB'];
 // 種族テーブル。抽選・描画・図鑑はすべてここから拉
 // rate を持つものが特殊個体。持たないものは剩餘の確率から均等に出る
@@ -216,8 +216,8 @@ const NORMAL  = SPECIES.map((sp, i) => i).filter(i => !SPECIES[i].rate);
 // 通常色は「特殊を全部外した剩餘」を均等に分ける
 const NORMAL_RATE = (1 - SPECIAL.reduce((a, i) => a + SPECIES[i].rate, 0)) / NORMAL.length;
 function rateOf(i){ return SPECIES[i].rate || NORMAL_RATE; }
-// 図鑑の記録をブラウザに保存する。種族名をキーにするので、
-// 種族の追加や並べ替えをしても既存の記録は壊れない
+// 図鑑の紀錄を瀏覽器に保存する。種族名を鍵にするので、
+// 種族の追加や並べ替えをしても既存の紀錄は壊れない
 const SAVE_KEY = 'unko-dex-v1';
 function loadDex(){
   try {
@@ -229,7 +229,7 @@ function loadDex(){
       const v = data.found[sp.name];
       if (typeof v === 'number' && v >= 0) found[i] = v;
     });
-  } catch (e) { /* 使えない環境では記録なしで動かす */ }
+  } catch (e) { /* 使えない環境では紀錄なしで移動 */ }
 }
 let saveTimer = 0;
 function saveDex(){
@@ -486,7 +486,7 @@ function pushOut(A, B, moveB){
     const cap = 0.05 * A.size;
     if (d > cap){ const k = cap/d; dx *= k; dy *= k; }
     if (moveB){
-      // 質量比で押し分ける（重い個体は動かず相手を潰す）
+      // 質量比で押し分ける（重い個体は動かず對手を潰す）
       const a = B.pts[bi], b = B.pts[(bi+1)%n];
       const wB = a.w*(1-bt) + b.w*bt;
       const sum = p.w + wB || 1;
@@ -495,14 +495,14 @@ function pushOut(A, B, moveB){
       a.x -= dx*fb*(1-bt); a.y -= dy*fb*(1-bt);
       b.x -= dx*fb*bt;     b.y -= dy*fb*bt;
     } else {
-      p.x += dx; p.y += dy;          // 眠っている相手は動かない壁として扱う
+      p.x += dx; p.y += dy;          // 眠っている對手は動かない壁として扱う
     }
   }
   return deepest;
 }
 
 /* ============================================================
-   3. 画面
+   3. 畫面
    ============================================================ */
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
@@ -539,7 +539,7 @@ function drop(x){
   rainbowNext = false;
   const sp = SPECIES[idx];
   const n = sp.count || 1;
-  // ふたご・みつごは同じ色でまとめて落とす
+  // ふたご・みつごは同じ色でまとめて掉落
   const groupCol = sp.face ? PALETTE_HSL[(Math.random()*PALETTE_HSL.length)|0] : speciesColor(sp);
 
   const group = n > 1 ? ++groupSeq : 0;
@@ -551,7 +551,7 @@ function drop(x){
     // ふたご・みつごは輪郭が少し重なる間隔で並べ、あとで連結する
     const spread = n > 1 ? (k - (n-1)/2) * 1.30 * size : 0;
     const px = Math.max(WORLD.left + hw, Math.min(WORLD.right - hw, x + spread));
-    // 連続で出したときに重なった状態で生まれないよう、ぶつかる相手がいれば往上ずらす
+    // 連続で出したときに重なった状態で生まれないよう、ぶつかる對手がいれば往上ずらす
     let py = -0.75*size - 40;
     for (let t = 0; t < 8; t++){
       let moved = false;
@@ -621,8 +621,8 @@ function solveJoints(dt){
     b.x += lam*wb*ux; b.y += lam*wb*uy;
   }
 }
-// 連結相手が動いているのに片方だけ眠ると引きずられるので起こす。
-// ただし相手も静止しかけているだけなら起こさない（起こし合って永久に眠れなくなる）
+// 連結對手が動いているのに片方だけ眠ると引きずられるので起こす。
+// ただし對手も静止しかけているだけなら起こさない（起こし合って永久に眠れなくなる）
 function syncJointSleep(){
   for (const jt of joints){
     if (jt.A.asleep && !jt.B.asleep && jt.B.motion > SLEEP_M) wake(jt.A);
@@ -637,9 +637,9 @@ function wake(b){
   b.motion = SLEEP_M * 4;   // 起床直後の減衰に時間をかけない（すぐ再び眠れるように）
 }
 
-// 流す：床を抜いて、画面下中央の排水口へ吸い込む
+// 流す：床を抜いて、畫面下中央の排水口へ吸い込む
 const DRAIN = { x: W/2, y: H + 120 };
-// ボタンを押した時点にあった個体にだけ印を付ける（モードにしないので、後から出したものは流されない）
+// 按鈕を押した時点にあった個体にだけ印を付ける（モードにしないので、後から出したものは流されない）
 function startFlush(){
   for (const b of bodies){
     if (b.flush) continue;
@@ -677,7 +677,7 @@ function applyFlush(dt){
 let grab = null;
 function applyGrab(){
   if (!grab) return;
-  if (grab.body.asleep) wake(grab.body);   // 眠ったまま動かすと物理を素通りしてしまう
+  if (grab.body.asleep) wake(grab.body);   // 眠ったまま移動と物理を素通りしてしまう
   const b = grab.body, cap = 0.15 * b.size;
   for (const g of grab.pts){
     const p = b.pts[g.i];
@@ -693,7 +693,7 @@ function applyGrab(){
     if (v > 2000){ p.vx *= 2000/v; p.vy *= 2000/v; }
   }
 }
-// 指定座標にある体を拾う（手前に描かれているものを優先）
+// 手手指定座標にある体を拾う（手前に描かれているものを優先）
 function pickBody(x, y){
   for (let i = bodies.length-1; i >= 0; i--){
     const b = bodies[i];
@@ -764,7 +764,7 @@ const DOTS = [[-0.40,0.28],[-0.05,0.33],[0.34,0.26],[-0.24,0.02],[0.16,0.05],[0.
 const DOT_R = 0.075;
 const STRIPES = [-0.62, -0.36, -0.10, 0.16, 0.42];
 
-// 模様・先端の白・金属光沢（本体と図鑑で共用。map は ローカル座標→画面座標）
+// 模様・先端の白・金属光沢（本体と図鑑で共用。map は ローカル座標→畫面座標）
 function drawDeco(g, sp, map, k, tone, C){
   if (sp.dots){
     g.fillStyle = tone(Math.min(C.l + 22, 97), -20, 0.92);
@@ -895,7 +895,7 @@ function drawHint(){
   ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(150,150,155,.9)';
   ctx.font = "600 17px 'Hiragino Maru Gothic ProN','Hiragino Sans','Yu Gothic',system-ui,sans-serif";
-  ctx.fillText('タップした位置にうんこを落とす', W/2, H/2 - 14);
+  ctx.fillText('點擊した位置にうんこを掉落', W/2, H/2 - 14);
   ctx.fillText('拖曳でうんこを掴む', W/2, H/2 + 14);
   ctx.restore();
 }

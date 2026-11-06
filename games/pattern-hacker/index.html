@@ -66,7 +66,7 @@ canvas{display:block}
 #pad{touch-action:none;transition:opacity .25s}
 #over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(18,18,19,.92);opacity:0;transition:opacity .35s}
 #over.show{opacity:1}
-/* 正解時のアンロック演出: 画面全体を覆って鍵が現れ、ツルが外れて往上抜ける */
+/* 正解時のアンロック演出: 畫面全体を覆って鍵が現れ、ツルが外れて往上抜ける */
 #unlock{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:var(--bg);opacity:0;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
 #unlock.on{opacity:1;visibility:visible;transition:opacity .25s}
 #lock{width:96px;height:120px;overflow:visible;color:var(--green);transform:scale(.8);transition:opacity .4s,transform .4s}
@@ -75,7 +75,7 @@ canvas{display:block}
 #unlock.open #shackle{transform:translateY(-12px)}
 #unlock.gone #lock{opacity:0;transform:translateY(-120px)}
 #padWrap.unlocked #pad{opacity:0}
-/* 初回だけ出す説明画面 */
+/* 初回だけ出す説明畫面 */
 #help{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px 20px;background:rgba(18,18,19,.96);overflow-y:auto}
 #help .box{width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px;font-size:15px;line-height:1.6}
 #help h1{margin:0;font-size:24px;text-align:center}
@@ -102,14 +102,14 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
     <div id="over" class="hidden">
       <div id="resTitle" aria-live="assertive"></div>
       <canvas id="ans" aria-hidden="true"></canvas>
-      <div class="btns"><button id="share">分享</button><button id="again">もう一回</button></div>
+      <div class="btns"><button id="share">分享</button><button id="again">再來一次</button></div>
     </div>
   </div>
 </div>
 <div id="help" class="hidden" role="dialog" aria-labelledby="helpTitle">
   <div class="box">
     <h1 id="helpTitle">PatternHacker</h1>
-    <p>隠されたパターンロックを解くゲームです。9つの点をすべて通るパターンを描いて回答すると、線ごとに正解と比べた結果が上の履歴に出ます。</p>
+    <p>隠されたパターンロックを解く遊戲。9つの点をすべて通るパターンを描いて回答すると、線ごとに正解と比べた結果が上の履歴に出ます。</p>
     <ul>
       <li><span class="sw" style="background:var(--green)"></span>同じ手番に同じ線がある</li>
       <li><span class="sw" style="background:var(--yellow)"></span>正解の別の手番に同じ向きの線がある</li>
@@ -124,10 +124,10 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
   <h2>玩法</h2>
   <p>隠されたパターンロックを、色のヒントから推理して解くパズルです。9つの点をすべて1回ずつ通る線を描くと、8本の線それぞれの判定が履歴に並びます。回答回数に上限はなく、全部の線が緑になるまでにかかった回数が結果になります。</p>
   <h2>操作</h2>
-  <p>スマホは盤を指でなぞり、指を離すと回答になります。9点を通らずに離した場合は回答になりません。まだ通っていない点を飛び越えると、その点も自動でつながります。PC はマウスで同じように描け、Esc で描きかけを消せます。</p>
-  <h2>コツ</h2>
+  <p>スマホは盤を手手指でなぞり、手手指を放開と回答になります。9点を通らずに離した場合は回答になりません。まだ通っていない点を飛び越えると、その点も自動でつながります。PC は滑鼠で同じように描け、Esc で描きかけを消せます。</p>
+  <h2>訣竅</h2>
   <p>灰色は同じ向きの線が正解にないという意味なので、逆向きの線ならまだ正解の可能性があります。緑の線は次の回答から自動でつながり、黄色の線は別の順番へ動かせば緑になります。履歴の右端では、その回に点を通った順番を確かめられます。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 <div id="unlock" aria-hidden="true">
   <svg id="lock" viewBox="0 0 64 80">
@@ -144,11 +144,11 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
   const SEGS = 8;           // 9点を結ぶ線の本数
   const COLS = SEGS + 1;    // 履歴の列数（線8本＋右端の通過順の図）
   const HIT_R = 0.3;        // 点の当たり判定の半径（点の間隔に対する比率）。斜めに1つずらす線が途中の点に触れないよう 0.44 未満にする
-  const SAMPLE_STEP = 6;    // 指の移動を何pxごとに刻んで判定するか（速く動かしても点を取りこぼさないため）
-  const HIST_RATE = 0.42;   // 画面の高さのうち回答履歴に使う割合の上限（入力盤を狭くしすぎないため）
+  const SAMPLE_STEP = 6;    // 手手指の移動を何pxごとに刻んで判定するか（速く動かしても点を取りこぼさないため）
+  const HIST_RATE = 0.42;   // 畫面の高さのうち回答履歴に使う割合の上限（入力盤を狭くしすぎないため）
   const GAP_RATE = 0.015;   // 履歴のマス同士の隙間（履歴の幅に対する比率）
   const TITLE = 'PatternHacker';
-  const HELP_KEY = 'patternHacker.helpShown';   // 説明画面を見たかどうかの保存キー
+  const HELP_KEY = 'patternHacker.helpShown';   // 説明畫面を見たかどうかの保存鍵
   const UNLOCK_T = [400, 750, 1150];   // アンロック演出の各段階の開始時刻（ミリ秒）: 鍵が出る / ツルが外れる / 鍵が抜けて結果を出す
   const DOT_ANIM_MS = 280;   // 点に触れたとき、膨らんで元の大きさに返回までの時間（ミリ秒）
   const DOT_POP = 0.6;       // 点に触れたときの膨らみの最大値（半径の増加率）
@@ -177,7 +177,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
     return a;
   }
 
-  // 9点すべてを通る正解パターンを作る（ランダムな順に試し、行き詰まったら返回）
+  // 9点すべてを通る正解パターンを作る（隨機な順に試し、行き詰まったら返回）
   function makeSecret(){
     const used = Array(9).fill(false), path = [];
     const dfs = () => {
@@ -198,7 +198,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
 
   // 線ごとの判定（Wordle の色分けに対応）
   // 2 = 同じ手番で同じ向きの線（緑） / 1 = 正解の別の手番に同じ向きの線がある（黄） / 0 = ない（灰）
-  // 向きが逆の線は黄にしない（始点→終点をそのままキーにする）
+  // 向きが逆の線は黄にしない（始点→終点をそのまま鍵にする）
   const segKey = (a, b) => a * 9 + b;
   function judge(g){
     const pairs = new Set();
@@ -301,7 +301,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
     }
   }
 
-  // 履歴は回答が増えるたびに縦に伸ばす（プレイ中は次に入る空の行を1行足す）
+  // 履歴は回答が增加たびに縦に伸ばす（プレイ中は次に入る空の行を1行足す）
   function drawHist(){
     const rows = Math.max(VIEW_ROWS, guesses.length + (mode === 'playing' ? 1 : 0));
     const H = histH(HW, rows);
@@ -330,7 +330,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
       pctx.strokeStyle = on; pctx.lineWidth = S * 0.018;
       pctx.beginPath();
       path.forEach((d, i) => { const [x, y] = dotPos(d, S); i ? pctx.lineTo(x, y) : pctx.moveTo(x, y); });
-      if (finger && path.length < 9) pctx.lineTo(finger.x, finger.y);   // 9点そろったら指への線は出さない
+      if (finger && path.length < 9) pctx.lineTo(finger.x, finger.y);   // 9点そろったら手手指への線は出さない
       pctx.stroke();
       // つながった直後の線は太く光らせ、時間とともに細く薄くして通常の線に溶け込ませる
       for (let k = 0; k < path.length - 1; k++){
@@ -433,7 +433,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
   function startAnim(){
     if (!animId) animId = requestAnimationFrame(tick);
   }
-  // 点を通過した時刻を記録して演出を始める（点と、直前の点からの線の両方）
+  // 点を通過した時刻を紀錄して演出を始める（点と、直前の点からの線の両方）
   function markDot(d){
     if (reduceMotion.matches) return;
     const now = performance.now();
@@ -450,7 +450,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
   // ---------- 入力 ----------
   function local(e){ const r = pad.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
 
-  // 確定済みでまだ通っていない点（自動で入るので指では選べない）
+  // 確定済みでまだ通っていない点（自動で入るので手手指では選べない）
   const isReserved = d => !used[d] && fixed.includes(d);
 
   // 次の手番が確定済みなら、その点を自動でつなぐ（連続していればまとめて）
@@ -529,7 +529,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
     });
     if (fb.every(v => v === 2)){ drawPad(); finish(); }
     else {
-      // 黄か緑の線があれば、指を離した時点で盤の上に手番順に色付けして見せる
+      // 黄か緑の線があれば、手手指を離した時点で盤の上に手番順に色付けして見せる
       // （全部灰のときは何も出さない。動きを減らす設定では順番待ちなしで一度に色付けする）
       if (fb.some(v => v)){ reveal = { fb, at: reduceMotion.matches ? -Infinity : performance.now() }; startAnim(); }
       drawPad(); setStatus();
@@ -629,7 +629,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);
@@ -637,8 +637,8 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
   });
   $('again').addEventListener('click', restart);
 
-  // ---------- キーボード（PC用） ----------
-  // Esc: 描きかけを消す（結果画面では「もう一回」にフォーカスがあるので Enter / スペースで再開できる）
+  // ---------- 鍵ボード（PC用） ----------
+  // Esc: 描きかけを消す（結果畫面では「再來一次」にフォーカスがあるので Enter / スペースで繼續できる）
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && helpOpen()){ closeHelp(); return; }
     if (e.key === 'Escape' && mode === 'playing' && activeId === null){
@@ -647,14 +647,14 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
   });
 
   // ---------- iOS 対策 ----------
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   const isDraggable = t => t instanceof Element && !!t.closest('#pad');
   document.addEventListener('touchstart', e => { if (isDraggable(e.target)) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove',  e => { if (activeId !== null) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => { if (isDraggable(e.target)) e.preventDefault(); });
 
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -662,7 +662,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
     lastTouchEnd = now;
   }, { passive:false });
 
-  // ---------- 説明画面 ----------
+  // ---------- 説明畫面 ----------
   // 初回に開いたときは自動で出す。以降は右上の「?」で開く
   const helpOpen = () => !$('help').classList.contains('hidden');
   function openHelp(first){

@@ -101,7 +101,7 @@ gtag('config', 'G-41RSZLP1YQ');
       <div id="rLen">0cm</div>
       <div id="rBest"></div>
       <div class="btns">
-        <button id="again" type="button">もう一回</button>
+        <button id="again" type="button">再來一次</button>
         <button id="share" type="button">分享</button>
       </div>
     </div>
@@ -117,12 +117,12 @@ gtag('config', 'G-41RSZLP1YQ');
 
   <section class="howto" data-pos="top-left" hidden>
     <h2>玩法</h2>
-    <p>じゃがいもをらせん状に切って串に広げ、揚げて長さを競うゲームです。長さは切った深さに、周回数×3.3cmを足したものです。長さに応じた呼び名がつき、最高記録はこのブラウザに保存されます。</p>
+    <p>じゃがいもをらせん状に切って串に広げ、揚げて長さを競う遊戲。長さは切った深さに、周回数×3.3cmを足したものです。長さに応じた呼び名がつき、最高紀錄はこの瀏覽器に會儲存。</p>
     <h2>操作</h2>
-    <p>按いる間だけじゃがいもが回り、指を往下動かした分だけ刃が下がります。刃は往上戻りません。揚げる場面では「できあがり」で完成です。完成品は拖曳で回り、ピンチで拡大できます。PC はマウスで同じように操作し、拡大はホイールです。</p>
-    <h2>コツ</h2>
-    <p>刃をゆっくり下ろすほど周回数が増えますが、1枚の厚みが0.1cmを切ると切れて剩餘が落ちます。指を止めたまま轉動と切れるので、迷ったら離して回転を止めます。揚げ時間は長さに関係なく、6秒ほどでよい色になり、揚げすぎると焦げます。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>按いる間だけじゃがいもが回り、手手指を往下動かした分だけ刃が下がります。刃は往上戻りません。揚げる場面では「できあがり」で完成です。完成品は拖曳で回り、ピンチで拡大できます。PC は滑鼠で同じように操作し、拡大はホイールです。</p>
+    <h2>訣竅</h2>
+    <p>刃をゆっくり下ろすほど周回数が増えますが、1枚の厚みが0.1cmを切ると切れて剩餘が落ちます。手手指を止めたまま轉動と切れるので、迷ったら離して回転を止めます。揚げ時間は長さに関係なく、6秒ほどでよい色になり、揚げすぎると焦げます。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 
@@ -176,7 +176,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   const COOK_TIME = 6;       // 油に入っている所が「ちょうどいい」揚げ色になるまでの秒数
   const GOOD_MIN = 1.0;      // 揚げ色の段階（1 = COOK_TIME 秒揚げた状態）。この間がちょうどいい色
   const GOOD_MAX = 1.8;
-  const FRY_X = 200;         // 揚げ場の位置（切る場所と重ならないように離す）
+  const FRY_X = 200;         // 揚げ場の位置（切る場所と重ならないように放開）
   // 揚げ具合 → 色（切り口と皮）
   const FLESH_COLORS = [[0, 0xf2e2a8], [GOOD_MIN, 0xe8b046], [GOOD_MAX, 0xc98225], [2.8, 0x6a3812], [4, 0x1e120c]];
   const SKIN_COLORS  = [[0, 0xb98b4e], [GOOD_MIN, 0xa8742e], [GOOD_MAX, 0x8a5a1e], [2.8, 0x4a2a10], [4, 0x150c08]];
@@ -185,7 +185,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
 
   // ---------- three.js ----------
   const cv = $('cv');
-  // 分享画像に画面を写すため描画結果を残す
+  // 分享画像に畫面を写すため描画結果を残す
   const renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true, preserveDrawingBuffer:true });
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(css('--bg'));
@@ -283,7 +283,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   const uncutTop = new THREE.Mesh(new THREE.BufferGeometry(), matFlesh);
   rig.add(uncut, uncutTop);
 
-  // ---------- 切った所（らせん）。切った分だけ1か所ずつ記録して作る ----------
+  // ---------- 切った所（らせん）。切った分だけ1か所ずつ紀錄して作る ----------
   // 1か所あたりの頂点：上面（内・外）、下面（内・外）、皮（上から往下 SKIN_ROWS+1 個。元の形の丸みをなぞる）
   const SKIN_ROWS = 4;
   const VPS = 4 + SKIN_ROWS + 1;          // 1か所あたりの頂点数
@@ -291,7 +291,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   const sDepth = new Float32Array(MAX_SAMPLES);  // 切ったときの刃の深さ
   const cookO = new Float32Array(MAX_SAMPLES);   // 外側（皮側）の揚げ具合
   const cookI = new Float32Array(MAX_SAMPLES);   // 内側（串側）の揚げ具合
-  let count = 0;                                 // 記録した数
+  let count = 0;                                 // 紀錄した数
 
   const posArr = new Float32Array(MAX_SAMPLES * VPS * 3);
   const colArr = new Float32Array(MAX_SAMPLES * VPS * 3);
@@ -476,7 +476,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   const KM_TIP = -0.358, KM_HILT = 0.108, KM_END = 0.358, KM_BLADE_Y = 0.02;   // モデルの刃先・刃の根元・柄の端の位置と刃の高さ
   const KNIFE_SCALE = (R_MAX + KNIFE_OUT - R_IN) / (KM_HILT - KM_TIP);       // 刃先が串の近く、刃の根元がじゃがいもの外 KNIFE_OUT の所に来る大きさ
   const KNIFE_RIGHT = R_IN + (KM_END - KM_TIP) * KNIFE_SCALE;                 // ナイフの右端
-  const KNIFE_TILT = 40 * Math.PI / 180;   // 持ち手を自分の長さの軸まわりに起こす角度（側面がカメラから見えるように。刃は水平のまま）
+  const KNIFE_TILT = 40 * Math.PI / 180;   // 持ち手を自己の長さの軸まわりに起こす角度（側面がカメラから見えるように。刃は水平のまま）
   const KM_HANDLE_Z = -0.03;                // モデルの持ち手の前後の真ん中
   const blade = new THREE.Group();
   {
@@ -505,7 +505,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
     // 刃：水平のまま。刃の高さをナイフの高さ（今切っている位置）に合わせる
     const bladeMesh = part(bladeIdx);
     bladeMesh.position.set(tx, -KM_BLADE_Y * KNIFE_SCALE, 0);
-    // 持ち手：自分の長さの軸まわりに起こして、側面をカメラに向ける
+    // 持ち手：自己の長さの軸まわりに起こして、側面をカメラに向ける
     const handleAxis = new THREE.Group();
     handleAxis.position.set(tx, 0, KM_HANDLE_Z * KNIFE_SCALE);
     handleAxis.rotation.x = KNIFE_TILT;
@@ -653,17 +653,17 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   const showPivot = new THREE.Group();
   showPivot.position.set(SHOW_X, 0, 0);
   scene.add(showPivot);
-  const SHOW_ROT = 0.008;   // 指を1px動かしたときに回る角度（ラジアン）
+  const SHOW_ROT = 0.008;   // 手手指を1px動かしたときに回る角度（ラジアン）
   let showHalfH = 10, showHalfW = 4;   // 最初の向きでのポテトの縦横の半分の大きさ
-  let showZoom = 1;         // 指2本・ホイールで変える倍率
+  let showZoom = 1;         // 手手指2本・ホイールで変える倍率
   const ZOOM_MIN = 0.4, ZOOM_MAX = 4;
   let worldPerPx = 0.02;
-  let viewTop = L0;   // 切る画面で映す上端（伸ばすときに広げる）
+  let viewTop = L0;   // 切る畫面で映す上端（伸ばすときに広げる）
   function placeCamera(){
     const vf = camera.fov * Math.PI / 180;
     const hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
     if (view === 'cut'){
-      // 真横から、じゃがいもとナイフが入るように（下はボタンの分の余白）
+      // 真横から、じゃがいもとナイフが入るように（下は按鈕の分の余白）
       let lo = -1.5, hi = viewTop + 1.5;
       const span = hi - lo;
       lo -= span * 0.15; hi += span * 0.12;
@@ -671,12 +671,12 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
       const cx = (KNIFE_RIGHT - R_MAX) / 2, halfW = (KNIFE_RIGHT + R_MAX) / 2 + 0.6;
       const dist = Math.max(((hi - lo) / 2) / Math.tan(vf / 2), halfW / Math.tan(hf / 2));
       const cy = (lo + hi) / 2;
-      // 指の移動量（px）を串の位置での長さ（cm）に直す係数
+      // 手手指の移動量（px）を串の位置での長さ（cm）に直す係数
       worldPerPx = 2 * dist * Math.tan(vf / 2) / Math.max(1, cv.clientHeight);
       camera.position.set(cx, cy + dist * Math.sin(elev), dist * Math.cos(elev));
       camera.lookAt(cx, cy, 0);
     } else if (view === 'show'){
-      // 正面から。下の結果の枠に重ならない所（画面の上側）にポテトが収まる距離にし、その真ん中に映す
+      // 正面から。下の結果の枠に重ならない所（畫面の上側）にポテトが収まる距離にし、その真ん中に映す
       const H = Math.max(1, cv.clientHeight);
       const panel = document.querySelector('#over .panel');
       const below = Math.min(H * 0.5, (panel ? panel.offsetHeight : 0) + 36);   // 下で使えない高さ（px）
@@ -711,10 +711,10 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   let stretchT = 0;       // 伸ばす演出の進み（0〜1）
   let cutting = false;    // 刃を入れ始めた
   let spin = 0;           // じゃがいもの回転角
-  let nextSample = 0;     // 次に記録する回転角
+  let nextSample = 0;     // 次に紀錄する回転角
   let depth = 0;          // 刃の深さ（cm）
   let frameDepth = 0;     // 前のフレームの刃の深さ
-  let press = null;       // 押さえている指 {id, y}
+  let press = null;       // 押さえている手手指 {id, y}
   let rigY = LIFT_Y;      // 揚げるときの串の高さ
   let spiralLen = 0;
   let result = null, overShownAt = 0;
@@ -755,7 +755,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
     placeCamera();
   }
 
-  // 画面中央の文字（出るたびに弾む演出をやり直す）
+  // 畫面中央の文字（出るたびに弾む演出をやり直す）
   function showMsg(text, kind){
     const el = $('msg');
     el.textContent = text;
@@ -766,7 +766,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   }
 
   // 切り終わり（切れた、または最後まで切った）
-  // 途中で切れたときに残った部分を串から落とす
+  // 途中で切れたときに残った部分を串から掉落
   const FALL_G = 120;        // 落ちる速さの増え方（cm/秒²）
   const SKEWER_BOTTOM = -3;  // 串の下端
   let fallState = 0;         // 0：落としていない 1：落ちている 2：落ちきった（もう出さない）
@@ -797,7 +797,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
     stretchT = -STRETCH_WAIT / STRETCH_TIME;
   }
 
-  // 伸ばす演出：切ったままの位置から、串に広げた位置まで動かす。伸びきって少し見せたら揚げる場面へ
+  // 伸ばす演出：切ったままの位置から、串に広げた位置まで移動。伸びきって少し見せたら揚げる場面へ
   function updateStretch(dt){
     stretchT += dt / STRETCH_TIME;
     if (stretchT >= 1 + STRETCH_HOLD / STRETCH_TIME){ phase = 'cutEnd'; startFry(); return; }
@@ -852,7 +852,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   ];
   const rankName = len => RANKS.find(r => len < r[0])[1];
 
-  const BEST_KEY = 'guruguru-potato-best';   // 最高記録（このブラウザに保存）
+  const BEST_KEY = 'guruguru-potato-best';   // 最高紀錄（この瀏覽器に保存）
 
   function finish(){
     if (phase !== 'fry') return;
@@ -1110,7 +1110,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
     burstDone();
   }
   const AUTO_ROT = 0.6;         // 完成品が自動で回る速さ（ラジアン/秒）
-  const showPtrs = new Map();   // 完成品の画面で触れている指
+  const showPtrs = new Map();   // 完成品の畫面で触れている手手指
   let pinchDist = 0;
   function ptrDist(){
     const [a, b] = [...showPtrs.values()];
@@ -1122,7 +1122,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   }
   const _qa = new THREE.Quaternion(), _ax = new THREE.Vector3();
   function rotateShow(dx, dy){
-    // 画面の横の動きは縦軸まわり、縦の動きは横軸まわりに轉動（どの向きにも回せる）
+    // 畫面の横の動きは縦軸まわり、縦の動きは横軸まわりに轉動（どの向きにも回せる）
     _qa.setFromAxisAngle(_ax.set(0, 1, 0), dx * SHOW_ROT);
     showPivot.quaternion.premultiply(_qa);
     _qa.setFromAxisAngle(_ax.set(1, 0, 0), dy * SHOW_ROT);
@@ -1130,12 +1130,12 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   }
 
   function updateCut(dt){
-    // じゃがいもは指で押さえている間だけ、一定の速さで勝手に回る（指を離すと止まる）
+    // じゃがいもは手手指で押さえている間だけ、一定の速さで勝手に回る（手手指を放開と止まる）
     const prevSpin = spin, prevDepth = frameDepth;
     if (press) spin += ROT_SPEED * Math.PI * 2 * dt;
     frameDepth = depth;
     if (cutting){
-      // 回った角度ごとに、そのときの刃の深さを記録する
+      // 回った角度ごとに、そのときの刃の深さを紀錄する
       while (nextSample <= spin && count < MAX_SAMPLES){
         const f = (nextSample - prevSpin) / Math.max(spin - prevSpin, 1e-9);
         sPhi[count] = nextSample;
@@ -1185,7 +1185,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
       if (press) return;
       press = { id:e.pointerId, y:e.clientY };
       if (!cutting){
-        // 刃を入れる：今の回転角から記録を始める
+        // 刃を入れる：今の回転角から紀錄を始める
         cutting = true;
         nextSample = spin;
       }
@@ -1210,7 +1210,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
       return;
     }
     if (!press || e.pointerId !== press.id || phase !== 'cut') return;
-    // 指を下に動かした分だけ刃を下ろす（上には戻らない）
+    // 手手指を下に動かした分だけ刃を下ろす（上には戻らない）
     const dy = e.clientY - press.y;
     press.y = e.clientY;
     if (dy > 0) depth = Math.min(L0, depth + dy * worldPerPx);
@@ -1230,23 +1230,23 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
 
   const bindBtn = (id, fn) => {
     $(id).addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); fn(); });
-    $(id).addEventListener('click', e => { if (e.detail === 0) fn(); });   // キーボードで押したとき
+    $(id).addEventListener('click', e => { if (e.detail === 0) fn(); });   // 鍵ボードで押したとき
   };
   bindBtn('done', finish);
   bindBtn('mute', toggleMute);
   bindBtn('again', reset);
 
-  // PC：結果画面ではスペースかEnterでもう一回
+  // PC：結果畫面ではスペースかEnterで再來一次
   document.addEventListener('keydown', e => {
     if (!$('share-view').classList.contains('hidden')){
       if (e.key === 'Escape') closeShareView();
-      return;   // 分享される内容を表示中は結果画面のキー操作を止める
+      return;   // 分享される内容を表示中は結果畫面の鍵操作を止める
     }
     if (document.activeElement && document.activeElement.tagName === 'BUTTON') return;
     if ((e.key === ' ' || e.key === 'Enter') && phase === 'over'){ e.preventDefault(); reset(); }
   });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (press || showPtrs.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => {
@@ -1254,7 +1254,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
     if (!(t && t.closest('#share-text'))) e.preventDefault();   // 分享される文面は選んでコピーできるようにする
   });
   document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -1267,7 +1267,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
     return `${rankName(result.len)}を${result.len.toFixed(1)}cm作った！\n`
       + location.href.split(/[?#]/)[0] + '\n#ぐるぐるポテトメーカー';
   }
-  // 結果画像：今の画面を縦長に切り出し、下に結果を書く
+  // 結果画像：今の畫面を縦長に切り出し、下に結果を書く
   function resultCanvas(){
     const W = 540, H = 960;
     const c = document.createElement('canvas');
@@ -1301,11 +1301,11 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
 
   $('share').addEventListener('pointerdown', e => e.stopPropagation());
   $('share').addEventListener('click', () => {
-    if (!result || performance.now() - overShownAt < 400) return;   // できあがりを押したときのタップで押されないように
+    if (!result || performance.now() - overShownAt < 400) return;   // できあがりを押したときの點擊で押されないように
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を畫面に出す
     const fallback = () => {
       if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1314,8 +1314,8 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
       $('share-close').focus({ preventScroll:true });
     };
     // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
-    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内瀏覽器等）。
+    // 分享シートを開いてから自己で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
@@ -1341,7 +1341,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
 
   // ---------- 揚げる音 ----------
-  // ブラウザは画面に触れるまで音を出せないので、最初に触れたときに準備する
+  // 瀏覽器は畫面に触れるまで音を出せないので、最初に触れたときに準備する
   let actx = null, sizzle = null;
   let muted = false;
   try { muted = localStorage.getItem('guruguru-potato-muted') === '1'; } catch (e) {}
@@ -1395,7 +1395,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
     else if (phase === 'lift') updateLift(dt);
     else if (phase === 'salt') updateSalt(dt);
     else if ((phase === 'over' || phase === 'salt') && view === 'show' && !showPtrs.size){
-      // 完成品はゆっくり回り続ける（指で回している間は止める）
+      // 完成品はゆっくり回り続ける（手手指で回している間は止める）
       _qa.setFromAxisAngle(_ax.set(0, 1, 0), AUTO_ROT * dt);
       showPivot.quaternion.premultiply(_qa);
     }

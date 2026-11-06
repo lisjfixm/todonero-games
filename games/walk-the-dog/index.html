@@ -108,17 +108,17 @@ gtag('config', 'G-41RSZLP1YQ');
       <div class="cap">さんぽした</div>
       <div class="note" id="rNote"></div>
       <button id="share" type="button"><svg viewBox="0 0 24 24"><path d="M18.9 2H22l-7.3 8.3L23 22h-6.6l-5.2-6.8L5.3 22H2.2l7.8-8.9L1.6 2h6.8l4.7 6.2L18.9 2Zm-1.1 18h1.7L7.3 3.8H5.4L17.8 20Z"/></svg>ポストする</button>
-      <button id="retry" type="button">もう一回</button>
+      <button id="retry" type="button">再來一次</button>
     </div>
   </div>
   <section class="howto" data-pos="bottom-right" hidden>
     <h2>玩法</h2>
-    <p>犬がリードをくわえて飼い主を振り回し、放り投げて飛距離を競うゲームです。リードの端は犬の口に固定されていて、指で動かすのは犬のほうです。指を離すと飼い主がリードから手を放して飛んでいき、止まるまでの距離が記録になります。左右どちらへ飛んでも距離に数えられ、ベストはこのブラウザに保存されます。</p>
+    <p>犬がリードをくわえて飼い主を振り回し、放り投げて飛距離を競う遊戲。リードの端は犬の口に固定されていて、手手指で移動のは犬のほうです。手手指を放開と飼い主がリードから手を放して飛んでいき、止まるまでの距離が紀錄になります。左右どちらへ飛んでも距離に数えられ、ベストはこの瀏覽器に會儲存。</p>
     <h2>操作</h2>
-    <p>画面を押すと犬が指の位置へ移動します。押したまま動かして振り回し、離すと投げます。飼い主が飛んでいる間は、画面をタップすると進行方向へ加速し、TAP!! のゲージがたまると空中で再來一次跳ね上がります。PC ではマウスで同じように遊べます。</p>
-    <h2>コツ</h2>
-    <p>投げる勢いには、離す直前で一番速かった瞬間の速さが使われます。勢いが足りないと投げられず、最初に戻ります。ゲージは手を止めると減っていき、跳ねるたびに必要なタップ数が増えるので、止まるまで連打を続けてください。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>畫面を按と犬が手手指の位置へ移動します。押したまま動かして振り回し、放開と投げます。飼い主が飛んでいる間は、畫面を點擊すると進行方向へ加速し、TAP!! のゲージがたまると空中で再來一次跳ね上がります。PC では滑鼠で同じように遊べます。</p>
+    <h2>訣竅</h2>
+    <p>投げる勢いには、放開直前で一番速かった瞬間の速さが使われます。勢いが足りないと投げられず、最初に戻ります。ゲージは手を止めると減っていき、跳ねるたびに必要な點擊数が增加ので、止まるまで連打を続けてください。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 
@@ -449,7 +449,7 @@ gtag('config', 'G-41RSZLP1YQ');
     for(const s of state.velHist) if(s > peak) peak = s;
     if(peak < 1.2){ reset(); return; }
 
-    // 指を離す直前の減速ぶんを戻す（直近0.1秒のピークまで）
+    // 手手指を放開直前の減速ぶんを戻す（直近0.1秒のピークまで）
     if(cur > 0.2 && peak > cur){
       const f = Math.min(3, peak / cur);
       for(const p of P){
@@ -474,7 +474,7 @@ gtag('config', 'G-41RSZLP1YQ');
     state.dist = Math.abs(hip().x - state.launchX);   // 左右どちらでも正
     state.cardShown = false;
     state.waitT = 0;
-    // 犬は飛んで来た方向（＝投げた側）の画面外から走って来る
+    // 犬は飛んで来た方向（＝投げた側）の畫面外から走って来る
     state.side = Math.sign(hip().x - state.launchX) || 1;
     const startX = state.camX - state.side * ((W * 0.5) / S + 2);
     const dx = startX - dog.x, dy = DOG_STAND - dog.y;
@@ -509,9 +509,9 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   }
 
-  const BOOST = 0.6;                 // 1タップの加速(m/s)
+  const BOOST = 0.6;                 // 1點擊の加速(m/s)
   const BOOST_CD = 0.07;             // 連打の受付間隔(秒)
-  const CHARGE_DECAY = 4;            // ゲージが1秒あたり減る量（タップ換算）
+  const CHARGE_DECAY = 4;            // ゲージが1秒あたり減少量（點擊換算）
 
   function airJump(){
     const ids = BODY_PARTS();
@@ -563,7 +563,7 @@ gtag('config', 'G-41RSZLP1YQ');
     state.charge++;
     if(state.charge >= state.need){
       state.charge = 0;
-      state.need = Math.round(state.need * 1.7);   // ジャンプごとに必要タップ数が増える
+      state.need = Math.round(state.need * 1.7);   // ジャンプごとに必要點擊数が增加
       airJump();
     }
 
@@ -593,10 +593,10 @@ gtag('config', 'G-41RSZLP1YQ');
   function onDown(e){
     e.preventDefault();
     if(state.mode === 'result'){
-      // 犬が走って来る演出中（カード表示前）のタップは無視する。
+      // 犬が走って来る演出中（カード表示前）の點擊は無視する。
       // resultAt はカード表示時に更新されるので、ここで見ると前回の値のまま通ってしまう
       if(!state.cardShown) return;
-      if(performance.now() - state.resultAt < 1000) return;   // 表示直後の誤タップ防止
+      if(performance.now() - state.resultAt < 1000) return;   // 表示直後の誤點擊防止
       reset();
       return;
     }
@@ -624,8 +624,8 @@ gtag('config', 'G-41RSZLP1YQ');
   elShare.addEventListener('click', e => {
     e.stopPropagation();
     const txt = `${state.dist.toFixed(1)}mさんぽした！\n${location.href}\n#おさんぽシミュレーター`;
-    // x.com/intent/post だとスマホのXアプリがアプリ内ブラウザで開いてしまうため、
-    // アプリが投稿画面として直接扱う twitter.com/intent/tweet を使う
+    // x.com/intent/post だとスマホのXアプリがアプリ内瀏覽器で開いてしまうため、
+    // アプリが投稿畫面として直接扱う twitter.com/intent/tweet を使う
     window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(txt), '_blank');
   });
   elRetry.addEventListener('pointerdown', e => e.stopPropagation());
@@ -649,7 +649,7 @@ gtag('config', 'G-41RSZLP1YQ');
       state.velHist.push(bodySpeed(dt));
       if(state.velHist.length > 12) state.velHist.shift();
     }else if(state.mode === 'result'){
-      physics(dt);                    // 記録確定後も転がりきるまで動かす
+      physics(dt);                    // 紀錄確定後も転がりきるまで移動
     }else if(state.mode === 'fly'){
       const h0 = hip();
       state.airT += dt;
@@ -665,7 +665,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
       const sp = bodySpeed(dt);
       state.flyT += dt;
-      // 接地していないと終了しない（放物線の頂点で速度が落ちても続行）
+      // 接地していないと結束しない（放物線の頂点で速度が落ちても続行）
       const landed = (h.y < 0.7);
       if(landed && sp < 0.25) state.slowT += dt; else state.slowT = 0;
       // 時間では打ち切らない。止まるまで待つ
@@ -1227,7 +1227,7 @@ gtag('config', 'G-41RSZLP1YQ');
     requestAnimationFrame(loop);
   }
 
-  // ベスト記録：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  // ベスト紀錄：瀏覽器のlocalStorageに保存（使えない環境ではその回だけ保持）
   const BEST_KEY = 'walkTheDog.best';
   function loadBest(){
     try{

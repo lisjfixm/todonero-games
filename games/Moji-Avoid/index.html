@@ -80,7 +80,7 @@ gtag('config', 'G-41RSZLP1YQ');
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;overflow:hidden;}
   body{
-    touch-action:manipulation;          /* ダブルタップ拡大を殺す */
+    touch-action:manipulation;          /* ダブル點擊拡大を殺す */
     margin:0;
     background:var(--bg);
     color:var(--fg);
@@ -99,7 +99,7 @@ gtag('config', 'G-41RSZLP1YQ');
     -webkit-user-select:text;
     user-select:text;
   }
-  /* プレイ領域は一定サイズ。画面が広い時は中央に置く */
+  /* プレイ領域は一定サイズ。畫面が広い時は中央に置く */
   #stage{
     position:fixed;inset:0;margin:auto;
     width:min(100vw, 420px);
@@ -107,7 +107,7 @@ gtag('config', 'G-41RSZLP1YQ');
     height:min(100dvh, 780px);
     box-sizing:border-box;
   }
-  /* 枠線は周りに余白がある広い画面でだけ拉（スマホでは画面いっぱいに見せる） */
+  /* 枠線は周りに余白がある広い畫面でだけ拉（スマホでは畫面いっぱいに見せる） */
   @media (min-width:421px){ #stage{border:1px solid var(--line);} }
   #cv{display:block;width:100%;height:100%;touch-action:none;}
 
@@ -163,7 +163,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #txt::placeholder{color:var(--sub);opacity:1;letter-spacing:.06em;}
   #txt:focus{outline:none;border-bottom-color:var(--bullet);}
 
-  /* 指で押すボタンは44px角を下限にする */
+  /* 手手指で按按鈕は44px角を下限にする */
   #start,#share,#rand,#howtoBtn{
     flex:0 0 auto;
     min-height:44px;min-width:44px;
@@ -173,7 +173,7 @@ gtag('config', 'G-41RSZLP1YQ');
     border-radius:0;
     cursor:pointer;
   }
-  /* 主ボタンは横幅いっぱい。結果画面では「分享」と半分ずつ */
+  /* 主按鈕は横幅いっぱい。結果畫面では「分享」と半分ずつ */
   #start,#share{flex:1 1 0;min-height:48px;}
   #start{font-size:14px;font-weight:600;}
   #rand,#howtoBtn{padding:10px 12px;font-size:12px;letter-spacing:.1em;}
@@ -181,7 +181,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #share,#rand,#howtoBtn{color:var(--fg);background:transparent;border:1px solid var(--line);}
   #share:hover,#rand:hover,#howtoBtn:hover{border-color:var(--fg);}
   #start:hover{filter:brightness(1.08);}
-  /* 押したことが指でも分かるようにする */
+  /* 押したことが手手指でも分かるようにする */
   #start:active{filter:brightness(.88);}
   #share:active,#rand:active,#howtoBtn:active{background:var(--line);}
   #share[hidden]{display:none;}
@@ -197,10 +197,10 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="overlay">
     <div id="panel">
       <p id="msg"></p>
-      <p id="nojs">JavaScriptが動いていません。このビューアではゲームを実行できないので、Safariなどのブラウザで開いてください。</p>
+      <p id="nojs">JavaScriptが動いていません。このビューアではゲームを実行できないので、Safariなどの瀏覽器で開いてください。</p>
       <div class="row">
         <input id="txt" type="text" enterkeyhint="go" aria-label="自機にする文字">
-        <button id="rand" type="button">ランダム</button>
+        <button id="rand" type="button">隨機</button>
       </div>
       <div class="row btns">
         <button id="howtoBtn" type="button" data-howto-open>玩法</button>
@@ -213,12 +213,12 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <section class="howto" hidden data-pos="none">
   <h2>玩法</h2>
-  <p>入力した文字がそのまま自機になり、全方位から飛んでくる弾をよけるゲームです。使える文字は12文字までで、ランダムのボタンでお題を選ぶこともできます。弾が来るのは開始時の1回だけで、当たった弾の数だけ文字の画が吹き飛びます。弾がすべて過ぎるか文字が全部壊れると終わり、残った文字を大きく表示します。</p>
+  <p>入力した文字がそのまま自機になり、全方位から飛んでくる弾をよける遊戲。使える文字は12文字までで、隨機の按鈕でお題を選ぶこともできます。弾が来るのは開始時の1回だけで、当たった弾の数だけ文字の画が吹き飛びます。弾がすべて過ぎるか文字が全部壊れると終わり、残った文字を大きく表示します。</p>
   <h2>操作</h2>
-  <p>画面のどこかに指を置いて拖曳すると、指の動いた分だけ文字が動きます。PC ではマウスの拖曳のほか、矢印キーや WASD でも動かせます。</p>
-  <h2>コツ</h2>
-  <p>弾は開始時の文字の位置をめがけて集まるので、すぐに中央を離れると当たりにくくなります。速く動かすと文字列は進む向きへ傾き、当たり判定も一緒に回ります。画の多い文字ほど弾の数が増えます。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p>畫面のどこかに手手指を置いて拖曳すると、手手指の動いた分だけ文字が動きます。PC では滑鼠の拖曳のほか、矢印鍵や WASD でも動かせます。</p>
+  <h2>訣竅</h2>
+  <p>弾は開始時の文字の位置をめがけて集まるので、すぐに中央を離れると当たりにくくなります。速く移動と文字列は進む向きへ傾き、当たり判定も一緒に回ります。画の多い文字ほど弾の数が増えます。</p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 
 <script>
@@ -227,7 +227,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   const FONT_STACK = "'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic','Noto Sans JP',system-ui,sans-serif";
 
-  // JSが動いていればこの注意書きは消える（動いていなければ画面に残る）
+  // JSが動いていればこの注意書きは消える（動いていなければ畫面に残る）
   const nojs = document.getElementById('nojs');
   if (nojs && nojs.parentNode) nojs.parentNode.removeChild(nojs);
 
@@ -241,15 +241,15 @@ gtag('config', 'G-41RSZLP1YQ');
   const shareBtn = document.getElementById('share');
   const randBtn = document.getElementById('rand');
 
-  // ボタンの配線は最初に済ませる。関数宣言は巻き上げられるので、
-  // 以降のどこかで例外が出ても入力とボタンは生きたままになる。
+  // 按鈕の配線は最初に済ませる。関数宣言は巻き上げられるので、
+  // 以降のどこかで例外が出ても入力と按鈕は生きたままになる。
   startBtn.addEventListener('click', function(){ startGame(); });
   randBtn.addEventListener('click', function(){ pickWord(); });
   shareBtn.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
   shareBtn.addEventListener('click', function(){ shareResult(); });
   txt.addEventListener('keydown', function(e){ if (e.key === 'Enter') startGame(); });
 
-  // 不具合の切り分け用：読み込み時のエラーを画面に出す
+  // 不具合の切り分け用：読み込み時のエラーを畫面に出す
   window.addEventListener('error', function(e){
     if (!msg) return;
     msg.textContent = '錯誤：' + (e.message || '') + ' @' + (e.lineno || '?');
@@ -267,7 +267,7 @@ gtag('config', 'G-41RSZLP1YQ');
     'とうふ','みずたまり'
   ];
 
-  // ランダムボタン：カタカナ語を入れ替える
+  // 隨機按鈕：カタカナ語を入れ替える
   function pickWord(){
     let w = txt.value;
     for (let i = 0; i < 12 && w === txt.value; i++){
@@ -692,7 +692,7 @@ gtag('config', 'G-41RSZLP1YQ');
     cue = CUE_TIME;
     shake = 0;
     drag = null;
-    keys = Object.create(null);   // 開始前に押されていたキーを持ち越さない
+    keys = Object.create(null);   // 開始前に押されていた鍵を持ち越さない
     state = 'playing';
     overlay.classList.remove('result');
     overlay.hidden = true;
@@ -721,8 +721,8 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- リザルトでの拡大 ----------
-  const RESULT_MARGIN = 24;     // 拡大した文字と画面の左右端との最小のすき間（px）
-  const RESULT_MAX_H = 0.34;    // 拡大した文字の高さの上限（画面の高さに対する割合）
+  const RESULT_MARGIN = 24;     // 拡大した文字と畫面の左右端との最小のすき間（px）
+  const RESULT_MAX_H = 0.34;    // 拡大した文字の高さの上限（畫面の高さに対する割合）
 
   // 残っている塗りの縦横のうち大きい方の半分（ローカル座標）
   function aliveHalf(){
@@ -730,7 +730,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // 残った文字を、無傷のときの大きさまで拡大する倍率。
-  // 画面からはみ出さず、解析ラスタの解像度を超えて粗くならない範囲に収める
+  // 畫面からはみ出さず、解析ラスタの解像度を超えて粗くならない範囲に収める
   function resultScale(){
     if (body.alivePartCount <= 0) return 1;
     const rw = body.bx1 - body.bx0, rh = body.by1 - body.by0;
@@ -755,7 +755,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   }
 
-  // 残った文字の中心が画面中央に来る位置
+  // 残った文字の中心が畫面中央に来る位置
   function resultPos(){
     const c = aliveCenter();
     return { x: W / 2 - c.x * body.scale, y: H / 2 - c.y * body.scale };
@@ -775,7 +775,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function updateEnding(dt){
     endT += dt;
     const k = Math.min(1, dt * 6);
-    // 残った文字を拡大しつつ、その中心が画面中央に来る位置へ寄せる
+    // 残った文字を拡大しつつ、その中心が畫面中央に来る位置へ寄せる
     body.angle += (0 - body.angle) * k;
     body.scale += (body.targetScale - body.scale) * k;
     const t = resultPos();
@@ -881,7 +881,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text: text }).catch(function(){});
       return;
     }
-    // 3) 分享シートがない環境：コピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境：コピーして按鈕の文言で知らせる
     if (navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(text).then(function(){
         shareBtn.textContent = '已複製';
@@ -1086,7 +1086,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
     // 進行方向に合わせて機体（文字列）を轉動。左右どちらに進んでも上下は反転しないよう、
     // 進行方向の「軸」に合わせる（±180度は同じ向きとして扱う）。
-    // 指の細かいブレで向きが暴れないよう、速度を均してから角度を求め、回転速度にも上限を設ける。
+    // 手手指の細かいブレで向きが暴れないよう、速度を均してから角度を求め、回転速度にも上限を設ける。
     const vx = (body.x - body.prevX) / dt, vy = (body.y - body.prevY) / dt;
     body.prevX = body.x;
     body.prevY = body.y;
@@ -1116,7 +1116,7 @@ gtag('config', 'G-41RSZLP1YQ');
       const b = bullets[i];
       b.x += b.vx * dt;
       b.y += b.vy * dt;
-      // 画面外に出て、かつ遠ざかっている弾だけ消す（飛来中の弾は画面外にいても残す）
+      // 畫面外に出て、かつ遠ざかっている弾だけ消す（飛来中の弾は畫面外にいても残す）
       if (b.x < -60 || b.x > W + 60 || b.y < -60 || b.y > H + 60){
         if ((b.x - W / 2) * b.vx + (b.y - H / 2) * b.vy > 0){
           bullets.splice(i, 1);
@@ -1260,7 +1260,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   /* ---------- 入力 ---------- */
 
-  // 長押しによる iOS のルーペ・コールアウト、右クリックメニューを抑止する
+  // 長押しによる iOS のルーペ・コールアウト、右點擊メニューを抑止する
   function blockDefault(e){ if (e.cancelable) e.preventDefault(); }
   cv.addEventListener('touchstart', blockDefault, { passive: false });
   cv.addEventListener('touchmove', blockDefault, { passive: false });
@@ -1284,8 +1284,8 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointercancel', endDrag);
 
   window.addEventListener('keydown', function(e){
-    // 入力欄での文字入力（ローマ字の a / s / d / w など）を移動キーとして拾わない。
-    // 日本語変換中はキーを離した通知が来ないことがあり、押しっぱなし扱いで動き続けるため
+    // 入力欄での文字入力（ローマ字の a / s / d / w など）を移動鍵として拾わない。
+    // 日本語変換中は鍵を離した通知が来ないことがあり、押しっぱなし扱いで動き続けるため
     if (e.target === txt || e.isComposing || e.keyCode === 229) return;
     const k = e.key.toLowerCase();
     if (state === 'playing' && (k.indexOf('arrow') === 0 || k === 'w' || k === 'a' || k === 's' || k === 'd')){

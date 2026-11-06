@@ -73,7 +73,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #sound[aria-pressed="false"] .on{display:none}
   #sound[aria-pressed="false"] .off{display:block}
   .hidden{display:none !important}
-  /* 分享される内容の画面（分享シートが出ない環境用） */
+  /* 分享される内容の畫面（分享シートが出ない環境用） */
   #share-view{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
   #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;background:var(--panel);border-radius:10px;padding:12px}
   #share-img{display:block;width:100%;height:auto}
@@ -107,7 +107,7 @@ gtag('config', 'G-41RSZLP1YQ');
     </button>
   </div>
   <div id="stage">
-    <canvas id="cv" role="img" aria-label="壁。タップした所がひび割れて崩れ、中の写真が見えます"></canvas>
+    <canvas id="cv" role="img" aria-label="壁。點擊した所がひび割れて崩れ、中の写真が見えます"></canvas>
   </div>
   <div id="bar">
     <label class="pick" id="pick0"><span id="pickText0">壁の写真</span><input id="file0" type="file" accept="image/*"></label>
@@ -120,7 +120,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="cam-view" class="hidden" role="dialog" aria-modal="true" aria-labelledby="cam-title" aria-describedby="cam-text">
     <div class="panel">
       <p id="cam-title">カメラを使います</p>
-      <p id="cam-text">スマホの外カメラ（背面）と内カメラ（画面側）を使います。壁の写真には外カメラ、中の写真には内カメラの映像が入ります。</p>
+      <p id="cam-text">スマホの外カメラ（背面）と内カメラ（畫面側）を使います。壁の写真には外カメラ、中の写真には内カメラの映像が入ります。</p>
       <div id="cam-actions">
         <button id="cam-close" class="btn" type="button">關閉</button>
         <button id="cam-allow" class="btn" type="button">許可</button>
@@ -140,9 +140,9 @@ gtag('config', 'G-41RSZLP1YQ');
   'use strict';
 
   // ---------- 定数 ----------
-  // 崩れ方（タップした所にギザギザの穴が開き、穴の分の壁が破片になって落ちる）
+  // 崩れ方（點擊した所にギザギザの穴が開き、穴の分の壁が破片になって落ちる）
   const HOLE_R = 34;           // 穴の大きさ（中心から縁までのおおよその距離、px）
-  const HARDNESS = [2, 5];     // 壊れにくさ：同じ所をこの回数叩くと穴が開く（それまではひびが入るだけ）。叩き始めた所ごとに、この範囲（最小, 最大）からランダムに決める
+  const HARDNESS = [2, 5];     // 壊れにくさ：同じ所をこの回数叩くと穴が開く（それまではひびが入るだけ）。叩き始めた所ごとに、この範囲（最小, 最大）から隨機に決める
   const HIT_R = 30;            // 前に叩いた所からこの距離（px）までなら、同じ所を叩いたとみなす
   const HOLE_PTS = [16, 24];   // 穴の縁の角の数（最小, 最大）。多いほど細かくギザギザになる
   const HOLE_JAG = 0.45;       // 縁のギザギザの深さ（穴の大きさに対する割合）
@@ -162,7 +162,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const CRACK_W = 1.8;         // ひびの付け根の太さ（px）。先へ行くほど細くなる
   // 破片の落ち方
   const GRAVITY = 2200;        // 重力（px/秒²）
-  const POP = [40, 220];       // タップした所から外へはじける速さ（px/秒、最小, 最大）
+  const POP = [40, 220];       // 點擊した所から外へはじける速さ（px/秒、最小, 最大）
   const POP_UP = 180;          // 往上はね上がる速さの最大（px/秒）
   const SPIN = 5;              // 回転の速さの最大（ラジアン/秒）
   const GROW = 0.7;            // 手前に倒れてくるように、1秒ごとにこの割合だけ大きくする
@@ -202,7 +202,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let W = 0, H = 0, dpr = 1;
   const imgs = [null, null];      // 0: 壁の写真, 1: 中の写真
 
-  // 画面の大きさで下描きしておく画像
+  // 畫面の大きさで下描きしておく画像
   const mk = () => document.createElement('canvas');
   const backC = mk();     // 中の写真
   const crackC = mk();    // ひびと穴の縁（透明な重ね絵。カメラの映像の上にもそのまま重ねられるように分けて持つ）
@@ -212,7 +212,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const fadeC = mk();     // 穴の中に落ちる壁の影
   const sideC = mk();     // 壁の割れた断面
 
-  // 壁の状態は壁の写真の画素の座標で持つ（画面の大きさが変わってもずれないように）
+  // 壁の状態は壁の写真の画素の座標で持つ（畫面の大きさが変わってもずれないように）
   let holes = [];         // 開いた穴：縁の点の列 [[x, y], …]
   let shakeT = 0;         // 壁の震えの剩餘時間（秒）
   const sand = [];        // 降っている砂粒 {x, y, vx, vy, r, c}
@@ -226,7 +226,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const video = $('cam-video');
   const camOn = layer => cam.layer === layer && !!cam.stream && video.readyState >= 2 && !!video.videoWidth;
 
-  // 壁の写真を画面いっぱいに収める変換（はみ出た分は切る）
+  // 壁の写真を畫面いっぱいに収める変換（はみ出た分は切る）
   let tf = { s: 1, ox: 0, oy: 0 };
   function frontSize(){
     const im = imgs[0];
@@ -393,7 +393,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- ひび ----------
-  // (x, y) から向き ang へ、ぶれながら伸びるひび（ときどき枝分かれする）。座標は画面のpx
+  // (x, y) から向き ang へ、ぶれながら伸びるひび（ときどき枝分かれする）。座標は畫面のpx
   function growCrack(x, y, ang, len, w, depth){
     const base = ang, pts = [[x, y, w]];
     for (let d = 0; d < len;){
@@ -449,7 +449,7 @@ gtag('config', 'G-41RSZLP1YQ');
     for (const p of poly){ x += p[0]; y += p[1]; }
     return [x / poly.length, y / poly.length];
   };
-  // (x, y) を中心にしたギザギザの穴の縁（画面のpx）。中心から見てどの向きにも縁が1か所だけある形にする
+  // (x, y) を中心にしたギザギザの穴の縁（畫面のpx）。中心から見てどの向きにも縁が1か所だけある形にする
   function makeHole(x, y){
     const n = Math.round(rand(HOLE_PTS[0], HOLE_PTS[1])), a0 = Math.random() * Math.PI * 2, out = [];
     const R = HOLE_R;
@@ -486,7 +486,7 @@ gtag('config', 'G-41RSZLP1YQ');
     for (let i = 3; i < d.length; i += 4) if (d[i] > 128) n++;
     return n / (w * h);
   }
-  // 破片1つ分の絵を切り出して、落ちる破片にする（tx, ty：タップした所）
+  // 破片1つ分の絵を切り出して、落ちる破片にする（tx, ty：點擊した所）
   function spawnFrag(poly, tx, ty){
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (const p of poly){ x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
@@ -573,7 +573,7 @@ gtag('config', 'G-41RSZLP1YQ');
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(backC, 0, 0);
     // 叩いた直後は壁（と縁のグラデーション・影）だけを震わせる。
-    // ずれた分だけ画面の端から中の写真が見えないよう、震えの幅に合わせて少し大きく描く
+    // ずれた分だけ畫面の端から中の写真が見えないよう、震えの幅に合わせて少し大きく描く
     const k = shakeT / SHAKE_TIME;
     const sx = (Math.random() * 2 - 1) * SHAKE_AMP * k * dpr, sy = (Math.random() * 2 - 1) * SHAKE_AMP * k * dpr;
     const sc = 1 + 2 * SHAKE_AMP * k / Math.min(W, H);
@@ -598,7 +598,7 @@ gtag('config', 'G-41RSZLP1YQ');
     ctx.globalAlpha = 1;
   }
   function update(dt){
-    // 震えている間、画面の上の端から砂を少しずつ降らせる
+    // 震えている間、畫面の上の端から砂を少しずつ降らせる
     if (shakeT > 0){
       sandDue += SAND_N * Math.min(dt, shakeT) / SHAKE_TIME;
       for (; sandDue >= 1; sandDue--){
@@ -622,7 +622,7 @@ gtag('config', 'G-41RSZLP1YQ');
       f.x += f.vx * dt; f.y += f.vy * dt;
       f.a += f.va * dt;
       f.sc += GROW * dt;
-      // 画面の往下出たら片付ける
+      // 畫面の往下出たら片付ける
       if (f.y - Math.hypot(f.w, f.h) * f.sc > H) frags.splice(i, 1);
     }
   }
@@ -668,8 +668,8 @@ gtag('config', 'G-41RSZLP1YQ');
   });
   document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
 
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
-  // 写真選択ボタンは除外する（止めるとファイル選択が開かないことがある）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // 写真選択按鈕は除外する（止めるとファイル選択が開かないことがある）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     if (e.target instanceof Element && e.target.closest('.pick')) return;
@@ -806,7 +806,7 @@ gtag('config', 'G-41RSZLP1YQ');
     };
   })();
 
-  // 効果音のオン・オフ（タッチは連打の拡大防止に止められないよう pointerdown で、キーボード操作は click で切り替える）
+  // 効果音のオン・オフ（タッチは連打の拡大防止に止められないよう pointerdown で、鍵ボード操作は click で切り替える）
   const soundBtn = $('sound');
   const toggleSound = () => {
     const v = soundBtn.getAttribute('aria-pressed') !== 'true';
@@ -818,7 +818,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 分享 ----------
   const shareText = () => '壁の中には...?\n' + location.href.split(/[?#]/)[0] + '\n#ジャイアントウォール';
-  // 今の画面を画像にする
+  // 今の畫面を画像にする
   function snapshotCanvas(){
     draw();
     const c = document.createElement('canvas');
@@ -839,7 +839,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = snapshotCanvas();
     const file = imageFile(c);
-    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（画像と文面）を畫面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -848,8 +848,8 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-close').focus({ preventScroll:true });
     };
     // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
-    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内瀏覽器等）。
+    // 分享シートを開いてから自己で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
@@ -878,8 +878,8 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- カメラ ----------
-  // ボタンを押すたびに「オフ → 壁の写真をカメラに → 中の写真をカメラに → オフ」と切り替える。
-  // 壁は背面カメラ（目の前の景色）、中はインカメラ（自分）を使う。インカメラは鏡のように左右反転して映す
+  // 按鈕を按たびに「オフ → 壁の写真をカメラに → 中の写真をカメラに → オフ」と切り替える。
+  // 壁は背面カメラ（目の前の景色）、中はインカメラ（自己）を使う。インカメラは鏡のように左右反転して映す
   const CAM_STATES = [
     { layer: -1, label: '',   name: 'オフ' },
     { layer: 0,  label: '壁', name: '壁の写真', facing: 'environment' },
@@ -901,7 +901,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // 写真を描き直す（カメラをやめた写真を、元の写真か残した映像に戻す）
   const refresh = layer => { if (layer === 0) renderSrc(); else if (layer === 1) renderBack(); };
 
-  // カメラを使えなかったとき：オフに戻し、対象の写真のボタンに一時的に知らせる
+  // カメラを使えなかったとき：オフに戻し、対象の写真の按鈕に一時的に知らせる
   function camFailed(layer){
     const old = cam.layer;
     cam.state = 0; cam.layer = -1;
@@ -960,7 +960,7 @@ gtag('config', 'G-41RSZLP1YQ');
     imgs[layer] = c;
   }
 
-  // 初めてカメラボタンを押したときは、カメラを使うことを知らせる画面を出し、許可を押したらカメラを起動する
+  // 初めてカメラ按鈕を押したときは、カメラを使うことを知らせる畫面を出し、許可を押したらカメラを起動する
   // （このページを開いている間は、2回目からは出さない）
   let camAllowed = false;
   const camView = $('cam-view');
@@ -984,7 +984,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (camViewOpen() && e.key === 'Escape') closeCamView();
   });
 
-  // 切り替え方は効果音ボタンと同じ（タッチは pointerdown、キーボード操作は click）
+  // 切り替え方は効果音按鈕と同じ（タッチは pointerdown、鍵ボード操作は click）
   const toggleCam = () => {
     if (!camAllowed){ openCamView(); return; }
     setCamState((cam.state + 1) % CAM_STATES.length);
@@ -992,7 +992,7 @@ gtag('config', 'G-41RSZLP1YQ');
   camBtn.addEventListener('pointerdown', e => { e.preventDefault(); toggleCam(); });
   camBtn.addEventListener('click', e => { if (e.detail === 0) toggleCam(); });
 
-  // 別のアプリから戻ったとき、止まった映像を再開する
+  // 別のアプリから戻ったとき、止まった映像を繼續する
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && cam.stream) video.play().catch(() => {});
   });

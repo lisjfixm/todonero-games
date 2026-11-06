@@ -37,7 +37,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta name="description" content="1万本のピンを2投で倒すボウリング">
 <style>
   :root{
-    /* 色の決め事：背景は元の暗い色、床は淡いオレンジの板、球はつやのある赤い無地のボウリングの球、文字やボタンは縁取りなし（暗く透けた地か影だけ） */
+    /* 色の決め事：背景は元の暗い色、床は淡いオレンジの板、球はつやのある赤い無地のボウリングの球、文字や按鈕は縁取りなし（暗く透けた地か影だけ） */
     --bg:#1e2228; --fg:#fff; --ink:#1d2b64;
     --lane:#f5ad6a; --rail:#d9823e; --pin:#f7f7f7; --pinDown:#b07a5a; --pinStripe:#d32020;
     --howto-bg:#1e2228; --howto-fg:#fff;
@@ -55,55 +55,55 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   #game{position:relative;margin:0 auto;width:100%;max-width:420px;height:100vh;height:100dvh;overflow:hidden}
   canvas{display:block;width:100%;height:100%;touch-action:none}
-  /* ボタンの中の文字やアイコンも選ばせない（長押しで虫眼鏡が出ないように） */
+  /* 按鈕の中の文字やアイコンも選ばせない（長押しで虫眼鏡が出ないように） */
   button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   button svg{pointer-events:none}
   #hud{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 0;display:flex;justify-content:flex-start;pointer-events:none}
   #pinCount{padding:6px 14px;border-radius:18px;background:var(--shade);font-size:16px;font-weight:bold;font-variant-numeric:tabular-nums;white-space:nowrap}
-  /* ゲートを通ったときに出る「×3」「+50」：ゲートの画面上の位置に合わせて JS で動かす */
+  /* ゲートを通ったときに出る「×3」「+50」：ゲートの畫面上の位置に合わせて JS で移動 */
   #pops{position:absolute;inset:0;pointer-events:none;overflow:hidden}
   /* 文字の縁取り（--textEdge）：線は引かず、文字のすぐ外が一番濃く、外へいくほど薄くなる縁を、ずらさないぼかしを3段重ねて作る */
   .gatePop{position:absolute;left:0;top:0;font-size:56px;font-weight:900;color:var(--pop);filter:var(--textEdge);white-space:nowrap;font-variant-numeric:tabular-nums;will-change:transform,opacity}
-  /* 倒している途中の本数：画面幅いっぱい近くまで大きく（「10,000本」が収まる大きさ） */
+  /* 倒している途中の本数：畫面幅いっぱい近くまで大きく（「10,000本」が収まる大きさ） */
   #centerCount{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:min(20vw,96px);font-weight:900;filter:var(--textEdge);line-height:1;white-space:nowrap;pointer-events:none;font-variant-numeric:tabular-nums}
-  /* パワーゲージ：移動のボタンと同じ暗く透けた帯に、たまっていくコマ（緑→黄→橙）。文字は付けない */
+  /* パワーゲージ：移動の按鈕と同じ暗く透けた帯に、たまっていくコマ（緑→黄→橙）。文字は付けない */
   #power{position:absolute;left:16px;right:16px;bottom:var(--ctlBottom);height:40px;display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:20px;background:var(--shade);pointer-events:none}
   #powerSegs{flex:1;display:flex;gap:3px;height:16px;align-items:stretch}
   .seg{flex:1;border-radius:4px;background:var(--gaugeOff)}
   .seg.on{background:var(--gaugeOn)}
   .seg.on.low{background:var(--gaugeLow)}
   .seg.on.hot{background:var(--gaugeHot)}
-  /* 位置のボタン：参考画像のAボタンのような青緑の丸に白い縁 */
-  /* 位置のボタン：左右の矢印は球のすぐ横に付いて動く。決定は下の真ん中 */
-  /* 位置のボタン：左右の矢印と決定を横一列に並べる。縦の位置は、球と画面下の間の真ん中（JS で合わせる） */
-  /* 位置を決める間、球の左右に出す小さな矢印（左右に動かせることを示すだけで、押すものではない） */
+  /* 位置の按鈕：参考画像のA按鈕のような青緑の丸に白い縁 */
+  /* 位置の按鈕：左右の矢印は球のすぐ横に付いて動く。確定は下の真ん中 */
+  /* 位置の按鈕：左右の矢印と確定を横一列に並べる。縦の位置は、球と畫面下の間の真ん中（JS で合わせる） */
+  /* 位置を決める間、球の左右に出す小さな矢印（左右に動かせることを示すだけで、按ものではない） */
   #posHint{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
   #posHint svg{position:absolute;top:0;width:var(--hintSize);height:var(--hintSize);margin-top:calc(var(--hintSize) / -2);fill:none;stroke-linecap:round;stroke-linejoin:round}
   #posHint .l{right:var(--hintGap)}
   #posHint .r{left:var(--hintGap)}
   #posHint .edge{stroke:var(--edge);stroke-width:5}
   #posHint .fg{stroke:#fff;stroke-width:3}
-  /* 決定ボタンは下端をパワーのゲージの下端と同じ高さにそろえる */
+  /* 確定按鈕は下端をパワーのゲージの下端と同じ高さにそろえる */
   #posCtrl{position:absolute;left:0;right:0;bottom:var(--ctlBottom);display:flex;justify-content:center;align-items:center;gap:16px;pointer-events:none}
   .ctl{display:flex;align-items:center;justify-content:center;padding:0;border:none;font-family:inherit;color:#fff;touch-action:none;pointer-events:auto}
   #posOk{flex:none;width:150px;height:56px;border-radius:28px;background:#fff;color:var(--ink);font-size:18px;font-weight:bold;letter-spacing:.1em}
   #posOk:active{background:#dfe4ee;transform:translateY(1px)}
   /* 向きを決めている間だけ、左下の隅に出す（位置を決め直す）。
-     画面上の操作ボタンの決まり：44px の半透明の黒い丸、枠線なし、白い細線のアイコンだけ、画面端から16px */
+     畫面上の操作按鈕の決まり：44px の半透明の黒い丸、枠線なし、白い細線のアイコンだけ、畫面端から16px */
   #backPos{position:absolute;left:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:none;border-radius:22px;background:#0008;touch-action:manipulation}
   #backPos svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   #backPos:focus-visible{outline:2px solid #fff;outline-offset:2px}
   .ctl:focus-visible{outline:2px solid #fff;outline-offset:2px}
   .hidden{display:none !important}
-  /* ストライク・スペアの演出：白く光ってから大きな文字が飛び込み、紙吹雪が舞う */
+  /* 好球・補中の演出：白く光ってから大きな文字が飛び込み、紙吹雪が舞う */
   #celebrate{position:absolute;inset:0;pointer-events:none;overflow:hidden}
   #celebFlash{position:absolute;inset:0;background:#fff;opacity:0}
   #celebrate.on #celebFlash{animation:celebFlash .5s ease-out}
   #confetti{position:absolute;inset:0;width:100%;height:100%}
   /* 文字は帯（#celebMid）と同じ高さの箱に入れ、箱の中で上下中央に置く（行の高さを1にして、字の上下の余白の差で帯からずれないようにする） */
   #celebText{position:absolute;left:0;right:0;top:38%;height:1.25em;display:flex;align-items:center;justify-content:center;line-height:1;font-size:min(13vw,60px);font-weight:900;white-space:nowrap;color:#fff;opacity:0}
-  /* ストライク・スペアの演出：文字の後ろに帯が横から差し込み（ストライクは赤、スペアは青）、文字の所から光の輪が広がり、
-     紙吹雪が文字の所から再來一次はじける。ストライクは輪も紙吹雪も1回ずつ多い */
+  /* 好球・補中の演出：文字の後ろに帯が横から差し込み（好球は赤、補中は青）、文字の所から光の輪が広がり、
+     紙吹雪が文字の所から再來一次はじける。好球は輪も紙吹雪も1回ずつ多い */
   #celebMid{position:absolute;left:0;right:0;top:38%;height:1.25em;font-size:min(13vw,60px)}
   #celebBand{position:absolute;left:-10%;right:-10%;top:-.15em;bottom:-.15em;background:var(--spareBand);opacity:0;transform:skewY(-4deg) translateX(-110%)}
   #celebrate.on #celebBand{animation:bandIn .35s cubic-bezier(.2,.9,.3,1) .05s forwards}
@@ -119,11 +119,11 @@ gtag('config', 'G-41RSZLP1YQ');
   @keyframes celebFlash{0%{opacity:.85}100%{opacity:0}}
   @keyframes celebIn{0%{opacity:0;transform:scale(2.6) rotate(-6deg)}60%{opacity:1}100%{opacity:1;transform:scale(1) rotate(-4deg)}}
   @keyframes celebPulse{from{transform:scale(1) rotate(-4deg)}to{transform:scale(1.07) rotate(-4deg)}}
-  /* 結果：暗く透けた背景の上に白いカード1枚。移動のボタンと同じく白と紺だけで組む */
+  /* 結果：暗く透けた背景の上に白いカード1枚。移動の按鈕と同じく白と紺だけで組む */
   #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,13,20,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
   #card{position:relative;width:100%;max-width:340px;display:flex;flex-direction:column;align-items:stretch;gap:18px;padding:24px 20px 20px;border-radius:20px;background:#fff;color:var(--ink)}
   /* 実物と同じ形式の分數表：フレームの上段に1投目・2投目の小枠、下段にそのフレームまでの合計 */
-  /* 分數表：1フレームだけなので、2つの小枠を左右半分ずつに並べ、その下に合計を置く（左右の釣り合いを取る） */
+  /* 分數表：1フレームだけなので、2つの小枠を左右半分ずつに並べ、その下に合計を置く（左右の釣り合いを取得） */
   #sheet{width:200px;margin:0 auto;border-collapse:collapse;color:var(--ink);font-variant-numeric:tabular-nums;table-layout:fixed}
   #sheet td{border:1.5px solid #c9cfdc;padding:0;text-align:center}
   #sheet .throws{display:flex}
@@ -132,7 +132,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #sheet .mark{display:block;width:100%;height:100%;fill:var(--ink)}
   #sheet .total{font-size:40px;font-weight:900;line-height:1.1;padding:12px 4px 14px}
   .btns{display:flex;flex-direction:column;gap:10px}
-  /* 分數表の表示演出：カードが出る → 1投目・2投目の順に枠へ判を押すように入る → 合計を数え上げ → 最後に弾む → ボタンが出る */
+  /* 分數表の表示演出：カードが出る → 1投目・2投目の順に枠へ判を按ように入る → 合計を数え上げ → 最後に弾む → 按鈕が出る */
   #over:not(.hidden){animation:overIn .25s ease-out both}
   #over:not(.hidden) #card{animation:cardIn .4s cubic-bezier(.2,1.4,.4,1) both}
   #sheet .v{display:flex;align-items:center;justify-content:center;width:100%;height:100%;opacity:0}
@@ -140,9 +140,9 @@ gtag('config', 'G-41RSZLP1YQ');
   #sheet .total.done{animation:totalPop .4s cubic-bezier(.2,1.6,.4,1)}
   #overBtns{opacity:0;pointer-events:none}
   /* 見える状態はクラス自体で決め、アニメは動きを付けるだけにする（iPhoneでアニメが流れないと、
-     アニメの最後の状態で見せる作りでは透明のまま剩餘、押せるのに見えないボタンになっていた） */
+     アニメの最後の状態で見せる作りでは透明のまま剩餘、押せるのに見えない按鈕になっていた） */
   #overBtns.in{opacity:1;pointer-events:auto;animation:btnsIn .3s ease-out}
-  /* 全部倒したとき：数え終わってから、カードの上の縁に「ストライク！」「スペア！」の帯を判のように押し、紙吹雪をはじけさせる */
+  /* 全部倒したとき：数え終わってから、カードの上の縁に「好球！」「補中！」の帯を判のように押し、紙吹雪をはじけさせる */
   #allBand{position:absolute;left:-12px;right:-12px;top:-40px;height:52px;display:flex;align-items:center;justify-content:center;line-height:1;font-size:30px;font-weight:900;color:#fff;white-space:nowrap;background:var(--spareBand);transform:rotate(-4deg);opacity:0;pointer-events:none}
   #allBand.strike{background:var(--strikeBand)}
   #allBand.in{opacity:1;animation:bandStamp .35s cubic-bezier(.2,1.5,.4,1)}
@@ -178,7 +178,7 @@ gtag('config', 'G-41RSZLP1YQ');
     <svg class="r" viewBox="0 0 24 24"><path class="edge" d="M9 5l7 7-7 7"/><path class="fg" d="M9 5l7 7-7 7"/></svg>
   </div>
   <div id="posCtrl" class="hidden">
-    <button id="posOk" class="ctl" type="button">決定</button>
+    <button id="posOk" class="ctl" type="button">確定</button>
   </div>
   <div id="celebrate" class="hidden" aria-live="assertive"><div id="celebFlash"></div><div id="celebMid"><div id="celebBand"></div><div class="celebRing"></div><div class="celebRing"></div><div class="celebRing"></div></div><canvas id="confetti"></canvas><div id="celebText"></div></div>
   <div id="over" class="hidden"><div id="card">
@@ -189,7 +189,7 @@ gtag('config', 'G-41RSZLP1YQ');
       </tr>
     </table>
     <div class="btns" id="overBtns">
-      <button id="retry" class="btn" type="button">もう一回</button>
+      <button id="retry" class="btn" type="button">再來一次</button>
       <button id="share" class="btn sub" type="button">分享</button>
     </div>
   </div><canvas id="overConfetti" aria-hidden="true"></canvas></div>
@@ -202,12 +202,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <section class="howto" hidden data-pos="top-right">
     <h2>玩法</h2>
-    <p>1万本のピンを2投で倒すボウリングです。レーンには30個のゲートが並び、球がくぐると「×」や「+」の数だけ球が増えます。2投で倒した合計が分數になり、1投目で全部倒せばストライク、2投目で倒しきればスペアです。</p>
+    <p>1万本のピンを2投で倒すボウリングです。レーンには30個のゲートが並び、球がくぐると「×」や「+」の数だけ球が増えます。2投で倒した合計が分數になり、1投目で全部倒せば好球、2投目で倒しきれば補中です。</p>
     <h2>操作</h2>
-    <p>まず画面を横に拖曳して球の位置を動かし、「決定」を押します。次に左往右振れる線を點擊向きを、往復するゲージを點擊強さを決めると投げられます。向きを決めている間は左下のボタンで位置に戻れます。PC では←→キーで位置を動かし、スペースか Enter で決定します。</p>
-    <h2>コツ</h2>
+    <p>まず畫面を横に拖曳して球の位置を動かし、「確定」を押します。次に左往右振れる線を點擊向きを、往復するゲージを點擊強さを決めると投げられます。向きを決めている間は左下の按鈕で位置に戻れます。PC では←→鍵で位置を動かし、スペースか Enter で確定します。</p>
+    <h2>訣竅</h2>
     <p>「+」は1投につき1回だけ効き、「×」は通った球1個ごとに効きます。先に「+」で球を増やしてから「×」へ通すと、一気に数が伸びます。2投目のゲートの配置は1投目と同じなので、1投目の結果を見て通り道を変えられます。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -239,10 +239,10 @@ gtag('config', 'G-41RSZLP1YQ');
   // ピンの描き方：見ている所の近くだけ形で描き、それ以外は点で描く（100万本を形で描くと重すぎるため）
   const NEAR_MAX = 6000;       // 形で描くピンの上限
   const NEAR_X = 40;           // 形で描く範囲の横幅（片側）
-  const NEAR_BACK = 30;        // 形で描く範囲：見ている所から手前へ
+  const NEAR_BACK = 30;        // 形で描く範囲：見ている所から手上一頁
   const NEAR_FWD = 30;         // 形で描く範囲：見ている所から奥へ
   const POINT_SIZE = 0.45;     // 点の大きさ（ピンの太さに合わせる）
-  const NEAR_MIN_PX = 3;       // ピンの太さが画面上でこのピクセル数より細くなる距離では、形で描かず点だけにする
+  const NEAR_MIN_PX = 3;       // ピンの太さが畫面上でこのピクセル数より細くなる距離では、形で描かず点だけにする
                                // （細すぎる形は点より薄く見え、その範囲だけ四角く抜けて見えるため）
 
   // 球とレーン
@@ -251,10 +251,10 @@ gtag('config', 'G-41RSZLP1YQ');
   const FOG_FAR = 1000;        // ここで背景の色になる
   const RAIL_W = 0.8;          // 床の両端の縁の幅
   const RAIL_H = 0.5;          // 床の両端の縁の高さ
-  const CAM_SETTLED = 0.5;     // カメラが球の所へ戻りきったとみなす剩餘の距離（これより遠い間は位置のボタンを隠す）
+  const CAM_SETTLED = 0.5;     // カメラが球の所へ戻りきったとみなす剩餘の距離（これより遠い間は位置の按鈕を隠す）
   const HINT_SIZE = 22;        // 球の左右の矢印の大きさ（px）
   const HINT_GAP = 4;          // 球の縁から矢印までの間（px）
-  const DRAG_GAIN = 1;         // 位置を決める拖曳の効き（1で指の下の床と同じだけ動く）
+  const DRAG_GAIN = 1;         // 位置を決める拖曳の効き（1で手手指の下の床と同じだけ動く）
   const TRAIL_SPEED = 20;      // この速さより速い球にだけ尾を拉
   const TRAIL_FULL = 45;       // この速さで尾が一番濃くなる（TRAIL_SPEED から濃くなっていく）
   const TRAIL_TIME = 0.03;     // 尾の長さ（この秒数ぶん前にいた所まで伸ばす）
@@ -263,7 +263,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const BALL_MASS = 1;         // 球の重さ
   const BALL_SPEED_MIN = 12;   // 強さが一番弱いときの球の速さ
   const BALL_SPEED_MAX = 90;   // 強さが一番強いときの球の速さ
-  const MAX_MOVE = 0.25;       // 1回で動かす距離の上限（球とピンの半径の和より十分短く。すり抜け防止）
+  const MAX_MOVE = 0.25;       // 1回で移動距離の上限（球とピンの半径の和より十分短く。すり抜け防止）
   const BALL_FRICTION = 0.4;   // 球の減速（レーンは油が塗ってあるので小さめ）
   const BALL_FIELD_DRAG = 0.15; // ピンが並ぶ所に入ってからの球の減速（速さに比例）。ピンの中を進める距離はおよそ「速さ÷これ」
                                // （目安：一番弱い球は約15、真ん中の強さは約80、一番強い球は約145＝一番奥（約122）を越える）
@@ -279,21 +279,21 @@ gtag('config', 'G-41RSZLP1YQ');
   const AIM_LEN = 0.5;          // 予測線の長さ（ピンの手前までの長さに対する割合）
   const AIM_FADE_FROM = 0.1;    // 予測線のこの割合の所から先へ、だんだん薄くして消す
   const AIM_GUIDE_OPACITY = 0.85; // 球の通り道を示す帯の濃さ（明るい木目の上でも見えるよう濃いめ。色は --guide）
-  const POS_SPEED = 6;         // ◀▶ボタン（PCは←→）を押し始めたときに位置が動く速さ（1秒あたり）
-  const POS_ACCEL = 1.5;       // 押し続けると速くなる割合（1秒押すと 1+1.5 倍）
+  const POS_SPEED = 6;         // ◀▶按鈕（PCは←→）を押し始めたときに位置が動く速さ（1秒あたり）
+  const POS_ACCEL = 1.5;       // 押し続けると速くなる割合（1秒按と 1+1.5 倍）
   const POS_SPEED_MAX = 60;    // 押し続けたときの速さの上限
   const LANE_HALF = 8.2;       // ゲートが並ぶ幅（と、投げる位置を動かせる幅）の半分
   const START_Z = 0;           // 投げる位置
   const LANE_START = START_Z - 12;
 
   // ゲート：「×」は通った球の数を掛ける、「+」は最初に通った1球のときだけ足す
-  // 置き場所・種類・数値は「もう一回」のたびにランダムに決める（2投目は1投目と同じ配置）
+  // 置き場所・種類・数値は「再來一次」のたびに隨機に決める（2投目は1投目と同じ配置）
   // 床の横幅いっぱいに散らして置き、ゲートの間は空いている（外すと何も起きない）
   const gateHalf = z => FIELD_HALF;   // ゲートを置ける横幅の半分（床の幅と同じ）
   const GATE_COUNT = 30;       // ゲートの数（床の幅に広げたので、前の扇形のときと同じくらいの密度になるよう増やした）
   const GATE_Z_MIN = 15;       // ゲートを置く奥行きの範囲
   const GATE_Z_MAX = 145;
-  const GATE_GAP_Z = 8;        // 横に重なるゲート同士は、奥行きをこれ以上離す（近すぎると増えた球が次のゲートを飛び越すため）
+  const GATE_GAP_Z = 8;        // 横に重なるゲート同士は、奥行きをこれ以上放開（近すぎると増えた球が次のゲートを飛び越すため）
   const GW_S = 6;              // 止まっているゲートの幅
   const GW_M = 4;              // 動くゲートの幅
   const MOVE_CHANCE = 0.3;     // 動くゲートになる確率
@@ -305,13 +305,13 @@ gtag('config', 'G-41RSZLP1YQ');
   const PLUS_PER_Z = 3;        // 「+」の数値は奥ほど大きい（奥行き1あたりの目安）
   const GATE_H = 2.4;          // ゲートの高さ
   const MAX_BALLS = 3000;      // 球の上限（重くなりすぎないように）
-  const CELEB_TIME = 2.4;      // ストライク・スペアの演出を見せる時間（秒）。この後に結果を出す
-  const STRIKE_BURST_AT = [0.45, 0.85]; // ストライクのとき、文字の所から紙吹雪がはじける時刻（秒）
-  const SPARE_BURST_AT = [0.45];        // スペアのとき、同じく
+  const CELEB_TIME = 2.4;      // 好球・補中の演出を見せる時間（秒）。この後に結果を出す
+  const STRIKE_BURST_AT = [0.45, 0.85]; // 好球のとき、文字の所から紙吹雪がはじける時刻（秒）
+  const SPARE_BURST_AT = [0.45];        // 補中のとき、同じく
   const SPARE_BURST_N = 140;   // 文字の所からはじける紙吹雪の枚数（1回ぶん）
   const CONFETTI_N = 180;      // 紙吹雪の枚数
   const CONFETTI_COLORS = ['#2f6dff', '#ffd21a', '#ffffff', '#ff5a5a', '#36d45a', '#ff9f1a'];
-  const SPAWN_ANIM = 0.4;      // 増えた球がゲートから飛び出して自分の位置に着くまでの時間（秒）
+  const SPAWN_ANIM = 0.4;      // 増えた球がゲートから飛び出して自己の位置に着くまでの時間（秒）
   const SPAWN_HOP = 1.6;       // 飛び出すときの山なりの高さ
   const SPAWN_SPREAD = 2.0;    // 増えた球をばらまく横幅（少ないとき）
   const SPAWN_SPREAD_K = 0.9;  // たくさん増えたときのばらまく幅の広がり方（√増えた数 × これ）
@@ -326,7 +326,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const RESTITUTION = 0.7;     // 跳ね返りの強さ
   const KNOCK_SPEED = 0.6;     // ピンがこの速さ以上で押されると倒れる
   const FALL_TIME = 0.35;      // 物理で動くピンが倒れきるまでの時間（秒）
-  const FLY_SPEED = 3;         // この速さ以上で弾かれたピンは宙に飛ぶ（物理で動かす）
+  const FLY_SPEED = 3;         // この速さ以上で弾かれたピンは宙に飛ぶ（物理で移動）
   const FLY_UP = 0.35;         // 宙に飛ぶときの上向きの速さ（弾かれた速さに対する割合）
   const SPIN_MIN = 6;          // 宙を舞うピンの回転の速さ（rad/s）
   const SPIN_MAX = 16;
@@ -335,7 +335,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const LAND_BOUNCE = 0.3;     // 着地で跳ねる強さ
 
   // 当たった瞬間の手応え
-  const SHAKE_PER = 0.02;      // 球がピンにぶつかった速さ1あたりの画面の揺れ
+  const SHAKE_PER = 0.02;      // 球がピンにぶつかった速さ1あたりの畫面の揺れ
   const SHAKE_MAX = 0.6;       // 揺れの上限
   const SHAKE_DECAY = 8;       // 揺れが収まる速さ
   const SLOW_SCALE = 0.25;     // 最初にピンへ当たった直後のスローの倍率
@@ -351,7 +351,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   const STEP = 1 / 90;         // 物理の刻み（秒）
   const END_WAIT = 0.5;        // 全部止まってから結果を出すまで（秒）
-  const IDLE_END = 0.8;        // 倒し進んでいるものが無くなってから、これだけたったら終わる（秒）
+  const IDLE_END = 0.8;        // 倒し進んでいるものが無くなってから、これだけたったら結束（秒）
   const ACTIVE_T = 0.6;        // 直近この秒数にピンを倒した球（と飛んだピン）は、まだ倒し進んでいるとみなす
   const IDLE_BALL_SPEED = 3;   // ただし、これより速く転がっている球があるうちは終わらない
 
@@ -361,13 +361,13 @@ gtag('config', 'G-41RSZLP1YQ');
   const CAM_BACK = 16;         // 追う位置からどれだけ後ろに置くか
   const CAM_BACK_PER_W = 0.45; // ピンの列の幅1あたりに足す後ろへの距離
   const CAM_AHEAD = 12;        // 追う位置からどれだけ先を見るか
-  const CAM_FOLLOW = 6;        // カメラが追いつく速さ（小さいと速い球が画面の先へ消える）
+  const CAM_FOLLOW = 6;        // カメラが追いつく速さ（小さいと速い球が畫面の先へ消える）
   const LOOK_MAX_OFS = 0;      // カメラが見る所の一番奥を、ピンの所の真ん中からどれだけずらすか（＋で奥）
-  const CAM_FIT_MARGIN = 4;    // 球の広がりに足す余白（全部の球が画面に収まるよう拉とき）
+  const CAM_FIT_MARGIN = 4;    // 球の広がりに足す余白（全部の球が畫面に収まるよう拉とき）
   const CAM_FIT_Z = 1.0;       // 奥行き方向の広がりを横幅に換算する割合
   const CAM_ZOOM_FOLLOW = 5;   // 球の広がりに合わせて拉速さ
   const CAM_X_FADE_W = 40;     // ピンの列の幅がこれに近づくほど、横に追うのをやめて中央から見る
-  const TOP_VIEW_PITCH = 40 * Math.PI / 180; // カメラの見下ろす角度がこれを超えたら、倒した数を画面中央に出す
+  const TOP_VIEW_PITCH = 40 * Math.PI / 180; // カメラの見下ろす角度がこれを超えたら、倒した数を畫面中央に出す
   const CELL = 1;              // 動くもの同士の当たり判定の区画の大きさ
 
   // ---------- ピンの並び ----------
@@ -383,11 +383,11 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ピンは1本ずつのオブジェクトにせず、配列で持つ（100万本でも軽いように）
   const px = new Float32Array(PIN_TOTAL), pz = new Float32Array(PIN_TOTAL);
-  const pAng = new Float32Array(PIN_TOTAL);   // 倒れる向き（画面奥が0）
+  const pAng = new Float32Array(PIN_TOTAL);   // 倒れる向き（畫面奥が0）
   const pStart = new Float32Array(PIN_TOTAL); // 倒れ始めた時刻
   const pState = new Uint8Array(PIN_TOTAL);   // 0 立っている / 1 連鎖で倒れている途中 / 2 倒れた / 3 物理で動かしている / 4 片付けた
   const pTrig = new Uint8Array(PIN_TOTAL);    // もう隣を倒したか
-  const pEnergy = new Float32Array(PIN_TOTAL); // 倒れる勢い（隣へ伝わるたびに減る）
+  const pEnergy = new Float32Array(PIN_TOTAL); // 倒れる勢い（隣へ伝わるたびに減少）
   const pDir = new Float32Array(PIN_TOTAL);    // 連鎖を伝える向き（見た目の倒れる向き pAng とは別。強い連鎖を受け継ぐと変わる）
   const pBoost = new Uint8Array(PIN_TOTAL);    // 強い勢いを受け継いで、次の刻みで隣へ伝え直す予定か
   const pBoostT = new Float32Array(PIN_TOTAL); // 受け継いだ時刻
@@ -441,7 +441,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const sun = new THREE.DirectionalLight(0xffffff, 0.45);
   sun.position.set(-6, 20, -8);
   scene.add(sun, sun.target);
-  // 影：球だけに付け、見ている範囲だけを描く（カメラに合わせて動かす）
+  // 影：球だけに付け、見ている範囲だけを描く（カメラに合わせて移動）
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   sun.castShadow = true;
@@ -457,7 +457,7 @@ gtag('config', 'G-41RSZLP1YQ');
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    // 点の大きさを画面の解像度に合わせる（距離1のときの1ワールド単位が何ピクセルか）
+    // 点の大きさを畫面の解像度に合わせる（距離1のときの1ワールド単位が何ピクセルか）
     renderer.getDrawingBufferSize(bufSize);
     pointMat.uniforms.uScale.value = bufSize.y / (2 * Math.tan(camera.fov * Math.PI / 360));
   }
@@ -705,7 +705,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const gateMat = new THREE.MeshBasicMaterial({ color: css('--gate'), transparent: true, opacity: GATE_OPACITY, side: THREE.DoubleSide, depthWrite: false });
   const rand = (a, b) => a + Math.random() * (b - a);
 
-  // ゲートの配置をランダムに決める。重なる置き方になったら引き直す
+  // ゲートの配置を隨機に決める。重なる置き方になったら引き直す
   function randomLayout(){
     const list = [];
     for (let n = 0; n < GATE_COUNT; n++){
@@ -745,7 +745,7 @@ gtag('config', 'G-41RSZLP1YQ');
       // 通ったときに光らせるので、ゲートごとに材質を分ける
       const mat = gateMat.clone();
       const panel = new THREE.Mesh(new THREE.PlaneGeometry(d.w - 0.3, GATE_H), mat);
-      panel.castShadow = true;   // 床にゲートの影を落とす
+      panel.castShadow = true;   // 床にゲートの影を掉落
       panel.position.set(0, GATE_H / 2, d.z);
       scene.add(panel);
       const tex = labelTex(d.op + d.val);
@@ -754,7 +754,7 @@ gtag('config', 'G-41RSZLP1YQ');
       label.rotation.y = Math.PI;   // カメラ側に文字の表を向ける
       label.position.set(0, GATE_H / 2, d.z - 0.02);
       scene.add(label);
-      // カメラは +z を向いているので、画面の右は -x 側になる
+      // カメラは +z を向いているので、畫面の右は -x 側になる
       gates.push({ z: d.z, op: d.op, val: d.val, w: d.w, cx0: -d.x, move: d.move, period: d.period,
         x0: 0, x1: 0, used: false, panel, label, mat, tex, flash: 0, popT: 0 });
     }
@@ -793,11 +793,11 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 状態 ----------
   let mode = 'aim';            // aim（構え）/ rolling（転がっている）/ over（結果）
-  let aimAngle = 0;            // 投げる向き（画面の右が正）
+  let aimAngle = 0;            // 投げる向き（畫面の右が正）
   let phase = 'pos';           // 構えの段階：pos（位置）/ dir（向き）/ pow（強さ）
   let phaseT = 0;              // 今の段階に入ってからの時間（秒）
   let power = 0;               // 強さ（0〜1）
-  let shake = 0;               // 画面の揺れの大きさ
+  let shake = 0;               // 畫面の揺れの大きさ
   let slowT = 0;               // スローの剩餘時間（秒）
   let slowUsed = false;        // スローは1投につき最初の1回だけ
   const pops = [];             // ゲートを通ったときに浮かぶ表示
@@ -979,7 +979,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (n <= 0) return;
     const sp = Math.hypot(b.vx, b.vz);
     const base = Math.atan2(b.vx, b.vz);
-    // 一度にたくさん増えるときは、重ならないよう広くばらまく
+    // 一度にたくさん增加ときは、重ならないよう広くばらまく
     const xMax = gateHalf(g.z) - BALL_R;
     const xs = Math.min(xMax, SPAWN_SPREAD / 2 + Math.sqrt(n) * SPAWN_SPREAD_K);
     const zs = Math.max(SPAWN_AHEAD, n * 0.6 / (xs * 2));
@@ -991,7 +991,7 @@ gtag('config', 'G-41RSZLP1YQ');
       const x = clamp(cx + (Math.random() * 2 - 1) * xs, -xMax, xMax);
       const z = z0 + Math.random() * zs;
       const nb = makeBall(x, z, Math.sin(a) * sp, Math.cos(a) * sp);
-      // 見た目だけ、くぐった球の位置から飛び出して自分の位置へ着地させる（当たり判定は最初から本来の位置）
+      // 見た目だけ、くぐった球の位置から飛び出して自己の位置へ着地させる（当たり判定は最初から本来の位置）
       nb.born = simT; nb.fx = b.x; nb.fz = b.z;
       balls.push(nb);
     }
@@ -1024,7 +1024,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 演出 ----------
-  // 球がピンに強く当たったら画面を揺らし、最初の1回だけスローにする
+  // 球がピンに強く当たったら畫面を揺らし、最初の1回だけスローにする
   function onHit(impact){
     shake = Math.min(SHAKE_MAX, shake + impact * SHAKE_PER);
     if (!slowUsed){ slowUsed = true; slowT = SLOW_TIME; }
@@ -1034,7 +1034,7 @@ gtag('config', 'G-41RSZLP1YQ');
     g.flash = 1;
     if (g.popT > 0) return;
     g.popT = POP_COOLDOWN;
-    // 通ったゲートの中身（「×3」「+50」など）を画面の文字で出す。位置はゲートの画面上の位置に合わせ、毎フレーム追う
+    // 通ったゲートの中身（「×3」「+50」など）を畫面の文字で出す。位置はゲートの畫面上の位置に合わせ、毎フレーム追う
     const el = document.createElement('div');
     el.className = 'gatePop';
     el.textContent = g.op + g.val;
@@ -1086,7 +1086,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     if (b.z < LANE_START) b.gone = true;
   }
-  // 物理で動くピンを h 秒ぶん動かす
+  // 物理で動くピンを h 秒ぶん移動
   function moveFlyer(p, h){
     const floor = onFloor(p.x, p.z);
     if (p.air){
@@ -1115,7 +1115,7 @@ gtag('config', 'G-41RSZLP1YQ');
     gateT += h;
     updateGates();
     // 球
-    const n0 = balls.length;  // このステップで増えた球は次のステップから動かす
+    const n0 = balls.length;  // このステップで増えた球は次のステップから移動
     for (let i = 0; i < n0; i++){
       const b = balls[i];
       if (b.gone) continue;
@@ -1139,7 +1139,7 @@ gtag('config', 'G-41RSZLP1YQ');
       if (p.done || p.gone) continue;
       const sp = Math.hypot(p.vx, p.vz);
       if (!p.air && sp > 0){ const k = Math.max(0, sp * Math.exp(-PIN_DAMP * h) - PIN_FRICTION * h) / sp; p.vx *= k; p.vz *= k; }
-      // 速く飛ぶピンも、立っているピンをすり抜けないよう細かく分けて動かす
+      // 速く飛ぶピンも、立っているピンをすり抜けないよう細かく分けて移動
       const sub = Math.max(1, Math.ceil(sp * h / MAX_MOVE));
       for (let s = 0; s < sub && !p.gone; s++) moveFlyer(p, h / sub);
       // 寝て止まったピンは、もう物理で動かさない
@@ -1183,7 +1183,7 @@ gtag('config', 'G-41RSZLP1YQ');
       $('pinCount').textContent = throwNo === 1 ? '1投目' : `2投目　剩餘 ${fmt(PIN_TOTAL - base)}本`;
       $('centerCount').textContent = `${fmt(knocked - base)}本`;
     }
-    // 上からの画面になったら、倒した数を左上から画面中央へ移す
+    // 上からの畫面になったら、倒した数を左上から畫面中央へ移す
     const center = topView && mode === 'rolling' && celebT < 0 && knocked > (throwNo === 2 ? firstKnocked : 0);   // 0本の間は出さない
     $('centerCount').classList.toggle('hidden', !center);
   }
@@ -1193,7 +1193,7 @@ gtag('config', 'G-41RSZLP1YQ');
       ? `1投目で${fmt(PIN_TOTAL)}本`
       : `1投目 ${fmt(firstKnocked)}本 / 2投目 ${fmt(knocked - firstKnocked)}本`;
   }
-  // ---------- ストライク・スペアの演出 ----------
+  // ---------- 好球・補中の演出 ----------
   // 光の輪の画像：濃さを1画素ずつ計算して書く（CSS や canvas のグラデーションは、6倍に広げたときにざらつきが見えるため）
   (() => {
     const S = 128, c = document.createElement('canvas'); c.width = c.height = S;
@@ -1216,7 +1216,7 @@ gtag('config', 'G-41RSZLP1YQ');
     celebT = 0;
     const strike = throwNo === 1;
     const el = $('celebText');
-    el.textContent = strike ? 'ストライク！' : 'スペア！';
+    el.textContent = strike ? '好球！' : '補中！';
     const box = $('celebrate');
     box.classList.remove('hidden', 'on');
     box.classList.toggle('spare', !strike);
@@ -1232,7 +1232,7 @@ gtag('config', 'G-41RSZLP1YQ');
     confetti = [];
     burstConfetti(W, H);
   }
-  // 画面の左下と右下から、上に向かって紙吹雪を打ち上げる
+  // 畫面の左下と右下から、上に向かって紙吹雪を打ち上げる
   function burstConfetti(W, H){
     for (let i = 0; i < CONFETTI_N; i++){
       const side = i % 2 ? 1 : -1;
@@ -1284,8 +1284,8 @@ gtag('config', 'G-41RSZLP1YQ');
     mode = 'over';
     document.documentElement.removeAttribute('data-howto-hidden');
     if (throwNo === 1) firstKnocked = knocked;
-    // 日本のボウリング場の分數表と同じ書き方：ストライクは1投目の枠に、左右を黒く塗った三角2つ（砂時計を横にした形）、
-    // スペアは枠の右下半分を黒く塗った三角、0本は「-」
+    // 日本のボウリング場の分數表と同じ書き方：好球は1投目の枠に、左右を黒く塗った三角2つ（砂時計を横にした形）、
+    // 補中は枠の右下半分を黒く塗った三角、0本は「-」
     const mark = n => n === 0 ? '-' : fmt(n);
     const SVG = p => `<svg class="mark" viewBox="0 0 10 10" preserveAspectRatio="none" aria-hidden="true">${p}</svg>`;
     const STRIKE = SVG('<polygon points="0,0 5,5 0,10"/><polygon points="10,0 5,5 10,10"/>');
@@ -1293,22 +1293,22 @@ gtag('config', 'G-41RSZLP1YQ');
     // 中身は演出で1つずつ入れるため、枠の中に包んで置く
     const V = h => `<span class="v">${h}</span>`;
     if (throwNo === 1){
-      // ストライクは1投目の枠（左）に記号を入れ、2投目の枠は空ける
+      // 好球は1投目の枠（左）に記号を入れ、2投目の枠は空ける
       $('throw1').innerHTML = V(STRIKE);
-      $('throw1').setAttribute('aria-label', 'ストライク');
+      $('throw1').setAttribute('aria-label', '好球');
       $('throw2').textContent = '';
       $('throw2').removeAttribute('aria-label');
     } else {
       $('throw1').innerHTML = V(mark(firstKnocked));
       $('throw1').removeAttribute('aria-label');
-      if (knocked === PIN_TOTAL){ $('throw2').innerHTML = V(SPARE); $('throw2').setAttribute('aria-label', 'スペア'); }
+      if (knocked === PIN_TOTAL){ $('throw2').innerHTML = V(SPARE); $('throw2').setAttribute('aria-label', '補中'); }
       else { $('throw2').innerHTML = V(mark(knocked - firstKnocked)); $('throw2').removeAttribute('aria-label'); }
     }
     // 本数は1か所だけに出す（1フレームしかないので、上の見出しや合計の列は同じ数の繰り返しになるため置かない）
     $('sheet').setAttribute('aria-label', `分數 ${fmt(knocked)}本`);
     const all = knocked === PIN_TOTAL, strike = all && throwNo === 1;
     const band = $('allBand');
-    band.textContent = strike ? 'ストライク！' : 'スペア！';
+    band.textContent = strike ? '好球！' : '補中！';
     band.classList.toggle('strike', strike);
     band.classList.toggle('hidden', !all);
     band.classList.remove('in');
@@ -1323,9 +1323,9 @@ gtag('config', 'G-41RSZLP1YQ');
   const SCORE_GAP = 300;      // 2投目の枠に入るまでの間
   const SCORE_COUNT_AT = 300; // 最後の枠が入ってから数え上げを始めるまで
   const SCORE_COUNT = 1000;   // 合計を0から数え上げる時間
-  const SCORE_BTNS = 150;     // 数え終わってからボタンが出るまで
+  const SCORE_BTNS = 150;     // 数え終わってから按鈕が出るまで
   const SCORE_ALL_AT = 150;   // 全部倒したとき：数え終わってから帯を按紙吹雪を出すまで
-  const SCORE_ALL_BTNS = 700; // 全部倒したとき：帯を按からボタンが出るまで
+  const SCORE_ALL_BTNS = 700; // 全部倒したとき：帯を按から按鈕が出るまで
   const OVER_CONFETTI_N = 160; // 結果の紙吹雪の枚数
   let scoreAnim = 0;
   function playScore(final, all){
@@ -1357,7 +1357,7 @@ gtag('config', 'G-41RSZLP1YQ');
     });
   }
 
-  // 結果の紙吹雪：帯の所から四方へはじけて落ちる（1回だけ。画面の往下出きったら止める）
+  // 結果の紙吹雪：帯の所から四方へはじけて落ちる（1回だけ。畫面の往下出きったら止める）
   const ovCv = $('overConfetti'), ovCtx = ovCv.getContext('2d');
   let ovConf = [];
   function burstOverConfetti(){
@@ -1506,7 +1506,7 @@ gtag('config', 'G-41RSZLP1YQ');
     ballMesh.instanceMatrix.needsUpdate = true;
     aimLine.visible = mode === 'aim';
     if (aimLine.visible){
-      // 画面の右は -x 側。球はまっすぐ進むので、ピンの手前（床の端に出るならそこ）までを帯で示す
+      // 畫面の右は -x 側。球はまっすぐ進むので、ピンの手前（床の端に出るならそこ）までを帯で示す
       const bx = balls[0].x;
       const dx = -Math.sin(aimAngle), dz = Math.cos(aimAngle);
       let len = (PIN_FRONT_Z - START_Z) / dz;
@@ -1521,11 +1521,11 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   function updateCamera(dt){
-    // 構えている間は、球の左右の位置に合わせてカメラも動かす
+    // 構えている間は、球の左右の位置に合わせてカメラも移動
     let leadX = mode === 'aim' ? balls[0].x : 0;
     let span = 0;
     if (mode !== 'aim'){
-      // 球の広がり（増えた球が画面からはみ出さないよう、全部が収まるまで引いて真ん中を見る）
+      // 球の広がり（増えた球が畫面からはみ出さないよう、全部が収まるまで引いて真ん中を見る）
       let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
       for (const b of balls){
         if (b.gone) continue;
@@ -1556,14 +1556,14 @@ gtag('config', 'G-41RSZLP1YQ');
     const fw = Math.max(w, spanS);
     const h = CAM_H + fw * CAM_H_PER_W;
     const back = CAM_BACK + fw * CAM_BACK_PER_W;
-    // 見る所はピンの所の真ん中より奥へは行かせない（奥の端まで追うと、ピンが画面の下半分に寄って上が空く）
+    // 見る所はピンの所の真ん中より奥へは行かせない（奥の端まで追うと、ピンが畫面の下半分に寄って上が空く）
     lookZ = Math.min(camLeadS + CAM_AHEAD, LOOK_MAX_Z);
     camera.position.set(camX, h, lookZ - CAM_AHEAD - back);
-    // 上からの画面（倒した数を中央に出す）はピンの所に来てからだけ
+    // 上からの畫面（倒した数を中央に出す）はピンの所に来てからだけ
     topView = Math.atan2(CAM_H + w * CAM_H_PER_W, CAM_BACK + w * CAM_BACK_PER_W + CAM_AHEAD) > TOP_VIEW_PITCH;
     camera.lookAt(camX, 0, lookZ);
-    // 画面上の位置合わせ（決定ボタン・ゲートの数字）は描く前に計算するので、ここでカメラの行列を今の位置に更新しておく
-    // （しないと1コマ前のカメラで計算され、もう一回でカメラが一気に戻ったときにボタンが前の位置に一瞬出る）
+    // 畫面上の位置合わせ（確定按鈕・ゲートの数字）は描く前に計算するので、ここでカメラの行列を今の位置に更新しておく
+    // （しないと1コマ前のカメラで計算され、再來一次でカメラが一気に戻ったときに按鈕が前の位置に一瞬出る）
     camera.updateMatrixWorld();
     // 高く拉ほど見える範囲が広がるので、描く距離もそれに合わせる（近すぎる面を切ると奥の精度が上がる）
     camera.near = Math.max(0.1, h * 0.01);
@@ -1600,7 +1600,7 @@ gtag('config', 'G-41RSZLP1YQ');
     else if (phase === 'dir') setPhase('pow');
     else throwBall();
   }
-  // 決めた向きと強さで投げる。カメラの向きの都合で画面の右は -x 側
+  // 決めた向きと強さで投げる。カメラの向きの都合で畫面の右は -x 側
   function throwBall(){
     const b = balls[0];
     const sp = BALL_SPEED_MIN + (BALL_SPEED_MAX - BALL_SPEED_MIN) * power;
@@ -1639,11 +1639,11 @@ gtag('config', 'G-41RSZLP1YQ');
   // 位置は床の端まで自由に動かせる（床の外に出ると球が落ちるので、そこだけ止める）
   const setPos = x => { balls[0].x = clamp(x, -FIELD_HALF + BALL_R, FIELD_HALF - BALL_R); };
 
-  // 位置：◀▶ボタンを按いる間だけ動き、決定ボタンを押すまで何度でも動かせる
-  // 画面の左は +x 側なので、◀ は +1、▶ は -1
+  // 位置：◀▶按鈕を按いる間だけ動き、確定按鈕を按まで何度でも動かせる
+  // 畫面の左は +x 側なので、◀ は +1、▶ は -1
   let keyDir = 0;
-  let drag = null;              // 位置を決める拖曳中の指（pointerId と、前の指の位置）
-  // ゲートの中身の表示：ゲートの上の所を画面に写した位置に置き、往上浮かせながら消す
+  let drag = null;              // 位置を決める拖曳中の手手指（pointerId と、前の手手指の位置）
+  // ゲートの中身の表示：ゲートの上の所を畫面に写した位置に置き、往上浮かせながら消す
   const popV = new THREE.Vector3();
   function placePops(){
     const w = wrap.clientWidth, h = wrap.clientHeight;
@@ -1657,16 +1657,16 @@ gtag('config', 'G-41RSZLP1YQ');
       p.el.style.opacity = behind ? 0 : 1 - k * k;
     }
   }
-  // 位置を決める間の表示（決定ボタンの出し入れと、球の左右の矢印の位置）
+  // 位置を決める間の表示（確定按鈕の出し入れと、球の左右の矢印の位置）
   const rowV = new THREE.Vector3(), hintV = new THREE.Vector3();
   function placePosRow(){
     if (mode !== 'aim' || phase !== 'pos') return;
     rowV.set(balls[0].x, BALL_R, balls[0].z).project(camera);
     const h = wrap.clientHeight, sy = (1 - rowV.y) / 2 * h;
-    // 2投目の始めはカメラがピンの所から戻ってくる途中なので、戻りきるまでボタンと矢印を隠す
+    // 2投目の始めはカメラがピンの所から戻ってくる途中なので、戻りきるまで按鈕と矢印を隠す
     const settled = Math.abs(camLeadS - camLead) < CAM_SETTLED && spanS < CAM_SETTLED;
     $('posCtrl').style.visibility = settled ? '' : 'hidden';
-    // 球の左右の矢印：球の中心を画面に写した所に置き、球の見かけの半径ぶん外側に離す
+    // 球の左右の矢印：球の中心を畫面に写した所に置き、球の見かけの半径ぶん外側に放開
     const w = wrap.clientWidth, sx = (rowV.x + 1) / 2 * w;
     hintV.set(balls[0].x - BALL_R, BALL_R, balls[0].z).project(camera);
     const rPx = Math.abs(hintV.x - rowV.x) / 2 * w;
@@ -1682,19 +1682,19 @@ gtag('config', 'G-41RSZLP1YQ');
   let holdT = 0;
   function updatePos(dt){
     if (mode !== 'aim' || phase !== 'pos') return;
-    const d = keyDir;   // PC の←→キー（画面では拖曳で動かす）
+    const d = keyDir;   // PC の←→鍵（畫面では拖曳で移動）
     if (!d){ holdT = 0; return; }
     holdT += dt;
     const speed = Math.min(POS_SPEED_MAX, POS_SPEED * (1 + holdT * POS_ACCEL));
     setPos(balls[0].x + d * speed * dt);
   }
 
-  // 向き・強さ：画面をタップした瞬間に止める（離すときより狙ったタイミングに合いやすい）
+  // 向き・強さ：畫面を點擊した瞬間に止める（放開ときより狙ったタイミングに合いやすい）
   cv.addEventListener('pointerdown', e => {
     if (mode !== 'aim') return;
     e.preventDefault();
     if (phase !== 'pos'){ advance(); return; }
-    // 位置の段階：画面を横に拖曳した分だけ、球を同じ向きに動かす（指を往右動かすと球も往右）
+    // 位置の段階：畫面を横に拖曳した分だけ、球を同じ向きに移動（手手指を往右移動と球も往右）
     cv.setPointerCapture(e.pointerId);
     drag = { id: e.pointerId, x: e.clientX };
   });
@@ -1703,7 +1703,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!drag || e.pointerId !== drag.id || mode !== 'aim' || phase !== 'pos') return;
     const dx = e.clientX - drag.x;
     drag.x = e.clientX;
-    // 球の所で床の1が画面の何ピクセルかを求めて、指の動きを床の上の距離に直す（画面の右は -x 側）
+    // 球の所で床の1が畫面の何ピクセルかを求めて、手手指の動きを床の上の距離に直す（畫面の右は -x 側）
     const b = balls[0];
     dragV0.set(b.x, 0, b.z).project(camera);
     dragV1.set(b.x - 1, 0, b.z).project(camera);
@@ -1714,14 +1714,14 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', dragEnd);
   cv.addEventListener('pointercancel', dragEnd);
 
-  // PC：←→を按いる間は位置が動く、スペース/↑/Enterで決定（位置→向き→強さ）、向きの途中は Esc/Backspace で位置に返回、結果画面ではスペース/Enterでもう一回
+  // PC：←→を按いる間は位置が動く、スペース/↑/Enterで確定（位置→向き→強さ）、向きの途中は Esc/Backspace で位置に返回、結果畫面ではスペース/Enterで再來一次
   addEventListener('keydown', e => {
     if (mode === 'aim'){
       if (phase === 'dir' && (e.key === 'Escape' || e.key === 'Backspace')){ backToPos(); e.preventDefault(); }
       else if (phase === 'pos' && e.key === 'ArrowLeft'){ keyDir = 1; e.preventDefault(); }
       else if (phase === 'pos' && e.key === 'ArrowRight'){ keyDir = -1; e.preventDefault(); }
       else if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'Enter'){
-        // 決定ボタンにフォーカスがあるときのスペース/Enterは、ボタン側の click で決定する（二重に進まないように）
+        // 確定按鈕にフォーカスがあるときのスペース/Enterは、按鈕側の click で確定する（二重に進まないように）
         if (!e.repeat && document.activeElement !== $('posOk')) advance();
         if (document.activeElement !== $('posOk')) e.preventDefault();
       }
@@ -1735,32 +1735,32 @@ gtag('config', 'G-41RSZLP1YQ');
     if ((e.key === 'ArrowLeft' && keyDir === 1) || (e.key === 'ArrowRight' && keyDir === -1)) keyDir = 0;
   });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   const isHeld = t => t === cv;
   document.addEventListener('touchstart', e => { if (isHeld(e.target)) e.preventDefault(); }, { passive: false });
-  // 位置を拖曳している間は、指が動いてもブラウザに操作を取られないようにする（ポリシー第4章）
+  // 位置を拖曳している間は、手手指が動いても瀏覽器に操作を取られないようにする（ポリシー第4章）
   document.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive: false });
   // 分享の文面は選んでコピーできるように除く
   document.addEventListener('selectstart', e => { if (!(e.target instanceof Element && e.target.closest('#share-text'))) e.preventDefault(); });
-  // 長押しメニューはゲーム画面のどこでも出さない（分享の文面だけは選んでコピーできるように除く）
+  // 長押しメニューはゲーム畫面のどこでも出さない（分享の文面だけは選んでコピーできるように除く）
   document.addEventListener('contextmenu', e => { if (!(e.target instanceof Element && e.target.closest('#share-text'))) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
-    // 決定ボタンは素早く押すことがあるので除く（ボタンには touch-action:none を付けて拡大されないようにしている）
+    // 確定按鈕は素早く按ことがあるので除く（按鈕には touch-action:none を付けて拡大されないようにしている）
     if (now - lastTouchEnd < 350 && !e.target.closest?.('#posCtrl')) e.preventDefault();
     lastTouchEnd = now;
   }, { passive: false });
 
-  // ---------- 結果画面 ----------
+  // ---------- 結果畫面 ----------
   $('retry').addEventListener('click', reset);
 
   function shareText(){
     return `${fmt(PIN_TOTAL)}本中${fmt(knocked)}本倒した！\n${throwDetail()}\n${location.href.split(/[?#]/)[0]}\n#1万ボーリング`;
   }
   // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
-  // 分享画像：ゲーム画面の上に、結果画面と同じ形の分數表を重ねる。ストライク・スペアなら演出と同じ帯付きの文字も入れる
+  // 分享画像：ゲーム畫面の上に、結果畫面と同じ形の分數表を重ねる。好球・補中なら演出と同じ帯付きの文字も入れる
   function resultDataUrl(){
     renderer.render(scene, camera);   // 直前に描けば preserveDrawingBuffer なしでも読み出せる
     const c = document.createElement('canvas');
@@ -1773,7 +1773,7 @@ gtag('config', 'G-41RSZLP1YQ');
     // 後ろを少し暗くして、表と文字を読みやすくする
     g.fillStyle = 'rgba(10,13,20,.35)'; g.fillRect(0, 0, W, H);
     const font = css('--font'), ink = css('--ink'), line = '#c9cfdc';
-    // 分數表（結果画面と同じ：上に1投目・2投目の小枠、下に合計）
+    // 分數表（結果畫面と同じ：上に1投目・2投目の小枠、下に合計）
     const bw = 200, boxH = 56, totH = 70, pad = 16;
     const bx = (W - bw) / 2, by = H * 0.52;
     g.fillStyle = '#fff';
@@ -1795,7 +1795,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     g.font = `900 40px ${font}`;
     g.fillText(fmt(knocked), W / 2, by + boxH + totH / 2 + 2);
-    // ストライク・スペアの文字（帯の上に白い字）
+    // 好球・補中の文字（帯の上に白い字）
     if (all){
       const fs = Math.min(W * 0.13, 60);
       g.save();
@@ -1805,7 +1805,7 @@ gtag('config', 'G-41RSZLP1YQ');
       g.fillRect(-W, -fs * 0.8, W * 2, fs * 1.6);
       g.fillStyle = '#fff'; g.font = `900 ${fs}px ${font}`;
       // 字の実際の上端・下端を測り、その真ん中を帯の真ん中に合わせる（フォントごとの上下の余白の差でずれないように）
-      const label = strike ? 'ストライク！' : 'スペア！';
+      const label = strike ? '好球！' : '補中！';
       g.textBaseline = 'alphabetic';
       const m = g.measureText(label);
       g.fillText(label, 0, (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
@@ -1825,7 +1825,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const url = resultDataUrl();
     const file = resultImageFile(url);
-    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を畫面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = url;
@@ -1834,8 +1834,8 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-close').focus({ preventScroll: true });
     };
     // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
-    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内瀏覽器等）。
+    // 分享シートを開いてから自己で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
@@ -1877,7 +1877,7 @@ gtag('config', 'G-41RSZLP1YQ');
         || balls.some(b => !b.gone && Math.hypot(b.vx, b.vz) > 0.3);
       settle = moving ? 0 : settle + dt;
       // 直近 IDLE_END 秒に倒れた数
-      // 終わりの判定。次のものが無くなってから IDLE_END 秒たったら終わる（最初の1本が倒れてからも IDLE_END 秒は待つ）：
+      // 終わりの判定。次のものが無くなってから IDLE_END 秒たったら結束（最初の1本が倒れてからも IDLE_END 秒は待つ）：
       // ・倒れている途中のピン、宙を飛んでいるピン
       // ・まだピンを倒しながら進んでいる球や飛んだピン（直近 ACTIVE_T 秒に倒していて、まだ速い）
       // ・まだ1本も倒れていない間に速く転がっている球（2投目で、片付けた後の空いた所を進んでいる球など）

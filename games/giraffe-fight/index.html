@@ -37,12 +37,12 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta name="description" content="長い首をぶつけ合うキリンの喧嘩">
 <style>
   :root {
-    --bg: #10131a;        /* 画面の下地 */
+    --bg: #10131a;        /* 畫面の下地 */
     --fg: #eef1f5;        /* 文字 */
     --sub: #b7c0cb;       /* 補助の文字 */
     --panel: #1b2230;     /* 結果パネルの地色 */
     --line: #3b4659;      /* 枠線 */
-    --accent: #e2c15a;    /* 勝ちの色（自分のHPバーと同じ） */
+    --accent: #e2c15a;    /* 贏の色（自己のHPバーと同じ） */
     --howto-bg: #1b2230; --howto-fg: #eef1f5;
   }
   *, *::before, *::after { box-sizing: border-box; }
@@ -107,7 +107,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   .gauge.cpu .bar > i { background: #d98a5a; margin-left: auto; }
 
-  /* ---- controls（親指で届く位置に置く） ---- */
+  /* ---- controls（親手手指で届く位置に置く） ---- */
   #pad {
     position: absolute;
     left: 0; right: 0; bottom: 0;
@@ -157,14 +157,14 @@ gtag('config', 'G-41RSZLP1YQ');
     position: relative;
     width: 124px; height: 124px;
     border-radius: 50%;
-    pointer-events: none;          /* 画面全体が攻撃なので、ここだけの判定は持たない */
+    pointer-events: none;          /* 畫面全体が攻撃なので、ここだけの判定は持たない */
     display: flex;
     align-items: center;
     justify-content: center;
     color: rgba(240,246,240,.9);
   }
   #swing svg { width: 70%; height: 70%; }
-  /* ボタンの外周に溜めゲージ */
+  /* 按鈕の外周に溜めゲージ */
   #swing::before {
     content: "";
     position: absolute;
@@ -250,14 +250,14 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   #share-close { width: 100%; }
 
-  /* 小さい画面ではボタンを少し詰める */
+  /* 小さい畫面では按鈕を少し詰める */
   @media (max-width: 360px) {
     #pad { padding: 0 14px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
     #stick { width: 104px; height: 104px; }
     #stick > i { width: 46px; height: 46px; margin: -23px 0 0 -23px; }
     #swing { width: 104px; height: 104px; }
   }
-  /* 横向きで画面が低いときは下端に寄せる */
+  /* 横向きで畫面が低いときは下端に寄せる */
   @media (max-height: 460px) {
     #pad { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
     #stick { width: 96px; height: 96px; }
@@ -303,7 +303,7 @@ gtag('config', 'G-41RSZLP1YQ');
       <p id="sub" hidden></p>
       <div id="row" hidden>
         <button class="dlg-btn" id="share" type="button">分享</button>
-        <button class="dlg-btn" id="again" type="button">もう一回</button>
+        <button class="dlg-btn" id="again" type="button">再來一次</button>
       </div>
     </div>
   </div>
@@ -317,12 +317,12 @@ gtag('config', 'G-41RSZLP1YQ');
 
   <section class="howto" hidden data-pos="top-left">
     <h2>玩法</h2>
-    <p>長い首を振ってぶつけ合い、CPUのキリンと1対1で戦う対戦ゲームです。お互いの体力は100で、相手の体力を先に0にすれば勝ちです。ページを開くとすぐに試合が始まり、決着がつくと結果と連勝数が表示されます。</p>
+    <p>長い首を振ってぶつけ合い、CPUのキリンと1対1で戦う対戦遊戲。お互いの體力は100で、對手の體力を先に0にすれば贏です。ページを開くとすぐに試合が始まり、決着がつくと結果と連勝数が表示されます。</p>
     <h2>操作</h2>
-    <p>左下のパッドで移動します。パッド以外の場所を按いる間は首を溜め、離すと振ります。溜めは約0.36秒で最大になり、そこで自動的に振ります。PC では矢印キーか WASD で移動し、スペースキーで溜めて振ります。</p>
-    <h2>コツ</h2>
-    <p>攻撃の動作をしていない間は、歩いていても相手の攻撃を完全に弾き、弾かれた側には硬直が生まれます。逆に溜めている最中に当てられるとダメージが増えるので、相手の溜めには短い突きを合わせてください。長く溜めるほど首は速く遠くまで届きますが、攻撃の動作中は足が止まります。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>左下のパッドで移動します。パッド以外の場所を按いる間は首を溜め、放開と振ります。溜めは約0.36秒で最大になり、そこで自動的に振ります。PC では矢印鍵か WASD で移動し、スペース鍵で溜めて振ります。</p>
+    <h2>訣竅</h2>
+    <p>攻撃の動作をしていない間は、歩いていても對手の攻撃を完全に弾き、弾かれた側には硬直が生まれます。逆に溜めている最中に当てられるとダメージが增加ので、對手の溜めには短い突きを合わせてください。長く溜めるほど首は速く遠くまで届きますが、攻撃の動作中は足が止まります。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 
@@ -667,7 +667,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     };
   }
 
-  // ===== GLB モデルを骨組みに合わせて動かす =====
+  // ===== GLB モデルを骨組みに合わせて移動 =====
   var MODEL_UP = new THREE.Vector3(0, 1, 0);
   var MODEL_DOWN = new THREE.Vector3(0, -1, 0);
   var _qp = new THREE.Quaternion(), _qw = new THREE.Quaternion();
@@ -684,7 +684,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     par.updateWorldMatrix(true, false);
     par.getWorldQuaternion(_qp);
     _qw.copy(_qp).multiply(rest);                       // 休め姿勢でのワールド向き
-    _va.set(0, 1, 0).applyQuaternion(_qw);              // ボーンは自分の +Y 方向に伸びる
+    _va.set(0, 1, 0).applyQuaternion(_qw);              // ボーンは自己の +Y 方向に伸びる
     _qd.setFromUnitVectors(_va, target);
     _qw.premultiply(_qd);                               // 目標のワールド向き
     bone.quaternion.copy(_qp.invert()).multiply(_qw);
@@ -792,7 +792,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     }
 
     // 頭のボーンは首の続きではなく鼻先を向いているので、向きを合わせずに
-    // 骨組みの頭の向きをそのまま写す。その差分をここで記録しておく。
+    // 骨組みの頭の向きをそのまま写す。その差分をここで紀錄しておく。
     aimBone(m.neck, m.rest.neck, dirOf(f.g.segs[1], MODEL_UP));
     aimBone(m.neckUp, m.rest.neckUp, dirOf(f.g.segs[3], MODEL_UP));
     root.updateMatrixWorld(true);
@@ -1029,9 +1029,9 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
   var MIN_GAP = 3.6;
   var Z_OFFSET = 0.32;      // 2体のすれ違い用の横ずれ
   var DMG_MIN = 4, DMG_MAX = 26;   // 1発のダメージの下限・上限
-  var COUNTER_ADD = 9;     // 溜め中の相手に当てた時の上乗せ（上限は DMG_MAX のまま）
+  var COUNTER_ADD = 9;     // 溜め中の對手に当てた時の上乗せ（上限は DMG_MAX のまま）
   var CLASH_BASE = 2;      // 激突で必ず入る分
-  var CLASH_RANGE = 7;     // 相手の溜め量で上乗せされる分（最大 2+7=9）
+  var CLASH_RANGE = 7;     // 對手の溜め量で上乗せされる分（最大 2+7=9）
   var hitstop = 0;
   var START_GAP = 4.0;
 
@@ -1142,7 +1142,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
 
   function stepLegs(f, dt) {
     // 実際に動いた量（押し合い・ノックバックを含む）と、動こうとしている量の大きい方で足を振る。
-    // 押されて動かされている時も、壁や相手に当たって進めない時も、足が止まらないようにする
+    // 押されて動かされている時も、壁や對手に当たって進めない時も、足が止まらないようにする
     var ax = (f.x - f.px) / dt, az = (f.z - f.pz) / dt;
     f.px = f.x; f.pz = f.z;
     var al = Math.sqrt(ax * ax + az * az), il = Math.sqrt(f.mx * f.mx + f.mz * f.mz);
@@ -1429,7 +1429,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     return false;
   }
 
-  // 振り抜いた首が相手にめり込むのを防ぐ（判定の有無にかかわらず毎フレーム押し戻す）
+  // 振り抜いた首が對手にめり込むのを防ぐ（判定の有無にかかわらず毎フレーム押し戻す）
   function resolvePenetration(att, def) {
     if (att.om <= 0) return;
     if (!headOverlaps(att, def)) return;
@@ -1486,7 +1486,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     fx.burst(p, power, 0);
     hitstop = 0.05 + 0.06 * power;       // 激突の瞬間だけ時間を止める
 
-    // 相殺しきれなかった分が互いに入る。受けるダメージは相手が溜めていた力で決まる
+    // 相殺しきれなかった分が互いに入る。受けるダメージは對手が溜めていた力で決まる
     var dmgA = CLASH_BASE + CLASH_RANGE * b.lastCharge;
     var dmgB = CLASH_BASE + CLASH_RANGE * a.lastCharge;
     a.hp = Math.max(0, a.hp - dmgA);
@@ -1504,12 +1504,12 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
   // ===== AI =====
   // CPU の強さ（隙に即反応し、攻めも濃い設定の一段階のみ）
   var AI = {
-    react: [0.10, 0.10],      // 相手の隙に気づくまでの時間（最小, 乱数幅）
+    react: [0.10, 0.10],      // 對手の隙に気づくまでの時間（最小, 乱数幅）
     think: [0.09, 0.16],      // 次の判断までの間隔（最小, 乱数幅）
     atk: 0.44,                // 判断のたびに攻めを選ぶ確率
     punish: 5.4,              // 隙を突きに行く距離
-    counter: 0.12,            // 溜めている相手には、溜め終わる前に当たるよう短く突く
-    counterP: 0.55            // 溜めている相手に突き返す割合
+    counter: 0.12,            // 溜めている對手には、溜め結束前に当たるよう短く突く
+    counterP: 0.55            // 溜めている對手に突き返す割合
   };
 
   // 首は溜めが長いほど遠くまで届く。その距離に必要なぶんだけ溜める
@@ -1524,7 +1524,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     var fwd = 0;
     f.ai.t -= dt;
 
-    // 相手の隙を「見てから」反応する（反応時間ぶんの猶予を作る）
+    // 對手の隙を「見てから」反応する（反応時間ぶんの猶予を作る）
     if (opp.vuln) f.ai.seen += dt;
     else { f.ai.seen = 0; f.ai.reaction = L.react[0] + Math.random() * L.react[1]; }
     var punish = opp.vuln && f.ai.seen >= f.ai.reaction;
@@ -1537,12 +1537,12 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
       fwd = 0;
     } else {
       if (punish && d < L.punish && f.ai.t <= 0) {
-        // 溜めている相手には毎回は手を出さず、たまに防御のまま受ける
+        // 溜めている對手には毎回は手を出さず、たまに防御のまま受ける
         if (opp.state === 'charge' && Math.random() > L.counterP) {
           f.ai.t = L.think[0];
         } else {
           startCharge(f);
-          // 相手が溜めている間に当てたいので短く突く。それ以外の隙にはしっかり溜める
+          // 對手が溜めている間に当てたいので短く突く。それ以外の隙にはしっかり溜める
           f.ai.hold = (opp.state === 'charge') ? L.counter : holdFor(d);
           f.ai.t = L.think[0];
         }
@@ -1581,7 +1581,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     knob.style.transform = '';
   }
 
-  // 攻撃は移動パッド以外のどこでも反応する（丸いボタンは溜めゲージの表示だけ）
+  // 攻撃は移動パッド以外のどこでも反応する（丸い按鈕は溜めゲージの表示だけ）
   var atkPid = null;
   function onStick(t) {
     return !!(t && t.closest && t.closest('#stick'));
@@ -1605,7 +1605,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
   window.addEventListener('pointerup', atkUp);
   window.addEventListener('pointercancel', atkUp);
 
-  // 移動ジョイパッド（指を離さずそのまま傾けて全方向に動かせる）
+  // 移動ジョイパッド（手手指を離さずそのまま傾けて全方向に動かせる）
   var stick = document.getElementById('stick');
   var knob = document.getElementById('knob');
   var stickPid = null;
@@ -1621,7 +1621,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     else {
       var n = (l - dead) / (max - dead);        // 不感帯の外から 0→1
       padX = dx / l * n;
-      padZ = dy / l * n;                        // 画面下 = 手前（+Z）
+      padZ = dy / l * n;                        // 畫面下 = 手前（+Z）
     }
     knob.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px)';
   }
@@ -1722,7 +1722,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     document.documentElement.setAttribute('data-howto-hidden', '');
   }
 
-  // エラー表示などの素のメッセージ（ボタンは出さない）
+  // エラー表示などの素のメッセージ（按鈕は出さない）
   function showMessage(text) {
     ttl.textContent = text;
     ttl.className = '';
@@ -1743,7 +1743,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     overlay.hidden = false;
   }
 
-  // 決着後は「もう一回」ボタン、または画面のどこでも触れば再戦
+  // 決着後は「再來一次」按鈕、または畫面のどこでも触れば再戦
   var retryLock = 0;        // 連打していても結果が一瞬で消えないようにする猶予
   function retry(e) {
     if (mode !== 'over' || retryLock > 0) return;
@@ -1754,7 +1754,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
   overlay.addEventListener('pointerdown', retry);
   window.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') return;
-    // ダイアログのボタンを操作しているときは、そのボタンに任せる
+    // ダイアログの按鈕を操作しているときは、その按鈕に任せる
     if (e.target && e.target.closest && e.target.closest('button')) return;
     retry(e);
   });
@@ -1782,7 +1782,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
   function doShare() {
     if (!last) return;
     const text = shareText();
-    // 2) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容を画面に出す
+    // 2) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容を畫面に出す
     const fallback = () => {
       if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
       $('share-text').textContent = text;
@@ -1790,7 +1790,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
       $('share-close').focus({ preventScroll: true });
     };
     // 分享シートが出なかったとき（失敗、または按すぐのキャンセル）は 2) へ。
-    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートを開いてから自己で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
@@ -1804,9 +1804,9 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     fallback();
   }
 
-  // 背景のタップ判定に吸われて、分享した瞬間に再戦するのを防ぐ
+  // 背景の點擊判定に吸われて、分享した瞬間に再戦するのを防ぐ
   $('share').addEventListener('pointerdown', e => e.stopPropagation());
-  // タッチでは click が出ない作りなので pointerup で拾い、マウス・キーボードは click で拾う
+  // タッチでは click が出ない作りなので pointerup で拾い、滑鼠・鍵ボードは click で拾う
   $('share').addEventListener('pointerup', e => {
     if (e.pointerType === 'mouse') return;
     e.stopPropagation();

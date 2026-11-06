@@ -112,14 +112,14 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
         <label class="size"><span>盤面 <output id="sizeOut">3×3</output></span>
           <input type="range" id="size" min="1" max="10" step="1" value="3">
         </label>
-        <label><input type="checkbox" id="moveOpp" checked>相手の駒を動かせる</label>
+        <label><input type="checkbox" id="moveOpp" checked>對手の駒を動かせる</label>
         <div class="ends">
           <button class="start" id="go">開始</button>
           <button class="start" id="howtoBtn" type="button" data-howto-open>玩法</button>
         </div>
       </div>
       <div class="ends" id="ends" hidden>
-        <button class="start" id="next">もう一回</button>
+        <button class="start" id="next">再來一次</button>
         <button class="start" id="toSetup">設定に返回</button>
         <button class="start" id="showBoard">結果を表示</button>
       </div>
@@ -133,16 +133,16 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
 <div class="discards" id="discards"></div>
 <section class="howto" hidden data-pos="none">
   <h2>玩法</h2>
-  <p>手番がなく、両者が同時に印を置くマルバツゲームです。縦、横、斜めのどれか1列を自分の印で埋めると勝ちで、勝った回数が画面に剩餘ます。全部のマスが埋まって揃わなければ、自動で再戦になります。開始画面で CPU の強さか対人戦、1×1から10×10までの盤面を選べます。</p>
+  <p>手番がなく、両者が同時に印を置くマルバツ遊戲。縦、横、斜めのどれか1列を自己の印で埋めると贏で、勝った回数が畫面に剩餘ます。全部のマスが埋まって揃わなければ、自動で再戦になります。開始畫面で CPU の強さか対人戦、1×1から10×10までの盤面を選べます。</p>
   <h2>操作</h2>
-  <p>下のトレイの○を指で拖曳し、空いたマスの上で離します。「相手の駒を動かせる」がオンなら、盤上のどちらの駒も掴んで別のマスへ移せるほか、盤の外へ出すと取り除けます。外に出した駒はまた掴んで盤に戻せます。対人戦ではもう1人が上のトレイの×を動かします。PC ではマウスの拖曳で操作します。</p>
-  <h2>コツ</h2>
-  <p>あと1つで揃いそうな相手の列は、空きマスをふさぐだけでなく、駒を盤の外へ捨てても崩せます。CPU は駒を運ぶ間も盤面を見直すので、置く直前に狙いが変わることがあります。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p>下のトレイの○を手手指で拖曳し、空いたマスの上で離します。「對手の駒を動かせる」がオンなら、盤上のどちらの駒も掴んで別のマスへ移せるほか、盤の外へ出すと取り除けます。外に出した駒はまた掴んで盤に戻せます。対人戦ではもう1人が上のトレイの×を動かします。PC では滑鼠の拖曳で操作します。</p>
+  <h2>訣竅</h2>
+  <p>あと1つで揃いそうな對手の列は、空きマスをふさぐだけでなく、駒を盤の外へ捨てても崩せます。CPU は駒を運ぶ間も盤面を見直すので、置く直前に狙いが変わることがあります。</p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 <script>
 (() => {
-  // CPUの強さ（[最小, 最大] の範囲で毎回ランダム）
+  // CPUの強さ（[最小, 最大] の範囲で毎回隨機）
   //  cross:×を盤面の端から端まで運ぶ時間(ms) / grab:次の×を掴むまでの間(ms)
   //  look:運びながら盤面を見直す間隔(ms) / notice:見直し1回ごとに気づく確率
   //  noise:置き場所の評価のブレ（0で常に最善）
@@ -198,7 +198,7 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
   const drags=new Map();
   const discardsEl=$('discards');
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て
   // 拖曳が奪われるのを防ぐ
   const isDraggable=t=>t instanceof Element && !!(t.closest('.piece,.mark') || t.closest('.cell')?.querySelector('.mark'));
   document.addEventListener('touchstart',e=>{ if(isDraggable(e.target)) e.preventDefault(); },{passive:false});
@@ -292,7 +292,7 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
 
   // ---- 進行 ----
   // 盤面の駒を動かせるか
-  // CPU対戦：人は○。相手(×)の駒はチェック時のみ。
+  // CPU対戦：人は○。對手(×)の駒はチェック時のみ。
   // 対人戦：1台では誰が触ったか区別できないため、チェックなしなら置いた駒は動かせない。
   function canMove(m){
     if(moveOpp) return true;
@@ -320,7 +320,7 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
     startGame();
   });
   nextBtn.addEventListener('click',startGame);
-  // 結果を表示：パネルを隠して終了時の盤面を見せる。画面をタップで返回
+  // 結果を表示：パネルを隠して結束時の盤面を見せる。畫面を點擊で返回
   let viewing=false;
   $('showBoard').addEventListener('click',()=>{
     panelEl.hidden=true;
@@ -414,7 +414,7 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
     }
     drawWinLine(line,result);
     endTimer=setTimeout(()=>{
-      statusEl.textContent=`${names[result]}の勝ち`;
+      statusEl.textContent=`${names[result]}の贏`;
       statusEl.hidden=false;
       $('ends').hidden=false;
       panelEl.hidden=false;
@@ -518,10 +518,10 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
     // 1. 勝てるマス
     const win=winningCells('x');
     if(win.length && notice('win')) return win[0];
-    // 2. 相手のリーチを止める
+    // 2. 對手のリーチを止める
     const block=winningCells('o');
     if(block.length && notice('block')) return block[0];
-    // 3. 自分のダブルリーチ / 4. 相手のダブルリーチを先に潰す
+    // 3. 自己のダブルリーチ / 4. 對手のダブルリーチを先に潰す
     for(const m of ['x','o']){
       if(!notice('fork')) continue;
       for(const i of empty){
@@ -529,7 +529,7 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
         if(n>=2) return i;
       }
     }
-    // 5. 列の埋まり具合で評価（自分の列を伸ばす＋相手の列を邪魔する）
+    // 5. 列の埋まり具合で評価（自己の列を伸ばす＋對手の列を邪魔する）
     let best=empty[0], bestScore=-1;
     for(const i of empty){
       let sc=0;

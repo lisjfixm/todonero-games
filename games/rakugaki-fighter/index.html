@@ -38,15 +38,15 @@ gtag('config', 'G-41RSZLP1YQ');
 <style>
   /* ノートとペンの世界観：方眼ノートの紙、ボールペンの青黒、赤ペン、蛍光ペン */
   :root{
-    --bg:#e8eef1;        /* 机の上の紙の色（対戦画面の背景にも使う） */
+    --bg:#e8eef1;        /* 机の上の紙の色（対戦畫面の背景にも使う） */
     --paper:#fbfcfd;     /* ノートの紙 */
     --grid:#d3e1ea;      /* 方眼の線 */
-    --ink:#1f2a44;       /* ボールペンの青黒（自分の絵・文字） */
+    --ink:#1f2a44;       /* ボールペンの青黒（自己の絵・文字） */
     --fg:#1f2a44; --sub:#5d6b80; --line:#1f2a44;
-    --enemy:#d33a2f;     /* 赤ペン（相手の絵） */
+    --enemy:#d33a2f;     /* 赤ペン（對手の絵） */
     --floor:#cdd8df;     /* 土俵 */
-    --you:#5ec8f2;       /* 自分の体力：青の蛍光ペン */
-    --foe:#ff7eae;       /* 相手の体力：ピンクの蛍光ペン */
+    --you:#5ec8f2;       /* 自己の體力：青の蛍光ペン */
+    --foe:#ff7eae;       /* 對手の體力：ピンクの蛍光ペン */
     --hpbg:rgba(31,42,68,.08);
     --stam:#3aa556;      /* スタミナ：緑 */
     --spark:#ffd400; --flash:#ff4a3d; --trail:#ffffff;
@@ -62,7 +62,7 @@ gtag('config', 'G-41RSZLP1YQ');
     -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   }
   canvas{display:block;touch-action:none}
-  /* ボタンはペンで描いた枠のように少しいびつな角丸にする */
+  /* 按鈕はペンで描いた枠のように少しいびつな角丸にする */
   button{font:inherit;font-size:18px;font-weight:bold;min-height:48px;padding:0 22px;color:var(--ink);background:var(--paper);
     border:2.5px solid var(--ink);border-radius:14px 22px 16px 20px/20px 14px 22px 16px;cursor:pointer;transition:transform .08s}
   button:active,button.on{transform:scale(.95)}
@@ -72,7 +72,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   #app{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;overflow:hidden}
 
-  /* お絵かき画面：方眼ノートの1ページ */
+  /* お絵かき畫面：方眼ノートの1ページ */
   #drawScr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
     padding:calc(12px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px))}
   #pad{width:min(100%, calc(100vh - 290px));width:min(100%, calc(100dvh - 290px));aspect-ratio:1/1;
@@ -82,7 +82,7 @@ gtag('config', 'G-41RSZLP1YQ');
     border:2.5px solid var(--ink);border-radius:6px 10px 8px 12px/12px 6px 10px 8px}
   .row{display:flex;gap:12px;width:min(100%, calc(100vh - 290px));width:min(100%, calc(100dvh - 290px))}
   #drawScr{gap:12px}
-  /* 道具（ペン／塗りつぶし／消しゴム）：3つで1組の切り替え。狭い画面でも3つ並ぶよう文字は少し小さめ */
+  /* 道具（ペン／塗りつぶし／消しゴム）：3つで1組の切り替え。狭い畫面でも3つ並ぶよう文字は少し小さめ */
   .seg{display:flex;flex:1}
   .seg button{flex:1;font-size:15px;padding:0 4px;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:4px}
   .seg button:not(:first-child):not(:last-child){border-radius:4px;margin-left:-2.5px}
@@ -94,12 +94,12 @@ gtag('config', 'G-41RSZLP1YQ');
   .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
   /* 色えらび：選んでいる色は二重の枠で示す */
   .colors{display:flex;gap:8px;padding:0 6px}   /* 選択中の二重枠がはみ出さないよう左右に余白 */
-  /* ボタン自体は押しやすい大きさ（高さ44px）のまま、見た目は中に描いた真円にする */
+  /* 按鈕自体は押しやすい大きさ（高さ44px）のまま、見た目は中に描いた真円にする */
   .sw{position:relative;flex:1;min-width:0;height:44px;padding:0;border:none;border-radius:0;background:none}
   .sw::before{content:"";position:absolute;left:50%;top:50%;width:min(34px, calc(100% - 4px));aspect-ratio:1/1;transform:translate(-50%,-50%);
     border-radius:50%;background:var(--c);border:2.5px solid var(--ink);box-sizing:border-box}
   .sw[aria-pressed="true"]::before{box-shadow:0 0 0 3px var(--paper),0 0 0 5.5px var(--ink)}
-  /* 絵の上の列：左にライブラリ、右に 1つ戻す・全部消す（「たたかう」から離す） */
+  /* 絵の上の列：左にライブラリ、右に 1つ戻す・全部消す（「たたかう」から放開） */
   .row.edit{justify-content:space-between;gap:10px}
   .row.edit .grp{display:flex;gap:10px}
   .row.edit button{display:flex;align-items:center;gap:6px;font-size:16px;padding:0 12px;white-space:nowrap}
@@ -114,21 +114,21 @@ gtag('config', 'G-41RSZLP1YQ');
   #libActs .primary{flex:1}
   #libLoad{font-size:16px;padding:0 14px;white-space:nowrap}
   #libMsg{margin:0;min-height:1.4em;text-align:center;font-size:14px;color:var(--sub)}
-  #libGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 14px;padding:14px 14px 6px 4px;margin:0 -6px;   /* 上と右は消すボタンの丸がはみ出す分の余白 */
+  #libGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 14px;padding:14px 14px 6px 4px;margin:0 -6px;   /* 上と右は消す按鈕の丸がはみ出す分の余白 */
     max-height:min(46vh,420px);max-height:min(46dvh,420px);overflow-y:auto;-webkit-overflow-scrolling:touch}
   #libEmpty{margin:8px 0;text-align:center;font-size:15px;color:var(--sub)}
   .item{position:relative;display:flex;flex-direction:column;gap:6px}
-  /* 絵のボタン：小さなノートの紙。押すとその絵を開く */
+  /* 絵の按鈕：小さなノートの紙。按とその絵を開く */
   .pick{width:100%;aspect-ratio:1/1;min-height:0;padding:0;overflow:hidden;
     background-color:var(--paper);
     background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
     background-size:12.5% 12.5%;background-position:-1px -1px;
     border-radius:6px 10px 8px 12px/12px 6px 10px 8px}
   .pick img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
-  /* 分享ボタン：絵の下に置く。押しやすい高さ（44px）のまま文字は小さめ */
+  /* 分享按鈕：絵の下に置く。押しやすい高さ（44px）のまま文字は小さめ */
   .shr{min-height:44px;font-size:14px;padding:0 4px;display:flex;align-items:center;justify-content:center;gap:4px}
   .shr .ic{width:18px;height:18px}
-  /* 消すボタン：押しやすい大きさ（44px）のまま、見た目は小さな丸にする。1回目で赤くなり、2回目で消える */
+  /* 消す按鈕：押しやすい大きさ（44px）のまま、見た目は小さな丸にする。1回目で赤くなり、2回目で消える */
   .del{position:absolute;right:-12px;top:-12px;width:44px;height:44px;min-height:0;padding:0;border:none;border-radius:0;background:none}
   .del::before{content:"×";position:absolute;left:50%;top:50%;width:28px;height:28px;transform:translate(-50%,-50%);
     display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;
@@ -137,14 +137,14 @@ gtag('config', 'G-41RSZLP1YQ');
   .row.edit button{min-height:44px;font-size:15px;padding:0 14px;white-space:nowrap}
   #go{flex:1;font-size:20px;padding:0 8px}
   #howtoBtn{flex:none;font-size:15px;padding:0 8px;white-space:nowrap}
-  /* 「CPU」：画像を読み込んで相手にする。読み込み後はアイコンの代わりに小さくその絵を出し、横に「おまかせに戻す」が出る */
+  /* 「CPU」：画像を読み込んで對手にする。読み込み後はアイコンの代わりに小さくその絵を出し、横に「おまかせに戻す」が出る */
   #cpuBtn{display:flex;align-items:center;gap:6px;font-size:16px;padding:0 12px;white-space:nowrap}
   #cpuThumb{width:30px;height:30px;flex:0 0 auto;object-fit:contain;background:var(--paper);border:1.5px solid var(--ink);border-radius:5px 7px 6px 8px/8px 5px 7px 6px}
   #cpuClear{width:44px;min-height:44px;padding:0;font-size:22px;line-height:1}
   #cpuMsg{margin:0;font-size:14px;text-align:center;color:var(--enemy)}
   #cpuMsg:empty{display:none}
 
-  /* 対戦画面 */
+  /* 対戦畫面 */
   #fightScr{position:absolute;inset:0}
   #view{position:absolute;inset:0;width:100%;height:100%}
   #hud{position:absolute;left:0;right:0;top:0;display:flex;gap:18px;padding:calc(env(safe-area-inset-top,0px) + 14px) 14px 0;pointer-events:none}
@@ -153,9 +153,9 @@ gtag('config', 'G-41RSZLP1YQ');
   .name{font-size:14px;font-weight:bold}
   .hp.l .name{color:var(--ink)}
   .hp.r .name{color:var(--enemy)}
-  /* 体力バー：鉛筆の枠に蛍光ペンを引いたような見た目 */
+  /* 體力バー：鉛筆の枠に蛍光ペンを引いたような見た目 */
   .bar{position:relative;height:16px;margin-top:4px;border:2px solid var(--ink);border-radius:5px 9px 6px 8px/8px 5px 9px 6px;background:var(--paper);overflow:hidden}
-  /* 中身は常に枠いっぱいの蛍光ペンの形で、体力の分だけ切り取って見せる（短くなっても形が崩れない） */
+  /* 中身は常に枠いっぱいの蛍光ペンの形で、體力の分だけ切り取って見せる（短くなっても形が崩れない） */
   .bar i{position:absolute;top:1px;bottom:1px;left:1px;right:1px;
     clip-path:polygon(0% 12%,100% 0%,99% 100%,1% 88%);transition:clip-path .25s ease-out}
   .hp.l .bar i{background:var(--you)}
@@ -168,7 +168,7 @@ gtag('config', 'G-41RSZLP1YQ');
   .acts{display:flex;align-items:flex-end;gap:12px;pointer-events:none}
   #def{width:76px;height:76px;margin-bottom:6px;border-radius:48% 52% 50% 50%/52% 48% 50% 50%;padding:0;font-size:17px;touch-action:none;pointer-events:auto}
   #def.on{background:var(--ink);color:var(--paper)}
-  /* スタミナ：体力バーの下の緑の線（攻撃・防御で減り、0で防ぐとガードが崩れる） */
+  /* スタミナ：體力バーの下の緑の線（攻撃・防御で減り、0で防ぐとガードが崩れる） */
   .gd{height:6px;margin-top:3px;border-radius:3px;background:var(--hpbg);overflow:hidden}
   .gd i{display:block;height:100%;width:100%;background:var(--stam)}
   .hp.r .gd i{margin-left:auto}
@@ -203,12 +203,12 @@ gtag('config', 'G-41RSZLP1YQ');
 <div id="app">
   <section class="howto" hidden data-pos="none">
     <h2>玩法</h2>
-    <p>ノートに描いたラクガキが立体になり、CPU と1対1で戦うゲームです。ペンや塗りつぶしで好きな形を描いて「たたかう」を押すと、絵が膨らんで土俵に立ちます。相手の体力を0にすれば勝ちで、自分が0になると負けです。力や速さ、体力は対戦ごとにランダムで決まります。</p>
+    <p>ノートに描いたラクガキが立体になり、CPU と1対1で戦う遊戲。ペンや塗りつぶしで好きな形を描いて「たたかう」を按と、絵が膨らんで土俵に立ちます。對手の體力を0にすれば贏で、自己が0になると輸です。力や速さ、體力は対戦ごとに隨機で決まります。</p>
     <h2>操作</h2>
-    <p>スマホは左のスティックで移動し、右の攻撃ボタンで攻撃します。防御ボタンは按いる間だけ構えます。PC は矢印キーで移動、Space で攻撃、Shift を按いる間が防御です。</p>
-    <h2>コツ</h2>
-    <p>防御中は体力が減りませんが、受けるたびにスタミナが減り、尽きるとガードが崩れて無防備になります。攻撃にもスタミナを使うので、連打しすぎないでください。絵の形で戦い方も変わり、手足のない絵は踏み込みの強い体当たりで戦います。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>スマホは左のスティックで移動し、右の攻撃按鈕で攻撃します。防御按鈕は按いる間だけ構えます。PC は矢印鍵で移動、Space で攻撃、Shift を按いる間が防御です。</p>
+    <h2>訣竅</h2>
+    <p>防御中は體力が減りませんが、受けるたびにスタミナが減り、尽きるとガードが崩れて無防備になります。攻撃にもスタミナを使うので、連打しすぎないでください。絵の形で戦い方も変わり、手足のない絵は踏み込みの強い体当たりで戦います。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 
   <section id="drawScr">
@@ -272,7 +272,7 @@ gtag('config', 'G-41RSZLP1YQ');
     <div id="result" hidden>
       <div class="card">
         <p id="resTxt" aria-live="assertive"></p>
-        <button id="again" class="primary">もう一回</button>
+        <button id="again" class="primary">再來一次</button>
         <div class="sub-row">
           <button id="redraw">描き直す</button>
           <button id="share">分享</button>
@@ -320,15 +320,15 @@ gtag('config', 'G-41RSZLP1YQ');
   const MAX_JOINTS = 48;    // 関節数の目安の上限（超えそうならボーンを長くする）
   const GRID_N = 96;        // 変形メッシュの細かさ（長辺方向の分割数。輪郭のなめらかさに効く）
   const BLEND = 0.5;        // 関節まわりで親ボーンと混ぜる範囲（ボーン長に対する比）
-  const Z_LAYER = 0.004;    // 重なり順：根元から1段離れるごとに手前へずらす量（同じ面で重なるとちらつくため）
+  const Z_LAYER = 0.004;    // 重なり順：根元から1段離れるごとに手上一頁ずらす量（同じ面で重なるとちらつくため）
   const Z_SUB = 0.0005;     // 重なり順：同じ段のボーンどうしをずらす量
 
   const INFLATE = 3.5;      // 絵のふくらみ（太い所ほど厚くなる。0で紙のように平ら）
   const THICK_MAX = 0.45;   // ふくらみの厚さの上限（片側）
   const THICK_SMOOTH = 12;  // ふくらみをなめらかにする回数（多いほど縁のギザギザが消えて丸くなる）
-  const TURN_SPEED = 8;     // 相手のほうへ向き直る速さ（ラジアン/秒）
-  const CAM_ANGLE = 0.8;    // カメラ：自分の真後ろから往右回り込む角度（ラジアン。自分で相手が隠れないように斜め後ろから見る）
-  const CAM_DIST = 4.4;     // カメラ：2人の中間からの距離（相手との距離に応じて足す）
+  const TURN_SPEED = 8;     // 對手のほうへ向き直る速さ（ラジアン/秒）
+  const CAM_ANGLE = 0.8;    // カメラ：自己の真後ろから往右回り込む角度（ラジアン。自己で對手が隠れないように斜め後ろから見る）
+  const CAM_DIST = 4.4;     // カメラ：2人の中間からの距離（對手との距離に応じて足す）
   const CAM_H = 1.5;        // カメラ：高さ（距離に応じて足す）
   const ARENA_R = 4.2;      // 土俵の半径
   const FLOOR_CELL = 0.5;   // 土俵の方眼の1マスの大きさ
@@ -362,27 +362,27 @@ gtag('config', 'G-41RSZLP1YQ');
   const DMG_RAND = 0.3;     // ダメージのばらつき（±30%）
   const END_WAIT = 1.5;     // 決着してから結果を出すまで（秒。倒れるところを見せる）
 
-  const STAT = {            // 対戦ごとにランダムで決まる能力の幅（最小, 最大）
+  const STAT = {            // 対戦ごとに隨機で決まる能力の幅（最小, 最大）
     power: [0.7, 1.3],      // 力（ダメージの倍率）
     speed: [0.7, 1.3],      // 速さ（移動の速さの倍率）
-    hp:    [70, 130],       // 体力
+    hp:    [70, 130],       // 體力
     def:   [0.7, 1.3],      // 守り（受けるダメージの倍率は 2−守り。防いだときのスタミナの減りは 1÷守り 倍）
   };
 
   // ---------- 防御 ----------
-  // 防御中に当たった攻撃は体力が減らない。代わりにスタミナが減る
+  // 防御中に当たった攻撃は體力が減らない。代わりにスタミナが減少
   const GUARD_SPEED = 0.4;      // 防御中の移動の速さ（倍率）
   const GUARD_KB = 0.3;         // 防御中に当たったときの吹っ飛び（倍率）
   const GUARD_STUN = 0.08;      // 防御中に当たったときに動けない時間（秒）
-  // スタミナ（ダクソ風）：攻撃すると減り、防いだ攻撃でも減る。使ってから少し待つと回復が始まる
+  // スタミナ（ダクソ風）：攻撃すると減り、防いだ攻撃でも減少。使ってから少し待つと回復が開始
   const STAM_MAX = 100;         // スタミナの最大
   const STAM_ATK = 28;          // 攻撃1回で使うスタミナ（少しでも残っていれば攻撃でき、足りない分は0で止まる）
-  const STAM_GUARD = 2.0;       // 防いだ攻撃で減るスタミナ（ダメージ × この値 ÷ 守り）
+  const STAM_GUARD = 2.0;       // 防いだ攻撃で減少スタミナ（ダメージ × この値 ÷ 守り）
   const STAM_REGEN = 45;        // 回復の速さ（1秒あたり）
   const STAM_REGEN_GUARD = 0.15;// 防御を構えている間の回復の速さ（倍率。構えっぱなしだと少しずつ削られる）
-  const STAM_DELAY = 0.6;       // 使ってから回復が始まるまで（秒）
+  const STAM_DELAY = 0.6;       // 使ってから回復が開始まで（秒）
   const GUARD_BREAK_STUN = 0.9; // スタミナが尽きてガードが崩れたときに無防備になる時間（秒）
-  const GUARD_FWD = 0.35;       // 防御の構え：腕などを体の前へ出す距離
+  const GUARD_FWD = 0.35;       // 防御の構え：腕などを体の上一頁出す距離
 
   // ---------- 演出 ----------
   const HITSTOP_BASE = 0.035;   // ヒットストップ（当たった瞬間に止まる時間、秒）
@@ -400,7 +400,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const BIG_HIT = 14;           // このダメージ以上は数字を大きく出す
   const TRAIL_LEN = 10;         // 攻撃の軌跡の長さ（フレーム数）
   const TRAIL_W = 0.07;         // 攻撃の軌跡の太さ
-  const SHARE_FILL = 0.85;      // 分享画像でキャラが画面の狭い方の幅に占める割合（大きいほど寄る）
+  const SHARE_FILL = 0.85;      // 分享画像でキャラが畫面の狭い方の幅に占める割合（大きいほど寄る）
   // 登場：描いた絵（ぺらぺらの2D）がボンッと煙に包まれて3Dになる
   const INTRO_HOLD = 0.7;       // 2Dの絵のまま見せる時間（秒）
   const INTRO_SWAP = 0.1;       // 煙が出てから3Dに切り替わるまで（秒。煙で隠れた瞬間に替える）
@@ -434,12 +434,12 @@ gtag('config', 'G-41RSZLP1YQ');
   const KO_SLOW_TIME = 0.8;     // 決着の一撃のスローの長さ（実時間・秒）
   const KO_SHAKE = 0.25;        // 決着の一撃の追加の揺れ
 
-  // CPUの戦い方（対戦ごとにランダムで1つ選ぶ）
+  // CPUの戦い方（対戦ごとに隨機で1つ選ぶ）
   //  speed    移動の速さ（プレイヤーに対する倍率）
   //  waitMin/waitMax  攻撃の間隔（秒）
-  //  guard    相手の攻撃を防御する確率 / react 防御するまでの時間（秒）
+  //  guard    對手の攻撃を防御する確率 / react 防御するまでの時間（秒）
   //  dist     立つ距離（届く距離に対する倍率。大きいほど遠くから）
-  //  strafe   相手の周りを回り込む強さ（0で回らない）
+  //  strafe   對手の周りを回り込む強さ（0で回らない）
   //  retreat  攻撃したあと離れている時間（秒。0で離れない）
   //  counter  防御で受け止めたら、すぐ反撃する
   const CPU_TYPES = [
@@ -471,7 +471,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return [(e.clientX - r.left) / r.width * PAD_RES, (e.clientY - r.top) / r.height * PAD_RES];
   }
   let penColor = COLORS[0][0], tool = 'pen';
-  // 色えらびのボタンを作る
+  // 色えらびの按鈕を作る
   COLORS.forEach(([hex, name], k) => {
     const b = document.createElement('button');
     b.className = 'sw'; b.style.setProperty('--c', hex);
@@ -574,8 +574,8 @@ gtag('config', 'G-41RSZLP1YQ');
     for (let i = 3; i < d.length; i += 4) if (d[i] > 40){ hasInk = true; break; }
     $('go').disabled = !hasInk;
   }
-  // 1つ戻す：描く・塗る・全部消すの直前の絵を保存しておき、押すと1つ前に戻す
-  // 保存は画素データで持つ（iPhoneのブラウザはキャンバスに使えるメモリが少なく、キャンバスで何枚も持つと絵が崩れるため）
+  // 1つ戻す：描く・塗る・全部消すの直前の絵を保存しておき、按と1つ前に戻す
+  // 保存は画素データで持つ（iPhoneの瀏覽器はキャンバスに使えるメモリが少なく、キャンバスで何枚も持つと絵が崩れるため）
   const history = [];
   function pushUndo(){
     history.push({ d:pctx.getImageData(0, 0, PAD_RES, PAD_RES), ink:hasInk });
@@ -597,16 +597,16 @@ gtag('config', 'G-41RSZLP1YQ');
 
   pad.addEventListener('pointerdown', e => {
     e.preventDefault();
-    for (const d of drags.values()) if (d.kind === 'pad') return;   // 1本指だけで描く
+    for (const d of drags.values()) if (d.kind === 'pad') return;   // 1本手手指だけで描く
     const p = padPos(e);
     if (tool === 'fill'){
       pushUndo();
       if (floodFill(p[0], p[1], penColor)){ hasInk = true; $('go').disabled = false; }
-      else { history.pop(); $('undo').disabled = !history.length; }   // 何も塗れなかったら記録しない
+      else { history.pop(); $('undo').disabled = !history.length; }   // 何も塗れなかったら紀錄しない
       return;
     }
     const erase = tool === 'eraser';
-    if (erase && !hasInk) return;   // 何も無い所を消しても変わらないので記録しない
+    if (erase && !hasInk) return;   // 何も無い所を消しても変わらないので紀錄しない
     pushUndo();
     pad.setPointerCapture(e.pointerId);
     drags.set(e.pointerId, { kind:'pad', last:p, erase });
@@ -764,7 +764,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text, files:[file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない環境（PCのブラウザなど）: PNG をダウンロードして、好きな方法で送ってもらう
+    // 2) 画像を渡せない環境（PCの瀏覽器など）: PNG をダウンロードして、好きな方法で送ってもらう
     const a = document.createElement('a');
     a.href = URL.createObjectURL(file); a.download = file.name;
     document.body.appendChild(a); a.click(); a.remove();
@@ -1317,7 +1317,7 @@ gtag('config', 'G-41RSZLP1YQ');
     legs.sort((a, b) => J[a.joints[a.joints.length - 1]].x - J[b.joints[b.joints.length - 1]].x);
     f.legOf = new Int16Array(n).fill(-1);
     f.legs = legs.map((c, k) => { for (const j of c.joints) f.legOf[j] = k; return { pivot:c.pivot, phase:k % 2 ? Math.PI : 0 }; });
-    // 防御の構え：足以外の手足を体の前へ寄せる（付け根からの順番で、先ほど前へ）
+    // 防御の構え：足以外の手足を体の上一頁寄せる（付け根からの順番で、先ほど上一頁）
     f.armOf = new Int16Array(n).fill(-1); f.armRank = new Float32Array(n);
     f.arms = f.chains.filter(c => !legs.includes(c)).map((c, k) => {
       c.joints.forEach((j, i) => { f.armOf[j] = k; f.armRank[j] = (i + 1) / c.joints.length; });
@@ -1411,7 +1411,7 @@ gtag('config', 'G-41RSZLP1YQ');
     f.shadow.geometry.dispose(); f.shadow.material.dispose();
   }
   const rand = ([a, b]) => a + Math.random() * (b - a);
-  // 向き：絵の正面（nx, nz）を相手のほうへ向ける。instant なら一瞬で向く
+  // 向き：絵の正面（nx, nz）を對手のほうへ向ける。instant なら一瞬で向く
   function faceToward(f, opp, dt, instant){
     const dx = opp.x - f.x, dz = opp.z - f.z;
     if (Math.hypot(dx, dz) < 1e-4) return;
@@ -1425,7 +1425,7 @@ gtag('config', 'G-41RSZLP1YQ');
     f.nx = Math.sin(f.yaw); f.nz = Math.cos(f.yaw);
   }
   function resetFighter(f, x, z){
-    // 能力は対戦ごとにランダム（表示しやすいよう力と速さは0.1刻み）
+    // 能力は対戦ごとに隨機（表示しやすいよう力と速さは0.1刻み）
     f.power = Math.round(rand(STAT.power) * 10) / 10;
     f.spd = Math.round(rand(STAT.speed) * 10) / 10;
     f.hpMax = Math.round(rand(STAT.hp));
@@ -1462,7 +1462,7 @@ gtag('config', 'G-41RSZLP1YQ');
       F[o+9] = x * 0 + (y * yz - z * yy); F[o+10] = z * yx - x * yz; F[o+11] = x * yy - y * yx;   // Z = X × Y
     }
     const V = f.vpos, nv = f.nv;
-    // ふくらみ（0＝描いた絵そのままの平ら、1＝立体）。平らなときは部位ごとの段差もなくし、表と裏だけわずかに離す
+    // ふくらみ（0＝描いた絵そのままの平ら、1＝立体）。平らなときは部位ごとの段差もなくし、表と裏だけわずかに放開
     const inf = f.inflate, flat = (1 - inf) * 0.003;
     for (let i = 0; i < nv; i++){
       const j1 = f.bj1[i];
@@ -1514,7 +1514,7 @@ gtag('config', 'G-41RSZLP1YQ');
       if (f.fallA >= FALL_MAX){ f.fallA = FALL_MAX; f.fallV = Math.abs(f.fallV) > 0.6 ? -f.fallV * FALL_BOUNCE : 0; }
     }
     bodyAxes(f);
-    // 根元（体の中心）は操作どおりに動かす（倒れているときは足元を軸に回した位置。背中が床に沈まないよう厚さ分持ち上げる）
+    // 根元（体の中心）は操作どおりに移動（倒れているときは足元を軸に回した位置。背中が床に沈まないよう厚さ分持ち上げる）
     const lift = f.maxThick * Math.sin(f.fallA);
     P[0] = Q[0] = f.x + f.ux * f.restY0; P[1] = Q[1] = f.uy * f.restY0 + lift; P[2] = Q[2] = f.z + f.uz * f.restY0;
     const a = f.atk, ch = a && a.chain;
@@ -1589,7 +1589,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ===== 攻撃 =====
-  const pickChain = f => f.chains.length ? f.chains[Math.floor(Math.random() * f.chains.length)] : null;   // 使う手足は毎回ランダム
+  const pickChain = f => f.chains.length ? f.chains[Math.floor(Math.random() * f.chains.length)] : null;   // 使う手足は毎回隨機
   function startAttack(f, opp, chain = pickChain(f)){
     if (f.atk || f.cool > 0 || f.stun > 0 || f.guard || f.stam <= 0) return;   // 防御中・スタミナ切れは攻撃できない
     f.stam = Math.max(0, f.stam - STAM_ATK); f.stamT = STAM_DELAY;
@@ -1627,11 +1627,11 @@ gtag('config', 'G-41RSZLP1YQ');
     const P = f.pos, Q = f.prev, O = opp.pos, k = 3 * t;
     const sp = Math.hypot(P[k] - Q[k], P[k+1] - Q[k+1], P[k+2] - Q[k+2]) / STEP;
     const base = DMG_MIN + (DMG_MAX - DMG_MIN) * Math.min(1, sp / SPEED_FULL);
-    // ダメージ = 基本 × 自分の力 × (2 − 相手の守り) × ばらつき
+    // ダメージ = 基本 × 自己の力 × (2 − 對手の守り) × ばらつき
     let raw = base * f.power * (2 - opp.def) * (1 + (Math.random() * 2 - 1) * DMG_RAND);
     let guarded = false, broke = false;
     if (opp.guard){
-      guarded = true;   // 防いだ攻撃は体力が減らず、スタミナが減る
+      guarded = true;   // 防いだ攻撃は體力が減らず、スタミナが減少
       opp.stam -= raw * STAM_GUARD / opp.def; opp.stamT = STAM_DELAY;
       if (opp.stam <= 0){   // スタミナが尽きるとガードが崩れる：この一撃は防げるが、しばらく無防備になる
         opp.stam = 0; opp.guard = false; opp.broken = true; broke = true;
@@ -1714,7 +1714,7 @@ gtag('config', 'G-41RSZLP1YQ');
       enemy.x  += dx / d * push; enemy.z  += dz / d * push;
     }
   }
-  // CPUが使う手足：体が太くて、立てる距離から相手に届かない短い手足は選ばない（無いときは一番長い手足）
+  // CPUが使う手足：体が太くて、立てる距離から對手に届かない短い手足は選ばない（無いときは一番長い手足）
   function cpuChain(e){
     if (!e.chains.length) return null;
     const ok = e.chains.filter(c => c.reach + HIT_PAD > e.body + 0.05);
@@ -1724,7 +1724,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const e = enemy, p = player, ai = e.ai;
     e.think -= dt;
     if (e.retreatT > 0) e.retreatT -= dt;
-    // 防御：相手が攻撃を始めたら、一定の確率で少し遅れて防御し、攻撃が終わるまで続ける
+    // 防御：對手が攻撃を始めたら、一定の確率で少し遅れて防御し、攻撃が結束まで続ける
     if (p.atk && p.atk !== e.seenAtk){
       e.seenAtk = p.atk;
       e.guardT = Math.random() < ai.guard && Math.hypot(p.x - e.x, p.z - e.z) < p.reach + p.body + 1 ? ai.react : -1;
@@ -1734,19 +1734,19 @@ gtag('config', 'G-41RSZLP1YQ');
     e.guardWant = e.guardT === 0 && !!p.atk && p.atk === e.seenAtk;
     if (ai.counter && wasGuard && !e.guardWant && !e.broken) e.think = 0;   // 防ぎ切ったらすぐ反撃
     if (e.stun > 0 || e.atk){ e.ix = e.iz = 0; return; }
-    // 次に使う手足を先に決め、その手足が相手の体の表面に届く距離まで近づいてから攻撃する
-    // （相手の絵が太いと中心までは届かないので、中心との距離ではなく表面との距離で判断する）
+    // 次に使う手足を先に決め、その手足が對手の体の表面に届く距離まで近づいてから攻撃する
+    // （對手の絵が太いと中心までは届かないので、中心との距離ではなく表面との距離で判断する）
     if (e.next === undefined) e.next = cpuChain(e);
     const range = (e.next ? e.next.reach : e.body) + HIT_PAD;
     let want = p.body + Math.max(e.body, range * ai.dist);   // 届く距離より少し内側に立つ（戦い方で変わる）
     if (e.retreatT > 0) want += RETREAT_DIST;                // 逃げ足：攻撃したあとはしばらく下がる
     const tired = e.stam <= Math.max(0, STAM_MAX * ai.stam); // スタミナが足りない間は少し離れて回復を待つ
     if (tired) want += TIRED_DIST;
-    let ux = e.x - p.x, uz = e.z - p.z;   // 相手から自分への向き（この向きのまま距離だけ合わせる）
+    let ux = e.x - p.x, uz = e.z - p.z;   // 對手から自己への向き（この向きのまま距離だけ合わせる）
     const ul = Math.hypot(ux, uz) || 1; ux /= ul; uz /= ul;
     const dx = p.x + ux * want - e.x, dz = p.z + uz * want - e.z, l = Math.hypot(dx, dz);
     if (l > 0.05){ const k = Math.min(1, l / 0.3); e.ix = dx / l * k; e.iz = dz / l * k; } else e.ix = e.iz = 0;   // 近くでは減速して行き過ぎない
-    if (ai.strafe > 0){   // 回り込み：相手の周りを横へ回る（ときどき向きを変える）
+    if (ai.strafe > 0){   // 回り込み：對手の周りを横へ回る（ときどき向きを変える）
       e.orbitT -= dt;
       if (e.orbitT <= 0){ e.orbitDir = -e.orbitDir; e.orbitT = 1.5 + Math.random() * 2; }
       e.ix += -uz * ai.strafe * e.orbitDir; e.iz += ux * ai.strafe * e.orbitDir;
@@ -1804,14 +1804,14 @@ gtag('config', 'G-41RSZLP1YQ');
     if (state === 'fight') startAttack(player, enemy);
   });
 
-  // 防御ボタン：按いる間だけ防御
+  // 防御按鈕：按いる間だけ防御
   let defHeld = false;
   const defBtn = $('def');
   const setDef = on => { defHeld = on; defBtn.classList.toggle('on', on); defBtn.setAttribute('aria-pressed', String(on)); };
   defBtn.addEventListener('pointerdown', e => { e.preventDefault(); defBtn.setPointerCapture(e.pointerId); setDef(true); });
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => defBtn.addEventListener(t, () => setDef(false)));
 
-  // PC：矢印キーで移動、スペースで攻撃、Shiftを按いる間は防御
+  // PC：矢印鍵で移動、スペースで攻撃、Shiftを按いる間は防御
   const keys = {};
   addEventListener('keydown', e => {
     if (state !== 'fight') return;
@@ -1821,16 +1821,16 @@ gtag('config', 'G-41RSZLP1YQ');
   });
   addEventListener('keyup', e => { keys[e.key] = false; });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   const isDraggable = t => t instanceof Element && !!t.closest('#pad,#joy,#atk,#def');
   document.addEventListener('touchstart', e => { if (isDraggable(e.target)) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove',  e => { if (drags.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => { if (isDraggable(e.target)) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
-  // ボタンには効かせない：touchend を止めると click が発生せず、素早く続けて押したボタンが反応しなくなるため
-  // （ボタンのダブルタップ拡大は body の touch-action:manipulation で防いでいる）
+  // 按鈕には効かせない：touchend を止めると click が発生せず、素早く続けて押した按鈕が反応しなくなるため
+  // （按鈕のダブル點擊拡大は body の touch-action:manipulation で防いでいる）
   document.addEventListener('touchend', e => {
     const now = Date.now();
     const onButton = e.target instanceof Element && !!e.target.closest('button');
@@ -1838,8 +1838,8 @@ gtag('config', 'G-41RSZLP1YQ');
     lastTouchEnd = now;
   }, { passive:false });
 
-  // ===== 画面の切り替え =====
-  // 相手の絵：赤ペンで描いたラクガキ。対戦ごとにランダムで選ぶ（座標は512四方の紙の上）
+  // ===== 畫面の切り替え =====
+  // 對手の絵：赤ペンで描いたラクガキ。対戦ごとに隨機で選ぶ（座標は512四方の紙の上）
   const ENEMY_LOOKS = [
     // 棒人間
     g => {
@@ -1909,12 +1909,12 @@ gtag('config', 'G-41RSZLP1YQ');
   const enemyDatas = [];
   const enemyDataOf = k => enemyDatas[k] || (enemyDatas[k] = analyze(makeTexture(enemyCanvas(k))));
   let lastLook = -1;
-  // 相手の絵の解析は重いので、ページを開いてお絵かきしている間に1枚ずつ済ませておく（「たたかう」を押したときの待ちを減らす）
+  // 對手の絵の解析は重いので、ページを開いてお絵かきしている間に1枚ずつ済ませておく（「たたかう」を押したときの待ちを減らす）
   ENEMY_LOOKS.forEach((_, k) => setTimeout(() => { if (state === 'draw') enemyDataOf(k); }, 300 + k * 400));
 
-  // ===== 任意のCPU：画像を読み込んで相手の絵にする =====
-  // customEnemy = { data, thumb }：読み込んだ画像の解析結果と小さい絵。null ならいつものCPUからランダムに選ぶ
-  // 解析結果の data.tex は「もう一回」のたびに相手を作り直すときに使うので、次の画像に替えるか「おまかせに戻す」まで持っておく
+  // ===== 任意のCPU：画像を読み込んで對手の絵にする =====
+  // customEnemy = { data, thumb }：読み込んだ画像の解析結果と小さい絵。null ならいつものCPUから隨機に選ぶ
+  // 解析結果の data.tex は「再來一次」のたびに對手を作り直すときに使うので、次の画像に替えるか「おまかせに戻す」まで持っておく
   let customEnemy = null, cpuMsgTimer = 0;
   function showCpuMsg(text){
     clearTimeout(cpuMsgTimer);
@@ -1941,8 +1941,8 @@ gtag('config', 'G-41RSZLP1YQ');
       if (!got.ink){ showCpuMsg('この画像には絵が見つかりませんでした'); return; }
       const c = document.createElement('canvas'); c.width = c.height = PAD_RES;
       c.getContext('2d').putImageData(got.data, 0, 0);
-      const data = analyze(makeTexture(c));   // 自分の絵・いつものCPUと同じ解析
-      if (!data){ c.width = c.height = 0; showCpuMsg('この画像は相手にできませんでした'); return; }
+      const data = analyze(makeTexture(c));   // 自己の絵・いつものCPUと同じ解析
+      if (!data){ c.width = c.height = 0; showCpuMsg('この画像は對手にできませんでした'); return; }
       const tc = thumbCanvas.getContext('2d');
       tc.clearRect(0, 0, THUMB_RES, THUMB_RES);
       tc.drawImage(c, 0, 0, THUMB_RES, THUMB_RES);
@@ -1962,7 +1962,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!renderer){ initThree(); initFx(); }
     resize3();
     let enemyData;
-    if (customEnemy) enemyData = customEnemy.data;   // 画像を読み込んであればそれが相手
+    if (customEnemy) enemyData = customEnemy.data;   // 画像を読み込んであればそれが對手
     else {
       let look = Math.floor(Math.random() * ENEMY_LOOKS.length);   // 見た目は前回と違うものにする
       if (look === lastLook) look = (look + 1 + Math.floor(Math.random() * (ENEMY_LOOKS.length - 1))) % ENEMY_LOOKS.length;
@@ -1974,7 +1974,7 @@ gtag('config', 'G-41RSZLP1YQ');
     disposeFighter(player); disposeFighter(enemy);
     if (fx){ for (const st of fx.dizzy.values()) st.forEach(m => { scene.remove(m); m.material.dispose(); }); fx.dizzy.clear(); }
     player = makeFighter(data, -1);
-    data.tex.width = data.tex.height = 0;   // 自分の絵の解析用キャンバスはもう使わないので手放す
+    data.tex.width = data.tex.height = 0;   // 自己の絵の解析用キャンバスはもう使わないので手放す
     enemy = makeFighter(enemyData, 1);
     startFight();
     startIntro();
@@ -2003,12 +2003,12 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   function startFight(){
     player.nx = undefined; enemy.nx = undefined;
-    player.x = 0; player.z = 1.6; enemy.x = 0; enemy.z = -1.6;   // 手前が自分、奥が相手
+    player.x = 0; player.z = 1.6; enemy.x = 0; enemy.z = -1.6;   // 手前が自己、奥が對手
     faceToward(player, enemy, 0, true); faceToward(enemy, player, 0, true);
     resetFighter(player, 0, 1.6);
     resetFighter(enemy, 0, -1.6);
     enemy.next = undefined;
-    enemy.ai = CPU_TYPES[Math.floor(Math.random() * CPU_TYPES.length)];   // 戦い方は対戦ごとにランダム
+    enemy.ai = CPU_TYPES[Math.floor(Math.random() * CPU_TYPES.length)];   // 戦い方は対戦ごとに隨機
     enemy.retreatT = 0; enemy.orbitT = 1; enemy.orbitDir = Math.random() < 0.5 ? 1 : -1;
     player.flash = enemy.flash = 0;
     for (const f of [player, enemy]){ f.inflate = 1; f.mesh.scale.setScalar(1); f.mesh.position.set(0, 0, 0); }
@@ -2033,8 +2033,8 @@ gtag('config', 'G-41RSZLP1YQ');
     $('gdPw').classList.toggle('broken', player.broken);
     $('gdEw').classList.toggle('broken', enemy.broken);
   }
-  // 体力バーの切り取り形：蛍光ペンの四角形（左上0,12%／右上100%,0／右下99%,100%／左下1%,88%）を体力の位置で切る
-  // fromRight なら右端を残して左から減らす（相手のバー）
+  // 體力バーの切り取り形：蛍光ペンの四角形（左上0,12%／右上100%,0／右下99%,100%／左下1%,88%）を體力の位置で切る
+  // fromRight なら右端を残して左から減らす（對手のバー）
   function hpClip(r, fromRight){
     r = Math.max(0, Math.min(1, r));
     const top = x => 12 - 12 * x / 100, bot = x => 88 + 12 * (x - 1) / 98;
@@ -2054,22 +2054,22 @@ gtag('config', 'G-41RSZLP1YQ');
   function showResult(){
     state = 'over';
     lastWin = player.hp > 0;
-    $('resTxt').textContent = lastWin ? '獲勝！' : '負け…';
+    $('resTxt').textContent = lastWin ? '獲勝！' : '輸…';
     $('resTxt').classList.toggle('lose', !lastWin);
     $('result').hidden = false;
   }
 
   // ===== 分享 =====
   function shareText(){
-    return `${lastWin ? '獲勝！' : '負け…'}\n${location.href.split(/[?#]/)[0]}\n#ラクガキファイター`;
+    return `${lastWin ? '獲勝！' : '輸…'}\n${location.href.split(/[?#]/)[0]}\n#ラクガキファイター`;
   }
   // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
-    // 画像には自分の描いたキャラだけを写す：CPUのキャラ・影・攻撃の軌跡・頭の上の星を一時的に隠す
+    // 画像には自己の描いたキャラだけを写す：CPUのキャラ・影・攻撃の軌跡・頭の上の星を一時的に隠す
     const hide = [enemy.mesh, enemy.shadow, enemy.trail && enemy.trail.m, ...(fx && fx.dizzy.get(enemy) || [])].filter(Boolean);
     const was = hide.map(o => o.visible);
     hide.forEach(o => { o.visible = false; });
-    // 自分のキャラを画像の真ん中に大きく写す：カメラの向きはそのままで、写ったときの縦横の大きさに合わせて近づける
+    // 自己のキャラを画像の真ん中に大きく写す：カメラの向きはそのままで、写ったときの縦横の大きさに合わせて近づける
     const dir = camLook.clone().sub(camPos).normalize();
     const right = new THREE.Vector3().crossVectors(dir, camera.up).normalize();
     const up = new THREE.Vector3().crossVectors(right, dir);
@@ -2083,7 +2083,7 @@ gtag('config', 'G-41RSZLP1YQ');
     let zc = 0; for (let i = 0; i < V.length; i += 3) zc += V[i] * dir.x + V[i+1] * dir.y + V[i+2] * dir.z;
     zc /= V.length / 3;
     const c = right.clone().multiplyScalar((u0 + u1) / 2).addScaledVector(up, (w0 + w1) / 2).addScaledVector(dir, zc);
-    // 距離：どの頂点も画面の内側（SHARE_FILL の範囲）に収まる一番近い距離
+    // 距離：どの頂点も畫面の内側（SHARE_FILL の範囲）に収まる一番近い距離
     const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * SHARE_FILL, th = tv * camera.aspect;
     let dist = 0.5;
     for (let i = 0; i < V.length; i += 3){
@@ -2118,7 +2118,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);
@@ -2198,7 +2198,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   function fxPoof(f){
     if (!fx) return;
-    // 絵の上のあちこち（メッシュの頂点からランダムに選ぶ）から煙を出す
+    // 絵の上のあちこち（メッシュの頂点から隨機に選ぶ）から煙を出す
     const V = f.vpos, nv = f.nv;
     let cx = 0, cy = 0, cz = 0;
     for (let i = 0; i < nv; i++){ cx += V[3*i]; cy += V[3*i+1]; cz += V[3*i+2]; }
@@ -2254,7 +2254,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (broke){ fxBreak(x, y, z, dx, dz); ring.size *= 1.8; return; }   // 崩れたときは文字を出さず、破片と大きな輪で見せる
     const el = document.createElement('div');
     el.className = 'pop' + (guarded ? ' guard' : dmg >= BIG_HIT ? ' big' : '');
-    el.textContent = guarded ? 'ガード' : dmg;   // 防いだときは体力が減らないので数字は出さない
+    el.textContent = guarded ? 'ガード' : dmg;   // 防いだときは體力が減らないので数字は出さない
     fx.layer.appendChild(el);
     fx.pops.push({ el, x, y, z, t:0 });
   }
@@ -2355,7 +2355,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
       T.geo.attributes.position.needsUpdate = true;
     }
-    // ダメージ数字（3D位置を画面に写して、浮かび上がりながら消える）
+    // ダメージ数字（3D位置を畫面に写して、浮かび上がりながら消える）
     const W = fx.layer.clientWidth, H = fx.layer.clientHeight;
     for (let i = fx.pops.length - 1; i >= 0; i--){
       const p = fx.pops[i];
@@ -2369,10 +2369,10 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   }
 
-  // ===== カメラ（2人が画面に収まるように横から見る） =====
+  // ===== カメラ（2人が畫面に収まるように横から見る） =====
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   function updateCamera(dt, snap){
-    // 自分の斜め後ろから、2人の中間を見る（自分の向き＝相手のほう）
+    // 自己の斜め後ろから、2人の中間を見る（自己の向き＝對手のほう）
     const fx = player.nx, fz = player.nz, rx = -fz, rz = fx;
     const d = Math.hypot(enemy.x - player.x, enemy.z - player.z);
     const mx = (player.x + enemy.x) / 2, mz = (player.z + enemy.z) / 2;
@@ -2399,14 +2399,14 @@ gtag('config', 'G-41RSZLP1YQ');
       ix = jx + (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
       iz = jy + (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
       const l = Math.hypot(ix, iz); if (l > 1){ ix /= l; iz /= l; }
-      // 画面の上＝相手のほう（自分の正面）、右＝自分の右
+      // 畫面の上＝對手のほう（自己の正面）、右＝自己の右
       const fx = player.nx, fz = player.nz, rx = -fz, rz = fx;
       const wx = rx * ix - fx * iz, wz = rz * ix - fz * iz;
       ix = wx; iz = wz;
       player.guardWant = defHeld || !!keys.Shift;
       cpuThink(dt);
     } else { enemy.ix = enemy.iz = 0; player.guardWant = enemy.guardWant = false; }
-    if (!player.down) faceToward(player, enemy, dt);   // いつも相手のほうを向く（倒れたら向きはそのまま）
+    if (!player.down) faceToward(player, enemy, dt);   // いつも對手のほうを向く（倒れたら向きはそのまま）
     if (!enemy.down) faceToward(enemy, player, dt);
     move(player, ix, iz, MOVE_SPEED * player.spd, dt);
     move(enemy, enemy.ix, enemy.iz, MOVE_SPEED * enemy.ai.speed * enemy.spd, dt);
@@ -2438,7 +2438,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (state !== 'draw' && player){
       const rate = slowT > 0 ? KO_SLOW : 1;   // 決着のスロー中はゆっくり進める
       if (slowT > 0) slowT -= dt;
-      if (hitStop > 0) hitStop -= dt;         // ヒットストップ中は物理を止める（火花などは動かす）
+      if (hitStop > 0) hitStop -= dt;         // ヒットストップ中は物理を止める（火花などは移動）
       else {
         acc += dt * rate;
         while (acc >= STEP){

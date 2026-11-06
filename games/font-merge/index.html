@@ -67,11 +67,11 @@ gtag('config', 'G-41RSZLP1YQ');
     background:var(--panel);text-align:center;padding:24px;
   }
   .ov h1,.ov h2{margin:0}
-  /* フォントの読み込み状況（画面右下）。失敗したときは赤字 */
+  /* フォントの読み込み状況（畫面右下）。失敗したときは赤字 */
   #fontMsg{position:absolute;right:6px;bottom:4px;left:6px;margin:0;z-index:5;pointer-events:none;
     font-size:11px;line-height:1.4;text-align:right;color:var(--sub)}
   #fontMsg.error{color:var(--danger)}
-  /* 成長の順番を開くメニューボタン（右上） */
+  /* 成長の順番を開くメニュー按鈕（右上） */
   #menuBtn{position:absolute;top:0;right:0;z-index:4;min-width:0;width:44px;height:44px;min-height:0;padding:0;
     border:none;background:transparent;color:var(--fg);display:flex;align-items:center;justify-content:center}
   .ov p{margin:0;color:var(--sub);line-height:1.6;font-size:15px}
@@ -103,7 +103,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="over" class="ov hidden">
     <h2>遊戲結束</h2>
     <p id="final" aria-live="polite"></p>
-    <button id="retryBtn">もう一回</button>
+    <button id="retryBtn">再來一次</button>
     <button id="shareBtn">分享</button>
   </div>
 
@@ -123,12 +123,12 @@ gtag('config', 'G-41RSZLP1YQ');
 
   <section class="howto" data-pos="none" hidden>
     <h2>玩法</h2>
-    <p>同じひらがな1文字を箱に落とし、同じフォントどうしをくっつけて次のフォントへ育てる落ちものゲームです。段階は全11段階で、合体させた段階が高いほど得点が増え、最初の1点から最後は66点になります。最終段階どうしは合体すると消えます。文字が点線より上に2秒とどまると遊戲結束です。</p>
+    <p>同じひらがな1文字を箱に落とし、同じフォントどうしをくっつけて次のフォントへ育てる落ちもの遊戲。段階は全11段階で、合体させた段階が高いほど得分が増え、最初の1点から最後は66点になります。最終段階どうしは合体すると消えます。文字が点線より上に2秒とどまると遊戲結束です。</p>
     <h2>操作</h2>
-    <p>箱の上で指を動かして落とす位置を決め、離すと落ちます。PC ではマウスを動かしてクリックするか、矢印キーとスペースキーで操作します。右上のメニューを開くとフォントの成長順を確認でき、その間はゲームが止まります。</p>
-    <h2>コツ</h2>
+    <p>箱の上で手手指を動かして掉落位置を決め、放開と落ちます。PC では滑鼠を動かして點擊するか、矢印鍵とスペース鍵で操作します。右上のメニューを開くとフォントの成長順を確認でき、その間はゲームが止まります。</p>
+    <h2>訣竅</h2>
     <p>フォントの順番はゲームごとに変わるので、最初に成長順を見ておくと合体を狙いやすくなります。落ちてくるのは下から5段階までで、次の文字は右上の「つぎ」に出ます。点線を超えている間は次を落とせません。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 
@@ -143,7 +143,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const BOX_L = 20, BOX_R = 340; // 箱の左右の内壁
   const BOX_B = 620;             // 箱の底
   const LINE_Y = 196;            // 遊戲結束ライン（文字の一番上がこれより上だとアウト判定）
-  const DROP_Y = 126;            // 落とす文字を構える高さ（文字の重心の位置）
+  const DROP_Y = 126;            // 掉落文字を構える高さ（文字の重心の位置）
   const OVER_TIME = 2.0;         // ラインより上にこの秒数とどまると遊戲結束
   const FRESH_TIME = 1.0;        // 落とした直後・合体直後の文字はこの秒数だけ判定から外す
   const G = 1600;                // 重力
@@ -206,7 +206,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const GF_FONTS = ALL_FONTS.filter(f => !LOCAL_FONTS[f]); // Google Fonts から讀取もの
   const LEVELS = 11;                     // 1ゲームの成長段階の数（FONT_POOL の組数以下）
   let usablePool = FONT_POOL;            // 読み込めたフォントだけの候補（読み込み後に決まる）
-  let FONTS = [];                        // 今回のゲームで使うフォント（成長順）。ゲーム開始ごとにランダムに決める
+  let FONTS = [];                        // 今回のゲームで使うフォント（成長順）。ゲーム開始ごとに隨機に決める
   // 落ちてくる文字の候補（ひらがなの清音と「ん」）。1ゲームにつきこの中の1文字だけを使う
   // 形が単純すぎてフォントの差が出ない文字と、カタカナは出さない（出さない文字は成長表にも注釈として出す）
   const EXCLUDED = 'へくしこい';
@@ -214,8 +214,8 @@ gtag('config', 'G-41RSZLP1YQ');
     .filter(c => !EXCLUDED.includes(c)).join('');
   const FONT_TIMEOUT = 20000;    // フォント読み込みを待つ最大時間（ミリ秒）。自前配信のフォントは1つ数MBあるので長め
   const MAX_LV = LEVELS - 1;     // 最大レベル（0始まり）
-  const SPAWN_MAX = 4;           // 落とす文字として出てくる最大レベル
-  // 合体したときの得点。本家と同じく「合体させた2つの段階」で決まる（1段目同士で1点、2段目同士で3点…）
+  const SPAWN_MAX = 4;           // 掉落文字として出てくる最大レベル
+  // 合体したときの得分。本家と同じく「合体させた2つの段階」で決まる（1段目同士で1点、2段目同士で3点…）
   const SCORE = [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66];
   const NEXT_SCALE = 0.27;       // 「つぎ」表示の縮小率
   const HUD_Y = 52;              // 分數と「つぎ」の高さ
@@ -228,9 +228,9 @@ gtag('config', 'G-41RSZLP1YQ');
   const PART_LIFE = 0.55;        // 粒が消えるまでの時間
   const PART_SPEED = [180, 380]; // 粒の初速の範囲
   const PART_G = 900;            // 粒にかかる重力
-  const TEXT_TIME = 0.7;         // 得点表示が浮かんで消える時間
-  const TEXT_RISE = 50;          // 得点表示が浮かぶ距離
-  const KEY_MOVE = 12;           // 矢印キー1回で動く量
+  const TEXT_TIME = 0.7;         // 得分表示が浮かんで消える時間
+  const TEXT_RISE = 50;          // 得分表示が浮かぶ距離
+  const KEY_MOVE = 12;           // 矢印鍵1回で動く量
 
   // ---------- 準備 ----------
   const cv = $('cv');
@@ -251,7 +251,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let aimX = W / 2;
   let cool = 0, acc = 0;
   let danger = false;
-  let fx = [];                   // 演出（粒・輪・得点表示）
+  let fx = [];                   // 演出（粒・輪・得分表示）
   let nextId = 1;
   let viewOpen = false;           // 成長の順番を表示中（ゲームは止める）
 
@@ -335,7 +335,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return shape;
   }
 
-  // 文字は1ゲームにつき1文字だけ。ゲーム開始時にランダムに決め、全部の文字がこれになる
+  // 文字は1ゲームにつき1文字だけ。ゲーム開始時に隨機に決め、全部の文字がこれになる
   let gameCh = KANA[0];
   const randPiece = () => ({ lv: Math.floor(Math.random() * (SPAWN_MAX + 1)), ch: gameCh });
   // 構えている文字がはみ出さない範囲に狙いを収める
@@ -522,7 +522,7 @@ gtag('config', 'G-41RSZLP1YQ');
     for (let it = 0; it < ITER; it++){
       for (const c of cs){
         if (c.b.dead || (c.a && c.a.dead)) continue;
-        // 法線：離れる方向にだけ押す（蓄積値が負にならないようにする）
+        // 法線：離れる方向にだけ按（蓄積値が負にならないようにする）
         const [vn] = relVel(c);
         let old = c.jn;
         c.jn = Math.max(old + (c.target - vn) / c.kn, 0);
@@ -772,14 +772,14 @@ gtag('config', 'G-41RSZLP1YQ');
     viewOpen = true;
     $('fontView').classList.remove('hidden');
   }
-  // 右上のメニューボタンで成長の順番を開く（ゲームが始まってから）
+  // 右上のメニュー按鈕で成長の順番を開く（ゲームが始まってから）
   $('menuBtn').addEventListener('click', () => { if (state !== 'idle') openFontView(); });
   $('fontView').addEventListener('click', () => {
     viewOpen = false;
     $('fontView').classList.add('hidden');
   });
 
-  $('howtoBtn').addEventListener('click', e => e.stopPropagation());   // 按も成長の順番の画面を閉じない
+  $('howtoBtn').addEventListener('click', e => e.stopPropagation());   // 按も成長の順番の畫面を閉じない
 
   cv.addEventListener('pointerdown', e => {
     if (state !== 'playing') return;
@@ -790,7 +790,7 @@ gtag('config', 'G-41RSZLP1YQ');
   });
   cv.addEventListener('pointermove', e => {
     if (state !== 'playing') return;
-    // マウスはボタンを按いなくても狙いを動かせる
+    // 滑鼠は按鈕を按いなくても狙いを動かせる
     if (pointerDown || e.pointerType === 'mouse') aimX = clampAim(toLogicalX(e));
   });
   cv.addEventListener('pointerup', e => {
@@ -805,7 +805,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (e.key === 'ArrowLeft'){ aimX = clampAim(aimX - KEY_MOVE); e.preventDefault(); }
     else if (e.key === 'ArrowRight'){ aimX = clampAim(aimX + KEY_MOVE); e.preventDefault(); }
     else if (e.key === ' ' || e.key === 'Enter'){
-      if (e.target instanceof HTMLButtonElement) return; // ボタン上ではボタン自体の動作に任せる
+      if (e.target instanceof HTMLButtonElement) return; // 按鈕上では按鈕自体の動作に任せる
       e.preventDefault();
       if (state === 'playing') drop(); else if (state === 'over') start();
     }
@@ -813,12 +813,12 @@ gtag('config', 'G-41RSZLP1YQ');
 
   $('retryBtn').addEventListener('click', start);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
   document.addEventListener('touchmove', e => { if (pointerDown) e.preventDefault(); }, { passive: false });
   document.addEventListener('selectstart', e => e.preventDefault());
   cv.addEventListener('contextmenu', e => e.preventDefault());
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -845,7 +845,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});                // 画像非対応なら文面のみ
       return;
     }
-    // 分享シートがない環境（PCのブラウザなど）は文面をコピー
+    // 分享シートがない環境（PCの瀏覽器など）は文面をコピー
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);
@@ -892,7 +892,7 @@ gtag('config', 'G-41RSZLP1YQ');
         $('fontMsg').textContent = `フォントを読み込めませんでした：${missing.join('、')}`;
         $('fontMsg').classList.add('error');
       }
-      start(); // 開始画面は無いので、読み込みが終わったらすぐ始める
+      start(); // 開始畫面は無いので、読み込みが終わったらすぐ始める
     });
   })();
 

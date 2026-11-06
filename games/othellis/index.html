@@ -123,45 +123,45 @@ gtag('config', 'G-41RSZLP1YQ');
     <h3>ルール</h3>
     <ul>
       <li>白か黒のミノが落ちてくる</li>
-      <li>置いた石で相手色を挟むと反転（8方向）</li>
+      <li>置いた石で對手色を挟むと反転（8方向）</li>
       <li>1行が同じ色で埋まると消える</li>
       <li>赤線から下まで同じ色で積み上がった列も消える</li>
       <li>反転が起きた時だけ、反転した石を含む壁から壁までの同色の斜め線も消える（2マス以上）</li>
-      <li>反転・消去の後、赤線より上に石が残っていたら終了</li>
+      <li>反転・消去の後、赤線より上に石が残っていたら結束</li>
     </ul>
-    <h3>キー操作</h3>
+    <h3>鍵操作</h3>
     <ul>
       <li>← → 移動（長押しで連続）</li>
       <li>↑ / X 右回転、Z 左回転</li>
       <li>↓ ソフトドロップ</li>
       <li>Space ハードドロップ</li>
       <li>Shift / C ホールド</li>
-      <li>Esc / P 一時停止</li>
+      <li>Esc / P 暫停</li>
     </ul>
-    <p class="note">キーが効かないときは一度盤面をクリックしてください</p>
+    <p class="note">鍵が効かないときは一度盤面を點擊してください</p>
   </div>
 </div>
 
 <section class="howto" hidden data-pos="none">
   <h2>玩法</h2>
-  <p>白か黒1色の、4個ひと組の石が落ちてくるパズルです。置いた石で相手の色を挟むと、8方向に裏返ります。同じ色で埋まった1行と、赤線から下まで同じ色の列は消えます。裏返しが起きた手では、裏返した石を含む壁から壁までの同色の斜め線も消えます。裏返しと消去のあとで赤線より上に石が残ると終わりです。</p>
+  <p>白か黒1色の、4個ひと組の石が落ちてくるパズルです。置いた石で對手の色を挟むと、8方向に裏返ります。同じ色で埋まった1行と、赤線から下まで同じ色の列は消えます。裏返しが起きた手では、裏返した石を含む壁から壁までの同色の斜め線も消えます。裏返しと消去のあとで赤線より上に石が残ると終わりです。</p>
   <h2>操作</h2>
-  <p>スマホは画面下のボタンで操作します。↑は一気に落とすボタンで、ホールドは1個につき1回使えます。PC は←→で移動、↑か X と Z で回転、↓で少しずつ落とし、Space で一気に落とします。Shift か C がホールドで、Esc か P で一時停止します。</p>
-  <h2>コツ</h2>
+  <p>スマホは畫面下の按鈕で操作します。↑は一気に掉落按鈕で、ホールドは1個につき1回使えます。PC は←→で移動、↑か X と Z で回転、↓で少しずつ落とし、Space で一気に落とします。Shift か C がホールドで、Esc か P で暫停します。</p>
+  <h2>訣竅</h2>
   <p>裏返しは1個10点ですが、1本500点の列や斜め、4行同時で800点の行消しのほうが大きく、こちらはレベルが倍率になります。レベルは10本消すごとに上がり、落下も速くなります。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 
 <div class="stage">
   <div class="boardwrap" id="boardwrap" tabindex="0">
     <canvas id="board"></canvas>
     <div class="overlay" id="startOv">
-      <p>白か黒のミノが落ちてくる。<br>置いた石で相手色を挟むと反転。<br>1行が同じ色で埋まると消える。<br>赤線から下まで同じ色で積み上がった列も消える。<br>反転で揃った斜め線（壁から壁まで）も消える。<br>赤線より上に石が残ったら終了。</p>
+      <p>白か黒のミノが落ちてくる。<br>置いた石で對手色を挟むと反転。<br>1行が同じ色で埋まると消える。<br>赤線から下まで同じ色で積み上がった列も消える。<br>反転で揃った斜め線（壁から壁まで）も消える。<br>赤線より上に石が残ったら結束。</p>
       <button id="startBtn">開始</button>
     </div>
     <div class="overlay hidden" id="pauseOv">
       <h2>PAUSED</h2>
-      <button id="resumeBtn">再開</button>
+      <button id="resumeBtn">繼續</button>
     </div>
     <div class="overlay hidden" id="overOv">
       <h2>GAME OVER</h2>
@@ -208,7 +208,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 定数 ----------
   const COLS = 8, ROWS = 16;      // 盤の列数・行数（赤ラインより上の待機行を含む）
   const CELL = 40;                // 1マスの論理サイズ（描画は端末サイズに合わせて拡縮する）
-  const LINE = 4;                 // 赤ライン: 反転・消去の後、この行より上（y < LINE）に石が残ったら終了
+  const LINE = 4;                 // 赤ライン: 反転・消去の後、この行より上（y < LINE）に石が残ったら結束
   const BLACK = 1, WHITE = 2;
   const SHAPES = [                // テトリミノ（出現時の向き）
     [[1,1,1,1]],
@@ -232,14 +232,14 @@ gtag('config', 'G-41RSZLP1YQ');
   const SCORE_DIAG = 500;                         // 斜め消去1本あたり（×レベル）
 
   // 操作（本家準拠の長押し連射）
-  const DAS = 170;                // 横移動: 長押しで連射が始まるまでの待ち（ms）
+  const DAS = 170;                // 横移動: 長押しで連射が開始までの待ち（ms）
   const ARR = 50;                 // 横移動: 連射の間隔（ms）
   const SOFT = 50;                // ソフトドロップの連射間隔（ms）
 
   // 演出の長さ（ms）
   const DUR = { flip: 420, clear: 320, clearcol: 320, clearcells: 320, fall: 180 };
   const MAX_DT = 50;              // ループの経過時間の上限（タブ復帰時の大ジャンプ防止）
-  const HI_KEY = 'othellis.hiScore';   // 最高分の localStorage キー
+  const HI_KEY = 'othellis.hiScore';   // 最高分の localStorage 鍵
   const SHARE_TAG = '#オセリス';       // 分享文面のハッシュタグ
 
   // ---------- 参照 ----------
@@ -253,14 +253,14 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 状態 ----------
   let mode = 'idle';              // idle / playing / over
-  let paused = false;             // playing 中の一時停止
+  let paused = false;             // playing 中の暫停
   let board, cur, next, hold, holdUsed, score, lines, flips, level;
   let dropTimer = 0, lastTime = 0;
   let anim = null;                // 演出中: { steps, idx, t0 }
   let pendingOver = false;        // 演出後に遊戲結束にする
-  let held = {};                  // 長押し中のキー: action -> 次に発火する時刻
-  let menuPaused = false;         // メニューを開いたことで一時停止したか
-  // 最高分：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  let held = {};                  // 長押し中の鍵: action -> 次に発火する時刻
+  let menuPaused = false;         // メニューを開いたことで暫停したか
+  // 最高分：瀏覽器のlocalStorageに保存（使えない環境ではその回だけ保持）
   let hiScore = 0;
   try { hiScore = parseInt(localStorage.getItem(HI_KEY)) || 0; } catch (e) {}
   function saveHi() { try { localStorage.setItem(HI_KEY, String(hiScore)); } catch (e) {} }
@@ -321,7 +321,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (aboveTop) { endGame(); return; }
     const steps = [];
 
-    // オセロ反転: 置いた各石から8方向に相手色が続き、その先に自分の色があれば間を返す
+    // オセロ反転: 置いた各石から8方向に對手色が続き、その先に自己の色があれば間を返す
     const toFlip = new Set();
     const me = cur.color, opp = me === BLACK ? WHITE : BLACK;
     for (const [px, py] of placed) {
@@ -378,7 +378,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (cols.length) {
       steps.push({ t: 'clearcol', base: clone(board), cols });
       cols.forEach(x => { for (let y = LINE; y < ROWS; y++) board[y][x] = 0; });
-      // 消えた列に赤ラインより上の石が残っていれば、その列の底まで落とす
+      // 消えた列に赤ラインより上の石が残っていれば、その列の底まで掉落
       const pre = clone(board), mv = [];
       cols.forEach(x => {
         let w = ROWS - 1;
@@ -416,7 +416,7 @@ gtag('config', 'G-41RSZLP1YQ');
       const cells = [...diagCells].map(i => [i % COLS, Math.floor(i / COLS)]);
       steps.push({ t: 'clearcells', base: clone(board), cells });
       cells.forEach(([x, y]) => { board[y][x] = 0; });
-      // 消えたマスの上にある石をその列の分だけ落とす
+      // 消えたマスの上にある石をその列の分だけ掉落
       const pre = clone(board), mv = [];
       const colsHit = new Set(cells.map(([x]) => x));
       colsHit.forEach(x => {
@@ -433,7 +433,7 @@ gtag('config', 'G-41RSZLP1YQ');
       level = Math.floor(lines / LINES_PER_LEVEL) + 1;
     }
 
-    // 反転・消去がすべて終わった後、赤ラインより上に石が残っていたら終了
+    // 反転・消去がすべて終わった後、赤ラインより上に石が残っていたら結束
     pendingOver = board.slice(0, LINE).some(row => row.some(v => v));
 
     cur = next; next = newPiece(); holdUsed = false;
@@ -696,10 +696,10 @@ gtag('config', 'G-41RSZLP1YQ');
   $('retryBtn').onclick = () => { start(); focusBoard(); };
   $('resumeBtn').onclick = () => { if (paused) togglePause(); };
   $('shareBtn').onclick = share;
-  // PC: どこかをクリックしたら盤にフォーカスを戻し、キー入力が届くようにする
+  // PC: どこかを點擊したら盤にフォーカスを戻し、鍵入力が届くようにする
   window.addEventListener('pointerdown', e => { if (!$('menu').contains(e.target) && e.target !== $('menuBtn')) focusBoard(); });
 
-  // タッチ操作ボタン（Pointer Events）。長押しでの拡大鏡・メニュー表示を防ぐ
+  // タッチ操作按鈕（Pointer Events）。長押しでの拡大鏡・メニュー表示を防ぐ
   const pad = $('pad');
   pad.addEventListener('contextmenu', e => e.preventDefault());
   pad.addEventListener('selectstart', e => e.preventDefault());
@@ -707,7 +707,7 @@ gtag('config', 'G-41RSZLP1YQ');
     b.addEventListener('pointerdown', e => { e.preventDefault(); act(b.dataset.act); });
   });
 
-  // キー操作（本家準拠）: ← → 移動 / ↑ X 時計回り / Z 反時計回り / ↓ ソフトドロップ / Space ハードドロップ / Esc P 一時停止
+  // 鍵操作（本家準拠）: ← → 移動 / ↑ X 時計回り / Z 反時計回り / ↓ ソフトドロップ / Space ハードドロップ / Esc P 暫停
   const KEYS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down', ArrowUp: 'rotate', x: 'rotate', X: 'rotate',
                  z: 'rotateccw', Z: 'rotateccw', ' ': 'drop', Escape: 'pause', p: 'pause', P: 'pause', Shift: 'hold', c: 'hold', C: 'hold' };
   window.addEventListener('keydown', e => {
@@ -715,7 +715,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const a = KEYS[e.key];
     if (!a) return;
     e.preventDefault();
-    if (e.repeat) return; // OSのキーリピートは使わず自前で連射する
+    if (e.repeat) return; // OSの鍵リピートは使わず自前で連射する
     if (mode === 'idle' && a !== 'pause') { start(); focusBoard(); return; }
     act(a);
     if (a === 'left' || a === 'right') held[a] = performance.now() + DAS;

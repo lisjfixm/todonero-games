@@ -46,31 +46,31 @@ gtag('config', 'G-41RSZLP1YQ');
     -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   }
   #game{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto;display:flex;flex-direction:column}
-  /* 3D画面は全面に広げ、ボタンはその上に重ねる */
+  /* 3D畫面は全面に広げ、按鈕はその上に重ねる */
   #stage{position:absolute;inset:0}
   #cv{display:block;width:100%;height:100%;touch-action:none}
-  /* ボタンは文字の大きさに合わせ、間のすき間は3D画面を触れるように指を通す */
+  /* 按鈕は文字の大きさに合わせ、間のすき間は3D畫面を触れるように手手指を通す */
   #bottom{position:absolute;left:0;right:0;bottom:0;padding:0 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
   #bottom, #bottom *{pointer-events:none}
   #bottom button{pointer-events:auto}
-  /* 1行を左・中央・右の3列に分け、下一個進むボタン（.go）は中央、道具（.tool）は右端に置く */
+  /* 1行を左・中央・右の3列に分け、下一個進む按鈕（.go）は中央、道具（.tool）は右端に置く */
   .row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end}
   .row > .go{grid-column:2}
   .row > .tool{grid-column:3;justify-self:end}
-  /* 幅の狭い画面では「生地を入れる」と描く／消しゴムが重なるので、描く／消しゴムを1段往上 */
+  /* 幅の狭い畫面では「生地を入れる」と描く／消しゴムが重なるので、描く／消しゴムを1段往上 */
   @media (max-width:359px){ #moldRow > .tool{grid-row:1} #moldRow > .go{grid-row:2} }
   button{font:inherit;font-size:16px;color:#fff;background:#0008;border:none;border-radius:22px;min-height:44px;padding:0 16px;touch-action:manipulation}
   button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   #bake{touch-action:none}
   #bake.active,#toppingRow button[aria-pressed="true"]{background:#fffd;color:#000}
   .hidden{display:none !important}
-  /* 描く／消しゴムの切り替え（右下）：2つのボタンをくっつけて1つの形にし、選んでいる方を白黒反転 */
+  /* 描く／消しゴムの切り替え（右下）：2つの按鈕をくっつけて1つの形にし、選んでいる方を白黒反転 */
   #toolSeg{display:flex}
   #toolSeg button{flex:0 0 44px;width:44px;padding:0;display:flex;align-items:center;justify-content:center;color:#fff}
   #toolSeg button:first-child{border-radius:22px 0 0 22px}
   #toolSeg button:last-child{border-radius:0 22px 22px 0}
   #toolSeg button[aria-pressed="true"]{background:#fffd;color:#000}
-  /* 線の太さのスライダー（描く／消しゴムの上）：細い点と太い点の間を指で左右に動かす */
+  /* 線の太さのスライダー（描く／消しゴムの上）：細い点と太い点の間を手手指で左右に移動 */
   #brushBox{display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-radius:22px;background:#0008;color:#fff}
   #brushBox svg{flex:none}
   #brushSize{pointer-events:auto;touch-action:none;-webkit-appearance:none;appearance:none;width:120px;height:44px;margin:0;background:transparent}
@@ -79,9 +79,9 @@ gtag('config', 'G-41RSZLP1YQ');
   #brushSize::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-10px;border-radius:50%;background:#fff;border:none}
   #brushSize::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:none}
   #brushSize:focus-visible{outline:2px solid #fff;outline-offset:2px;border-radius:22px}
-  /* ボタンの置き場所：下一個進むボタンは下の中央、道具（描く／消しゴム・分享）は右下、トッピングはその上に2段 */
+  /* 按鈕の置き場所：下一個進む按鈕は下の中央、道具（描く／消しゴム・分享）は右下、トッピングはその上に2段 */
   #toppingBox{display:flex;flex-direction:column;gap:8px}
-  /* トッピングは4つと3つの2段に分け、それぞれ中央にそろえる。全部が画面に収まるよう、文字は画面の幅に合わせて小さくする */
+  /* トッピングは4つと3つの2段に分け、それぞれ中央にそろえる。全部が畫面に収まるよう、文字は畫面の幅に合わせて小さくする */
   #toppingRow{display:flex;flex-direction:column;align-items:center;gap:8px}
   .topLine{display:flex;gap:6px}
   #toppingRow button{white-space:nowrap;font-size:min(13px, 3.3vw);padding:0 8px}
@@ -137,7 +137,7 @@ gtag('config', 'G-41RSZLP1YQ');
       <div class="row"><button id="done" class="go" type="button">完成</button></div>
     </div>
     <div id="result" class="row hidden">
-      <button id="again" class="go" type="button">もう一回</button>
+      <button id="again" class="go" type="button">再來一次</button>
       <button id="share" class="tool" type="button">分享</button>
     </div>
   </div>
@@ -150,12 +150,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <section class="howto" data-pos="top-left" hidden>
     <h2>玩法</h2>
-    <p>鉄板に金型を描き、生地を注いで焼き、トッピングで仕上げるワッフル作りのおもちゃです。点数や時間切れはありません。描いた線は金型の出っ張りになり、ワッフルにはその形の窪みが付きます。「もう一回」を按も金型は残るので、描き足して焼き直せます。</p>
+    <p>鉄板に金型を描き、生地を注いで焼き、トッピングで仕上げるワッフル作りのおもちゃです。点数や時間切れはありません。描いた線は金型の出っ張りになり、ワッフルにはその形の窪みが付きます。「再來一次」を按も金型は残るので、描き足して焼き直せます。</p>
     <h2>操作</h2>
-    <p>鉄板をなぞると線が描けます。太さはスライダーで変えられ、消しゴムもあります。「生地を入れる」の後は鉄板をなぞって生地を注ぎ、ふたを手で關閉か「焼く」を押すと焼き始め、「取り出す」で焼き上がります。トッピングはボタンで選んで載せ、「完成」の後は拖曳で回して眺められます。PC ではマウスで同じように操作します。</p>
+    <p>鉄板をなぞると線が描けます。太さはスライダーで変えられ、消しゴムもあります。「生地を入れる」の後は鉄板をなぞって生地を注ぎ、ふたを手で關閉か「焼く」を按と焼き始め、「取り出す」で焼き上がります。トッピングは按鈕で選んで載せ、「完成」の後は拖曳で回して眺められます。PC では滑鼠で同じように操作します。</p>
     <h2>楽しみ方</h2>
     <p>焼き色は焼いた時間で決まります。10秒で薄い煙が出始め、15秒を超えると黒い煙とともに一気に焦げます。金型に押された所は濃く焼けるので、模様がくっきり出ます。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -170,13 +170,13 @@ gtag('config', 'G-41RSZLP1YQ');
   const F = 3;                // 金型とワッフルの形は、生地のマス目をさらにこの数で細かく割った細かいマス目で作る
   const BRUSH = 6;            // 金型を描く筆の半径のはじめの値（生地のマス目で数えたマス）。スライダーで BRUSH_MIN〜BRUSH_MAX に変えられる
   const BRUSH_MIN = 2, BRUSH_MAX = 20; // 筆の半径の範囲（スライダーの min / max と合わせる）
-  const BRUSH_PREVIEW_HOLD = 0.6;      // スライダーから指を離してから、太さの見本が消え始めるまで（秒）
+  const BRUSH_PREVIEW_HOLD = 0.6;      // スライダーから手手指を離してから、太さの見本が消え始めるまで（秒）
   const BLUR = 1;             // 出っ張りのふちを丸める量（生地のマス目で数えたマス）
   const EDGE_LO = 0.2, EDGE_HI = 0.8; // 出っ張りの壁の急さ（ぼかした値のこの範囲で立ち上がる。狭いほど壁が切り立つ）
   const PLATE_R = 0.5;        // 鉄板の半径
   const MOLD_H = 0.05;        // 金型の出っ張りの高さ（上下の鉄板それぞれ）
   // 生地
-  const POUR_RATE = 1.25;      // 生地を注ぐ速さ（注ぎ口の真下で1秒に増える厚み）
+  const POUR_RATE = 1.25;      // 生地を注ぐ速さ（注ぎ口の真下で1秒に增加厚み）
   const POUR_R = 5;           // 生地の注ぎ口の広がり（マス）
   const POUR_MAX = 0.08;      // おたまの真下でも生地はこの厚みまでしか盛り上がらない
   const SPILL_BINS = 96;      // こぼれた生地を周方向に分ける数
@@ -194,7 +194,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const LADLE_Y = 0.42;       // おたまを構える高さ（鉄板から）
   const LADLE_TILT = 1.1;     // 注ぐときにおたまを傾ける角度（rad）
   const LADLE_TILT_SPEED = 8; // おたまを傾ける速さ
-  const LADLE_FOLLOW = 14;    // おたまが指を追いかける速さ
+  const LADLE_FOLLOW = 14;    // おたまが手手指を追いかける速さ
   const STREAM_R = 0.016;     // おたまから落ちる生地の太さ
   // 本体
   const BASE_H = 0.16;        // 下側の本体の高さ
@@ -205,7 +205,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const LID_OPEN = -1.85;     // ふたを開けたときの角度（rad）
   const MAKER_SLIDE = 5;       // 皿へ移すときにワッフルメーカーを往左滑らせる距離
   const MAKER_SLIDE_TIME = 0.9; // その時間（秒）
-  const LID_CLOSE_AT = -0.35; // ふたを手で下ろしてこの角度（rad）より閉じた所で離すと、閉まって焼き始める
+  const LID_CLOSE_AT = -0.35; // ふたを手で下ろしてこの角度（rad）より閉じた所で放開と、閉まって焼き始める
   const LID_SPEED = 10;       // ふたが開け閉めされる速さ
   const COLOR_BODY = 0xc8141c;  // 本体の色（赤）
   const COLOR_PLATE = 0x0d0d0e; // 鉄板のまわりの色（黒いフッ素加工）
@@ -223,7 +223,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const THIN_FILL = 0.35;     // 焼くとき、すき間に対してこれより薄い生地は周りへ寄せ集める（ペラペラのふちを作らない）
   const GAP_FILL = 16;        // 焼くとき、生地どうしの間のこれ（マス）以下のすき間は埋める（金型の出っ張りで分かれた生地をつなぐ）
   const ISLAND_MIN = 800;     // 焼くとき、これより小さい（マス数）離れ小島の生地は取り除く（小さな粒がとがった山になるため）
-  const WAF_MIN = 0.05;       // 金型で押した所に残す最低の厚み（生地が薄いときは押す深さを浅くして、薄い膜にしない）
+  const WAF_MIN = 0.05;       // 金型で押した所に残す最低の厚み（生地が薄いときは按深さを浅くして、薄い膜にしない）
   const RISE = 1.8;           // 焼くと生地がふくらむ倍率（ふくらんで上の鉄板まで届き、厚みが出る）
   // 皿
   const DISH_R = 0.62;        // 皿の半径
@@ -236,20 +236,20 @@ gtag('config', 'G-41RSZLP1YQ');
   const FOV = 42;             // 縦の視野角（度）
   const CAM_PITCH = 34;       // 見下ろす角度（度）
   const CAM_YAW = 18;         // 右から見る角度（度）
-  const CAM_DIST = 2.6;       // カメラの距離（横幅が足りない画面では離す）
+  const CAM_DIST = 2.6;       // カメラの距離（横幅が足りない畫面では放開）
   const CAM_TARGET = new THREE.Vector3(0, 0.22, -0.22); // 注視点
-  const MOLD_CAM_PITCH = 60;  // 金型を作る画面で鉄板を見下ろす角度（度）。真上だと出っ張りの高さが見えないので斜めから
-  const MOLD_CAM_DIST = 1.6;  // 金型を作る画面のカメラの距離
+  const MOLD_CAM_PITCH = 60;  // 金型を作る畫面で鉄板を見下ろす角度（度）。真上だと出っ張りの高さが見えないので斜めから
+  const MOLD_CAM_DIST = 1.6;  // 金型を作る畫面のカメラの距離
   const DISH_CAM_PITCH = 75;  // 皿を見るときの見下ろす角度（度）。トッピングしやすいよう上から見る
   const DISH_CAM_DIST = 2.2;  // 皿を見るときのカメラの距離
   const ORBIT_SPEED = 0.4;    // 完成品を見るとき、拖曳1pxで回る角度（度）
   const ORBIT_PITCH_MIN = 8, ORBIT_PITCH_MAX = 88;   // 見下ろす角度の範囲（度）
   const ZOOM_MIN = 0.3, ZOOM_MAX = 2.0;              // 近づける・離れる倍率の範囲
   // 完成の演出
-  const FINALE_ZOOM = 0.48;      // 完成したときに寄る倍率（ワッフルが画面いっぱいに近くなる）
+  const FINALE_ZOOM = 0.48;      // 完成したときに寄る倍率（ワッフルが畫面いっぱいに近くなる）
   const FINALE_PITCH = 28;       // 完成したときに見下ろす角度（度）
   const FINALE_TIME = 1.2;       // 寄っていく時間（秒）
-  const AUTO_ROTATE = 30;        // 完成品を自動で轉動速さ（度/秒）。指で触っている間は止まる
+  const AUTO_ROTATE = 30;        // 完成品を自動で轉動速さ（度/秒）。手手指で触っている間は止まる
   const SPARK_COUNT = 160;       // 完成したときに飛び散るきらきらの数（2回に分けてはじける）
   const SPARK_WAVE_GAP = 0.35;   // 1回目と2回目のはじけの間（秒）
   const SPARK_LIFE = 2.6;        // きらきらが消えるまでの時間（秒）
@@ -283,7 +283,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const POP_TIME = 0.3;       // バニラアイスがぽんと乗る時間（秒）
   const DROP_TIME = 0.45;     // いちご・ブルーベリーが落ちてきて弾む時間（秒）
   const WHIP_TIME = 0.4;      // ホイップを下から絞り出して盛り上がる時間（秒）
-  const DROP_H = 0.18;        // それらを落とす高さ
+  const DROP_H = 0.18;        // それらを掉落高さ
   const SPRINKLE_FALL = 0.25; // カラースプレーが落ちる時間（秒）
   const SPRINKLE_FALL_H = 0.08; // カラースプレーを振る高さ
   const LAMP_ON = 0xff8a2a;   // 焼いている間に点くランプの色
@@ -312,14 +312,14 @@ gtag('config', 'G-41RSZLP1YQ');
   const SUGAR_SPREAD = 0.045;            // 粉砂糖が散らばる半径
   const SUGAR_SIZE = 0.005;              // 粉砂糖の粒の大きさ
   const COLOR_SUGAR = 0xf6f4f0;          // 粉砂糖の色
-  const GHOST_GUARD = 400;    // 結果を出してからこの時間（ミリ秒）は分享ボタンを受け付けない（焼くボタンを離した指が按しまうのを防ぐ）
+  const GHOST_GUARD = 400;    // 結果を出してからこの時間（ミリ秒）は分享按鈕を受け付けない（焼く按鈕を離した手手指が按しまうのを防ぐ）
 
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
   const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 
   // ---------- 状態 ----------
-  let state = 'mold';   // 'mold'（金型を作る画面） / 'pour'（生地を入れる画面） / 'bake'（焼いている） / 'result'（焼き上がり）
+  let state = 'mold';   // 'mold'（金型を作る畫面） / 'pour'（生地を入れる畫面） / 'bake'（焼いている） / 'result'（焼き上がり）
   let bakeSec = 0, bakeStart = 0;
   let resultShownAt = 0;
   let lidAngle = LID_OPEN, lidTarget = LID_OPEN;
@@ -503,7 +503,7 @@ gtag('config', 'G-41RSZLP1YQ');
     for (let i = 0; i < N * N; i++) if (inside[i] && dough[i] > 1e-4){ m[i] = 1; sum += ground(i) + dough[i]; cnt++; }
     if (!cnt) return;
     const level = sum / cnt;
-    const filt = (src, useMax) => {   // 正方形の範囲で最大（太らせる）・最小（細らせる）を取る。縦横に分けて計算する
+    const filt = (src, useMax) => {   // 正方形の範囲で最大（太らせる）・最小（細らせる）を取得。縦横に分けて計算する
       const tmp = new Float32Array(N * N), out = new Float32Array(N * N), r = GAP_FILL;
       for (let y = 0; y < N; y++) for (let x = 0; x < N; x++){
         let v = useMax ? 0 : 1;
@@ -587,7 +587,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   }
   // 見た目用に、生地の厚みをなめらかにしたもの（3回ぼかす）
-  // 鉄板のふちの近くでは厚みを円に沿ってなめらかに0へ落とす。
+  // 鉄板のふちの近くでは厚みを円に沿ってなめらかに0へ掉落。
   // （マス目のふちは階段状なので、生地がふちまで届くとその階段がギザギザのトゲに見える）
   const rimFade = new Float32Array(N * N);
   for (let i = 0; i < N * N; i++) rimFade[i] = 1 - smooth(PLATE_R * 0.93, PLATE_R * 0.98, Math.hypot(cellX(i), cellZ(i)));
@@ -657,7 +657,7 @@ gtag('config', 'G-41RSZLP1YQ');
   rim.position.set(1.6, 1.4, -2.2);
   scene.add(rim);
 
-  // 色の指定は見た目どおりの色（sRGB）で書き、three.js の計算用（linear）に直して渡す。
+  // 色の手手指定は見た目どおりの色（sRGB）で書き、three.js の計算用（linear）に直して渡す。
   // 直さずに渡すと、出力時に明るく変換されて白っぽく（黒は灰色、赤はピンクに）なる
   const srgb = hex => new THREE.Color(hex).convertSRGBToLinear();
   // フッ素加工の表面の細かいざらつき（ノイズ画像を凹凸として使う）
@@ -852,7 +852,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return g;
   }
 
-  // ワッフルメーカー一式をまとめる（皿へ移すときに丸ごと画面の外へ滑らせるため）
+  // ワッフルメーカー一式をまとめる（皿へ移すときに丸ごと畫面の外へ滑らせるため）
   const maker = new THREE.Group();
   scene.add(maker);
   // 下側の本体
@@ -893,7 +893,7 @@ gtag('config', 'G-41RSZLP1YQ');
   lamp.rotation.y = 0.45;
   maker.add(lamp);
   lidBody.add(tab);
-  // ふたをつかむための見えない当たり（ふた全体を覆う円柱）。表示はしないが指の当たり判定には使う
+  // ふたをつかむための見えない当たり（ふた全体を覆う円柱）。表示はしないが手手指の当たり判定には使う
   const lidPick = new THREE.Mesh(new THREE.CylinderGeometry(BODY_R + 0.04, BODY_R + 0.04, LID_H + 0.03, 32),
     new THREE.MeshBasicMaterial({ side:THREE.DoubleSide }));
   lidPick.visible = false;
@@ -907,13 +907,13 @@ gtag('config', 'G-41RSZLP1YQ');
   {
     const under = [[DISH_R, 0.042], [0.56, 0.018], [0.4, 0.004], [0.36, 0], [0.3, 0], [0.28, 0.004], [0, 0.004]];   // 皿の裏側の断面
     const lathe = pts => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), 96);
-    // 見える皿は影を受けるだけにする（皿が自分の上面に影を落とすと、全体が灰色にくすみ、ふちに縞が出るため）
+    // 見える皿は影を受けるだけにする（皿が自己の上面に影を掉落と、全体が灰色にくすみ、ふちに縞が出るため）
     const dish = new THREE.Mesh(lathe([...DISH_SURF, ...under]),
       new THREE.MeshPhysicalMaterial({ color:srgb(COLOR_DISH), roughness:0.3, clearcoat:1, clearcoatRoughness:0.05, side:THREE.DoubleSide }));  // 釉薬のかかった陶器
     dish.receiveShadow = true;
     dish.position.set(DISH_X, TABLE_Y, DISH_Z);
     scene.add(dish);
-    // 皿の影は、皿より一回り低い見えない形で台に落とす。
+    // 皿の影は、皿より一回り低い見えない形で台に掉落。
     // 皿の上面との間を2cmほど空ける（近いと、皿のふちの斜面に縞模様の影が出るため）
     const dishShadow = new THREE.Mesh(lathe([[DISH_R, 0.03], [DISH_R * 0.9, 0], [0, 0]]),
       new THREE.MeshBasicMaterial({ colorWrite:false, depthWrite:false, side:THREE.DoubleSide }));
@@ -979,21 +979,21 @@ gtag('config', 'G-41RSZLP1YQ');
         return keep > 0.0 ? top : g - uHide;
       }
       ` + sh.vertexShader
-      // 面の向きは描くときに画面上の傾きから求める（頂点ごとに周りの高さを読み直すと重いため）
+      // 面の向きは描くときに畫面上の傾きから求める（頂点ごとに周りの高さを読み直すと重いため）
       .replace('#include <beginnormal_vertex>', `
         float hC = heightAt(vec2(uv.x, 1.0 - uv.y), vKeep);
         vec3 objectNormal = vec3(0.0, 1.0, 0.0);`)
       .replace('#include <begin_vertex>', 'vec3 transformed = vec3(position.x, hC, position.z);');
     sh.fragmentShader = 'varying float vKeep;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n  if (vKeep < 0.5) discard;');
   };
-  // 金型の形を生地の計算用の画像に写す（生地を入れる画面に移るときに1回）
+  // 金型の形を生地の計算用の画像に写す（生地を入れる畫面に移るときに1回）
   function updateMoldTex(){
     for (let i = 0; i < M * M; i++) moldData[i * 4] = Math.round(BF[i] * 255);
     moldTex.needsUpdate = true;
   }
   const batter = new THREE.Mesh(batterGeo, batterSurfMat);
   batter.frustumCulled = false;
-  batter.receiveShadow = true;   // 生地は自分自身に影を落とさない（ふちの斜面にギザギザの影が出るため）
+  batter.receiveShadow = true;   // 生地は自己自身に影を落とさない（ふちの斜面にギザギザの影が出るため）
   maker.add(batter);
 
   // こぼれた生地：鉄板のふち → 本体のふち → 側面を伝って垂れ → 台の上に広がる
@@ -1367,7 +1367,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   // なぞって振りかけるトッピング
   const DRAG_TOPPINGS = { sprinkle:addSprinkles, sugar:addSugar };
-  // ---- タップで置くトッピング（ホイップ・いちご・ブルーベリー・バニラアイス） ----
+  // ---- 點擊で置くトッピング（ホイップ・いちご・ブルーベリー・バニラアイス） ----
   // make が形を作る。按いる間は同じ形を半透明で見せ、離したらその形をそのまま置いて動きを付ける
   function makeWhip(){
     return shadowy(new THREE.Mesh(whipGeo, whipMat));
@@ -1665,7 +1665,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return blurOut;
   }
   const blurTmp = new Float32Array(N * N);
-  // 金型の高さをぼかしたもの（生地を入れる画面に移るときに作る。ぼかしは足し算なので、表面の高さ＝これ＋ぼかした厚み）
+  // 金型の高さをぼかしたもの（生地を入れる畫面に移るときに作る。ぼかしは足し算なので、表面の高さ＝これ＋ぼかした厚み）
   const groundBlur = new Float32Array(N * N);
   function updateGroundBlur(){
     const g = new Float32Array(N * N);
@@ -1703,7 +1703,7 @@ gtag('config', 'G-41RSZLP1YQ');
     for (let i = 0; i < M * M; i++){
       const x = i % M, y = Math.floor(i / M);
       // 平らな表面（ふたの高さまで）を、金型を描いた所だけ上はそのまま押し下げ、下はそのまま押し上げる。
-      // 押す深さは金型の高さまでで、生地が薄いときは押した所に WAF_MIN の厚みが残るよう浅くする（薄い膜にしない）
+      // 按深さは金型の高さまでで、生地が薄いときは押した所に WAF_MIN の厚みが残るよう浅くする（薄い膜にしない）
       const surf = Math.min(su[i], THICK);
       const dep = clamp((surf - WAF_MIN) / 2, 0, MOLD_H);
       lidF[i] = surf - dep * BF[i];
@@ -1772,8 +1772,8 @@ gtag('config', 'G-41RSZLP1YQ');
   let moldQueued = false, batterQueued = false, flowing = false;
   const moldChanged = () => { moldQueued = true; flowing = true; };   // 金型が変わると生地も流れ直す
 
-  // ---------- カメラ・画面サイズ ----------
-  // 見る先ごとの位置へカメラを寄せていく。縦長の画面では横幅が収まるまで離す
+  // ---------- カメラ・畫面サイズ ----------
+  // 見る先ごとの位置へカメラを寄せていく。縦長の畫面では横幅が収まるまで放開
   const DISH_TARGET = new THREE.Vector3(DISH_X, DISH_TOP, DISH_Z);
   const wafCenter = new THREE.Vector3();        // ワッフルの中心（ワッフルから見た位置）
   const _focus = new THREE.Vector3();
@@ -1781,7 +1781,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const MOLD_TARGET = new THREE.Vector3(0, 0, 0);
   const camTgt = new THREE.Vector3(), camPos = new THREE.Vector3();
   const goalTgt = new THREE.Vector3(), goalPos = new THREE.Vector3();
-  // 完成品を見るときの回転とズーム（指で動かした分）
+  // 完成品を見るときの回転とズーム（手手指で動かした分）
   let orbitYaw = 0, orbitPitch = DISH_CAM_PITCH, orbitZoom = 1;
   function framing(target, pitchDeg, yawDeg, minDist, halfWidth, zoom = 1){
     const halfW = Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * camera.aspect;
@@ -1793,7 +1793,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function cameraGoal(){
     if (view === 'mold') framing(MOLD_TARGET, MOLD_CAM_PITCH, 0, MOLD_CAM_DIST, PLATE_R + 0.06);
     else if (view === 'dish'){
-      // 完成したら、回る中心を皿の中心からワッフルの中心へ移す（中心がずれたまま回ると、ワッフルが画面の外へ振れる）
+      // 完成したら、回る中心を皿の中心からワッフルの中心へ移す（中心がずれたまま回ると、ワッフルが畫面の外へ振れる）
       _focus.copy(waffle.position).add(wafCenter);
       _focus.lerpVectors(DISH_TARGET, _focus, finaleK);
       framing(_focus, orbitPitch, CAM_YAW + orbitYaw, DISH_CAM_DIST, DISH_R + 0.1, orbitZoom);
@@ -1829,8 +1829,8 @@ gtag('config', 'G-41RSZLP1YQ');
     const g = toGrid(hit.x, hit.z), m = BRUSH_MAX + 2;
     return { x:clamp(g.x, -m, N - 1 + m), y:clamp(g.y, -m, N - 1 + m) };
   };
-  // 金型の画面では描き、生地の画面では注ぐ。ふたが開いていてカメラが止まっている間だけ触れる
-  // 生地を入れる画面は切り替わった瞬間から触れる（カメラやふたの動きを待たない）
+  // 金型の畫面では描き、生地の畫面では注ぐ。ふたが開いていてカメラが止まっている間だけ触れる
+  // 生地を入れる畫面は切り替わった瞬間から触れる（カメラやふたの動きを待たない）
   const canTouch = () => state === 'pour' || (state === 'mold' && lidAngle < LID_OPEN * 0.9 && cameraSettled());
   let drawing = null, last = null;
   // 鉄板の円の中に収めて、おたまの行き先にする
@@ -1838,10 +1838,10 @@ gtag('config', 'G-41RSZLP1YQ');
     const r = Math.hypot(hit.x, hit.z), R = PLATE_R * 0.95;
     ladleTarget.set(r > R ? hit.x * R / r : hit.x, 0, r > R ? hit.z * R / r : hit.z);
   }
-  // ---------- ふたを手で關閉（生地を入れる画面で、ふたをつかんで下ろす） ----------
+  // ---------- ふたを手で關閉（生地を入れる畫面で、ふたをつかんで下ろす） ----------
   let lidPtr = null, lidGrabOffset = 0;   // つかんだ所と、ふたの今の角度の差（つかんだ瞬間にふたが跳ねないように）
   const hingeHit = new THREE.Vector3(), hingePlane = new THREE.Plane();
-  // 指の位置から、ちょうつがいを軸にしたふたの角度を求める（ちょうつがいの軸に垂直な面に指の線を当てる）
+  // 手手指の位置から、ちょうつがいを軸にしたふたの角度を求める（ちょうつがいの軸に垂直な面に手手指の線を当てる）
   function lidAngleAt(e){
     const r = cv.getBoundingClientRect();
     ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
@@ -1944,7 +1944,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (state === 'mold'){ stampCircle(p.x, p.y); moldChanged(); }
   });
   cv.addEventListener('pointermove', e => {
-    // マウスでは按いなくてもおたまがついてくる
+    // 滑鼠では按いなくてもおたまがついてくる
     if (state === 'pour' && lidPtr === null && (e.pointerId === drawing || e.pointerType === 'mouse') && toPlate(e)) aimLadle();
     if (e.pointerId !== drawing) return;
     const p = toPlate(e);
@@ -1956,11 +1956,11 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', endDraw);
   cv.addEventListener('pointercancel', endDraw);
 
-  // ---------- 完成品を轉動・ズームする（1本指拖曳で回転、2本指ピンチ・ホイールでズーム） ----------
+  // ---------- 完成品を轉動・ズームする（1本手手指拖曳で回転、2本手手指ピンチ・ホイールでズーム） ----------
   // ---------- トッピングを乗せる（チョコソース・カラースプレー・粉砂糖はなぞる。ほかは按いる間に半透明の見本が出て、離した所に置く） ----------
   // ワッフルの上だけでなく、皿やテーブルの上にも置ける
   let topKind = 'choco', topPtr = null;
-  // 指の先にある、トッピングを置ける面の点（ワッフルから見た位置）。高さを求め直しながら近づける
+  // 手手指の先にある、トッピングを置ける面の点（ワッフルから見た位置）。高さを求め直しながら近づける
   function pickSurface(e){
     const r = cv.getBoundingClientRect();
     ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
@@ -1984,7 +1984,7 @@ gtag('config', 'G-41RSZLP1YQ');
     e.preventDefault();
     cv.setPointerCapture(e.pointerId);
     topPtr = e.pointerId;
-    if (TAP_TOPPINGS[topKind]) showPreview(topKind, q);   // 按いる間は半透明の見本を出す（指に付いてくる）
+    if (TAP_TOPPINGS[topKind]) showPreview(topKind, q);   // 按いる間は半透明の見本を出す（手手指に付いてくる）
     else if (topKind === 'choco'){
       chocoLine = shadowy(new THREE.Mesh(new THREE.BufferGeometry(), chocoMat));
       chocoLine.userData.pts = [];
@@ -2014,7 +2014,7 @@ gtag('config', 'G-41RSZLP1YQ');
     for (const b of topButtons) b.setAttribute('aria-pressed', String(b.dataset.top === kind));
   }
   for (const b of topButtons) b.addEventListener('pointerdown', e => { e.preventDefault(); selectTopping(b.dataset.top); });
-  // 皿に移し終えたら、トッピングのボタンを出す
+  // 皿に移し終えたら、トッピングの按鈕を出す
   function showTopping(){
     toppingMode = true;
     selectTopping('choco');
@@ -2075,10 +2075,10 @@ gtag('config', 'G-41RSZLP1YQ');
   }, { passive:false });
 
 
-  // ---------- 画面の切り替え ----------
-  // 金型を作る画面（最初の画面）から、生地を入れる画面へ進む。「もう一回」で金型を作る画面へ返回
-  // 生地を入れる画面：ワッフルメーカー全体を見て生地を注ぐ
-  // ワッフルメーカーを画面の外（左）へ滑らせて片付ける／戻す
+  // ---------- 畫面の切り替え ----------
+  // 金型を作る畫面（最初の畫面）から、生地を入れる畫面へ進む。「再來一次」で金型を作る畫面へ返回
+  // 生地を入れる畫面：ワッフルメーカー全体を見て生地を注ぐ
+  // ワッフルメーカーを畫面の外（左）へ滑らせて片付ける／戻す
   function slideMaker(show){
     const x0 = maker.position.x, x1 = show ? 0 : -MAKER_SLIDE;
     maker.visible = true;
@@ -2102,7 +2102,7 @@ gtag('config', 'G-41RSZLP1YQ');
     $('pourRow').classList.add('hidden');
     $('startRow').classList.remove('hidden');   // ふたは手で閉じても、「焼く」で自動で閉じてもよい
   }
-  // 金型を作る画面へ返回（焼き上がりから。ワッフルメーカーを戻し、金型はそのまま描き足せる）
+  // 金型を作る畫面へ返回（焼き上がりから。ワッフルメーカーを戻し、金型はそのまま描き足せる）
   function toMoldScreen(){
     slideMaker(true);
     state = 'mold';
@@ -2115,7 +2115,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   $('toPour').addEventListener('pointerdown', e => { e.preventDefault(); toPourScreen(); });
 
-  // ---------- 焼く（ふたを手で關閉か「焼く」を押すと焼き始め、「取り出す」を押すまで焼け続ける） ----------
+  // ---------- 焼く（ふたを手で關閉か「焼く」を按と焼き始め、「取り出す」を按まで焼け続ける） ----------
   function startBake(){
     if (state !== 'pour') return;
     if (totalDough() < 1) return;   // 生地が入っていなければ焼かない
@@ -2130,10 +2130,10 @@ gtag('config', 'G-41RSZLP1YQ');
     flowing = false;
     ladleAngle = 0;
     state = 'bake';
-    document.documentElement.setAttribute('data-howto-hidden', '');   // 焼いている間は時間で焦げていくのでボタンを隠す
+    document.documentElement.setAttribute('data-howto-hidden', '');   // 焼いている間は時間で焦げていくので按鈕を隠す
     bakeStart = performance.now();
     lidTarget = 0;   // ふたが自動で關閉
-    lidPtr = null;   // ふたをつかんでいる途中に「焼く」を押したときは、つかんでいた指を離したことにする
+    lidPtr = null;   // ふたをつかんでいる途中に「焼く」を押したときは、つかんでいた手手指を離したことにする
     $('startRow').classList.add('hidden');
     $('pourRow').classList.remove('hidden');
   }
@@ -2155,7 +2155,7 @@ gtag('config', 'G-41RSZLP1YQ');
     transfer = -1;          // ふたが開いたら皿へ移し始める（ループで進める）
     resultReady = false;
   }
-  // トッピングを終えたら結果のボタンを出す
+  // トッピングを終えたら結果の按鈕を出す
   function showResult(){
     resultReady = true;
     $('result').classList.remove('hidden');
@@ -2166,7 +2166,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (state === 'bake') endBake();
   });
 
-  // もう一回：金型は残し、生地は空にする
+  // 再來一次：金型は残し、生地は空にする
   function again(){
     if (state !== 'result' || !resultReady) return;
     resultReady = false;
@@ -2212,7 +2212,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を畫面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -2221,7 +2221,7 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-close').focus({ preventScroll:true });
     };
     // 分享シートが出なかったときは 3) へ：失敗したとき、またはキャンセル扱いでも按すぐに終わったとき。
-    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートを開いてから自己で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
@@ -2247,7 +2247,7 @@ gtag('config', 'G-41RSZLP1YQ');
   $('share-close').addEventListener('click', closeShareView);
   $('share-view').addEventListener('pointerdown', e => e.stopPropagation());
 
-  // ---------- キーボード（PC） ----------
+  // ---------- 鍵ボード（PC） ----------
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && shareOpen()){ closeShareView(); return; }
     if (shareOpen()) return;
@@ -2264,7 +2264,7 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- iPhone 対策 ----------
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て、描く操作や長押しが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て、描く操作や長押しが奪われるのを防ぐ
   const isHold = t => t instanceof Element && !!t.closest('#cv,#bake');
   document.addEventListener('touchstart', e => { if (isHold(e.target)) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (drawing !== null) e.preventDefault(); }, { passive:false });
@@ -2273,7 +2273,7 @@ gtag('config', 'G-41RSZLP1YQ');
     e.preventDefault();
   });
   document.addEventListener('contextmenu', e => { if (isHold(e.target)) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -2290,7 +2290,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (moldQueued){ moldQueued = false; updateMold(); }
     if (state === 'pour'){
       // 生地を注ぐ（押さえている間）
-      // おたまを指の場所へ動かし、按いる間は傾けて注ぐ（傾ききってから生地が落ちる）
+      // おたまを手手指の場所へ動かし、按いる間は傾けて注ぐ（傾ききってから生地が落ちる）
       const k = Math.min(1, dt * LADLE_FOLLOW);
       ladle.position.x += (ladleTarget.x - ladle.position.x) * k;
       ladle.position.z += (ladleTarget.z - ladle.position.z) * k;
@@ -2343,7 +2343,7 @@ gtag('config', 'G-41RSZLP1YQ');
         }
       }
     }
-    moveCamera(Math.min(1, dt * (canOrbit() ? 18 : CAM_MOVE)));   // 完成品を回している間は指にすぐ付いてくる
+    moveCamera(Math.min(1, dt * (canOrbit() ? 18 : CAM_MOVE)));   // 完成品を回している間は手手指にすぐ付いてくる
     // 焼いている間：10秒から薄い煙、15秒を超えると黒い煙がふたのすき間から出る（焼き時間は出さない）
     if (state === 'bake'){
       const t = (now - bakeStart) / 1000;
@@ -2357,7 +2357,7 @@ gtag('config', 'G-41RSZLP1YQ');
     updateTweens(dt);
     updateSparks(dt);
     updateBrushPreview(dt);
-    // 完成品は、指で触っていない間は自動でゆっくり回る
+    // 完成品は、手手指で触っていない間は自動でゆっくり回る
     if (canOrbit() && orbitPtrs.size === 0) orbitYaw += AUTO_ROTATE * dt;
     // ランプ：焼いている間は点き、ほかは消える（ふわっと切り替える）
     lampMat.emissiveIntensity += ((state === 'bake' ? 2.2 : 0) - lampMat.emissiveIntensity) * Math.min(1, dt * 8);
@@ -2367,10 +2367,10 @@ gtag('config', 'G-41RSZLP1YQ');
 
   updateMold();
   updateBatter();
-  batter.visible = false;   // 最初は金型を作る画面
+  batter.visible = false;   // 最初は金型を作る畫面
   resize();
   addEventListener('resize', resize);
-  new ResizeObserver(resize).observe(cv);   // 下のボタンの段数が変わって描く範囲が変わったときも合わせる
+  new ResizeObserver(resize).observe(cv);   // 下の按鈕の段数が変わって描く範囲が変わったときも合わせる
   requestAnimationFrame(loop);
 })();
 </script>

@@ -46,7 +46,7 @@ gtag('config', 'G-41RSZLP1YQ');
     --vest:#b3212b; --fez:#c4232c; --gold:#d8a630; --tassel:#222;
     --wall:#efe4cf; --wall-pattern:#e3d4b8; --tile:#f7f5ef; --tile-pattern:#b9cce4;
     --ice:#fbfbf4; --trail:#ffffff;
-    /* 手に持つアイスの色：プレイごとにこの中からランダムに選ぶ（見た目だけ） */
+    /* 手に持つアイスの色：プレイごとにこの中から隨機に選ぶ（見た目だけ） */
     --ice-gold:#ffc83a;   /* 黄金のアイス（金属として映り込みで光らせる） */
     --ice-1:#fbfbf4; --ice-2:#f6b8c8; --ice-3:#bfe8d2; --ice-4:#8a5a3c; --ice-5:#ffd27a; --ice-6:#b9b4e8; --ice-7:#a9c98a;
   }
@@ -70,7 +70,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #res-title{font-size:24px;font-weight:700}
   #res-count{font-size:20px}
   #res-best{font-size:14px;color:var(--sub)}
-  /* 最高記録を更新したとき：飛び出してきて、その後ゆっくり脈打つ */
+  /* 最高紀錄を更新したとき：飛び出してきて、その後ゆっくり脈打つ */
   #res-new{font-size:20px;font-weight:700;color:var(--new-best)}
   #res-new.show{animation:newPop .5s cubic-bezier(.2,1.6,.4,1) both, newPulse 1.2s ease-in-out .5s infinite}
   #res-count.new{animation:newPop .5s cubic-bezier(.2,1.6,.4,1) .15s both}
@@ -94,9 +94,9 @@ gtag('config', 'G-41RSZLP1YQ');
     <div class="panel">
       <div id="res-title">アイスを取られた！</div>
       <div id="res-count"></div>
-      <div id="res-new" class="hidden">最高記録更新！</div>
+      <div id="res-new" class="hidden">最高紀錄更新！</div>
       <div id="res-best"></div>
-      <button id="retry" class="primary" type="button">もう一回</button>
+      <button id="retry" class="primary" type="button">再來一次</button>
       <button id="share" type="button">分享</button>
     </div>
   </div>
@@ -110,12 +110,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <section class="howto" data-pos="top-left" hidden>
     <h2>玩法</h2>
-    <p>トルコアイス屋の店員になり、棒の先のアイスをお客さんの手から守るゲームです。ページを開くとすぐに始まり、取られずにいた秒数が分數になります。取られたら終わりで、最高記録はこのブラウザに保存されます。</p>
+    <p>トルコアイス屋の店員になり、棒の先のアイスをお客さんの手から守る遊戲。ページを開くとすぐに始まり、取られずにいた秒数が分數になります。取られたら終わりで、最高紀錄はこの瀏覽器に會儲存。</p>
     <h2>操作</h2>
-    <p>画面のどこを触っても、指を動かした分だけ店員の手が動きます。アイスの上に指を置く必要はありません。PC ではマウスの拖曳か矢印キーで動かします。</p>
-    <h2>コツ</h2>
-    <p>お客さんは手を少し引いて構えてから、アイスへ一気に手を伸ばします。取られるのは伸ばしている間だけなので、構えが見えたら動く準備をして、伸びてきたところをかわしてください。かわした回数が増えるほど手は速くなり、動きの先読みも強まります。6回かわすと手が途中で曲がるようになり、8回かわすと構えだけのフェイントも混ざります。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>畫面のどこを触っても、手手指を動かした分だけ店員の手が動きます。アイスの上に手手指を置く必要はありません。PC では滑鼠の拖曳か矢印鍵で動かします。</p>
+    <h2>訣竅</h2>
+    <p>お客さんは手を少し引いて構えてから、アイスへ一気に手を伸ばします。取られるのは伸ばしている間だけなので、構えが見えたら動く準備をして、伸びてきたところをかわしてください。かわした回数が增加ほど手は速くなり、動きの先読みも強まります。6回かわすと手が途中で曲がるようになり、8回かわすと構えだけのフェイントも混ざります。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 
@@ -158,14 +158,14 @@ const KENNEY = {
   const L_ROD = 0.55;          // 手からアイス棒の先まで
   const WRIST_ANGLE = 0.7;     // 前腕に対する棒の角度（rad、上向きが正）
   const WRIST_STIFF = 0.3;     // 手首の硬さ（0〜1。小さいほど棒がぶらぶらする）
-  const PULL = 0.06;           // 手を指の位置へ拉強さ（1ステップあたりの割合）
+  const PULL = 0.06;           // 手を手手指の位置へ拉強さ（1ステップあたりの割合）
   const HAND_DAMP = 0.8;       // 手の速度を残す割合（拉力による揺れ戻しを抑える）
-  const DRAG_GAIN = 1.0;       // 指の移動量に対する手の移動量
-  const KEY_SPEED = 1.4;       // 矢印キーで手を動かす速さ (m/s)
-  const TARGET_MIN_X = -0.05;  // 手を自分の体より後ろへは引けない
+  const DRAG_GAIN = 1.0;       // 手手指の移動量に対する手の移動量
+  const KEY_SPEED = 1.4;       // 矢印鍵で手を移動速さ (m/s)
+  const TARGET_MIN_X = -0.05;  // 手を自己の体より後ろへは引けない
   const ARM_MIN_REACH = 0.3;   // 手は肩からこれ以上近づけない (m)。腕を折りたたみきらないようにする
   const ELBOW_SIDE_MIN = 0.04; // 肘を、肩と手を結ぶ線から少なくともこれだけ下・外側に出す (m)
-  const ELBOW_PUSH = 0.05;     // そのために肘を押す強さ（反復1回あたりの割合）
+  const ELBOW_PUSH = 0.05;     // そのために肘を按強さ（反復1回あたりの割合）
   const TARGET_MIN_Y = 0.9;    // 手をカウンターより往下は下げられない
   const ICE_OFFSET = 0.04;     // 棒の先からアイスの中心まで（棒の先にアイスが刺さっている）
   const ICE_R = 0.06;          // アイスの半径
@@ -177,9 +177,9 @@ const KENNEY = {
   const COUNTER = { x:0.5, w:0.6, h:0.95, depth:1.2 };   // 屋台の台の部分の中心の位置・幅・高さ・奥行き (m)
   const COUNTER_MASS = 12;     // 壊れる前の屋台の重さ (kg)。軽いほど倒れやすい
   const COUNTER_FRICTION = 0.6;  // 床との摩擦（小さいと倒れずに滑る）
-  const PUSH_K = 0.5;          // 腕や手が台を押す強さの倍率
-  const PUSH_MAX_PEN = 0.02;   // 1ステップに押す量として数える入り込みの上限 (m)。大きく突き抜けても暴れないように
-  const CPU_PUSH_MASS = 3;     // 客の手が台を押すときの重さ (kg)
+  const PUSH_K = 0.5;          // 腕や手が台を按強さの倍率
+  const PUSH_MAX_PEN = 0.02;   // 1ステップに按量として数える入り込みの上限 (m)。大きく突き抜けても暴れないように
+  const CPU_PUSH_MASS = 3;     // 客の手が台を按ときの重さ (kg)
   // 屋台が壊れる条件と壊れ方（部品ごとに耐久 1 を持ち、尽きたら外れる）
   const STALL_DAMAGE_SPEED = 2.5;  // 腕・棒・客の手がこの速さ (m/s) より速くぶつかると、近くの部品が傷む
   const STALL_DAMAGE_PER_HP = 4;   // 耐久 1 を削るのに要る、上の速さからの上乗せ (m/s)。大きいほど壊れにくい
@@ -187,21 +187,21 @@ const KENNEY = {
   const STALL_BREAK_FALL = 3.0;    // 倒れた屋台がこの速さ (m/s) より速く床に打ちつけられると、打ちつけた所の近くが傷む
   const STALL_BREAK_BURST = 0.4;   // 外れた部品がはじける速さの最大 (m/s)
   const STALL_BREAK_SPIN = 3;      // 外れた部品の回転のばらつき (rad/s)
-  const STALL_BREAK_RAND_SPEED = 2;  // 外れた部品に加えるランダムな力：それで付く速さの最大 (m/s)。重さに関係なく同じだけ動かす
-  const STALL_BREAK_RAND_SPIN = 10;  // その力が部品のランダムな点にかかって付く回転の上限 (rad/s)
+  const STALL_BREAK_RAND_SPEED = 2;  // 外れた部品に加える隨機な力：それで付く速さの最大 (m/s)。重さに関係なく同じだけ移動
+  const STALL_BREAK_RAND_SPIN = 10;  // その力が部品の隨機な点にかかって付く回転の上限 (rad/s)
   const PIECE_HIT_ITER = 8;          // 崩れた部品どうし（と残っている屋台）のぶつかりを解く回数（1ステップあたり）
   const PIECE_FRICTION = 0.5;
   const PIECE_HIT_MASS_MAX = 1;
-  const PIECE_SPREAD_Z = 1.2;        // 外れた部品に付ける奥行き方向のランダムな速さの最大 (m/s)。奥行き方向にも散らばるように
-  const PIECE_Z_MIN = -1.65, PIECE_Z_MAX = 1.5;   // 崩れた部品が奥行き方向に動ける範囲（壁と画面手前）      // 部品どうしのぶつかりで使う重さの上限 (kg)        // 部品どうしの摩擦
+  const PIECE_SPREAD_Z = 1.2;        // 外れた部品に付ける奥行き方向の隨機な速さの最大 (m/s)。奥行き方向にも散らばるように
+  const PIECE_Z_MIN = -1.65, PIECE_Z_MAX = 1.5;   // 崩れた部品が奥行き方向に動ける範囲（壁と畫面手前）      // 部品どうしのぶつかりで使う重さの上限 (kg)        // 部品どうしの摩擦
   const PIECE_MAX_SPEED = 8, PIECE_MAX_SPIN = 30;   // 崩れた部品の速さ (m/s)・回転 (rad/s) の上限
-  const PIECE_REST_SPEED = 0.3, PIECE_REST_DAMP = 8;   // 他の部品に触れていてこれより遅いとき、勢いを落とす速さ（1秒あたり）
+  const PIECE_REST_SPEED = 0.3, PIECE_REST_DAMP = 8;   // 他の部品に触れていてこれより遅いとき、勢いを掉落速さ（1秒あたり）
   const PIECE_GHOST_TIME = 0.4;      // 外れた時点で重なっていた部品どうし（重ねたコーンなど）を、ぶつけずにおく時間 (秒)。その後は押し広げる
   const PIECE_WAKE_SPEED = 0.15;
   const PIECE_WAKE_DEPTH = 0.015;    // これより深く重なっていたら、止まっている部品も起こして押し広げる (m)     // 止まっている部品は、この速さ (m/s) 以上でぶつかられたら動き出す
   const PIECE_PUSH_MAX = 2;          // 部品どうしが入り込んだときに位置を押し戻す速さの上限 (m/s)。深く入り込んでもはじけ飛ばないように
   const SLEEP_SPEED = 0.1, SLEEP_SPIN = 0.3;   // これより遅い状態が0.5秒続いたら止める（眠らせる）
-  const STALL_TIP_SPIN = 1;          // 奥行き方向に薄い板が、外れたときに奥か手前へ倒れ始める回転 (rad/s)
+  const STALL_TIP_SPIN = 1;          // 奥行き方向に薄い板が、外れたときに奥か手上一頁倒れ始める回転 (rad/s)
   const STALL_BREAK_MIN_SPIN = 1.5;  // 回転の下限 (rad/s)。まっすぐ跳ねて立ったまま着地しないように
   const STALL_HIT_TRANSFER = 0.5;  // 外れた部品が引き継ぐ、ぶつかった勢いの割合（ぶつかった点に近いほど大きい）
   const ITEM_SLIDE_ANGLE = 0.35;   // 屋台がおよそこの角度 (rad) 傾くと、台の上の商品が滑り落ちる
@@ -232,8 +232,8 @@ const KENNEY = {
 
   // 掠り：アイスが客のコーンに触れると（いつでも）、アイスの一部がコーンの上に剩餘、本体との間が伸びる。1回のプレイで1度だけ。見た目だけ
   const GOLD_CHANCE = 0.001;         // 黄金のアイスが出る確率（1回のプレイごと）
-  const SECRET_KEYS = '1029384756';  // 隠しコマンド（PC）：この順に数字キーを押すと、次の回は黄金のアイス
-  const CORNER_SIZE = 80;            // 隠しコマンド（スマホ）：画面の4隅のこの範囲（px）を同時に押さえる
+  const SECRET_KEYS = '1029384756';  // 隠しコマンド（PC）：この順に数字鍵を按と、次の回は黄金のアイス
+  const CORNER_SIZE = 80;            // 隠しコマンド（スマホ）：畫面の4隅のこの範囲（px）を同時に押さえる
   const CORNER_HOLD = 5;             // 隠しコマンド（スマホ）：4隅を押さえ続ける時間（秒）
   const GRAZE_BLOB_R = 0.03;   // コーンの上に残るアイスの半径 (m)
   const GRAZE_END_R = 0.022;   // 伸びる部分の両端の太さ（半径）
@@ -249,7 +249,7 @@ const KENNEY = {
     wall:[0, -0.35, 0],         // 壁
   };
 
-  // 客の強さ：かわした回数 n に応じて上がる（回数は画面には出さない）
+  // 客の強さ：かわした回数 n に応じて上がる（回数は畫面には出さない）
   const DIFF = {
     waitBase:1.3,  waitStep:0.04,  waitMin:0.35,   // 次に手を出すまでの待ち（秒、±30%ばらつく）
     windBase:0.65, windStep:0.018, windMin:0.22,   // 構えの時間（秒）＝手を出す合図
@@ -268,7 +268,7 @@ const KENNEY = {
   const BEST_KEY = 'turkishIce3d.bestTime';
   const SHARE_INSTANT = 0.5;   // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
 
-  // 最高記録（取られなかった秒数）：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  // 最高紀錄（取られなかった秒数）：瀏覽器のlocalStorageに保存（使えない環境ではその回だけ保持）
   let best = 0;
   try { best = parseFloat(localStorage.getItem(BEST_KEY)) || 0; } catch(e) {}
   const fmt = t => t.toFixed(1);   // 秒数の表示（小数1桁）
@@ -276,7 +276,7 @@ const KENNEY = {
 
   // ---------- three.js ----------
   const wrap = $('game');
-  // 分享画像に画面を写すため、描画バッファを残す
+  // 分享画像に畫面を写すため、描画バッファを残す
   const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -619,7 +619,7 @@ const KENNEY = {
     [0,0], [0.12,0], [0.135,0.06], [0.125,0.18], [0.14,0.32], [0.155,0.43], [0.15,0.49], [0.11,0.53], [0.04,0.55], [0,0.55]
   ].map(p => new THREE.Vector2(p[0], p[1])), 20);
 
-  // 人の体（動かす腕は別に作る）。face=+1 で +X 向き、-1 で -X 向き
+  // 人の体（移動腕は別に作る）。face=+1 で +X 向き、-1 で -X 向き
   // 戻り値は腰を原点にしたグループで、rotation.z で上半身を前に傾けられる
   function buildPerson(face, hx, hy, shirt){
     const ankleY = 0.08, hipJ = hy - LEG_TOP;
@@ -793,7 +793,7 @@ const KENNEY = {
   const cFarHand = addFist();
   const cone = addModel('cone', { height:0.14, center:true });   // 客が最初から持っているコーン（モデルは Kenney。口が +Y）
 
-  // ---------- 画面サイズ・カメラ ----------
+  // ---------- 畫面サイズ・カメラ ----------
   // 縦持ちでも横持ちでも、店員の肩から客の体までが収まる距離にする（少し斜めから見る）
   const VIEW = { cx:0.55, cy:1.5, halfW:0.95, halfH:1.3, yaw:0.35, pitch:0.1 };
   function resize(){
@@ -815,7 +815,7 @@ const KENNEY = {
   resize();
   addEventListener('resize', resize);
 
-  // 画面の座標 → 腕が動く面（z=0）の座標
+  // 畫面の座標 → 腕が動く面（z=0）の座標
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hit = new THREE.Vector3();
   function toWorld(x, y){
@@ -826,12 +826,12 @@ const KENNEY = {
   }
 
   // ---------- 店員の腕（ラグドール） ----------
-  const S = { x:SHOULDER.x, y:SHOULDER.y, w:0 };            // 肩（体の傾きに合わせて動かす。腕には引っ張られない）
+  const S = { x:SHOULDER.x, y:SHOULDER.y, w:0 };            // 肩（体の傾きに合わせて移動。腕には引っ張られない）
   const E = { x:0, y:0, px:0, py:0, w:1/2 };                // 肘
   const W = { x:0, y:0, px:0, py:0, w:1/1.5 };              // 手
   const T = { x:0, y:0, px:0, py:0, w:1/0.6 };              // 棒の先
   const PTS = [E, W, T];
-  const target = { x:0, y:0 };   // 手を引き寄せる先。指を離しても手はそこを保つ
+  const target = { x:0, y:0 };   // 手を引き寄せる先。手手指を離しても手はそこを保つ
 
   // 店員の体：腰を軸に上半身を傾ける。lean は前かがみが正、vel はその速さ、look は顔を上下に向ける角度
   const V_HIP = { x:SHOULDER.x, y:SHOULDER.y - C_TORSO };
@@ -896,7 +896,7 @@ const KENNEY = {
     const k = (ELBOW_SIDE_MIN - side) * ELBOW_PUSH;
     E.x += rx * k; E.y += ry * k;
   }
-  // 床と屋台に当たる。push が真のときは、屋台（壊れた後は部品）に入り込んだ分だけ押す（1ステップに1回だけ押す）
+  // 床と屋台に当たる。push が真のときは、屋台（壊れた後は部品）に入り込んだ分だけ按（1ステップに1回だけ按）
   // 強い勢いでぶつかったら屋台が壊れる
   function collide(p, r, push){
     if (p.y < r){ p.y = r; p.px = p.x - (p.x - p.px) * 0.5; }
@@ -916,7 +916,7 @@ const KENNEY = {
   // ---------- 屋台の物理（横から見た2Dの剛体） ----------
   // 屋台は全体で1つの剛体（重さと回転のしにくさは台の部分で決める）。部品ごとに当たり判定と耐久を持つ。
   // 腕や客の手が強い勢いでぶつかるか、倒れて床に強く打ちつけると、その近くの部品だけが傷み、
-  // 耐久が尽きた部品から外れて別々の剛体になる。支えを失った部品（柱が無い屋根など）も外れる。
+  // 耐久が尽きた部品から外れて各自の剛体になる。支えを失った部品（柱が無い屋根など）も外れる。
   // 外れた部品どうしはぶつからない（床と腕・客の手にだけ当たる）
   const BOX_HW = COUNTER.w / 2, BOX_HH = COUNTER.h / 2;
   const box = {   // 壊れる前の屋台。x, y は台の中心
@@ -1015,7 +1015,7 @@ const KENNEY = {
     for (let it = 0; it < iters; it++){
       for (const k of b.hits){
         const vy = b.vy + b.w * k.rx;
-        // 屋台（壊れる前）は速さで押し戻す。崩れた部品は位置で直す（bodyPost）。速さで押すと勢いが増えて跳ね続けるため
+        // 屋台（壊れる前）は速さで押し戻す。崩れた部品は位置で直す（bodyPost）。速さで按と勢いが増えて跳ね続けるため
         const bias = b === box ? Math.max(0, k.depth - 0.002) * 0.2 / h : 0;
         const kn = 1 / b.m + k.rx * k.rx / b.I;
         const jn = Math.max(0, k.jn - (vy - bias) / kn), dn = jn - k.jn;
@@ -1036,7 +1036,7 @@ const KENNEY = {
     if (b !== box){
       capSpeed(b);
       const v = Math.hypot(b.vx, b.vy);
-      // 他の部品の上に載ってゆっくり動いているときは、積み重なりの細かい震えを止めるため少しずつ勢いを落とす
+      // 他の部品の上に載ってゆっくり動いているときは、積み重なりの細かい震えを止めるため少しずつ勢いを掉落
       if (b.touch && v < PIECE_REST_SPEED){
         const k = Math.max(0, 1 - PIECE_REST_DAMP * h);
         b.vx *= k; b.vy *= k; b.w *= k;
@@ -1044,7 +1044,7 @@ const KENNEY = {
     }
     b.x += b.vx * h; b.y += b.vy * h; b.a += b.w * h;
     if (b !== box && b.vz){
-      // 奥行き方向：床か他の部品に触れていれば摩擦で止まっていく。壁と画面手前で跳ね返る
+      // 奥行き方向：床か他の部品に触れていれば摩擦で止まっていく。壁と畫面手前で跳ね返る
       if ((b.hits && b.hits.length) || b.touch){ const dv = b.friction * GRAVITY * h; b.vz = Math.abs(b.vz) <= dv ? 0 : b.vz - Math.sign(b.vz) * dv; }
       let dz = b.vz * h;
       if (b.z0 + dz < PIECE_Z_MIN){ dz = PIECE_Z_MIN - b.z0; b.vz = Math.abs(b.vz) * 0.3; }
@@ -1081,10 +1081,10 @@ const KENNEY = {
 
   // ---------- 崩れた部品どうしのぶつかり ----------
   // 外れた部品と、まだ残っている屋台の部品を、それぞれ傾いた箱として扱う（奥行きの範囲が重なるものどうしだけ）。
-  // 箱の角が相手の箱に入り込んでいたら、入り込んだ向きに押し返す力積と摩擦を当てる。
+  // 箱の角が對手の箱に入り込んでいたら、入り込んだ向きに押し返す力積と摩擦を当てる。
   // 外れた時点で既に重なっていた組（重ねたコーン、天板に沈めた冷凍ケースなど）は、一度離れるまでぶつけない
   // ただし重なったまま積もってしまわないよう、PIECE_GHOST_TIME 秒たったらぶつけて、ゆっくり押し広げる
-  const ghosts = new WeakMap();   // 見た目の物体 → 今はぶつけない相手の見た目の物体と、ぶつけ始める時刻
+  const ghosts = new WeakMap();   // 見た目の物体 → 今はぶつけない對手の見た目の物体と、ぶつけ始める時刻
   let simTime = 0;
   function addGhost(a, b){
     if (!ghosts.has(a)) ghosts.set(a, new Map());
@@ -1118,7 +1118,7 @@ const KENNEY = {
       const d = dx * ax + dy * ay, o = ra + rb - Math.abs(d);
       if (o <= 0) return null;
       if (!best || o < best.depth){
-        // 中心がほぼ同じ所にあると押す向きが毎回入れ替わって離れなくなるので、そのときは向きを決め打ちする（上向き、横なら番号で）
+        // 中心がほぼ同じ所にあると按向きが毎回入れ替わって離れなくなるので、そのときは向きを決め打ちする（上向き、横なら番号で）
         let sg = d < 0 ? -1 : 1;
         if (Math.abs(d) < 0.005) sg = Math.abs(ay) > 0.3 ? Math.sign(ay) : ((A.b.id || 0) < (B.b.id || 0) ? 1 : -1);
         best = { nx:ax * sg, ny:ay * sg, depth:o };
@@ -1126,11 +1126,11 @@ const KENNEY = {
     }
     return best;
   }
-  // 重なっている2つの箱の接点（相手に入り込んだ角）を contacts に足す。法線と深さは組で共通
+  // 重なっている2つの箱の接点（對手に入り込んだ角）を contacts に足す。法線と深さは組で共通
   function pairContacts(A, B, contacts, pairs, zpairs){
     const sat = satPair(A, B);
     if (!sat) return;
-    // 奥行きの重なりの方が浅いときは、奥行き方向にずらして離す（積み上がらず、奥行き方向にも広がるように）
+    // 奥行きの重なりの方が浅いときは、奥行き方向にずらして放開（積み上がらず、奥行き方向にも広がるように）
     const oz = Math.min(A.z1, B.z1) - Math.max(A.z0, B.z0);
     if (oz < sat.depth && !(A.b === box && B.b === box)){
       zpairs.push({ A:A.b, B:B.b, s:(A.z0 + A.z1) < (B.z0 + B.z1) ? -1 : 1, depth:oz });
@@ -1154,7 +1154,7 @@ const KENNEY = {
     }
   }
   const overlapping = (A, B) => !!satPair(A, B);
-  // 部品が外れた瞬間に、その時点で重なっている相手を覚える
+  // 部品が外れた瞬間に、その時点で重なっている對手を覚える
   function markGhosts(pc){
     const list = shapeList(), me = list.find(sh => sh.b === pc);
     if (!me) return;
@@ -1205,7 +1205,7 @@ const KENNEY = {
         const jt = Math.max(-lim, Math.min(lim, k.jt - vt / kt)), dt = jt - k.jt;
         k.jt = jt;
         const ix = k.nx * dn + tx * dt, iy = k.ny * dn + ty * dt;
-        // 眠っている相手に勢いよく当たったら起こす（載っているだけなら起こさない）
+        // 眠っている對手に勢いよく当たったら起こす（載っているだけなら起こさない）
         if (vn < -PIECE_WAKE_SPEED || Math.abs(vt) > PIECE_WAKE_SPEED){
           for (const b of [A, B]) if (b.asleep && b !== box){ b.asleep = false; b.still = 0; }
         }
@@ -1216,7 +1216,7 @@ const KENNEY = {
       floorSolve(box, h, 2);
     }
     // 入り込んだ分は位置を直接ずらして戻す（速さで押し戻すと勢いが増えて、積み重なった部品が震え続けるため）
-    // 止まっている部品も位置は動かす（止まった部品が壁になって、重なりが剩餘続けないように）。壊れる前の屋台は動かさない
+    // 止まっている部品も位置は移動（止まった部品が壁になって、重なりが剩餘続けないように）。壊れる前の屋台は動かさない
     const invP = b => (b === box && b.asleep) ? 0 : 1 / Math.min(b.m, PIECE_HIT_MASS_MAX);
     // 奥行き方向の重なり：位置をずらし、近づく向きの速さを止める（屋台は奥行き方向には動かさない）
     for (const k of zpairs){
@@ -1311,7 +1311,7 @@ const KENNEY = {
     if (hit){ vx += hit.vx * k * STALL_HIT_TRANSFER; vy += hit.vy * k * STALL_HIT_TRANSFER; }
     const m = Math.max(PIECE_MIN_MASS, 4 * q.hx * q.hy * PIECE_DENSITY);
     { const v0 = Math.hypot(vx, vy); if (v0 > PIECE_MAX_SPEED){ vx *= PIECE_MAX_SPEED / v0; vy *= PIECE_MAX_SPEED / v0; } }   // 速すぎる勢いは抑える
-    // ランダムな力：向きは上向きの範囲（床に押し付けて打ち消されないように）でランダム、強さは最大の4〜10割で、部品のランダムな点にかける（中心から外れた分だけ回る）。
+    // 隨機な力：向きは上向きの範囲（床に押し付けて打ち消されないように）で隨機、強さは最大の4〜10割で、部品の隨機な点にかける（中心から外れた分だけ回る）。
     // 立ったまま床に残らないよう、重い部品にも同じ速さが付くようにする
     const fa = Math.PI * (0.1 + 0.8 * Math.random()), fv = STALL_BREAK_RAND_SPEED * (0.4 + 0.6 * Math.random());   // 弱すぎて何も起きないことが無いよう下限を付ける
     const jx = Math.cos(fa) * fv * m, jy = Math.sin(fa) * fv * m;
@@ -1388,7 +1388,7 @@ const KENNEY = {
 
   // ---------- 客の手 ----------
   // wait（構えてアイスを追う）→ windup（手を拉＝合図）→ lunge（伸ばす）→ miss → back → wait
-  // x, y はコーンの口の位置（ここでアイスを受け取る）。手はそこから口の向き (ax, ay) の逆へ CUP_DIST の所
+  // x, y はコーンの口の位置（ここでアイスを受け取得）。手はそこから口の向き (ax, ay) の逆へ CUP_DIST の所
   const cpu = { x:0, y:0, ax:0, ay:1, state:'wait', t:0, dx:0, dy:0, travel:0, maxTravel:0, feint:false, speed:0, homing:0, lean:0 };
 
   function hoverPoint(){
@@ -1478,7 +1478,7 @@ const KENNEY = {
     const al = Math.hypot(cpu.ax, cpu.ay) || 1e-6;
     cpu.ax /= al; cpu.ay /= al;
 
-    // 客の手とコーンが屋台に当たったら押す（客の手は止まらない）。強くぶつかれば屋台が壊れる
+    // 客の手とコーンが屋台に当たったら按（客の手は止まらない）。強くぶつかれば屋台が壊れる
     const cvx = (cpu.x - prevX) / h, cvy = (cpu.y - prevY) / h;
     for (const [x, y] of [[cpu.x, cpu.y], [cpu.x - cpu.ax * CUP_DIST, cpu.y - cpu.ay * CUP_DIST]]){
       forEachCollider(HAND_R, (b, q) => {
@@ -1497,11 +1497,11 @@ const KENNEY = {
 
   // ---------- ゲームの状態 ----------
   let state = 'playing';   // playing / caught（取られて結果待ち）/ over
-  document.documentElement.setAttribute('data-howto-hidden', '');   // 開いた瞬間からプレイ中なので、結果画面までボタンを隠す
+  document.documentElement.setAttribute('data-howto-hidden', '');   // 開いた瞬間からプレイ中なので、結果畫面まで按鈕を隠す
   let count = 0;           // かわした回数（客の強さに使う）
   let elapsed = 0;         // 取られていない秒数（分數）
   let overT = 0;
-  let newBest = false;   // 今回のプレイで最高記録を更新した
+  let newBest = false;   // 今回のプレイで最高紀錄を更新した
 
   function dodged(){
     if (state !== 'playing') return;
@@ -1524,7 +1524,7 @@ const KENNEY = {
     document.documentElement.removeAttribute('data-howto-hidden');
     $('res-count').textContent = fmt(elapsed) + '秒';
     $('res-best').textContent = '最高 ' + fmt(best) + '秒';
-    // 最高記録を更新したら、文言を出して飛び出させる（毎回アニメーションをやり直すため、一度クラスを外して付け直す）
+    // 最高紀錄を更新したら、文言を出して飛び出させる（毎回アニメーションをやり直すため、一度クラスを外して付け直す）
     const nb = $('res-new'), rc = $('res-count');
     nb.classList.remove('show'); rc.classList.remove('new');
     nb.classList.toggle('hidden', !newBest);
@@ -1552,7 +1552,7 @@ const KENNEY = {
 
   // ---------- 隠しコマンド：次の回を黄金のアイスにする ----------
   function secretCommand(){ forceGold = true; }
-  // PC：数字キーを SECRET_KEYS の順に押す
+  // PC：数字鍵を SECRET_KEYS の順に按
   let keyLog = '';
   document.addEventListener('keydown', e => {
     keyLog = (keyLog + (e.key.length === 1 ? e.key : ' ')).slice(-SECRET_KEYS.length);
@@ -1560,10 +1560,10 @@ const KENNEY = {
     keyLog = '';
     secretCommand();
   });
-  // スマホ：ゲーム画面の4隅を同時に CORNER_HOLD 秒押さえ続ける
-  const cornerTouches = new Map();   // 隅を押さえている指（pointerId → 隅の番号）
+  // スマホ：ゲーム畫面の4隅を同時に CORNER_HOLD 秒押さえ続ける
+  const cornerTouches = new Map();   // 隅を押さえている手手指（pointerId → 隅の番号）
   let cornerTimer = 0;
-  let cornerGesture = false;         // 2つ以上の隅を同時に押さえた（指を離したときのボタンの反応を止める）
+  let cornerGesture = false;         // 2つ以上の隅を同時に押さえた（手手指を離したときの按鈕の反応を止める）
   function cornerOf(x, y){
     const g = $('game').getBoundingClientRect();
     const l = x < g.left + CORNER_SIZE, r = x > g.right - CORNER_SIZE, t = y < g.top + CORNER_SIZE, b = y > g.bottom - CORNER_SIZE;
@@ -1587,16 +1587,16 @@ const KENNEY = {
   };
   document.addEventListener('pointerup', cornerRelease, true);
   document.addEventListener('pointercancel', cornerRelease, true);
-  // 隅にボタンがあっても、隅を押さえたあと指を離したときにボタンが反応しないようにする
+  // 隅に按鈕があっても、隅を押さえたあと手手指を離したときに按鈕が反応しないようにする
   document.addEventListener('click', e => {
     if (cornerGesture){ e.preventDefault(); e.stopPropagation(); }
   }, true);
 
   // ---------- 入力 ----------
-  // 画面のどこを触っても、指を動かした分だけ手を動かす（指で手が隠れないように）
+  // 畫面のどこを触っても、手手指を動かした分だけ手を移動（手手指で手が隠れないように）
   let drag = null;
   cv.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'touch' && cornerOf(e.clientX, e.clientY) >= 0) return;   // 隠しコマンドで隅を押さえた指では操作しない
+    if (e.pointerType === 'touch' && cornerOf(e.clientX, e.clientY) >= 0) return;   // 隠しコマンドで隅を押さえた手手指では操作しない
     if (state !== 'playing' || drag) return;
     e.preventDefault();
     const p = toWorld(e.clientX, e.clientY);
@@ -1628,7 +1628,7 @@ const KENNEY = {
   document.addEventListener('keyup', e => keys.delete(e.key));
   addEventListener('blur', () => keys.clear());
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => {
@@ -1636,7 +1636,7 @@ const KENNEY = {
     if (!(t && t.closest('#share-text'))) e.preventDefault();
   });
   document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -1644,17 +1644,17 @@ const KENNEY = {
     lastTouchEnd = now;
   }, { passive:false });
 
-  // ---------- 結果画面・分享 ----------
+  // ---------- 結果畫面・分享 ----------
   $('retry').addEventListener('pointerdown', e => e.stopPropagation());
   $('retry').addEventListener('click', restart);
 
   function shareText(){
     return `アイスを${fmt(elapsed)}秒取られなかった！\n最高 ${fmt(best)}秒\n${location.href.split(/[?#]/)[0]}\n#トルコアイス3D`;
   }
-  // 結果画像：画面の中央を正方形に切り出し、上に結果を書く
+  // 結果画像：畫面の中央を正方形に切り出し、上に結果を書く
   const shareCv = document.createElement('canvas');
   shareCv.width = shareCv.height = 600;
-  // 取られた瞬間の画面を残しておく（取られた直後に描いたフレームを、アイスを中心にした正方形で切り出す）
+  // 取られた瞬間の畫面を残しておく（取られた直後に描いたフレームを、アイスを中心にした正方形で切り出す）
   const catchShot = document.createElement('canvas');
   catchShot.width = catchShot.height = 600;
   let wantShot = false;
@@ -1671,7 +1671,7 @@ const KENNEY = {
     const g = shareCv.getContext('2d');
     g.fillStyle = css('--bg');
     g.fillRect(0, 0, 600, 600);
-    g.drawImage(catchShot, 0, 0, 600, 600);   // 取られた瞬間の画面
+    g.drawImage(catchShot, 0, 0, 600, 600);   // 取られた瞬間の畫面
     g.fillStyle = css('--panel');
     g.fillRect(0, 0, 600, 110);
     g.fillStyle = css('--fg');
@@ -1694,7 +1694,7 @@ const KENNEY = {
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を畫面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1703,8 +1703,8 @@ const KENNEY = {
       $('share-close').focus({ preventScroll:true });
     };
     // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
-    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内瀏覽器等）。
+    // 分享シートを開いてから自己で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
@@ -1739,7 +1739,7 @@ const KENNEY = {
     cone.position.set(cpu.x - cpu.ax * 0.065, cpu.y - cpu.ay * 0.065, 0);
     cone.quaternion.setFromUnitVectors(UPV, _u.set(cpu.ax, cpu.ay, 0));
 
-    // 手が届かないときは腰から前へ乗り出す。それでも届かない分は腕が伸びる
+    // 手が届かないときは腰から上一頁乗り出す。それでも届かない分は腕が伸びる
     let want = C_LEAN_MAX;
     for (let a = 0; a <= C_LEAN_MAX; a += 0.02){
       const sx = C_HIP.x - Math.sin(a) * C_TORSO, sy = C_HIP.y + Math.cos(a) * C_TORSO;

@@ -278,20 +278,20 @@ gtag('config', 'G-41RSZLP1YQ');
   body{
     background:var(--bg); color:var(--ink);
     font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
-    touch-action:manipulation;              /* ダブルタップ拡大を殺す */
+    touch-action:manipulation;              /* ダブル點擊拡大を殺す */
     -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   }
 
-  /* ゲーム画面は論理解像度 400×760 に固定し、端末の画面に収まるよう全体を拡大縮小する（レターボックス）。
-     端末の縦横比が違っても、流れる言葉の列数・速さ・画面を横切る時間が同じになるようにするため */
+  /* ゲーム畫面は論理解像度 400×760 に固定し、端末の畫面に収まるよう全体を拡大縮小する（レターボックス）。
+     端末の縦横比が違っても、流れる言葉の列数・速さ・畫面を横切る時間が同じになるようにするため */
   #stage{
     position:fixed;overflow:hidden;
     top:env(safe-area-inset-top,0px);right:env(safe-area-inset-right,0px);
     bottom:env(safe-area-inset-bottom,0px);left:env(safe-area-inset-left,0px);
   }
-  /* 結果画面の間は外側の余白も座布団と同じ黒にして、境目の1pxが見えないようにする */
+  /* 結果畫面の間は外側の余白も座布団と同じ黒にして、境目の1pxが見えないようにする */
   body.result{background:#020603}
-  /* 端の半端な画素で、座布団の下の言葉や緑の背景が透けないよう、結果画面の間は下を隠して黒にする */
+  /* 端の半端な画素で、座布団の下の言葉や緑の背景が透けないよう、結果畫面の間は下を隠して黒にする */
   body.result #app{background:#020603}
   body.result #field, body.result #hud, body.result #app::before{visibility:hidden}
   #app{
@@ -366,7 +366,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   #pop{position:absolute;left:50%;top:42%;z-index:6;pointer-events:none;text-align:center;white-space:nowrap;transform:translate(-50%,-50%);opacity:0}
   #pop.show{animation:popIn .95s ease-out forwards}
-  /* --tilt: 正解のたびにJSでランダムな傾きを入れる */
+  /* --tilt: 正解のたびにJSで隨機な傾きを入れる */
   @keyframes popIn{
     0%{transform:translate(-50%,-50%) rotate(var(--tilt,0deg)) scale(.3);opacity:0}
     14%{transform:translate(-50%,-50%) rotate(var(--tilt,0deg)) scale(1.22);opacity:1}
@@ -391,7 +391,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #app::before{
     content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;
     /* 600px四方で上下左右につながる斜めの縞（1マスの対角線に2周期ぶん入れる）を敷き詰める。
-       大きな要素を動かすと端末によって一瞬描画が抜けるので、要素は画面サイズのまま背景の位置だけを動かす */
+       大きな要素を移動と端末によって一瞬描画が抜けるので、要素は畫面サイズのまま背景の位置だけを移動 */
     background-image:linear-gradient(135deg,
       #ff8a00 0%, #ff3d6e 16.667%, #ffd23f 33.333%,
       #ff8a00 50%, #ff3d6e 66.667%, #ffd23f 83.333%, #ff8a00 100%);
@@ -426,18 +426,18 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   /* ---------- 結果 ---------- */
-  /* 拡大縮小したゲーム画面の端は半端な画素になるので、少しはみ出させて端まで確実に覆う */
+  /* 拡大縮小したゲーム畫面の端は半端な画素になるので、少しはみ出させて端まで確実に覆う */
   #over{
     position:absolute;inset:-4px;z-index:8;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
     padding:16px;text-align:center;color:var(--fg);
     background:rgba(0,0,0,.93);
   }
-  /* 結果画面で降るバナナ（結果の表示より後ろ） */
+  /* 結果畫面で降るバナナ（結果の表示より後ろ） */
   #rain{position:absolute;inset:0;overflow:hidden;pointer-events:none}
   #rain .rb{position:absolute;left:0;top:0;display:block;will-change:transform}
   #over > :not(#rain):not(#gorillas):not(#credit){position:relative;z-index:2}
-  /* 画像のクレジット（結果画面の下に小さく） */
+  /* 画像のクレジット（結果畫面の下に小さく） */
   #credit{position:absolute;left:0;right:0;bottom:calc(8px + env(safe-area-inset-bottom));z-index:3;
     font-size:10px;color:rgba(255,255,255,.55);pointer-events:none}
 
@@ -501,9 +501,9 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   @keyframes twinkle{from{opacity:.1;transform:translate(-50%,-50%) scale(.4) rotate(0deg)}to{opacity:1;transform:translate(-50%,-50%) scale(1.2) rotate(45deg)}}
 
-  /* ゴリパワーに応じて増えていくゴリラ（画面のふちから体を半分くらい出して覗く） */
+  /* ゴリパワーに応じて増えていくゴリラ（畫面のふちから体を半分くらい出して覗く） */
   #gorillas{position:absolute;inset:0;z-index:1;pointer-events:none}
-  #gorillas .g{position:absolute;line-height:1}                 /* 位置と向き（JSで指定） */
+  #gorillas .g{position:absolute;line-height:1}                 /* 位置と向き（JSで手手指定） */
   #gorillas .gi{display:block;animation:gPop .35s cubic-bezier(.2,1.6,.4,1) both}   /* 出てくる動き */
   @keyframes gPop{0%{transform:scale(0) rotate(-30deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
   #gorillas.done .gi{animation:beat .6s ease-in-out infinite alternate}
@@ -517,7 +517,7 @@ gtag('config', 'G-41RSZLP1YQ');
   @keyframes final{0%{transform:scale(1)}40%{transform:scale(1.5)}100%{transform:scale(1)}}
   #resCombo{font-size:18px;font-weight:bold}
   #resCombo b{color:var(--banana);font-size:40px;vertical-align:-4px;margin:0 4px}
-  #share{margin-top:48px}   /* ボタンは結果の表示から少し離して下に置く */
+  #share{margin-top:48px}   /* 按鈕は結果の表示から少し離して下に置く */
   .btn{
     font:inherit;font-size:20px;font-weight:900;min-height:52px;min-width:200px;padding:0 28px;
     border-radius:26px;border:none;color:var(--wood);background:var(--banana);
@@ -525,7 +525,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   .btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--bananaDark)}
   .btn.sub{background:#fff;box-shadow:0 5px 0 #bbb}
-  /* 分享・もう1ウホは数え上げの演出が終わるまで出さない（場所は空けておき、出たときに配置がずれないようにする） */
+  /* 分享・もう1ウホは数え上げの演出が結束まで出さない（場所は空けておき、出たときに配置がずれないようにする） */
   #over:not(.ready) .btn{visibility:hidden}
   .btn.sub:active{box-shadow:0 2px 0 #bbb}   /* 押したときに沈む見た目を「もう1ウホ」と揃える */
   :focus-visible{outline:3px solid #fff;outline-offset:3px}
@@ -565,12 +565,12 @@ gtag('config', 'G-41RSZLP1YQ');
 </div>
   <section class="howto" hidden data-pos="top-left">
     <h2>玩法</h2>
-    <p>右から往左流れる言葉の中から、読みに「ごり」か「うほ」が入っているものを探してタップするゲームです。制限時間の30秒が終わった時点のゴリパワーが分數になり、最大コンボも結果に出ます。当たりで得られるのは1,000×コンボ数の2乗で、10コンボ以降は1回10万です。</p>
+    <p>右から往左流れる言葉の中から、読みに「ごり」か「うほ」が入っているものを探して點擊する遊戲。制限時間の30秒が終わった時点のゴリパワーが分數になり、最大コンボも結果に出ます。当たりで得られるのは1,000×コンボ数の2乗で、10コンボ以降は1回10万です。</p>
     <h2>操作</h2>
-    <p>言葉を指でタップします。PC ではクリックです。タップすると、その言葉の読みが表示されます。</p>
-    <h2>コツ</h2>
-    <p>はずれをタップすると1万減るうえ、コンボが0に戻ります。コンボが伸びているほど、減点よりコンボが切れる損のほうが大きいので、迷う言葉は見送るのが得策です。フィーバーの外で5回当てると5秒間のフィーバーになり、当たりの言葉が金色で見分けられます。流れは2倍速になります。終了が近づくほど流れも速くなります。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>言葉を手手指で點擊します。PC では點擊です。點擊すると、その言葉の読みが表示されます。</p>
+    <h2>訣竅</h2>
+    <p>はずれを點擊すると1万減少うえ、コンボが0に戻ります。コンボが伸びているほど、減点よりコンボが切れる損のほうが大きいので、迷う言葉は見送るのが得策です。フィーバーの外で5回当てると5秒間のフィーバーになり、当たりの言葉が金色で見分けられます。流れは2倍速になります。結束が近づくほど流れも速くなります。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 
@@ -582,39 +582,39 @@ gtag('config', 'G-41RSZLP1YQ');
   const TIME_LIMIT = 30;       // 制限時間（秒）
   const HURRY_SEC = 5;         // 剩餘この秒数で剩餘時間を赤くする
   const SPAWN_SEC = 0.08;      // 開始時に言葉が出てくる間隔（秒）
-  const SPAWN_SEC_END = 0.035; // 終了間際に言葉が出てくる間隔（秒）
+  const SPAWN_SEC_END = 0.035; // 結束間際に言葉が出てくる間隔（秒）
   const SPEED_MIN = 52;        // 開始時の流れる速さ（px/秒）の最小
   const SPEED_MAX = 98;        // 開始時の流れる速さ（px/秒）の最大
-  const SPEED_END = 2.6;       // 終了間際の速さの倍率（開始時の何倍か）
+  const SPEED_END = 2.6;       // 結束間際の速さの倍率（開始時の何倍か）
   const ACCEL_CURVE = 1.6;     // 速くなり方（1で一定、大きいほど後半に一気に速くなる）
   const HIT_RATE = 0.4;        // 当たりの言葉が出る割合
   const LANE_H = 68;           // 1レーンの高さ（px）
   const LANE_GAP = 12;         // 同じレーンで前の言葉との最低間隔（px）
   const HIT_BASE = 1000;       // 当たり1回のゴリパワー = HIT_BASE × コンボ数²（1コンボ1,000、5コンボ25,000、10コンボ100,000）
-  const COMBO_CAP = 10;        // 点数の計算に使うコンボ数の上限（コンボの表示と最大コンボはこれを超えても増える）
-  const LOSS = 10000;          // はずれをタップしたときに減るゴリパワー
-  const SHAKE_COMBO = 5;       // このコンボ数から当たりで画面が揺れる
+  const COMBO_CAP = 10;        // 点数の計算に使うコンボ数の上限（コンボの表示と最大コンボはこれを超えても增加）
+  const LOSS = 10000;          // はずれを點擊したときに減少ゴリパワー
+  const SHAKE_COMBO = 5;       // このコンボ数から当たりで畫面が揺れる
   const BANANA_BASE = 12;      // 当たりで飛び散るバナナの数（1コンボ目）
-  const BANANA_PER_COMBO = 2;  // 1コンボごとに増えるバナナの数
+  const BANANA_PER_COMBO = 2;  // 1コンボごとに增加バナナの数
   const BANANA_MAX = 36;       // 一度に飛び散るバナナの最大数
   const BANANA_GRAVITY = 1400; // バナナにかかる重力（px/秒²）
   const FEVER_HITS = 5;        // フィーバーの外でこの回数当てたらフィーバー（フィーバー中の当たりは数えない。はずれると0に返回）
   const FEVER_SEC = 5;         // フィーバーの長さ（秒）
   const FEVER_SPEED = 2;       // フィーバー中の言葉の流れる速さの倍率
-  const EFFECT_FULL = 3000000; // 結果画面の演出（ゴリラ・バナナの雨・数え上げ・後光）が最大になるゴリパワー
-  const RAIN_MAX = 30;         // 結果画面で降るバナナの量の最大（本/秒）。EFFECT_FULL で最大
+  const EFFECT_FULL = 3000000; // 結果畫面の演出（ゴリラ・バナナの雨・数え上げ・後光）が最大になるゴリパワー
+  const RAIN_MAX = 30;         // 結果畫面で降るバナナの量の最大（本/秒）。EFFECT_FULL で最大
   const RAIN_POW = 0.3;        // バナナの雨の増え方（1万で約5本/秒、10万で約11本/秒、100万で約22本/秒）
   // 後光の段階: ゴリパワーがこの値を超えるごとに豪華になる
   //   1: 金色の光の筋と中心の光 / 2: 白い逆回転の光 / 3: 光の輪 / 4: 虹色の光 / 5: キラキラ
   const HALO_STAGES = [10000, 50000, 200000, 1000000, EFFECT_FULL];
-  const COUNT_DELAY = 0.6;     // 時間切れから結果の数え上げが始まるまで（秒）
+  const COUNT_DELAY = 0.6;     // 時間切れから結果の数え上げが開始まで（秒）
   const COUNT_MIN = 1.0;       // 数え上げにかける時間の最短（秒）
   const COUNT_MAX = 3.5;       // 数え上げにかける時間の最長（秒）。EFFECT_FULL で最長
-  const GORILLA_MAX = 50;      // 結果画面のゴリラの最大数。EFFECT_FULL で最大
+  const GORILLA_MAX = 50;      // 結果畫面のゴリラの最大数。EFFECT_FULL で最大
   const GORILLA_POW = 0.26;    // ゴリラの増え方（1万で11匹、10万で20匹、100万で37匹）
-  const GORILLA_SIZE_MAX = 160;// 結果画面のゴリラの大きさの上限（px）。数が少ないときはこの大きさ前後
-  const GORILLA_SIZE_MIN = 90; // 結果画面のゴリラの大きさの下限（px）。数が多くてもこれより小さくしない（重なってもよい）
-  const GORILLA_HIDE = 0.5;    // ゴリラの体が画面の外に隠れる割合の目安（0.5で半分）
+  const GORILLA_SIZE_MAX = 160;// 結果畫面のゴリラの大きさの上限（px）。数が少ないときはこの大きさ前後
+  const GORILLA_SIZE_MIN = 90; // 結果畫面のゴリラの大きさの下限（px）。数が多くてもこれより小さくしない（重なってもよい）
+  const GORILLA_HIDE = 0.5;    // ゴリラの体が畫面の外に隠れる割合の目安（0.5で半分）
   const SHARE_TAG = '#ゴリパワー';
   const KANA_WORDS = false;    // true: 流れる言葉を漢字ではなく読み（ひらがな）で出す（お試し。false で漢字に返回）
 
@@ -751,7 +751,7 @@ gtag('config', 'G-41RSZLP1YQ');
     setGold(false);
   }
 
-  // 論理解像度（400×760）のゲーム画面を、端末の表示領域に収まる最大の大きさに拡大縮小する
+  // 論理解像度（400×760）のゲーム畫面を、端末の表示領域に収まる最大の大きさに拡大縮小する
   const LOGICAL_W = 400, LOGICAL_H = 760;
   let scale = 1;
   function fitStage(){
@@ -777,7 +777,7 @@ gtag('config', 'G-41RSZLP1YQ');
     barFill.classList.toggle('hurry', hurry);
   }
 
-  // ---------- 開始・終了 ----------
+  // ---------- 開始・結束 ----------
   function startGame(){
     cancelAnimationFrame(countUp);
     stopRain();
@@ -800,7 +800,7 @@ gtag('config', 'G-41RSZLP1YQ');
     last = performance.now();
   }
 
-  // ---------- 結果画面のバナナの雨 ----------
+  // ---------- 結果畫面のバナナの雨 ----------
   // 数え上げ中の数字に合わせて量が増え、数え終わったら最終のゴリパワーに応じた量で降り続ける
   let rainLoop = 0, rainVal = 0;
   function startRain(){
@@ -838,9 +838,9 @@ gtag('config', 'G-41RSZLP1YQ');
     ], { duration:dur, easing:'ease-in' }).onfinish = () => b.remove();
   }
 
-  // 結果画面のふちに沿って n 匹のゴリラをランダムに置く位置・大きさ・向きを求める
+  // 結果畫面のふちに沿って n 匹のゴリラを隨機に置く位置・大きさ・向きを求める
   // 外周をおおまかに n 等分した中でばらつかせ（固まりすぎないように）、出てくる順番もばらばらにする
-  // 体の半分くらいが画面の外に隠れ、頭が画面の内側を向くように轉動
+  // 体の半分くらいが畫面の外に隠れ、頭が畫面の内側を向くように轉動
   function perimeterSlots(n, W = over.clientWidth, H = over.clientHeight){
     if (n <= 0) return [];
     const len = 2 * (W + H);
@@ -856,7 +856,7 @@ gtag('config', 'G-41RSZLP1YQ');
       else if ((d -= W) < H){ x = W; y = d; rot = -90; }             // 右辺
       else if ((d -= H) < W){ x = W - d; y = H; rot = 0; }           // 下辺
       else { d -= W; x = 0; y = H - d; rot = 90; }                   // 左辺
-      // 中心を画面のふちから内側へずらして、隠れる割合を GORILLA_HIDE 前後にする
+      // 中心を畫面のふちから内側へずらして、隠れる割合を GORILLA_HIDE 前後にする
       const inset = size * (0.5 - GORILLA_HIDE) + size * (Math.random() * 0.2 - 0.05);
       pts.push({ x, y, size, inset, edgeRot:rot, rot:rot + (Math.random() * 40 - 20) });
     }
@@ -945,7 +945,7 @@ gtag('config', 'G-41RSZLP1YQ');
         resNum.classList.remove('bump');
         replay(resNum, 'final');
         gl.classList.add('done');
-        over.classList.add('ready');   // 演出が終わったのでボタンを出す
+        over.classList.add('ready');   // 演出が終わったので按鈕を出す
       }
     };
     countUp = requestAnimationFrame(step);
@@ -985,7 +985,7 @@ gtag('config', 'G-41RSZLP1YQ');
     lanes[lane] = it;
   }
 
-  // ---------- タップ ----------
+  // ---------- 點擊 ----------
   function tap(it, px, py){
     if (it.done || state !== 'playing') return;
     it.done = true;
@@ -1025,29 +1025,29 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   }
 
-  // 「+Nゴリパワー！」と「Nコンボ！」（コンボが増えるほど大きく）
+  // 「+Nゴリパワー！」と「Nコンボ！」（コンボが增加ほど大きく）
   function showPop(gain){
     setPopGain('+' + fmt(gain) + 'ゴリパワー！');
     const pc = $('popCombo');
     pc.textContent = combo >= 2 ? combo + 'コンボ！' : '';
     pc.style.fontSize = Math.min(24 + combo * 2, 44) + 'px';
-    // 毎回ランダムに左右どちらかへ 6〜14度 傾ける
+    // 毎回隨機に左右どちらかへ 6〜14度 傾ける
     const tilt = (6 + Math.random() * 8) * (Math.random() < 0.5 ? -1 : 1);
     $('pop').style.setProperty('--tilt', tilt + 'deg');
     replay($('pop'), 'show');
   }
-  // 桁が増えても画面幅に収まるように文字の大きさを決める
+  // 桁が増えても畫面幅に収まるように文字の大きさを決める
   function setPopGain(text){
     const el = $('popGain');
     el.textContent = text;
-    const w = $('app').clientWidth * 0.84;   // 傾けても画面からはみ出さないよう少し狭めに
+    const w = $('app').clientWidth * 0.84;   // 傾けても畫面からはみ出さないよう少し狭めに
     el.style.fontSize = Math.min(46, w / (text.length * 0.82)) + 'px';
   }
   function hidePop(){ $('pop').classList.remove('show'); }
 
-  // タップした所からバナナが派手に飛び散る（コンボが増えるほど多く・大きく・遠くへ）
+  // 點擊した所からバナナが派手に飛び散る（コンボが增加ほど多く・大きく・遠くへ）
   function burst(cx, cy, c){
-    // 画面上の座標を、拡大縮小しているゲーム画面の中の座標に直す
+    // 畫面上の座標を、拡大縮小しているゲーム畫面の中の座標に直す
     const r = app.getBoundingClientRect();
     const x = (cx - r.left) / scale, y = (cy - r.top) / scale;
     const n = Math.min(BANANA_MAX, BANANA_BASE + (c - 1) * BANANA_PER_COMBO);
@@ -1098,7 +1098,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 
 
-  // 経過時間に応じた進み具合（0: 開始 → 1: 終了）。後半ほど大きく伸びる
+  // 経過時間に応じた進み具合（0: 開始 → 1: 結束）。後半ほど大きく伸びる
   function pace(){
     const p = Math.min(1, Math.max(0, 1 - timeLeft / TIME_LIMIT));
     return Math.pow(p, ACCEL_CURVE);
@@ -1112,7 +1112,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
-  // 結果画面と同じく、黒い背景・バナナ・外周のゴリラ・後光・ゴリパワー・最大コンボを描く
+  // 結果畫面と同じく、黒い背景・バナナ・外周のゴリラ・後光・ゴリパワー・最大コンボを描く
   function resultImageFile(){
     const css = getComputedStyle(document.documentElement);
     const col = k => css.getPropertyValue(k).trim();
@@ -1126,7 +1126,7 @@ gtag('config', 'G-41RSZLP1YQ');
     // 黒い背景
     g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
 
-    // バナナ（ゴリパワーに応じた数を散らす。結果画面で降っている量くらい）
+    // バナナ（ゴリパワーに応じた数を散らす。結果畫面で降っている量くらい）
     if (ready(bananaImg)){
       const n = Math.round(RAIN_MAX * Math.pow(effectRatio(power), RAIN_POW) * 2.4);
       for (let i = 0; i < n; i++){
@@ -1139,7 +1139,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
     }
 
-    // 外周のゴリラ（結果画面と同じ数・同じ隠れ方）
+    // 外周のゴリラ（結果畫面と同じ数・同じ隠れ方）
     if (ready(gorillaImg)){
       perimeterSlots(gorillasFor(power), W, H).forEach(p => {
         g.save();
@@ -1152,7 +1152,7 @@ gtag('config', 'G-41RSZLP1YQ');
       });
     }
 
-    // 後光（結果画面と同じ段階。数字の後ろ）
+    // 後光（結果畫面と同じ段階。数字の後ろ）
     const cx = W / 2, cy = 175, hs = 1.1;   // 後光の中心と大きさの倍率
     const stage = HALO_STAGES.filter(th => power >= th).length;
     // 放射状の光の筋: 中心から外へ透明になっていく
@@ -1215,7 +1215,7 @@ gtag('config', 'G-41RSZLP1YQ');
       g.restore();
     }
 
-    // 文字（結果画面と同じ順: 数字 → ゴリパワー → 最大nコンボ）
+    // 文字（結果畫面と同じ順: 数字 → ゴリパワー → 最大nコンボ）
     g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
     g.strokeStyle = col('--wood');
     const num = fmt(power);
@@ -1267,7 +1267,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);
@@ -1284,14 +1284,14 @@ gtag('config', 'G-41RSZLP1YQ');
       if (timeLeft <= 0){
         endGame();
       } else {
-        // 後半にかけて流れる速さと出てくる頻度を上げる（画面上の言葉もまとめて加速）
+        // 後半にかけて流れる速さと出てくる頻度を上げる（畫面上の言葉もまとめて加速）
         if (feverLeft > 0){
           feverLeft -= dt;
           if (feverLeft <= 0) endFever();
         }
         const k = pace();
         const mul = (1 + (SPEED_END - 1) * k) * (feverLeft > 0 ? FEVER_SPEED : 1);
-        // フィーバー中は流れが速いぶん出す間隔も縮めて、画面上の言葉の数が減らないようにする
+        // フィーバー中は流れが速いぶん出す間隔も縮めて、畫面上の言葉の数が減らないようにする
         spawnT -= dt * (feverLeft > 0 ? FEVER_SPEED : 1);
         if (spawnT <= 0){ spawn(); spawnT = SPAWN_SEC + (SPAWN_SEC_END - SPAWN_SEC) * k; }
         items = items.filter(it => {
@@ -1309,8 +1309,8 @@ gtag('config', 'G-41RSZLP1YQ');
     requestAnimationFrame(frame);
   }
 
-  // ---------- PCのキー操作 ----------
-  // 結果画面ではスペース / Enter で「もう1ウホ」
+  // ---------- PCの鍵操作 ----------
+  // 結果畫面ではスペース / Enter で「もう1ウホ」
   document.addEventListener('keydown', e => {
     if (state === 'over' && over.classList.contains('ready') && (e.key === ' ' || e.key === 'Enter') && !(e.target instanceof HTMLButtonElement)){
       e.preventDefault();
@@ -1319,16 +1319,16 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- iOS対策 ----------
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てタップが奪われるのを防ぐ（流れる言葉に限定）
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て點擊が奪われるのを防ぐ（流れる言葉に限定）
   const isTarget = t => t instanceof Element && !!t.closest('.w');
   document.addEventListener('touchstart', e => { if (isTarget(e.target)) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove',  e => { if (isTarget(e.target)) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => { if (isTarget(e.target)) e.preventDefault(); });
 
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
-  // ボタンは除外する（続けて押したときに click が消えないように。ボタンの拡大は touch-action で止まる）
+  // 按鈕は除外する（続けて押したときに click が消えないように。按鈕の拡大は touch-action で止まる）
   document.addEventListener('touchend', e => {
     if (e.target instanceof Element && e.target.closest('button')) return;
     const now = Date.now();

@@ -51,11 +51,11 @@ body{
 }
 #game{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto}
 canvas{display:block;touch-action:none}
-/* 分數：画面上部の中央。芝の上でも読めるように薄い影を付ける */
+/* 分數：畫面上部の中央。芝の上でも読めるように薄い影を付ける */
 #hud{position:absolute;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top,0px) + 10px);display:flex;flex-direction:column;align-items:center;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.5)}
 #hud .label{font-size:14px;font-weight:700;color:var(--fg);letter-spacing:.1em}
 #hud .num{font-size:44px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
-/* 結果：画面の中央に1枚のカードとしてまとめる */
+/* 結果：畫面の中央に1枚のカードとしてまとめる */
 #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--panel)}
 #over .card{width:min(300px,100%);padding:28px 24px 24px;border-radius:16px;background:var(--card);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;text-align:center}
 #over h2{margin:0;font-size:26px;font-weight:800}
@@ -79,19 +79,19 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
       <h2 id="overTitle">カップイン！</h2>
       <div class="score"><span class="num" id="result">0</span><span class="unit">球よけた</span></div>
       <div class="btns">
-        <button id="retry" class="primary">もう一回</button>
+        <button id="retry" class="primary">再來一次</button>
         <button id="share" class="secondary">分享</button>
       </div>
     </div>
   </div>
   <section class="howto" data-pos="top-left" hidden>
     <h2>玩法</h2>
-    <p>ゴルフのカップになって、打ち込まれるボールをよけ続けるゲームです。打たれた球がカップに入らず止まると、よけた数が1増えます。1球でも入ると終わりで、そこまでの数が結果になります。</p>
+    <p>ゴルフのカップになって、打ち込まれるボールをよけ続ける遊戲。打たれた球がカップに入らず止まると、よけた数が1増えます。1球でも入ると終わりで、そこまでの数が結果になります。</p>
     <h2>操作</h2>
-    <p>画面を拖曳すると、指を動かした分だけカップが動きます。指でカップを隠さずに操作できますが、最高速度があるので少し遅れてついてきます。PC はマウスの拖曳か矢印キーです。</p>
-    <h2>コツ</h2>
+    <p>畫面を拖曳すると、手手指を動かした分だけカップが動きます。手手指でカップを隠さずに操作できますが、最高速度があるので少し遅れてついてきます。PC は滑鼠の拖曳か矢印鍵です。</p>
+    <h2>訣竅</h2>
     <p>球はカップの少し先で止まる強さで打たれるので、打たれてから動きを変えると外れやすくなります。よけるほど先読みが強まり、打つ間隔も1.2秒から0.35秒まで縮みます。速い球は上を通っても落ちません。止まった球は剩餘、足元にゲージが出ると打ち直されます。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -120,10 +120,10 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   const CLOTH_ITER = 15;        // 布の拘束を解く回数（多いほど伸びにくい）
   const GAUGE_IN = 0.3;        // 打ち直す球の足元ゲージの内径
   const GAUGE_OUT = 0.42;      // 打ち直す球の足元ゲージの外径
-  const HOLE_MAX_SPEED = 7;    // カップが動ける最高速度（単位/秒）。指に遅れてついてくる
+  const HOLE_MAX_SPEED = 7;    // カップが動ける最高速度（単位/秒）。手手指に遅れてついてくる
   const HOLE_MARGIN = 0.46;    // カップの中心がグリーンの端に寄れる限界（カップの半径と同じ＝カップの縁がグリーンの端まで行ける）
   const HOLE_START_Z = 3;      // カップの初期位置（手前寄り）
-  const KEY_SPEED = 7;         // 矢印キーで動かすときの速さ（単位/秒）
+  const KEY_SPEED = 7;         // 矢印鍵で移動ときの速さ（単位/秒）
   const FRICTION = 3;          // ボールの減速（単位/秒²）
   const CAPTURE_SPEED = 3.2;   // この速さより遅い球がカップの上を通ると落ちる
   const OVERSHOOT = 1.0;       // CPUはカップのこの距離先で止まる強さで打つ
@@ -138,8 +138,8 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   const INTERVAL_START = 1.2;  // 最初の打つ間隔（秒）
   const INTERVAL_MIN = 0.35;   // 打つ間隔の下限（秒）
   const INTERVAL_STEP = 0.05;  // 1球よけるごとに縮む間隔（秒）
-  const PREDICT_STEP = 0.05;   // 1球よけるごとに増えるCPUの先読みの割合（最大1）
-  const SINK_TIME = 0.6;       // カップに入ってから結果画面までの時間（ゲーム内の秒。スロー中なので実際はもっと長い）
+  const PREDICT_STEP = 0.05;   // 1球よけるごとに增加CPUの先読みの割合（最大1）
+  const SINK_TIME = 0.6;       // カップに入ってから結果畫面までの時間（ゲーム内の秒。スロー中なので実際はもっと長い）
   const SLOW_SCALE = 0.25;     // カップインした瞬間からのスローモーションの速さ（1で通常）
   const SINK_GRAVITY = 60;     // カップの中に落ちる球にかかる重力（単位/秒²）
   const CUP_DEPTH = 0.8;       // カップの深さ
@@ -168,7 +168,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
 
   // ---------- 3D ----------
   const wrap = $('game');
-  // 分享画像に今の画面をそのまま使うため描画バッファを残す
+  // 分享画像に今の畫面をそのまま使うため描画バッファを残す
   const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   const cv = renderer.domElement;
@@ -253,7 +253,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   scene.add(cup);
 
   // ---------- カップに立てる旗（見た目だけで、球とは当たらない） ----------
-  // 竿：根元はカップに固定。先端はばねで真上に戻ろうとし、カップを急に動かすと慣性で傾いて揺れる
+  // 竿：根元はカップに固定。先端はばねで真上に戻ろうとし、カップを急に移動と慣性で傾いて揺れる
   // 布：質点を距離の拘束でつないだもの。重力と空気抵抗を受け、竿の動きに引きずられてなびく
   const pinMesh = new THREE.Mesh(
     // カップの底まで刺さっている分も含めた長さ
@@ -306,7 +306,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     if (o > maxO){ ox *= maxO / o; oz *= maxO / o; tip.x = bx + ox; tip.z = bz + oz; }
     pinDir.set(ox, Math.sqrt(PIN_LEN * PIN_LEN - ox * ox - oz * oz), oz).divideScalar(PIN_LEN);
 
-    // 布：位置の差から速度を出して動かす（空気抵抗で少しずつ減速）
+    // 布：位置の差から速度を出して移動（空気抵抗で少しずつ減速）
     const keep = 1 - CLOTH_AIR_DRAG, g = CLOTH_GRAVITY * DT * DT;
     for (const p of cp){
       if (p.fixed){ attach(p); continue; }
@@ -320,7 +320,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
         const dx = B.x - A.x, dy = B.y - A.y, dz = B.z - A.z;
         const len = Math.hypot(dx, dy, dz) || 1e-6;
         const f = (len - rest) / len * s;
-        // 竿に留めた質点は動かさず、相手側だけを動かす
+        // 竿に留めた質点は動かさず、對手側だけを移動
         const wa = A.fixed ? 0 : B.fixed ? 1 : 0.5;
         const wb = B.fixed ? 0 : A.fixed ? 1 : 0.5;
         A.x += dx * f * wa; A.y += dy * f * wa; A.z += dz * f * wa;
@@ -460,7 +460,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     for (let i = 0; i < N - 1; i++){ const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
     geo.setIndex(idx);
     const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: css('--ball'), map: trailTex, transparent:true, opacity:0, depthWrite:false, side:THREE.DoubleSide }));
-    mesh.frustumCulled = false;   // 頂点を毎フレーム書き換えるので、画面外判定の範囲は計算しない
+    mesh.frustumCulled = false;   // 頂点を毎フレーム書き換えるので、畫面外判定の範囲は計算しない
     mesh.visible = false;
     scene.add(mesh);
     // 位置の履歴（x, z の順。先頭がいちばん古い）。最初は全部いまの位置にして、帯が出ないようにしておく
@@ -499,7 +499,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     b.mesh.quaternion.premultiply(rollQ).normalize();
   }
 
-  // ---------- カメラ（縦長画面にグリーンとまわりの長い芝（球が出てくる所）が収まる距離を探す） ----------
+  // ---------- カメラ（縦長畫面にグリーンとまわりの長い芝（球が出てくる所）が収まる距離を探す） ----------
   const CAM_TARGET = new THREE.Vector3(0, 0, 0.6);
   const corners = [[-1,-1],[1,-1],[-1,1],[1,1]]
     .map(([sx, sz]) => new THREE.Vector3(sx * (GREEN_W / 2 + FRINGE_W), 0, sz * (GREEN_L / 2 + FRINGE_W)));
@@ -576,7 +576,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     timeScale = 1;
   }
 
-  // ---------- 入力（指の移動量だけカップの目標点を動かす。指でカップが隠れないように） ----------
+  // ---------- 入力（手手指の移動量だけカップの目標点を移動。手手指でカップが隠れないように） ----------
   const ray = new THREE.Raycaster();
   const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   const ndc = new THREE.Vector2();
@@ -609,7 +609,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   cv.addEventListener('pointerup', endDrag);
   cv.addEventListener('pointercancel', endDrag);
 
-  // PC用：矢印キーで移動、スペース/Enterでもう一回
+  // PC用：矢印鍵で移動、スペース/Enterで再來一次
   const keys = new Set();
   addEventListener('keydown', e => {
     if (e.key.startsWith('Arrow')){ keys.add(e.key); e.preventDefault(); }
@@ -617,12 +617,12 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   });
   addEventListener('keyup', e => keys.delete(e.key));
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (dragId !== null) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -661,7 +661,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   }
   function spawnBall(){
     const mesh = new THREE.Mesh(ballGeo, ballMat);
-    // くぼみの並びが球ごとに揃わないように、最初の向きをランダムにする
+    // くぼみの並びが球ごとに揃わないように、最初の向きを隨機にする
     mesh.quaternion.setFromEuler(new THREE.Euler(rand(0, Math.PI * 2), rand(0, Math.PI * 2), rand(0, Math.PI * 2)));
     // グリーンの外（まわりの長い芝）の4辺のどこかから出す（周囲の長さに対して均等に選ぶので、長い辺ほど出やすい）
     const hw = GREEN_W / 2 + SPAWN_OUT, hl = GREEN_L / 2 + SPAWN_OUT;
@@ -764,13 +764,13 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   }
 
   // ---------- 更新 ----------
-  // 旗はゲームの状態に関係なく（結果画面でも）揺れが収まるまで動かす
+  // 旗はゲームの状態に関係なく（結果畫面でも）揺れが収まるまで移動
   function step(){
     stepGame();
     stepFlag(hole.x, hole.z);
   }
   // カップインの後も（スローのまま）ほかの球は転がり続ける。
-  // 結果画面になったら通常の速さに戻り、球は転がり終わるまで動く（新しい球は出ない）
+  // 結果畫面になったら通常の速さに戻り、球は転がり結束まで動く（新しい球は出ない）
   function stepGame(){
     if (state === 'sinking'){
       sinkTimer += DT;
@@ -789,7 +789,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   }
 
   function stepPlayer(){
-    // キー操作
+    // 鍵操作
     let kx = 0, kz = 0;
     if (keys.has('ArrowLeft')) kx--;
     if (keys.has('ArrowRight')) kx++;
@@ -921,20 +921,20 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   }
   requestAnimationFrame(loop);
 
-  // ---------- 結果画面 ----------
+  // ---------- 結果畫面 ----------
   $('retry').addEventListener('pointerdown', e => e.stopPropagation());
   $('retry').addEventListener('click', reset);
 
   function shareText(){
     return avoided + '球よけた！\n' + location.href.split(/[?#]/)[0] + '\n#ホールインさせない';
   }
-  // カップインした後の3D画面の上に、よけた数を書き込んだ画像を作る。
-  // 文字は画面上部の中央（プレイ中の分數と同じ場所。カップやグリーンにかぶらない）に置く
+  // カップインした後の3D畫面の上に、よけた数を書き込んだ画像を作る。
+  // 文字は畫面上部の中央（プレイ中の分數と同じ場所。カップやグリーンにかぶらない）に置く
   function drawResultImage(){
     const c = document.createElement('canvas');
     c.width = cv.width; c.height = cv.height;
     const g = c.getContext('2d');
-    g.drawImage(cv, 0, 0);   // 描画バッファを残しているので、今の3D画面がそのまま写る
+    g.drawImage(cv, 0, 0);   // 描画バッファを残しているので、今の3D畫面がそのまま写る
     const k = cv.width / cv.clientWidth;   // CSSピクセル → 画像のピクセル
     const font = getComputedStyle(document.body).fontFamily;
     const num = String(avoided), unit = '球よけた';
@@ -976,7 +976,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);

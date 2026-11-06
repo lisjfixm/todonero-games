@@ -66,7 +66,7 @@ gtag('config', 'G-41RSZLP1YQ');
     width:min(100%, 52vh);margin:0 auto;   /* 正方形なので幅を決めれば高さも決まる */
   }
   canvas{display:block;width:100%;height:auto}
-  /* 対戦キャンバスだけ指の動きを奪う。トーナメント表は指でスクロールさせる */
+  /* 対戦キャンバスだけ手手指の動きを奪う。トーナメント表は手手指でスクロールさせる */
   #cv{touch-action:none}
 
   .panel{padding:14px 2px 0}
@@ -214,7 +214,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <section class="panel hidden" id="p-battle">
     <div id="stick" role="application" aria-label="移動スティック">
       <div id="stickBase"><div id="stickKnob"></div></div>
-      <p id="stickHint">拖曳して動かす</p>
+      <p id="stickHint">拖曳して移動</p>
     </div>
   </section>
 
@@ -222,12 +222,12 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <section class="howto" data-pos="none" hidden>
   <h2>玩法</h2>
-  <p>都道府県の形をしたコマをぶつけ合い、丸い土俵の外へはじき出す対戦ゲームです。47都道府県から1つ選ぶとトーナメントが始まり、決賽まで勝ち抜けば優勝で、選択画面のその県に星が付きます。相手が落ちれば勝ちで、自分が落ちるか同時に落ちると負けです。組み合わせによっては不戦勝もあります。</p>
+  <p>都道府県の形をしたコマをぶつけ合い、丸い土俵の外へはじき出す対戦遊戲。47都道府県から1つ選ぶとトーナメントが始まり、決賽まで贏抜けば優勝で、選択畫面のその県に星が付きます。對手が落ちれば贏で、自己が落ちるか同時に落ちると輸です。組み合わせによっては不戦勝もあります。</p>
   <h2>操作</h2>
-  <p>対戦中は土俵の下の枠を押すと、その場所にスティックが出ます。拖曳した向きへ、倒した量に応じてコマが加速します。PC はマウスの拖曳のほか、矢印キーでも動かせます。</p>
-  <h2>コツ</h2>
-  <p>コマの大きさは実際の面積に比例し、小さい県ほど速く回ります。土俵はくぼんでいて、ふちに近いほど強く中心へ引き戻されます。ぶつかると回転の勢いで横へはじかれるので、相手をふちへ追い込んでから当てましょう。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p>対戦中は土俵の下の枠を按と、その場所にスティックが出ます。拖曳した向きへ、倒した量に応じてコマが加速します。PC は滑鼠の拖曳のほか、矢印鍵でも動かせます。</p>
+  <h2>訣竅</h2>
+  <p>コマの大きさは実際の面積に比例し、小さい県ほど速く回ります。土俵はくぼんでいて、ふちに近いほど強く中心へ引き戻されます。ぶつかると回転の勢いで横へはじかれるので、對手をふちへ追い込んでから当てましょう。</p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 </div>
 
@@ -262,18 +262,18 @@ const TUNE = {
   physics: {
     stepHz:       240,  // 物理の刻み（1秒あたりの計算回数）
     massPerArea:  110,  // 面積が中央の県の質量 = その面積(px²) / この値
-    // 質量を見た目の大きさから切り離す指数。
-    //   1.0 … 質量 ∝ 画面上の面積（実面積どおり。北海道は香川の44.4倍）
+    // 質量を見た目の大きさから切り放開手手指数。
+    //   1.0 … 質量 ∝ 畫面上の面積（実面積どおり。北海道は香川の44.4倍）
     //   0.0 … 全県が同じ質量（体格差は当たり判定の広さだけで出る）
     // 面積が中央の県の質量はどの値でも変わらない
     massExp:      0.1,
   },
 
-  // 大きさ ── 画面上の面積を実面積に比例させる。
+  // 大きさ ── 畫面上の面積を実面積に比例させる。
   // areaExp を 1 にすると実物どおりの比率になるが、北海道が土俵を埋めてしまう。
-  // 0.39 は実面積44倍の差を画面上4.4倍に圧縮する（従来の対数圧縮と同じ比率）。
+  // 0.39 は実面積44倍の差を畫面上4.4倍に圧縮する（従来の対数圧縮と同じ比率）。
   size: {
-    areaExp: 1.0,  // 画面上の面積 ∝ 実面積^areaExp
+    areaExp: 1.0,  // 畫面上の面積 ∝ 実面積^areaExp
     medianR: 26,    // 外接半径の中央値がこの値(px)になるよう全体を正規化
   },
 
@@ -294,7 +294,7 @@ const TUNE = {
     maxRate: 22 * 2.2,  // ぶつかった瞬間まで含めた上限。これも spinFactor 倍される
 
     // 形の向きが進む速さ。角速度 w（弾き飛ばしの源）は変えずに、
-    // 見た目の回転だけを落とす。当たり判定も同じ向きで回るので
+    // 見た目の回転だけを掉落。当たり判定も同じ向きで回るので
     // 見えている形とずれることはない。
     viewScale: 2.72, // 1 で角速度どおり、0 で止まる。今は毎秒1.3回転
   },
@@ -336,7 +336,7 @@ const TUNE = {
     slowScale:   0.1, // スロー中の再生速度
   },
 
-  start: { offset: 95 },   // 開始時に中心から左往右離す距離
+  start: { offset: 95 },   // 開始時に中心から左往右放開距離
 };
 
 
@@ -355,18 +355,18 @@ const COL = {
   spark:      "#FFC42E",
   indigo:     "#4B3BB5",
   piece:      "#3FC457",   // 対戦中のコマの色（全県共通・単色）
-  button:     "#4B3BB5",   // 押せるもの（都道府県えらびのボタン）
+  button:     "#4B3BB5",   // 押せるもの（都道府県えらびの按鈕）
   chip:       "#D9D5E6",   // 押せない表示だけのもの（トーナメント表のチップ）
   chipText:   "#4A4664",   // 上のチップの文字色
-  route:      "#FFC42E",   // トーナメント表で勝ち上がった経路（自分）
-  routeOther: "#A8A3C4",   // 同上（自分以外）
+  route:      "#FFC42E",   // トーナメント表で贏上がった経路（自己）
+  routeOther: "#A8A3C4",   // 同上（自己以外）
   gold:       "#FFC42E",
   red:        "#EF3E44",
   green:      "#3FC457",
   inkMid:     "#6E6A8A",
-  nameSelf:   "#FFFFFF",   // 対戦中の県名（自分）
+  nameSelf:   "#FFFFFF",   // 対戦中の県名（自己）
   nameCpu:    "#FF4A4A",   // 対戦中の県名（CPU）
-  onDark:     "#F2F0F8",   // 最終結果画面の暗い背景の上に置く文字
+  onDark:     "#F2F0F8",   // 最終結果畫面の暗い背景の上に置く文字
   onDarkDim:  "#B6B1CC",   // 同上、控えめなほう
 };
 
@@ -555,8 +555,8 @@ const shuffle = arr => {
   return arr;
 };
 
-// 実面積(km²) → 画面上の大きさ。
-// scale は形の拡大率で、形は面積1に正規化してあるので画面上の面積は scale² になる。
+// 実面積(km²) → 畫面上の大きさ。
+// scale は形の拡大率で、形は面積1に正規化してあるので畫面上の面積は scale² になる。
 // r は重心からいちばん遠い頂点までの距離。円ではなく、粗い判定と表示にだけ使う。
 function sizeKens(){
   const S = TUNE.size;
@@ -565,7 +565,7 @@ function sizeKens(){
   const f = S.medianR / rs[rs.length >> 1];
   KENS.forEach(k => {
     k.scale    = k.s0 * f;
-    k.polyArea = k.scale * k.scale;              // 画面上の面積(px²)
+    k.polyArea = k.scale * k.scale;              // 畫面上の面積(px²)
     k.r        = KEN_BODY[k.name].rb * k.scale;  // 外接半径(px)
   });
 
@@ -579,7 +579,7 @@ function sizeKens(){
   // 大きさによる機動力の差。基準の取り方が重要。
   //   回転は「いちばん大きい県」を 1.0 にして、小さい県ほど速く轉動（往上伸ばす）
   //   移動は「いちばん小さい県」を 1.0 にして、大きい県ほど鈍くする（往下伸ばす）
-  // 移動を 1.0 より往上伸ばすと、加速が引き寄せに勝って自分でふちを越えてしまう
+  // 移動を 1.0 より往上伸ばすと、加速が引き寄せに勝って自己でふちを越えてしまう
   const areas = KENS.map(k => k.polyArea);
   const aMin = Math.min(...areas), aMax = Math.max(...areas);
   const H = TUNE.handling;
@@ -941,7 +941,7 @@ function buildTournament(myIndex){
 
   const first = new Array(SLOTS).fill(null);
 
-  // 自分は必ず相手のいる組に入れる。第一輪が不戦勝になることはない
+  // 自己は必ず對手のいる組に入れる。第一輪が不戦勝になることはない
   const myPair = fullPairs[Math.floor(Math.random()*fullPairs.length)];
   first[myPair*2 + (Math.random() < 0.5 ? 0 : 1)] = myIndex;
 
@@ -959,14 +959,14 @@ function buildTournament(myIndex){
   return { rounds, me: myIndex, round: 0, match: 0 };
 }
 
-// 自分の今の試合番号（その回戦で自分がいるペア）
+// 自己の今の試合番号（その回戦で自己がいるペア）
 function myMatch(t){
   const cur = t.rounds[t.round];
   const i = cur.indexOf(t.me);
   return i < 0 ? -1 : (i >> 1);
 }
 
-// 自分の試合以外をランダムに決めて、自分の対戦相手を返す
+// 自己の試合以外を隨機に決めて、自己の対戦對手を返す
 function resolveRound(t){
   const cur = t.rounds[t.round], next = t.rounds[t.round+1];
   const mine = myMatch(t);
@@ -977,7 +977,7 @@ function resolveRound(t){
   }
   t.match = mine;
   const i = cur.indexOf(t.me);
-  return cur[i ^ 1];    // 隣のスロットが相手（null なら不戦勝）
+  return cur[i ^ 1];    // 隣のスロットが對手（null なら不戦勝）
 }
 
 /* ── トーナメント表の描画 ─────────────────────────────── */
@@ -1013,7 +1013,7 @@ function drawBracket(){
     }
   }
 
-  // 勝ち上がりの経路。決まっている試合はすべて拉
+  // 贏上がりの経路。決まっている試合はすべて拉
   const routeSeg = (r, m) => {
     const win = tour.rounds[r+1][m];
     if (win === null) return null;
@@ -1038,7 +1038,7 @@ function drawBracket(){
     for (let m=0; m<(SLOTS >> r)/2; m++){
       const s = routeSeg(r, m);
       if (!s) continue;
-      if (s.win === tour.me){ mine.push(s); continue; }   // 自分は上に重ねて描く
+      if (s.win === tour.me){ mine.push(s); continue; }   // 自己は上に重ねて描く
       strokeSeg(s);
     }
   }
@@ -1070,7 +1070,7 @@ function drawBracket(){
   }
   BX.textAlign = "left"; BX.textBaseline = "alphabetic";
 
-  // 自分の試合が見える位置までスクロール
+  // 自己の試合が見える位置までスクロール
   const box = el("bracketBox");
   const my = tour.rounds[tour.round].indexOf(tour.me);
   if (my >= 0){
@@ -1080,7 +1080,7 @@ function drawBracket(){
 }
 
 /* ══════════════════════════════════════════════════════════
-   画面遷移
+   畫面遷移
    ══════════════════════════════════════════════════════════ */
 const P = { select: el("p-select"), bracket: el("p-bracket"), battle: el("p-battle") };
 function show(name){
@@ -1091,9 +1091,9 @@ function show(name){
 }
 
 /* ── 1. 都道府県えらび ───────────────────────────────── */
-// ボタン用に、県の形を正方形の viewBox に収めた SVG を作る。
+// 按鈕用に、県の形を正方形の viewBox に収めた SVG を作る。
 // 一覧では見分けやすさを優先して、県ごとに枠いっぱいまで拡大する
-// （実際の大きさの比率は対戦画面のほうで表現される）
+// （実際の大きさの比率は対戦畫面のほうで表現される）
 function kenSvg(name){
   const a = SHAPES[name];
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -1113,10 +1113,10 @@ function kenSvg(name){
        + '<polygon points="' + pts.join(" ") + '" fill="currentColor"/></svg>';
 }
 
-/* ── 優勝回数の記録 ─────────────────────────────────────
-   自分で操作して優勝した県だけを数える。
+/* ── 優勝回数の紀錄 ─────────────────────────────────────
+   自己で操作して優勝した県だけを数える。
    保存できない環境（プライベートモードなど）でも落ちないよう、
-   失敗したらそのセッション限りの記録として動かす。 */
+   失敗したらそのセッション限りの紀錄として移動。 */
 const WIN_KEY = "kenbattle.champions";
 let WINS = {};
 try {
@@ -1185,13 +1185,13 @@ function openRound(){
   const tag = `<span class="roundTag">${ROUND_NAMES[tour.round]}</span>`;
   if (nextFoe === null){
     el("nextLine").innerHTML = `${tag} ${myName} は不戦勝`;
-    el("goBattle").textContent = "勝ち上がる";
+    el("goBattle").textContent = "贏上がる";
   } else {
     el("nextLine").innerHTML =
       `${tag} ${myName} <span class="vs">VS</span> ${KENS[nextFoe].name}`;
     el("goBattle").textContent = "対戦する";
   }
-  el("goBattle").onclick = onGoBattle;   // 決着画面で差し替わったぶんを戻す
+  el("goBattle").onclick = onGoBattle;   // 決着畫面で差し替わったぶんを戻す
 }
 
 function drawBracketIdle(){
@@ -1227,7 +1227,7 @@ function onGoBattle(){
 el("goBattle").onclick = onGoBattle;
 el("restart").onclick = () => { buildKenList(); show("select"); drawSelectIdle(); };
 
-// 勝ち上がり／敗退の処理
+// 贏上がり／敗退の処理
 function advance(won){
   const t = tour;
   const cur = t.rounds[t.round], next = t.rounds[t.round+1];
@@ -1236,7 +1236,7 @@ function advance(won){
   next[t.match] = won ? t.me : foe;
   t.round++;
   if (!won){
-    // 自分が抜けた後の剩餘はランダムで埋める
+    // 自己が抜けた後の剩餘は隨機で埋める
     fillRest(t);
     drawBracket();
     showOutcome(false);
@@ -1275,7 +1275,7 @@ function showOutcome(champion){
 
 function drawBracketOutcome(champion){
   drawStage();
-  // 明るい暗幕だと金色が背景に沈むので、この画面だけ暗くする
+  // 明るい暗幕だと金色が背景に沈むので、この畫面だけ暗くする
   X.fillStyle = "rgba(38,34,58,.82)"; X.fillRect(0,0,W,H);
 
   const winner = KENS[tour.rounds[ROUNDS][0]];
@@ -1371,7 +1371,7 @@ let iWon = false;
 function finish(){
   over = true;
   slowTimer = TUNE.finish.slowSeconds;
-  iWon = !me.dead;                      // 相打ちは負け扱い
+  iWon = !me.dead;                      // 相打ちは輸扱い
   const winner = iWon ? me : cpu;
   spawnWin(winner.x, winner.y);
 }
@@ -1412,7 +1412,7 @@ function syncInput(){
   input.x = ix; input.y = iy;
 }
 
-/* キーボード */
+/* 鍵ボード */
 const KEYMAP = { ArrowLeft:"left", ArrowRight:"right", ArrowUp:"up", ArrowDown:"down" };
 addEventListener("keydown", e => {
   const k = KEYMAP[e.key];

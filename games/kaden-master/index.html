@@ -74,7 +74,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   button.primary{background:var(--fg);color:var(--panel)}
   button:focus-visible{outline:3px solid var(--water);outline-offset:2px}
-  .howto-open{min-height:0}   /* 上の button の min-height を「玩法」ボタンに効かせない */
+  .howto-open{min-height:0}   /* 上の button の min-height を「玩法」按鈕に効かせない */
   #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
   #share-view .panel{background:var(--panel);border-radius:12px;padding:16px;width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y}
   #share-img{display:block;width:100%;height:auto;border-radius:6px}
@@ -95,7 +95,7 @@ gtag('config', 'G-41RSZLP1YQ');
       <div id="r-hits"></div>
       <div class="btns">
         <button id="share" type="button">分享</button>
-        <button id="again" type="button" class="primary">もう一回</button>
+        <button id="again" type="button" class="primary">再來一次</button>
       </div>
     </div>
   </div>
@@ -108,12 +108,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <section class="howto" hidden data-pos="bottom-left">
     <h2>玩法</h2>
-    <p>調子の悪い家電を叩いて直すタイムアタックです。テレビ、ラジオ、扇風機、冷蔵庫、洗濯機の5台を順に直し、全部直すまでの時間と叩いた回数が結果に出ます。家電にはそれぞれ直るツボがランダムな場所に隠れていて、そこを叩くと直ります。ページを開くとすぐに計測が始まります。</p>
+    <p>調子の悪い家電を叩いて直すタイムアタックです。テレビ、ラジオ、扇風機、冷蔵庫、洗濯機の5台を順に直し、全部直すまでの時間と叩いた回数が結果に出ます。家電にはそれぞれ直るツボが隨機な場所に隠れていて、そこを叩くと直ります。ページを開くとすぐに計測が始まります。</p>
     <h2>操作</h2>
-    <p>家電の本体を點擊叩きます。PC ではクリックです。結果画面では、スペースキーか Enter キーでもやり直せます。</p>
-    <h2>コツ</h2>
+    <p>家電の本体を點擊叩きます。PC では點擊です。結果畫面では、スペース鍵か Enter 鍵でもやり直せます。</p>
+    <h2>訣竅</h2>
     <p>ツボに近い所を叩くほど、直後の約0.8秒だけ症状が軽くなり、そのあと元に戻ります。遠すぎると全く変わりません。症状の軽くなり方を比べて、ツボの場所を絞り込んでください。叩いた回数はタイムに響かないので、ためらわずに叩くほうが速く終わります。後の家電ほどツボは小さくなります。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script>
@@ -122,7 +122,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const $ = id => document.getElementById(id);
 
   // ---------- 定数 ----------
-  const W = 360, H = 640;          // 論理解像度（この大きさで描いて画面に合わせて拡大縮小する）
+  const W = 360, H = 640;          // 論理解像度（この大きさで描いて畫面に合わせて拡大縮小する）
   const CX = 180, CY = 350;        // 家電の中心位置（論理px）
   const HINT_RANGE = 170;          // ツボからこの距離（論理px）より遠いと、叩いても全く調子が良くならない
   const HINT_POWER = 0.85;         // ツボのすぐ近くを叩いたとき、調子の悪さをどこまで減らすか（0〜1）
@@ -145,9 +145,9 @@ gtag('config', 'G-41RSZLP1YQ');
   };
 
   // ---------- 演出の定数 ----------
-  const CAM_SHAKE = 8;             // 叩いたときの画面揺れ（論理px）。ツボに近いほど最大でこの2倍
-  const CAM_SHAKE_FIX = 26;        // 直ったときの画面揺れ（論理px）
-  const CAM_DECAY = 9;             // 画面揺れが収まる速さ（1/秒）
+  const CAM_SHAKE = 8;             // 叩いたときの畫面揺れ（論理px）。ツボに近いほど最大でこの2倍
+  const CAM_SHAKE_FIX = 26;        // 直ったときの畫面揺れ（論理px）
+  const CAM_DECAY = 9;             // 畫面揺れが収まる速さ（1/秒）
   const SQ_K = 320, SQ_D = 14;     // 叩いたときに家電がつぶれて返回ばねの強さ・減衰
   const ENTER_TIME = 0.7;          // 次の家電が上から落ちてくる時間（秒）
   const SPARKS = 14;               // 1回叩いたときの火花の数（ツボに近いほど最大でこの3倍）
@@ -168,7 +168,7 @@ gtag('config', 'G-41RSZLP1YQ');
     drop: 0.6,       // 水しぶき
     rays: 0.3,       // 直った家電の後ろの後光
     focus: 0.35,     // 直った瞬間の集中線
-    flash: 0.4,      // 画面全体のフラッシュの最大の濃さ
+    flash: 0.4,      // 畫面全体のフラッシュの最大の濃さ
   };
   const MAX_PARTS = 1500;          // パーティクルの上限（重くならないように）
 
@@ -274,7 +274,7 @@ gtag('config', 'G-41RSZLP1YQ');
         ctx.fillRect(-110, 108, 30, 22);
         ctx.fillRect(80, 108, 30, 22);
         rr(-140, -120, 280, 230, 18); fillStroke(C.body);
-        // 画面
+        // 畫面
         ctx.save();
         rr(-124, -100, 180, 170, 22); ctx.clip();
         ctx.fillStyle = C.sky; ctx.fillRect(-124, -100, 180, 170);
@@ -435,7 +435,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = a => a[Math.floor(Math.random() * a.length)];
 
-  // ツボを家電の上のランダムな位置に置く（縁から SPOT_MARGIN 以上内側）
+  // ツボを家電の上の隨機な位置に置く（縁から SPOT_MARGIN 以上内側）
   function pickSpot(ap){
     const m = SPOT_MARGIN;
     for (let i = 0; i < 5000; i++){
@@ -444,7 +444,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     return { x: 0, y: 0 };
   }
-  // 家電の上のランダムな点（煙・電撃を出す位置）
+  // 家電の上の隨機な点（煙・電撃を出す位置）
   function randomInside(ap){
     for (let i = 0; i < 40; i++){
       const x = rand(-ap.hw, ap.hw), y = rand(ap.top, ap.bot);
@@ -651,7 +651,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   });
 
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     if (e.target instanceof Element && e.target.closest('#share-view')) return;
@@ -692,7 +692,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 分享シートが無い・使えない環境：文面をコピーし、分享される内容を画面に出す
+    // 分享シートが無い・使えない環境：文面をコピーし、分享される内容を畫面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -955,7 +955,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     ctx.restore();
 
-    // 画面全体のフラッシュ
+    // 畫面全体のフラッシュ
     if (flash > 0){
       ctx.globalAlpha = FX_ALPHA.flash * Math.min(1, flash);
       ctx.fillStyle = C.flash;

@@ -34,7 +34,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>塗鴉相撲</title>
-<meta name="description" content="描いた手足で相手を押し出す相撲">
+<meta name="description" content="描いた手足で對手を押し出す相撲">
 <style>
   :root{ --ink:#23262b; --player:#e0413a; --cpu:#3b6ec7; --ground:#2b2f36; --howto-bg:#23262b; --howto-fg:#fff; }
   *{box-sizing:border-box}
@@ -52,12 +52,12 @@ gtag('config', 'G-41RSZLP1YQ');
 <canvas id="pad" width="300" height="180"></canvas>
 <section class="howto" data-pos="top-right" hidden>
   <h2>玩法</h2>
-  <p>手足を描いた人形を CPU とぶつけ合い、相手を土俵から落とす相撲ゲームです。勝つと連勝数が増えて次の土俵へ進み、負けると連勝が途切れて同じ土俵で重新開始ます。土俵は平ら、中央が高い、相手側が一段高い、滑る、細かい凹凸、シーソーの6種類です。</p>
+  <p>手足を描いた人形を CPU とぶつけ合い、對手を土俵から掉落相撲遊戲。勝つと連勝数が増えて次の土俵へ進み、輸ると連勝が途切れて同じ土俵で重新開始ます。土俵は平ら、中央が高い、對手側が一段高い、滑る、細かい凹凸、シーソーの6種類です。</p>
   <h2>操作</h2>
-  <p>下の白い枠に線を拉と、描き始めに近い肩か腰に手足が付きます。中央の点線より右なら手前、左なら奥の手足になるので、肩と腰に2本ずつ描けます。線を描くと取組が始まり、掛け声の間は構えて待ちます。取組中も描き直せます。PC ではマウスで描けます。</p>
-  <h2>コツ</h2>
-  <p>手足は常に相手の方へ向かって回り続けます。体の重さは線の長さに関係なく一定なので、長く描いても重くはなりません。CPU は回転が遅めですが、2.5秒ごとに形を変えてくるので、土俵の形に合わせて描き直しましょう。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p>下の白い枠に線を拉と、描き始めに近い肩か腰に手足が付きます。中央の点線より右なら手前、左なら奥の手足になるので、肩と腰に2本ずつ描けます。線を描くと取組が始まり、掛け声の間は構えて待ちます。取組中も描き直せます。PC では滑鼠で描けます。</p>
+  <h2>訣竅</h2>
+  <p>手足は常に對手の方へ向かって回り続けます。体の重さは線の長さに関係なく一定なので、長く描いても重くはなりません。CPU は回転が遅めですが、2.5秒ごとに形を変えてくるので、土俵の形に合わせて描き直しましょう。</p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 
 <script>
@@ -72,13 +72,13 @@ const E_BODY = 0.05;    // 体同士の反発
 const MU_BODY = 0.5;    // 体同士の摩擦
 const DT = 1 / 240;
 const SCALE = 0.56;     // パッド座標 → ワールド座標
-const VIEW_W = 700;     // 画面に映る横幅（ワールド座標）。土俵の幅に関係なく固定（落ちたキャラも映る）
+const VIEW_W = 700;     // 畫面に映る横幅（ワールド座標）。土俵の幅に関係なく固定（落ちたキャラも映る）
 const CPU_SPEED = 0.7;  // CPUの回転上限の倍率（強さ調整）
 const CPU_DELAY = 2.5;  // CPUがポーズを持ち替える間隔（秒）
 const READY_TIME = 2.2;  // 「はっけよーい」で構えている時間（秒）
 const SLOW_RATE = 0.25; // 決着後のスロー再生の速さ
 const SLOW_TIME = 0.25; // スロー再生する長さ（ゲーム内秒。実時間では SLOW_TIME / SLOW_RATE = 1秒）
-const RING_L = 0, RING_R = 336, RING_Y = 300;   // 土俵（この外に落ちたら負け）
+const RING_L = 0, RING_R = 336, RING_Y = 300;   // 土俵（この外に落ちたら輸）
 const RING_C = (RING_L + RING_R) / 2;
 const BUOY = 1.8, DRAG = 4;                       // 水の浮力・抵抗
 const START_P = RING_C - 62, START_C = RING_C + 62;
@@ -94,7 +94,7 @@ const TSTEP = 2, X0 = -800, X1 = 1400;
 const STAGES = [
   { f: () => 0 },
   { f: x => -36 * Math.max(0, 1 - Math.abs(x - RING_C) / 150) },   // 中央がゆるやかに高い
-  { f: x => x > RING_C ? -45 : 0 },                                // 相手側が一段高い
+  { f: x => x > RING_C ? -45 : 0 },                                // 對手側が一段高い
   { f: () => 0, mu: 0.25 },                                        // 滑る
   { f: x => -8 * (1 - Math.cos(x / 22 * Math.PI * 2)) },           // 細かい凹凸
   { f: () => 0, seesaw: true },                                    // 中央のヒンジで傾くシーソー
@@ -174,7 +174,7 @@ function makeBody(limbs, color, facing){
   for (const [jointPt, limb] of [[SHOULDER, limbs.arm], [HIP, limbs.leg]]){
     const o = tf(jointPt);
     const rel = p => ({ x: (p.x - jointPt.x) * SCALE * facing, y: (p.y - jointPt.y) * SCALE });
-    // 手前（front）と奥（back）を別々の手足として持つ
+    // 手前（front）と奥（back）を各自の手足として持つ
     const frontLines = (limb.front ? [limb.front] : []).map(st => st.map(rel));
     const backLines = (limb.back ? [limb.back] : []).map(st => st.map(rel));
     let pts = [];
@@ -544,7 +544,7 @@ function render(){
   rctx.save();
   rctx.scale(dpr, dpr);
   const cw = W / dpr, ch = H / dpr;
-  if (streak > 0){                                 // 勝ち数（2つ以上で連勝表示）
+  if (streak > 0){                                 // 贏数（2つ以上で連勝表示）
     const label = streak === 1 ? '1勝' : streak + ' 連勝中';
     rctx.font = 'bold 16px sans-serif'; rctx.textAlign = 'left'; rctx.textBaseline = 'alphabetic';
     rctx.lineWidth = 3; rctx.strokeStyle = 'rgba(0,0,0,0.45)'; rctx.fillStyle = '#fff';
@@ -565,7 +565,7 @@ function render(){
     rctx.textAlign = 'center'; rctx.textBaseline = 'middle';
     rctx.fillStyle = result === 'WIN' ? css('--player') : css('--cpu');
     rctx.font = 'bold 34px sans-serif';
-    rctx.fillText(result === 'WIN' ? '勝ち' : '負け', cw / 2, py + 48);
+    rctx.fillText(result === 'WIN' ? '贏' : '輸', cw / 2, py + 48);
     if (result === 'WIN'){
       rctx.fillStyle = css('--ink'); rctx.font = 'bold 18px sans-serif';
       rctx.fillText(streak === 1 ? '1勝' : streak + ' 連勝中', cw / 2, py + 82);
@@ -584,7 +584,7 @@ function render(){
   }
   rctx.restore();
 }
-function out(b){ return b.y > RING_Y + 120; }   // 勝敗は高さだけで判定（土俵から落ちたら負け）
+function out(b){ return b.y > RING_Y + 120; }   // 勝敗は高さだけで判定（土俵から落ちたら輸）
 function frame(ts){
   if (!lastTs) lastTs = ts;
   // 決着後はスロー再生（SLOW_RATE 倍速）で少し見せてからダイアログ
@@ -600,7 +600,7 @@ function frame(ts){
   }
   acc += dtReal * rate;
   while (acc >= DT){
-    // 常に相手の方を向いて押す（乗り越えて反対側に出ても向き直る）
+    // 常に對手の方を向いて按（乗り越えて反対側に出ても向き直る）
     stepSeesaw(DT);
     face(player, cpu); face(cpu, player);
     stepBody(player, DT); stepBody(cpu, DT);
@@ -689,10 +689,10 @@ function shareImage(){
     });
     return;
   }
-  // 3) 分享ダイアログが無い環境（Firefox など）は X の投稿画面を開く
+  // 3) 分享ダイアログが無い環境（Firefox など）は X の投稿畫面を開く
   copyImage().then(openIntent).catch(() => { showImage(dataUrl); openIntent(); });
 }
-// ページ遷移せずに画像を重ねて表示（點擊關閉。長押し／右クリックで保存）
+// ページ遷移せずに画像を重ねて表示（點擊關閉。長押し／右點擊で保存）
 function showImage(dataUrl){
   const box = document.createElement('div');
   box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10';

@@ -108,13 +108,13 @@ gtag('config', 'G-41RSZLP1YQ');
 </div>
 
 <div id="bottom">
-  <button id="btn-go" class="primary">決定</button>
+  <button id="btn-go" class="primary">確定</button>
 </div>
 
 <div id="grip" class="panel hidden">
   <button data-hand="open">パー</button>
   <button data-hand="fist">グー</button>
-  <button data-hand="point">指差し</button>
+  <button data-hand="point">手手指差し</button>
 </div>
 
 <div id="go">GO</div>
@@ -130,12 +130,12 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <section class="howto" hidden data-pos="none">
   <h2>玩法</h2>
-  <p>人間にポーズをとらせ、コマのように回して戦わせるゲームです。「決定」を押すと、ランダムなポーズのCPUとすり鉢状のステージで対戦します。相手を場外へ出すか、回転を尽きさせれば勝ちです。60秒たつと回転の多いほうが勝ちます。</p>
+  <p>人間にポーズをとらせ、コマのように回して戦わせる遊戲。「確定」を按と、隨機なポーズのCPUとすり鉢状のステージで対戦します。對手を場外へ出すか、回転を尽きさせれば贏です。60秒たつと回転の多いほうが贏ます。</p>
   <h2>操作</h2>
-  <p>ポーズは関節の印を拖曳して作ります。胴の印を選ぶと全身を轉動リングが出ます。何もない所の拖曳で視点が回り、右上のメニューからリセットやコードでの分享ができます。対戦中は左下のパッドで移動し、スピンのボタンで回転を上乗せできます。使えるのは3秒に1回です。PC では矢印キーか WASD とスペースキーです。</p>
-  <h2>コツ</h2>
+  <p>ポーズは関節の印を拖曳して作ります。胴の印を選ぶと全身を轉動リングが出ます。何もない所の拖曳で視点が回り、右上のメニューからリセットやコードでの分享ができます。対戦中は左下のパッドで移動し、スピンの按鈕で回転を上乗せできます。使えるのは3秒に1回です。PC では矢印鍵か WASD とスペース鍵です。</p>
+  <h2>訣竅</h2>
   <p>手足を広げると当てたときの力は増しますが、回転は早く減ります。重心が軸からずれると外へ流されやすく、接地点がずれると回転が減りやすくなります。速く動きすぎても回転を失います。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -164,11 +164,11 @@ const TUNE = {
   // --- カメラ(自動フレーミング) ---
   camPad      : 0.40,  // ステージの外に足す余白(m)
   camBodyH    : 1.80,  // 人の背丈(縦方向の余裕に使う)
-  camMargin   : 1.06,  // 画面いっぱいに対する余裕
+  camMargin   : 1.06,  // 畫面いっぱいに対する余裕
   camMin      : 4.50,  // 寄れる限界(m)
   camMax      : 22.0,  // 引ける限界(m)
   camHeight   : 0.70,  // 注視点の高さ(m)
-  camFov      : 42,    // 横長画面での画角。縦長では自動で広げる
+  camFov      : 42,    // 横長畫面での画角。縦長では自動で広げる
   camFovMax   : 70,    // 広げる上限
 
   // --- 発射演出 ---
@@ -200,7 +200,7 @@ const TUNE = {
   tiltMax     : 0.22,  // 見た目の傾きの最大(rad)
 
   // --- 衝突 ---
-  hitPower    : 0.082, // 弾き飛ばしの強さ(相手の 回転×リーチ に掛かる)
+  hitPower    : 0.082, // 弾き飛ばしの強さ(對手の 回転×リーチ に掛かる)
   hitCap      : 120.0,  // 1回の衝突で受ける弾き速度の上限(m/s)
   hitTangent  : 0.55,  // 弾き飛ばしのうち横向き成分の割合
   hitDamage   : 0.030, // 衝突で失う回転量の係数
@@ -232,7 +232,7 @@ const TUNE = {
   gravity     : 12.0,   // 場外に落ちるときの重力
 
   // --- ポーズ操作 ---
-  ikChain     : 3,     // IK で一緒に動かす親関節の数(2 なら 手→前腕→上腕)
+  ikChain     : 3,     // IK で一緒に移動親関節の数(2 なら 手→前腕→上腕)
   ikIters     : 6,     // IK(CCD)の反復回数
   gizmoR      : 0.46,  // 全身回転ギズモ(リング)の半径
   handleSize  : 0.0525, // 関節ハンドルの半径(m)
@@ -240,7 +240,7 @@ const TUNE = {
 
   // --- 決着 ---
   spinOut     : 5.00,  // これ以下の回転になるとスピンアウト
-  timeLimit   : 60.0,  // 時間切れ(秒) 回転が多い方の勝ち
+  timeLimit   : 60.0,  // 時間切れ(秒) 回転が多い方の贏
 };
 
 /* 体の各部位: [重さ, 半径(m)] — 重心・リーチ・接地点の計算に使う */
@@ -264,7 +264,7 @@ const POSABLE = ['Spine','Spine2','Neck','Head',
   'RightUpLeg','RightLeg','RightFoot','RightToeBase',
   'LeftHandTip','RightHandTip'];
 
-/* 指先に置くハンドル。指は動かさず、手首(Hand)の向きだけを変える。
+/* 手手指先に置くハンドル。手手指は動かさず、手首(Hand)の向きだけを変える。
    at = ハンドルを表示する骨 / bone = 実際に轉動骨 */
 const TIPS = {
   LeftHandTip:  { at:'LeftHandMiddle4',  bone:'LeftHand',  label:'左手の向き' },
@@ -516,13 +516,13 @@ function aimBone(f, bone, dirWorld){
 }
 
 /* --- 手の握り -------------------------------------------------------------
-   指の関節は個別ハンドルを出さず、スライダーで一括で曲げる。
+   手手指の関節は個別ハンドルを出さず、スライダーで一括で曲げる。
    Mixamo リグはどちらの手もローカルX軸の正方向が手のひら側。
    ------------------------------------------------------------------------- */
 const FINGERS = ['Thumb','Index','Middle','Ring','Pinky'];
-// 握り切ったときの角度(rad)。親指だけ轉動向きが逆(手のひらを横切って人差し指に添う)
+// 握り切ったときの角度(rad)。親手手指だけ轉動向きが逆(手のひらを横切って人差し手手指に添う)
 const CURL = { Thumb:[-0.15, -0.30, -0.30], other:[1.40, 1.55, 1.05] };
-// 手の形。指ごとに CURL を何割かけるか
+// 手の形。手手指ごとに CURL を何割かけるか
 const HANDS = {
   open:  { Thumb:0,   Index:0, Middle:0, Ring:0, Pinky:0 },
   fist:  { Thumb:1,   Index:1, Middle:1, Ring:1, Pinky:1 },
@@ -618,7 +618,7 @@ function fallbackCopy(text){
   } catch (err){ return false; }
 }
 
-/* 画面下に短く出る通知 */
+/* 畫面下に短く出る通知 */
 function toast(msg){
   const t = $('toast');
   t.textContent = msg;
@@ -627,7 +627,7 @@ function toast(msg){
   t._timer = setTimeout(() => t.classList.remove('show'), 1800);
 }
 
-/* 選んでいる手の形のボタンを光らせる */
+/* 選んでいる手の形の按鈕を光らせる */
 function markHand(key){
   for (const b of document.querySelectorAll('#grip button'))
     b.classList.toggle('on', b.dataset.hand === key);
@@ -657,7 +657,7 @@ function applyWorldRot(f, bone, q){
 }
 
 /* 掴んだ関節から親をたどって IK チェーンを作る(動かせない関節で打ち切り)
-   start を渡すと、そこから上を轉動(指先を掴んで手首から動かす場合に使う) */
+   start を渡すと、そこから上を轉動(手手指先を掴んで手首から移動場合に使う) */
 function ikChainOf(f, bone, start){
   const chain = [];
   let b = bone;
@@ -870,7 +870,7 @@ function stepSim(A, B, dt){
     const speed = Math.hypot(s.vx, s.vz);
     const rate = (TUNE.spinDecay + TUNE.tipDrag*st.tipOff + TUNE.reachDrag*st.reach
                   + speed*TUNE.moveSpinCost)/TUNE.spinRef;
-    s.spin *= Math.exp(-rate*dt);        // 割合で減るので 0 にはならない
+    s.spin *= Math.exp(-rate*dt);        // 割合で減少ので 0 にはならない
     if (s.spin < 0) s.spin = 0;
     s.angle += s.spin*dt;
     s.cd = Math.max(0, s.cd - dt);
@@ -929,7 +929,7 @@ function collide(A, B){
 }
 
 function judge(A, B){
-  if (A.sim.out && B.sim.out)                    // 同時に出たら回転が残っている方の勝ち
+  if (A.sim.out && B.sim.out)                    // 同時に出たら回転が残っている方の贏
     return Math.abs(A.sim.spin - B.sim.spin) < 1e-4 ? 'draw'
          : (A.sim.spin > B.sim.spin ? 'win-ring' : 'lose-ring');
   if (A.sim.out) return 'lose-ring';
@@ -1045,7 +1045,7 @@ function buildScene(){
     const m = new THREE.Mesh(hg, new THREE.MeshBasicMaterial({
       color:COLOR.handle, transparent:true, opacity:TUNE.handleAlpha, depthTest:false }));
     m.renderOrder = 10;
-    // 縁取りを裏面で描いて、体の色に負けないようにする
+    // 縁取りを裏面で描いて、体の色に輸ないようにする
     const ring = new THREE.Mesh(hg, new THREE.MeshBasicMaterial({
       color:COLOR.handleEdge, side:THREE.BackSide, depthTest:false,
       transparent:true, opacity:0.9 }));
@@ -1166,7 +1166,7 @@ function updateParticles(dt){
     pPos[i*3]   += pVel[i].x*dt;
     pPos[i*3+1] += pVel[i].y*dt;
     pPos[i*3+2] += pVel[i].z*dt;
-    // 背景色へ溶かして消す(加算合成をやめたので、色を落とすと黒くなってしまう)
+    // 背景色へ溶かして消す(加算合成をやめたので、色を掉落と黒くなってしまう)
     const k = pLife[i]/pLife0[i];
     const t = Math.min(1, TUNE.sparkGlow*k*k);
     pCol[i*3]   = pBase[i*3]  *t + _bgc.r*(1 - t);
@@ -1258,7 +1258,7 @@ function resize(){
     : TUNE.camFov;
   camera.updateProjectionMatrix();
 }
-/* ステージ全体が収まる距離を、画角と画面比から一度だけ決める。
+/* ステージ全体が収まる距離を、画角と畫面比から一度だけ決める。
    ステージは円盤なので、斜めから見ると縦方向は sin で潰れる。球として
    収めると引きすぎるため、横は直径・縦は潰れた分＋人の背丈で計算する。 */
 function frameStage(){
@@ -1296,7 +1296,7 @@ const pointer = new THREE.Vector2();
 const plane = new THREE.Plane();
 const camDir = new THREE.Vector3();
 let drag = null;
-const touches = new Map();     // 2本指のピンチ用
+const touches = new Map();     // 2本手手指のピンチ用
 let pinchLen = 0;
 function pinchDist(){
   const t = [...touches.values()];
@@ -1306,7 +1306,7 @@ function pinchDist(){
 function dragBone(e){
   const tip  = TIPS[selected];
   const bone = handleBone(player, selected);   // 実際に轉動骨
-  const eff  = handleAt(player, selected);     // 目標に合わせたい点(指先など)
+  const eff  = handleAt(player, selected);     // 目標に合わせたい点(手手指先など)
   if (!bone || !eff) return;
   pointer.set(e.clientX/innerWidth*2-1, -(e.clientY/innerHeight*2-1));
   ray.setFromCamera(pointer, camera);
@@ -1330,7 +1330,7 @@ function dragBone(e){
   refreshStats();
 }
 
-/* バトル中の操作: 左のパッドで移動、右のボタンで高速スピン */
+/* バトル中の操作: 左のパッドで移動、右の按鈕で高速スピン */
 const stick = { x:0, y:0 };
 const keys = {};
 
@@ -1366,7 +1366,7 @@ function tryBoost(){
   s.boostCd = TUNE.boostCool;
 }
 
-/* 画面の向きを基準に、操作入力を加速度へ変換する */
+/* 畫面の向きを基準に、操作入力を加速度へ変換する */
 const _fw = new THREE.Vector3();
 function applyControl(){
   const s = player.sim; if (!s) return;
@@ -1379,7 +1379,7 @@ function applyControl(){
   if (l < 0.01){ s.ax = 0; s.az = 0; return; }
   if (l > 1){ jx /= l; jy /= l; }
   _fw.set(cam.target.x - camera.position.x, 0, cam.target.z - camera.position.z).normalize();
-  const rx = -_fw.z, rz = _fw.x;             // 画面の右方向
+  const rx = -_fw.z, rz = _fw.x;             // 畫面の右方向
   s.ax = (rx*jx + _fw.x*(-jy))*TUNE.moveAccel;
   s.az = (rz*jx + _fw.z*(-jy))*TUNE.moveAccel;
 }
@@ -1585,7 +1585,7 @@ function toLaunch(){
   computeStats(player);
   randomPose(enemy);
   computeStats(enemy);
-  // 構えは記録だけして、この時点では元のポーズで立たせておく
+  // 構えは紀錄だけして、この時点では元のポーズで立たせておく
   for (const f of [player, enemy]){
     f.poseTo = poseSnapshot(f);
     defaultPose(f);

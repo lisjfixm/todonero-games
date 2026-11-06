@@ -71,12 +71,12 @@
 </div>
 <section class="howto" data-pos="top-left" hidden>
   <h2>玩法</h2>
-  <p>星のまわりを回る衛星を操り、重力圏から重力圏へ飛び移って宇宙の奥へ進むゲームです。タップで今の星を離れ、次の星の重力圏に入ると自動で周回に入ります。星に入るたびに1点で、途中の星を飛ばして先の星に入ると、飛ばした数だけ加点されます。画面の下か左右の外へ出ると終わりです。</p>
+  <p>星のまわりを回る衛星を操り、重力圏から重力圏へ飛び移って宇宙の奥へ進む遊戲。點擊で今の星を離れ、次の星の重力圏に入ると自動で周回に入ります。星に入るたびに1点で、途中の星を飛ばして先の星に入ると、飛ばした数だけ加点されます。畫面の下か左右の外へ出ると終わりです。</p>
   <h2>操作</h2>
-  <p>画面のどこかをタップすると飛び出します。押したまま指を左往右動かすと、飛んでいる間の進路を少しずつ曲げられます。PC はスペースか Enter で飛び出し、左右の矢印キーで曲げます。終了後はタップでやり直せます。</p>
-  <h2>コツ</h2>
+  <p>畫面のどこかを點擊すると飛び出します。押したまま手指を左往右移動と、飛んでいる間の進路を少しずつ曲げられます。PC はスペースか Enter で飛び出し、左右の矢印鍵で曲げます。結束後は點擊でやり直せます。</p>
+  <h2>訣竅</h2>
   <p>周回中に失敗することはないので、進みたい向きへ衛星が向いた瞬間に按ください。重力圏の輪が青い星は遅く、橙の星は速く回ります。進むほど全体の速さも上がり、最大で2倍になります。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 </div>
 <script>
@@ -266,7 +266,7 @@ function tap(){
     document.documentElement.setAttribute('data-howto-hidden', '');
     player.ignore = player.eng;
     player.eng = null;
-    player.sSign = player.vy < 0 ? 1 : -1;   // 画面往右曲がる向きを揃える
+    player.sSign = player.vy < 0 ? 1 : -1;   // 畫面往右曲がる向きを揃える
   }
 }
 addEventListener('pointerdown', e => {
@@ -297,12 +297,12 @@ function gameOver(){
     '<h1>LOST</h1><div class="big">' + score + '</div>' +
     '<div class="sub">BEST ' + best + '</div>' +
     '<a class="share" id="share" target="_blank" rel="noopener">分享到X</a>' +
-    '<p class="blink">タップで再來一次</p>';
+    '<p class="blink">點擊で再來一次</p>';
   const share = document.getElementById('share');
   // ページURLは url 引数で渡すと X 側でリンクとして表示される
   share.href = 'https://x.com/intent/post?text=' + encodeURIComponent(buildShareText())
              + '&url=' + encodeURIComponent(location.href);
-  // ボタン上のタップでゲームが再開しないように、画面全体の pointerdown へ伝えない
+  // 按鈕上の點擊でゲームが繼續しないように、畫面全体の pointerdown へ伝えない
   share.addEventListener('pointerdown', e => e.stopPropagation());
 }
 function buildShareText(){

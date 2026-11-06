@@ -54,7 +54,7 @@ gtag('config', 'G-41RSZLP1YQ');
     touch-action:manipulation;
     -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   }
-  #game{position:fixed;inset:0;overflow:hidden}   /* 画面全体を使う（台の大きさは画面に合わせてカメラで決める） */
+  #game{position:fixed;inset:0;overflow:hidden}   /* 畫面全体を使う（台の大きさは畫面に合わせてカメラで決める） */
   canvas{display:block;width:100%;height:100%;touch-action:none}
   #score{position:absolute;left:0;right:0;top:0;padding-top:calc(env(safe-area-inset-top,0px) + 14px);text-align:center;font-size:60px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--fg);text-shadow:0 3px 10px rgba(0,0,0,.6);pointer-events:none}
   #score.bump{animation:bump .25s ease-out}
@@ -69,7 +69,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #res-unit{font-size:20px;font-weight:700}
   button{display:block;width:100%;min-height:50px;margin:10px 0 0;border:0;border-radius:14px;font:inherit;font-size:18px;font-weight:700;color:var(--fg);background:var(--btn);cursor:pointer}
   #retry{background:var(--accent);color:var(--accent-fg)}
-  .howto-open{width:auto;min-height:0}   /* 上の button の全幅指定を「玩法」ボタンに効かせない */
+  .howto-open{width:auto;min-height:0}   /* 上の button の全幅手手指定を「玩法」按鈕に効かせない */
   button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:5}
   #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;padding:16px;border-radius:20px;background:var(--panel)}
@@ -84,7 +84,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="over" class="hidden" role="dialog" aria-label="結果">
     <div class="panel">
       <p id="result"><span id="res-num">0</span><span id="res-unit">個 仕分けた</span></p>
-      <button id="retry" type="button">もう一回</button>
+      <button id="retry" type="button">再來一次</button>
       <button id="share" type="button">分享</button>
     </div>
   </div>
@@ -97,12 +97,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <section class="howto" data-pos="top-left" hidden>
     <h2>玩法</h2>
-    <p>中央の十字に落ちてくる爆弾を、同じ色の四隅のエリアへ運んで仕分けるゲームです。仕分けた個数が得点になります。導火線が燃え尽きるか、違う色のエリアに入れると爆発して終わります。時間がたつほど出る間隔と導火線は短くなり、一度に落ちる数も最大4個まで増えます。</p>
+    <p>中央の十字に落ちてくる爆弾を、同じ色の四隅のエリアへ運んで仕分ける遊戲。仕分けた個数が得分になります。導火線が燃え尽きるか、違う色のエリアに入れると爆発して終わります。時間がたつほど出る間隔と導火線は短くなり、一度に落ちる数も最大4個まで増えます。</p>
     <h2>操作</h2>
-    <p>爆弾を指でつかんで運び、離すと落ちます。動かした勢いは離したあとも残るので、投げることもできます。指を2本使えば2個を同時に持てます。PC ではマウスの拖曳で操作します。</p>
-    <h2>コツ</h2>
+    <p>爆弾を手手指でつかんで運び、放開と落ちます。動かした勢いは離したあとも残るので、投げることもできます。手手指を2本使えば2個を同時に持てます。PC では滑鼠の拖曳で操作します。</p>
+    <h2>訣竅</h2>
     <p>導火線の剩餘が2.5秒を切った爆弾は脈打つので、先に片付けましょう。エリアの境のブロックは投げた爆弾なら越えられますが、勢いが余って違う色に入ると失敗になります。赤と橙は対角にあります。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -118,7 +118,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const SPAWN_MARGIN = 0.1;   // 爆弾が落ちてくる範囲（中央の十字の置き場全体）を、ブロックや外枠からこれだけ内側にする
   const SPAWN_HEIGHT = 9;     // 爆弾が出てくる高さ
   const GRAVITY = 18;         // 重力（m/s²）
-  const STEP = 1 / 120;       // 物理を進める固定の時間刻み（秒）。画面の更新間隔に関係なく同じ動きにする
+  const STEP = 1 / 120;       // 物理を進める固定の時間刻み（秒）。畫面の更新間隔に関係なく同じ動きにする
   const RESTITUTION = 0.35;   // 床で跳ねる強さ
   const BOUNCE_MIN = 1.2;     // これより遅い落下速度なら跳ねずに床に乗る（m/s）
   const BOUNCE_MAX = 2.2;     // 床で跳ね返る速さの上限（m/s）。高く跳ねてブロックを越えないように、跳ねる高さをブロックより低く抑える
@@ -137,7 +137,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const SPIN_DECAY_AIR = 0.3; // 空中での回転の減り方（1秒あたりの割合）
   const SPIN_DECAY_GROUND = 3;// 床の上での回転の減り方（1秒あたりの割合）
   const HOLD_Y = 1.0;         // つかんでいる爆弾の高さ
-  const GRAB_SCALE = 1.8;     // つかめる範囲（爆弾の半径の倍率。指で押さえやすくするため大きめ）
+  const GRAB_SCALE = 1.8;     // つかめる範囲（爆弾の半径の倍率。手手指で押さえやすくするため大きめ）
   const FUSE_START = 9;       // 最初の導火線の長さ（秒）
   const FUSE_MIN = 4.5;       // 導火線の長さの下限（秒）
   const FUSE_DEC = 0.06;      // 経過1秒ごとに導火線が短くなる秒数
@@ -145,7 +145,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const SPAWN_MIN = 1.1;      // 出現間隔の下限（秒）
   const SPAWN_DEC = 0.018;    // 経過1秒ごとに出現間隔が縮む秒数（約60秒で下限になる）
   const DROP_MAX = 4;         // 一度に落ちてくる個数の上限
-  const DROP_STEP = 20;       // この秒数ごとに一度に落ちてくる個数が1個増える（1個→最大 DROP_MAX 個）
+  const DROP_STEP = 20;       // この秒数ごとに一度に落ちてくる個数が1個增加（1個→最大 DROP_MAX 個）
   const BLINK_TIME = 2.5;     // 導火線の剩餘がこの秒数を切ったら脈打ち始める
   const PULSE = 0.12;         // 脈打つときに大きくなる割合（色は変えない。光らせると白の爆弾と区別できなくなるため）
   const SORT_TIME = 0.25;     // 仕分けた爆弾が消えるまでの時間（秒）
@@ -165,8 +165,8 @@ gtag('config', 'G-41RSZLP1YQ');
   const SPARK_SPEED = 1.2;    // 火の粉が飛び出す速さ（m/s）
   const SPARK_SIZE = 0.09;    // 火の粉の大きさ
   const SPARK_MAX = 800;      // 同時に出せる火の粉の数の上限
-  const SHAKE = 0.18;         // 爆発で画面が揺れる強さ
-  const SHAKE_TIME = 0.5;     // 画面が揺れる時間（秒）
+  const SHAKE = 0.18;         // 爆発で畫面が揺れる強さ
+  const SHAKE_TIME = 0.5;     // 畫面が揺れる時間（秒）
   const SHARE_INSTANT = 0.5;  // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
 
   // 色はCSS変数から読む（分享画像の描画と揃えるため）
@@ -217,7 +217,7 @@ gtag('config', 'G-41RSZLP1YQ');
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
-  // 画角を狭めにして遠近の差を減らす（手前と奥で台の幅が変わりにくく、画面いっぱいに大きく映せる）
+  // 画角を狭めにして遠近の差を減らす（手前と奥で台の幅が変わりにくく、畫面いっぱいに大きく映せる）
   const camera = new THREE.PerspectiveCamera(30, 9/16, 0.1, 200);
   // CSSの色（sRGB）を three.js の計算用（リニア）に直して使う
   const col = n => new THREE.Color(css(n)).convertSRGBToLinear();
@@ -323,7 +323,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const sc = document.createElement('canvas');
     sc.width = sc.height = 256;
     const sg = sc.getContext('2d');
-    // ぼかしは shadowBlur で作る（canvas の filter は古い Safari で効かないため）。本体は画面外に描いて影だけ残す
+    // ぼかしは shadowBlur で作る（canvas の filter は古い Safari で効かないため）。本体は畫面外に描いて影だけ残す
     sg.shadowColor = 'rgba(0,0,0,.7)';
     sg.shadowBlur = 36;
     sg.shadowOffsetX = 1000;
@@ -391,7 +391,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const FUSE_TOP = BOMB_R + 0.07;   // 導火線の根元の高さ（口金の上）
 
   // ---------- 状態 ----------
-  document.documentElement.setAttribute('data-howto-hidden', '');   // 開始画面が無く、読み込み直後からプレイ中
+  document.documentElement.setAttribute('data-howto-hidden', '');   // 開始畫面が無く、読み込み直後からプレイ中
   let state = 'play';      // 'play' / 'doom'（間違えたエリアに入れて爆発を待つ間。操作できない）/ 'boom'（爆発の演出中）/ 'over'
   let score = 0;
   let elapsed = 0;
@@ -399,7 +399,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let boomT = -1;          // 爆発してからの時間（爆発していなければ -1）
   let doomBomb = null;     // 間違えたエリアに入れられ、これから爆発する爆弾
   let doomT = 0;           // 間違えたエリアに入れてからの時間
-  let shakeT = 0;          // 画面の揺れの剩餘時間
+  let shakeT = 0;          // 畫面の揺れの剩餘時間
   const bombs = [];
   const effects = [];      // 演出（仕分けの粒・爆発の煙など）
   const scorches = [];     // 床に残る焦げ跡
@@ -409,12 +409,12 @@ gtag('config', 'G-41RSZLP1YQ');
   const spawnNow = () => Math.max(SPAWN_MIN, SPAWN_START - elapsed * SPAWN_DEC);
   const dropNow  = () => Math.min(DROP_MAX, 1 + Math.floor(elapsed / DROP_STEP));
 
-  // 一度に dropNow() 個を、互いに重ならない位置から同時に落とす
+  // 一度に dropNow() 個を、互いに重ならない位置から同時に掉落
   function spawnGroup(){
     const n = dropNow();
     const placed = [];
     for (let i = 0; i < n; i++){
-      // 中央の十字の置き場のどこかに落とす（縦の帯か横の帯を選び、その中でばらつかせる）。色のエリアやブロックの上には落とさない
+      // 中央の十字の置き場のどこかに掉落（縦の帯か横の帯を選び、その中でばらつかせる）。色のエリアやブロックの上には落とさない
       const arm = NEUTRAL - WALL_T / 2 - BOMB_R - SPAWN_MARGIN;   // 帯の半幅
       const len = FIELD / 2 - BOMB_R - SPAWN_MARGIN;               // 帯の長さの半分
       let x = 0, z = 0;
@@ -587,7 +587,7 @@ gtag('config', 'G-41RSZLP1YQ');
     });
   }
 
-  // 爆発：閃光・火の玉・煙・破片・光、床に焦げ跡、画面の揺れ
+  // 爆発：閃光・火の玉・煙・破片・光、床に焦げ跡、畫面の揺れ
   function explodeEffect(x, y, z, color){
     const flash = new THREE.Mesh(unitSphere, new THREE.MeshBasicMaterial({ color:new THREE.Color(4, 3.4, 2.4),
       transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, toneMapped:false }));
@@ -632,7 +632,7 @@ gtag('config', 'G-41RSZLP1YQ');
         if (p > 0.7) m.scale.setScalar(m.userData.size * (1 - p) / 0.3);
       }
     });
-    // 焦げ跡（もう一回まで残す）
+    // 焦げ跡（再來一次まで残す）
     const sc = document.createElement('canvas');
     sc.width = sc.height = 128;
     const sg = sc.getContext('2d');
@@ -665,7 +665,7 @@ gtag('config', 'G-41RSZLP1YQ');
     b.vx = b.vy = b.vz = 0;
     b.spin = 0;
     b.doomRatio = Math.max(b.left / b.total, 0.03);   // 導火線をここから0まで燃やす
-    // つかんでいた爆弾はその場で手を離したことにして落とす
+    // つかんでいた爆弾はその場で手を離したことにして掉落
     for (const o of bombs) if (o.state === 'held'){ o.state = 'fall'; o.vy = 0; o.thrown = true; }
     drags.clear();
   }
@@ -706,7 +706,7 @@ gtag('config', 'G-41RSZLP1YQ');
         if (d >= BOMB_R * 2) continue;
         if (d < 1e-4){ nx = Math.random() - 0.5; ny = 0; nz = Math.random() - 0.5; d = Math.hypot(nx, nz); }
         nx /= d; ny /= d; nz /= d;
-        // 押し離す・跳ね返す量の分け方（同じ質量なら半分ずつ、片方が動かなければもう片方が全部）
+        // 押し放開・跳ね返す量の分け方（同じ質量なら半分ずつ、片方が動かなければもう片方が全部）
         const wa = a.state === 'doom' ? 0 : b.state === 'doom' ? 1 : 0.5, wb = 1 - wa;
         const push = BOMB_R * 2 - d;
         a.x -= nx * push * wa; a.y -= ny * push * wa; a.z -= nz * push * wa;
@@ -773,7 +773,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
     if (b.thrown) hopWalls(b); else keepInCross(b);
 
-    // 投げたときの回転（空中ではゆっくり、床の上では早く減る）
+    // 投げたときの回転（空中ではゆっくり、床の上では早く減少）
     if (b.spin > 0.01){
       _rq.setFromAxisAngle(b.spinAxis, b.spin * dt);
       b.g.quaternion.premultiply(_rq);
@@ -785,7 +785,7 @@ gtag('config', 'G-41RSZLP1YQ');
     // 床に触れている
     b.y = BOMB_R;
     if (!b.kicked){
-      // 降ってきた爆弾は、最初に床に着いたときにランダムな向きへ転がり出す
+      // 降ってきた爆弾は、最初に床に着いたときに隨機な向きへ転がり出す
       b.kicked = true;
       const ang = Math.random() * Math.PI * 2;
       const sp = KICK_MIN + Math.random() * (KICK_MAX - KICK_MIN);
@@ -903,7 +903,7 @@ gtag('config', 'G-41RSZLP1YQ');
       boomT += dt;
       if (boomT >= EXPLODE_TIME && state === 'boom') showOver();
     }
-    // 爆発で画面を揺らす（だんだん弱く）
+    // 爆発で畫面を揺らす（だんだん弱く）
     camera.position.copy(camBase);
     if (shakeT > 0){
       shakeT = Math.max(shakeT - dt, 0);
@@ -914,7 +914,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   }
 
-  // ---------- 画面サイズとカメラ ----------
+  // ---------- 畫面サイズとカメラ ----------
   const VIEW_DIR = new THREE.Vector3(0, 0.86, 0.51).normalize();  // 斜め上から見下ろす
   const LOOK = new THREE.Vector3(0, 0, 0.2);
   const camBase = new THREE.Vector3();   // 揺れていないときのカメラの位置
@@ -923,8 +923,8 @@ gtag('config', 'G-41RSZLP1YQ');
     camera.lookAt(LOOK);
     camera.updateMatrixWorld();
   }
-  // 台（外枠の上端まで）が画面いっぱいに収まる距離を探す（上側は分數表示のぶんだけ空ける）
-  const SCORE_SPACE = 90;   // 画面上端から分數表示の下までの高さ（px）
+  // 台（外枠の上端まで）が畫面いっぱいに収まる距離を探す（上側は分數表示のぶんだけ空ける）
+  const SCORE_SPACE = 90;   // 畫面上端から分數表示の下までの高さ（px）
   function fitCamera(H){
     const h = FIELD / 2 + FRAME_W;
     const pts = [];
@@ -1006,13 +1006,13 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!b) return;
     drags.delete(e.pointerId);
     if (b.state === 'held'){
-      // 離した所から落とす。動かしていた勢いはそのまま引き継ぐ
+      // 離した所から掉落。動かしていた勢いはそのまま引き継ぐ
       b.state = 'fall';
       b.vy = 0;
       b.thrown = true;
       const sp = Math.hypot(b.vx, b.vz);
       if (sp > THROW_MAX){ b.vx *= THROW_MAX / sp; b.vz *= THROW_MAX / sp; }
-      // 投げた瞬間に回転を与える（投げた向きに前転する軸。ほぼ動かしていなければ向きはランダム）
+      // 投げた瞬間に回転を与える（投げた向きに前転する軸。ほぼ動かしていなければ向きは隨機）
       const v = Math.hypot(b.vx, b.vz);
       if (v > 0.05) b.spinAxis.set(b.vz, 0, -b.vx).normalize();
       else { const a = Math.random() * Math.PI * 2; b.spinAxis.set(Math.cos(a), 0, Math.sin(a)); }
@@ -1022,7 +1022,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', release);
   cv.addEventListener('pointercancel', release);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => {
@@ -1031,10 +1031,10 @@ gtag('config', 'G-41RSZLP1YQ');
     e.preventDefault();
   });
   cv.addEventListener('contextmenu', e => e.preventDefault());
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
-    // ボタンは click で動かしているので除外する（止めると続けて押したときにボタンが反応しない）
+    // 按鈕は click で動かしているので除外する（止めると続けて押したときに按鈕が反応しない）
     if (e.target instanceof Element && e.target.closest('button')) return;
     const now = Date.now();
     if (now - lastTouchEnd < 350) e.preventDefault();
@@ -1069,7 +1069,7 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('keydown', e => {
     if (!$('share-view').classList.contains('hidden')){
       if (e.key === 'Escape') closeShareView();
-      return;   // 分享の画面を出している間は結果画面のキー操作を止める
+      return;   // 分享の畫面を出している間は結果畫面の鍵操作を止める
     }
     if (state === 'over' && (e.key === ' ' || e.key === 'Enter')){
       e.preventDefault();
@@ -1124,7 +1124,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を畫面に出す
     const fallback = () => {
       if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1133,8 +1133,8 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-close').focus({ preventScroll:true });
     };
     // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
-    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内瀏覽器等）。
+    // 分享シートを開いてから自己で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
@@ -1165,7 +1165,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function loop(now){
     const dt = Math.min((now - last) / 1000, 1/30);
     last = now;
-    // 物理は固定の時間刻みで進め、描画だけ画面の更新に合わせる
+    // 物理は固定の時間刻みで進め、描画だけ畫面の更新に合わせる
     const running = () => state === 'play' || state === 'doom';
     if (running()){
       acc += dt;

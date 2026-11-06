@@ -34,7 +34,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
 <title>膨脹曲棍球</title>
-<meta name="description" content="パックがどんどん増えるエアホッケー">
+<meta name="description" content="パックがどんどん增加エアホッケー">
 <style>
   :root{
     --bg:#111; --fg:#eee; --sub:#999;
@@ -72,18 +72,18 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="over" class="hidden">
     <div id="resTitle" aria-live="assertive"></div>
     <div id="resScore"></div>
-    <button id="retry" type="button">もう一回</button>
+    <button id="retry" type="button">再來一次</button>
     <button id="toMenu" type="button">モード選択へ</button>
     <button id="share" type="button">分享</button>
   </div>
   <section class="howto" hidden data-pos="none">
     <h2>玩法</h2>
-    <p>パックがゲートを通るたびに増えていくエアホッケーです。お互いのHPは1000で、ゴールされたパック1個につき1減り、先に0になったほうが負けです。パックが全部なくなると次のサーブが出ます。CPUとの対戦のほか、1台の端末を2人で触るふたり対戦も選べます。</p>
+    <p>パックがゲートを通るたびに増えていくエアホッケーです。お互いのHPは1000で、ゴールされたパック1個につき1減り、先に0になったほうが輸です。パックが全部なくなると次のサーブが出ます。CPUとの対戦のほか、1台の端末を2人で触るふたり対戦も選べます。</p>
     <h2>操作</h2>
-    <p>台を指でなぞるとマレットが動きます。動かせるのは自分の陣地の中だけです。ふたり対戦では、台の手前半分を触った指が手前、奥半分を触った指が奥のマレットを動かします。PC はマウスの拖曳か矢印キーで、奥のマレットは WASD です。</p>
-    <h2>コツ</h2>
-    <p>ゲートは+10から+50まであり、通ったパックのそばにその数だけ増えます。増えた分は元のパックと同じ速さで近い向きへ飛ぶので、相手のゴールへ向かうパックをゲートに通すと一気にHPを削れます。通過されたゲートは別の場所へ移り、薄い表示で次の位置が分かります。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>台を手手指でなぞるとマレットが動きます。動かせるのは自己の陣地の中だけです。ふたり対戦では、台の手前半分を触った手手指が手前、奥半分を触った手手指が奥のマレットを動かします。PC は滑鼠の拖曳か矢印鍵で、奥のマレットは WASD です。</p>
+    <h2>訣竅</h2>
+    <p>ゲートは+10から+50まであり、通ったパックのそばにその数だけ増えます。増えた分は元のパックと同じ速さで近い向きへ飛ぶので、對手のゴールへ向かうパックをゲートに通すと一気にHPを削れます。通過されたゲートは別の場所へ移り、薄い表示で次の位置が分かります。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -94,7 +94,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 定数 ----------
   // 物理は台の上の2D平面（x:横, y:奥行き）で計算し、表示だけ3Dにする
-  const FW = 360, FH = 640;     // 台の大きさ（y=0 がCPU側、y=FH が自分側）
+  const FW = 360, FH = 640;     // 台の大きさ（y=0 がCPU側、y=FH が自己側）
   const GOAL_EDGE = 30;         // ゴールの両脇に残す縁（壁）の幅
   const GOAL_W = FW - GOAL_EDGE * 2;   // ゴールの口の幅
   const PUCK_R = 9;             // パック半径
@@ -106,31 +106,31 @@ gtag('config', 'G-41RSZLP1YQ');
   const HIT_E = 0.95;           // マレットの反発
   const PUCK_E = 0.9;           // パック同士の反発
   const STEP = 1 / 240;         // 物理の固定タイムステップ（速いパックのすり抜け防止）
-  const PLAYER_SPEED = 3000;    // 自分のマレットが指に追いつく速さの上限
+  const PLAYER_SPEED = 3000;    // 自己のマレットが手手指に追いつく速さの上限
   const CPU_SPEED = 1000;       // CPUマレットの速さ（強さ調整）
   const CPU_LUNGE = 110;        // CPUが打つとき、パックを突き抜けて振り抜く距離
   const CPU_DETOUR = 80;        // CPUがパックの後ろへ回り込むときに大きく避ける距離
   const CPU_WINDUP = 45;        // 打つ前にパックの後ろで構えるときの間合い（大きいほど助走が長い）
   const CPU_EDGE = 70;          // ゴールの線からこの距離より近いパックは後ろに回れないので狙わない
-  const CPU_THREAT = 0.5;       // 狙う相手を選ぶとき、ゴールに近いパックをどれだけ優先するか
+  const CPU_THREAT = 0.5;       // 狙う對手を選ぶとき、ゴールに近いパックをどれだけ優先するか
   const CPU_KEEP = 0.7;         // 今狙っているパックより、この割合以下の手間で済む候補が出たときだけ乗り換える
   const CPU_SWEEP = 0.38;       // 自陣にパックがないとき左右に大きく動く幅（台の幅に対する割合）
   const CPU_SWEEP_SPEED = 1.8;  // 左右に動く速さ（ラジアン/秒）
-  const KEY_SPEED = 500;        // PCの矢印キーでの移動速度
+  const KEY_SPEED = 500;        // PCの矢印鍵での移動速度
   const SERVE_SPEED = 260;      // サーブのパックの速さ（px/秒）
   const SERVE_ANGLE = 0.4;      // サーブの向きのばらつき（まっすぐ縦からの最大角度、ラジアン）
   const SLOW_RATE = 0.2;        // 決着後のスローの速さ（1で通常）
-  const SLOW_TIME = 2.0;        // 決着後にスローを見せる時間（実時間の秒）。その後に結果画面
-  const MAX_HP = 1000;          // 両者の最初のHP。ゴールされるたびに1減り、先に0になったほうが負け
+  const SLOW_TIME = 2.0;        // 決着後にスローを見せる時間（実時間の秒）。その後に結果畫面
+  const MAX_HP = 1000;          // 両者の最初のHP。ゴールされるたびに1減り、先に0になったほうが輸
   const HP_W = 160, HP_H = 64;  // ゴール近くに出すHPの数字の大きさ
   const HP_POP = 1.35;          // HPが変わった瞬間に数字が膨らむ倍率
   const HP_POP_TIME = 0.3;      // 膨らんだ数字が元の大きさに返回までの時間（秒）
-  const GATE_Y = 250;           // サーブ時のゲートの位置（相手陣地側）
+  const GATE_Y = 250;           // サーブ時のゲートの位置（對手陣地側）
   const GATE_Y_MIN = 80;        // 通過後にゲートが出現する範囲（奥側の端）
   const GATE_Y_MAX = FH - 120;  // 通過後にゲートが出現する範囲（手前側の端）
-  const GATE_MOVE_MIN = 100;    // 出現位置を元の場所からこれ以上離す
+  const GATE_MOVE_MIN = 100;    // 出現位置を元の場所からこれ以上放開
   const GATE_COUNT = 3;         // 台に出るゲートの最大数
-  const GATE_ADD_MIN = 2, GATE_ADD_MAX = 8;   // 試合開始時は1つだけ。剩餘はこの範囲（秒）のランダムなタイミングで1つずつ追加
+  const GATE_ADD_MIN = 2, GATE_ADD_MAX = 8;   // 試合開始時は1つだけ。剩餘はこの範囲（秒）の隨機なタイミングで1つずつ追加
   const GATE_RESPAWN = 0.6;     // 通過されたゲートが次の場所に出現するまでの時間（秒）。その間は効かない
   const GATE_PREVIEW_ALPHA = 0.25; // 出現を待っている間、次の場所に予告として薄く出すときの不透明度
   const GATE_TALL = 56;         // ゲートの高さ（見た目）
@@ -148,13 +148,13 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 状態 ----------
   const cv = $('cv');
   let W = 0, H = 0;
-  let state = 'idle';            // idle（対戦相手を選ぶ画面）/ playing / ending（決着後のスロー）/ over
+  let state = 'idle';            // idle（対戦對手を選ぶ畫面）/ playing / ending（決着後のスロー）/ over
   let slowLeft = 0;              // ending の剩餘時間
-  let mode = 'cpu';              // 'cpu'：CPUと対戦 / 'pvp'：ふたりで対戦（奥のマレットも人が動かす）
+  let mode = 'cpu';              // 'cpu'：CPUと対戦 / 'pvp'：ふたりで対戦（奥のマレットも人が移動）
   let pucks = [], alive = 0, gates = [];
   let pHP = MAX_HP, cHP = MAX_HP;
   const player = {x:FW/2, y:FH - 80, vx:0, vy:0, tx:FW/2, ty:FH - 80};
-  const cpu = {x:FW/2, y:80, vx:0, vy:0, tx:FW/2, ty:80};   // 奥のマレット（ふたりで対戦のときは2人目が動かす）
+  const cpu = {x:FW/2, y:80, vx:0, vy:0, tx:FW/2, ty:80};   // 奥のマレット（ふたりで対戦のときは2人目が移動）
 
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const C = {};
@@ -326,13 +326,13 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- カメラ・リサイズ ----------
-  // 自分側の斜め上から、台全体が画面に収まる距離まで離す
+  // 自己側の斜め上から、台全体が畫面に収まる距離まで放開
   const camTarget = new THREE.Vector3(0, 0, 10);
   const camDir = new THREE.Vector3(0, Math.sin(CAM_PITCH * Math.PI / 180), Math.cos(CAM_PITCH * Math.PI / 180));
   const fitPts = [];
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const y of [0, GATE_TALL])
     fitPts.push(new THREE.Vector3(sx * (hx + RAIL_T), y, sz * (hz + RAIL_T)));
-  // HPの数字も画面に収める
+  // HPの数字も畫面に収める
   for (const sz of [-1, 1]) for (const sx of [-1, 1]) for (const y of [0, HP_H])
     fitPts.push(new THREE.Vector3(sx * HP_W * HP_POP / 2, y * HP_POP, sz * HP_Z));
   const v = new THREE.Vector3();
@@ -370,7 +370,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function spotFree(x, y, self){
     return gates.every(o => o === self || !(Math.abs(y - o.y) < 40 && Math.abs(x - o.x) < gateW + GATE_GAP));
   }
-  // ゲートを置く位置をランダムに選ぶ（from を渡すと、そこから GATE_MOVE_MIN 以上離れた位置にする）
+  // ゲートを置く位置を隨機に選ぶ（from を渡すと、そこから GATE_MOVE_MIN 以上離れた位置にする）
   function randomSpot(self, from){
     let x = 0, y = 0;
     for (let tries = 0; tries < 200; tries++){
@@ -381,13 +381,13 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     return [x, y];
   }
-  // 他のゲートと違う種類をランダムに選ぶ
+  // 他のゲートと違う種類を隨機に選ぶ
   function pickType(){
     const free = GATE_TYPES.filter(t => !gates.some(g => g.t === t.t && g.n === t.n));
     const list = free.length ? free : GATE_TYPES;
     return list[Math.floor(Math.random() * list.length)];
   }
-  // 試合開始時：ゲートは中央に1つだけ。剩餘は開始後ランダムなタイミングで追加する
+  // 試合開始時：ゲートは中央に1つだけ。剩餘は開始後隨機なタイミングで追加する
   let gateAddTimers = [];
   function makeGates(){
     gates = [];
@@ -406,14 +406,14 @@ gtag('config', 'G-41RSZLP1YQ');
     refreshGates();
   }
   // 通過されたゲートを別の場所へ移す（種類はそのまま）。
-  // 元の場所から離れていて、他のゲートと重ならない位置をランダムに選ぶ
+  // 元の場所から離れていて、他のゲートと重ならない位置を隨機に選ぶ
   function relocateGate(g){
     [g.x, g.y] = randomSpot(g, {x: g.x, y: g.y});
     g.wait = GATE_RESPAWN;
     refreshGates();
   }
-  // パックが0になったら中央に1個置いて再開（ゲートはそのまま）。
-  // パックはランダムにどちらかのコートへ向かって動いている状態で出す
+  // パックが0になったら中央に1個置いて繼續（ゲートはそのまま）。
+  // パックは隨機にどちらかのコートへ向かって動いている状態で出す
   function serve(){
     const dir = Math.random() < 0.5 ? -1 : 1;              // -1：奥のコートへ / 1：手前のコートへ
     const a = (Math.random() * 2 - 1) * SERVE_ANGLE;
@@ -455,7 +455,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // CPU：自陣で一番ゴールに近いパックを狙う。
   // パックの真後ろ（奥側）に大きく下がって構え、狙う方向へ勢いよく振り抜く。
-  // 狙いは、自分のマレットがいない側の手前ゴール
+  // 狙いは、自己のマレットがいない側の手前ゴール
   let cpuClock = 0, cpuAim = null;
   // 狙うパックを選ぶ。手間 = CPUからの距離 − ゴールへの近さ×CPU_THREAT（小さいほど狙う）
   function cpuCost(p){ return Math.hypot(p.x - cpu.x, p.y - cpu.y) - (FH / 2 - p.y) * CPU_THREAT; }
@@ -494,7 +494,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // マレットやパック同士で押されたパックを台の中に戻す。
-  // 端の線より外に出てよいのはゴールの口の幅の中だけ（口の外で壁に押しつけても得点にしない）
+  // 端の線より外に出てよいのはゴールの口の幅の中だけ（口の外で壁に押しつけても得分にしない）
   function confine(p){
     const half = GOAL_W / 2;
     p.x = clamp(p.x, PUCK_R, FW - PUCK_R);
@@ -522,7 +522,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ゲートは奥向き・手前向きのどちらに通過しても効く。
-  // 自分の速度で進んだ分だけでなく、マレットや他のパックに押されて越えた場合も数えるため、
+  // 自己の速度で進んだ分だけでなく、マレットや他のパックに押されて越えた場合も数えるため、
   // ステップ開始時の位置から最終的な位置までの移動で判定する。
   // 1回通過されたらその場から消え、別の場所に出る（移った先はこのステップでは判定しない）
   function checkGates(){
@@ -546,7 +546,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function step(h){
     cpuClock += h;
     for (const g of gates) if (g.wait > 0) g.wait = Math.max(0, g.wait - h);
-    // 試合開始時だけ、ゲートをランダムなタイミングで追加していく
+    // 試合開始時だけ、ゲートを隨機なタイミングで追加していく
     for (let i = gateAddTimers.length - 1; i >= 0; i--){
       gateAddTimers[i] -= h;
       if (gateAddTimers[i] <= 0){ gateAddTimers.splice(i, 1); addGate(); }
@@ -562,7 +562,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
 
     const damp = Math.exp(-DAMP * h);
-    const n = pucks.length;   // このステップで増えた分は次のステップから動かす
+    const n = pucks.length;   // このステップで増えた分は次のステップから移動
     const half = GOAL_W / 2;
     for (let i = 0; i < n; i++){
       const p = pucks[i];
@@ -583,7 +583,7 @@ gtag('config', 'G-41RSZLP1YQ');
         else { p.y = PUCK_R; p.vy = Math.abs(p.vy) * WALL_E; }
         if (p.y < -PUCK_R){ kill(p); if (state !== 'ending') cHP--; }   // 決着後はHPを動かさない
       }
-      // 手前（自分側）の端
+      // 手前（自己側）の端
       if (p.y > FH - PUCK_R){
         if (inMouth || py > FH - PUCK_R) p.x = clamp(p.x, FW / 2 - half + PUCK_R, FW / 2 + half - PUCK_R);
         else { p.y = FH - PUCK_R; p.vy = -Math.abs(p.vy) * WALL_E; }
@@ -631,7 +631,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 入力 ----------
-  // 指の位置から台の面（マレットの高さ）へ光線を飛ばし、当たった点をマレットの目標にする
+  // 手手指の位置から台の面（マレットの高さ）へ光線を飛ばし、当たった点をマレットの目標にする
   const ray = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
   const pickPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -5);
@@ -643,9 +643,9 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!ray.ray.intersectPlane(pickPlane, hit)) return [player.tx, player.ty];
     return [hit.x + FW / 2, hit.z + FH / 2];
   }
-  // 指（ポインター）ごとに、どちらのマレットを動かしているかを覚える。
-  // CPUと対戦：どこを触っても手前のマレット（1本の指だけ）。
-  // ふたりで対戦：台の手前半分を触った指は手前、奥半分を触った指は奥のマレット（それぞれ1本ずつ）
+  // 手手指（ポインター）ごとに、どちらのマレットを動かしているかを覚える。
+  // CPUと対戦：どこを触っても手前のマレット（1本の手手指だけ）。
+  // ふたりで対戦：台の手前半分を触った手手指は手前、奥半分を触った手手指は奥のマレット（それぞれ1本ずつ）
   const drags = new Map();
   const held = m => [...drags.values()].includes(m);
   cv.addEventListener('pointerdown', e => {
@@ -666,7 +666,7 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);
 
-  // PC用：矢印キーで手前のマレット、ふたりで対戦のときはWASDで奥のマレットを動かす
+  // PC用：矢印鍵で手前のマレット、ふたりで対戦のときはWASDで奥のマレットを移動
   const keys = new Set();
   const WASD = ['w', 'a', 's', 'd'];
   addEventListener('keydown', e => {
@@ -676,13 +676,13 @@ gtag('config', 'G-41RSZLP1YQ');
   });
   addEventListener('keyup', e => { keys.delete(e.key); keys.delete(e.key.toLowerCase()); });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   const isDraggable = t => t instanceof Element && !!t.closest('canvas');
   document.addEventListener('touchstart', e => { if (isDraggable(e.target)) e.preventDefault(); }, {passive:false});
   document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, {passive:false});
   document.addEventListener('selectstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => { if (isDraggable(e.target)) e.preventDefault(); });
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -715,7 +715,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     if (alive <= 0) serve();
     updateHud();
-    // 決着したら、しばらくスローで盤面を見せてから結果画面を出す
+    // 決着したら、しばらくスローで盤面を見せてから結果畫面を出す
     if (state === 'playing' && (pHP <= 0 || cHP <= 0)){ state = 'ending'; slowLeft = SLOW_TIME; }
     else if (state === 'ending'){ slowLeft -= dt; if (slowLeft <= 0) finish(); }
   }
@@ -751,7 +751,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const nameFar = () => mode === 'cpu' ? 'CPU' : '赤';
   function resultWord(){
     if (pHP === cHP) return '引き分け';
-    if (mode === 'cpu') return pHP > cHP ? '獲勝！' : '負け…';
+    if (mode === 'cpu') return pHP > cHP ? '獲勝！' : '輸…';
     return (pHP > cHP ? '青' : '赤') + 'の獲勝！';
   }
   const scoreLine = () => `${nameNear()} ${Math.max(0, pHP)} - ${Math.max(0, cHP)} ${nameFar()}`;
@@ -773,12 +773,12 @@ gtag('config', 'G-41RSZLP1YQ');
     $('menu').classList.add('hidden');
     updateHud();
   }
-  // 対戦相手を選んで開始
+  // 対戦對手を選んで開始
   for (const [id, md] of [['modeCpu', 'cpu'], ['mode2p', 'pvp']]){
     $(id).addEventListener('pointerdown', e => e.stopPropagation());
     $(id).addEventListener('click', () => { mode = md; restart(); });
   }
-  // 結果画面からモード選択の画面へ返回（盤面は止まったまま、選んだら新しい試合を始める）
+  // 結果畫面からモード選択の畫面へ返回（盤面は止まったまま、選んだら新しい試合を始める）
   $('toMenu').addEventListener('pointerdown', e => e.stopPropagation());
   $('toMenu').addEventListener('click', () => {
     state = 'idle';
@@ -793,8 +793,8 @@ gtag('config', 'G-41RSZLP1YQ');
     return `インフレホッケーで${resultWord()}\n${scoreLine()}\n`
       + location.href.split(/[?#]/)[0] + '\n#インフレホッケー';
   }
-  // 結果をPNG画像にする：試合終了時の3D盤面（HPの数字も写る）をそのまま画像にする。
-  // WebGLの画面は描画後に消えることがあるので、直前に描き直してから同じ処理の中で読み出す。
+  // 結果をPNG画像にする：試合結束時の3D盤面（HPの数字も写る）をそのまま画像にする。
+  // WebGLの畫面は描画後に消えることがあるので、直前に描き直してから同じ処理の中で読み出す。
   // （分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const c = cv;

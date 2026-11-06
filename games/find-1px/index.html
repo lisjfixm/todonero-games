@@ -37,7 +37,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta name="description" content="どこかにある1pxの点を探すタイム勝負">
 <style>
   :root{
-    --bg:#efede8;      /* 画面の地。探す範囲の白と区別できる薄いグレー */
+    --bg:#efede8;      /* 畫面の地。探す範囲の白と区別できる薄いグレー */
     --card:#ffffff;    /* 探す範囲。点の色は白地前提で決めているので必ず白にする */
     --fg:#1d1d1f; --sub:#7a766f; --line:#d8d4cc;
     --accent:#e0533d;  /* はずれ */
@@ -51,7 +51,7 @@ gtag('config', 'G-41RSZLP1YQ');
   body{
     background:var(--bg);color:var(--fg);
     font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
-    touch-action:none;   /* 画面のどこでもピンチ拡大させない（拡大すると1pxが見えてしまうため）。スクロールも不要 */
+    touch-action:none;   /* 畫面のどこでもピンチ拡大させない（拡大すると1pxが見えてしまうため）。スクロールも不要 */
     -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   }
   #game{position:relative;margin:0 auto;width:100%;max-width:420px;height:100vh;height:100dvh;display:flex;flex-direction:column}
@@ -65,11 +65,11 @@ gtag('config', 'G-41RSZLP1YQ');
   #title{font-size:20px;font-weight:800;line-height:1.3;letter-spacing:.02em}
   /* 探す点と同じ色の四角。白に近い色でも見えるよう細い枠線を付ける */
   #swatch{display:inline-block;width:.6em;height:.6em;margin-right:.25em;vertical-align:.05em;border:1px solid var(--sub);border-radius:2px}
-  /* 「拡大中」「移動中」の札。空のときも高さを残して、出たときに画面がずれないようにする */
+  /* 「拡大中」「移動中」の札。空のときも高さを残して、出たときに畫面がずれないようにする */
   #hint{height:24px;line-height:24px;padding:0 12px;border-radius:12px;background:var(--chip);color:#fff;
     font-size:13px;font-weight:bold;letter-spacing:.06em}
   #hint:empty{visibility:hidden}
-  /* 見出しと重ならないよう、メッセージは探す範囲の下に置く（高さを固定して表示時に画面がずれないようにする） */
+  /* 見出しと重ならないよう、メッセージは探す範囲の下に置く（高さを固定して表示時に畫面がずれないようにする） */
   #msg{min-height:1.4em;line-height:1.4;font-size:15px;font-weight:bold;text-align:center;pointer-events:none}
   #msg.ok{color:var(--ok)}
   #msg.ng{color:var(--accent)}
@@ -102,25 +102,25 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="field">
     <div id="title"><span id="swatch" role="img" aria-label="この色の点"></span>を見つけろ！</div>
     <div id="hint" aria-live="polite"></div>
-    <canvas id="cv" aria-label="この中にある1pxの点を探してタップ"></canvas>
+    <canvas id="cv" aria-label="この中にある1pxの点を探して點擊"></canvas>
     <div id="msg" aria-live="assertive"></div>
   </div>
   <div id="over" hidden>
     <div class="card">
       <h2>過關！</h2>
       <div id="result" aria-live="polite"></div>
-      <button class="btn" id="retry">もう一回</button>
+      <button class="btn" id="retry">再來一次</button>
       <button class="btn secondary" id="share">分享</button>
     </div>
   </div>
   <section class="howto" data-pos="top-left" hidden>
     <h2>玩法</h2>
-    <p>白い範囲のどこかにある1pxの点を探してタップする、全5ステージのタイム勝負です。点の色は黒から始まり、ステージが進むほど白に近づきます。探す色は見出しの四角で確かめられます。5つ全部見つけると、合計タイムとミスの回数が出ます。</p>
+    <p>白い範囲のどこかにある1pxの点を探して點擊する、全5ステージのタイム勝負です。点の色は黒から始まり、ステージが進むほど白に近づきます。探す色は見出しの四角で確かめられます。5つ全部見つけると、合計タイムとミスの回数が出ます。</p>
     <h2>操作</h2>
-    <p>点だと思う所をタップします。当たりの範囲は点から半径16pxなので、指で按も届きます。PC ではクリックで選びます。画面の拡大はできません。</p>
-    <h2>コツ</h2>
+    <p>点だと思う所を點擊します。当たりの範囲は点から半径16pxなので、手手指で按も届きます。PC では點擊で選びます。畫面の拡大はできません。</p>
+    <h2>訣竅</h2>
     <p>外すと1回につき5秒が加算されるので、連打すると損をします。同じステージで10秒たつと点の大きさが変わり始め、20秒たつと動き出すので、見つからないときは変化を待つのも手です。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script>
@@ -131,9 +131,9 @@ gtag('config', 'G-41RSZLP1YQ');
   // ステージごとの点の色（背景は白）。後のステージほど白に近くて見つけにくい
   const DOT_COLORS = ['#000000', '#808080', '#c0c0c0', '#e0e0e0', '#f0f0f0'];
   const FIELD_COLOR = '#ffffff';
-  const TAP_R = 16;          // 当たりとみなす半径（CSS px）。指では1pxぴったりは押せないため
+  const TAP_R = 16;          // 当たりとみなす半径（CSS px）。手手指では1pxぴったりは押せないため
   const MISS_PENALTY = 5;    // 外したときに加算する秒数（連打で探せないようにする）
-  const MARGIN = 8;          // 点を置かない画面端の幅（CSS px）
+  const MARGIN = 8;          // 点を置かない畫面端の幅（CSS px）
   const FOUND_SHOW = 0.7;    // 見つけた点に丸を出して見せる時間（秒）
   // 探す範囲（CSS px）。端末によらず同じ広さにする。ほぼ全てのスマホに収まる大きさ
   const FIELD_W = 360, FIELD_H = 480;
@@ -163,7 +163,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function resize(){
     // 解像度は打ち止めにせず端末の倍率そのままで描く（引き伸ばしによるぼやけを防ぐ）
     dpr = window.devicePixelRatio || 1;
-    // 基本は固定サイズ。画面がそれより小さい場合だけ収まる大きさに縮める
+    // 基本は固定サイズ。畫面がそれより小さい場合だけ収まる大きさに縮める
     // （枠線2px分と、上の見出し・状態表示・下のメッセージ・その間隔の分を拉）
     const box = $('field');
     const other = $('title').offsetHeight + $('hint').offsetHeight + $('msg').offsetHeight + 8 * 3;
@@ -198,10 +198,10 @@ gtag('config', 'G-41RSZLP1YQ');
   function dotSize(){
     if (stageTime < PULSE_AFTER) return 1;
     const t = (stageTime - PULSE_AFTER) / PULSE_PERIOD;
-    return 1 + (PULSE_MAX - 1) * (0.5 - 0.5 * Math.cos(t * Math.PI * 2));   // 1pxから滑らかに始まる
+    return 1 + (PULSE_MAX - 1) * (0.5 - 0.5 * Math.cos(t * Math.PI * 2));   // 1pxから滑らかに開始
   }
 
-  // MOVE_AFTER を過ぎたら点を動かす。範囲の端で跳ね返る
+  // MOVE_AFTER を過ぎたら点を移動。範囲の端で跳ね返る
   function moveDot(dt){
     if (stageTime < MOVE_AFTER) return;
     const r = dotRange();
@@ -315,7 +315,7 @@ gtag('config', 'G-41RSZLP1YQ');
       stageTime += dt;
       moveDot(dt);
       updateHint();
-      if (stageTime >= Math.min(MOVE_AFTER, PULSE_AFTER)) draw();   // 変化が始まるまでは描き直さない
+      if (stageTime >= Math.min(MOVE_AFTER, PULSE_AFTER)) draw();   // 変化が開始までは描き直さない
     } else if (mode === 'found') {
       foundTimer -= dt;
       if (foundTimer <= 0) afterFound();
@@ -333,7 +333,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   $('retry').addEventListener('click', start);
 
-  // PC: 結果画面では Enter / スペースでもう一回
+  // PC: 結果畫面では Enter / スペースで再來一次
   document.addEventListener('keydown', e => {
     if (mode === 'over' && (e.key === 'Enter' || e.key === ' ') && document.activeElement !== $('share')) {
       e.preventDefault();
@@ -341,8 +341,8 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
-  // 2本指のタッチはピンチ拡大の始まりなので、どこで触れても止める
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // 2本手手指のタッチはピンチ拡大の始まりなので、どこで触れても止める
   document.addEventListener('touchstart', e => { if (e.target === cv || e.touches.length > 1) e.preventDefault(); }, {passive:false});
   document.addEventListener('touchmove', e => { if (e.target === cv || e.touches.length > 1) e.preventDefault(); }, {passive:false});
   // iPhone(Safari)は user-scalable=no を無視してピンチ拡大するので、Safari独自のジェスチャーイベントも止める
@@ -356,7 +356,7 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('selectstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => e.preventDefault());
 
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるうえ、1pxが見えてしまうため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるうえ、1pxが見えてしまうため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -379,7 +379,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({text}).catch(() => {});
       return;
     }
-    // 2) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 2) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);

@@ -47,7 +47,7 @@ gtag('config', 'G-41RSZLP1YQ');
     --board:#ffffff; --board-ink:#1d2329; --board-line:var(--line);   /* 駅名標（山手線の色の帯） */
     --fg:#1d2329; --panel:rgba(255,255,255,.92);
     --howto-bg:#2c2f33; --howto-fg:#e6e6e6;
-    --line:#80c241;                    /* 山手線の色（ボタン・地図の線路） */
+    --line:#80c241;                    /* 山手線の色（按鈕・地図の線路） */
     --led-bg:#0e0f10; --led-frame:#2c2f33; --led-edge:#4a4e53; --led-label:#e6e6e6;   /* 電光掲示板（表示面・きょう体・ふち・見出し） */
     --led-red:#ff3b2f; --led-orange:#ffb52e; --led-green:#8cff5a; --led-yellow:#f2ff3a;
     --map-bg:#ffffff; --map-line:var(--line); --map-st:#ffffff; --map-st-edge:#2c2f33; --map-car:#e0251b;   /* 地図（線路・駅・電車） */
@@ -93,7 +93,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #speed-box{left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);padding:4px 6px 6px;border-radius:8px;background:var(--led-frame);text-shadow:none}
   #speed-box{padding:6px}
   #meter{display:block;width:140px;height:140px}
-  /* 駅を通るときに画面の真ん中に大きく出す駅名と剩餘の駅の数 */
+  /* 駅を通るときに畫面の真ん中に大きく出す駅名と剩餘の駅の数 */
   #pass{position:absolute;left:0;right:0;top:30%;text-align:center;color:#fff;font-weight:900;line-height:1.1;pointer-events:none;
     text-shadow:0 0 6px rgba(0,0,0,.55),0 2px 0 rgba(0,0,0,.6)}
   #pass[hidden]{display:none}
@@ -141,18 +141,18 @@ gtag('config', 'G-41RSZLP1YQ');
       <div class="led-cell" id="final"><span>0:00.0</span></div>
       <h2>最速タイム</h2>
       <div class="led-cell" id="best"><span>-:--.-</span></div>
-      <button id="retry" type="button">もう一回</button>
+      <button id="retry" type="button">再來一次</button>
       <button id="share" type="button">分享</button>
     </div>
   </div>
   <section class="howto" data-pos="none" hidden>
     <h2>玩法</h2>
-    <p>環状線を電車で一周するタイムアタックです。最初に押した瞬間から計測が始まり、10駅を回って最初の駅に返回とタイムが決まります。電車は駅に止まらず、乗客は走っている電車に跳び乗り、跳び降ります。最速タイムはこのブラウザに保存されます。</p>
+    <p>環状線を電車で一周するタイムアタックです。最初に押した瞬間から計測が始まり、10駅を回って最初の駅に返回とタイムが決まります。電車は駅に止まらず、乗客は走っている電車に跳び乗り、跳び降ります。最速タイムはこの瀏覽器に會儲存。</p>
     <h2>操作</h2>
-    <p>画面のどこかを按いる間は加速し、離すと減速します。操作はこれだけです。PC ではスペース、上キー、W キーで同じように動かせます。</p>
-    <h2>コツ</h2>
-    <p>前方の線路に出る帯の色は、今の速さのまま進んだときの車体の傾きを示し、緑から黄色、赤へと変わります。速すぎるとカーブの外側へ倒れて脱線し、止まった状態から走り直す間も時計は進みます。離したときの減速は加速の3倍以上強いので、カーブの手前まで按短く離すのが基本です。乗客が増えると車体が重くなり、加速も減速も鈍ります。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>畫面のどこかを按いる間は加速し、放開と減速します。操作はこれだけです。PC ではスペース、上鍵、W 鍵で同じように動かせます。</p>
+    <h2>訣竅</h2>
+    <p>前方の線路に出る帯の色は、今の速さのまま進んだときの車体の傾きを示し、緑から黄色、赤へと変わります。速すぎるとカーブの外側へ倒れて脱線し、止まった状態から走り直す間も時計は進みます。離したときの減速は加速の3倍以上強いので、カーブの手前まで按短く放開のが基本です。乗客が增加と車体が重くなり、加速も減速も鈍ります。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -188,7 +188,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const PAX_LEVELS = [[700, '満員', '--led-red'], [500, '混雑', '--led-orange'], [300, '普通', '--led-yellow'], [0, '空き', '--led-green']];
 
   // 走行（1秒あたりに進む距離。表示は ×3.6 で km/h）
-  // 操作はスロットカーと同じ：画面を按いる間は加速、離すと減速する
+  // 操作はスロットカーと同じ：畫面を按いる間は加速、放開と減速する
   const ACC_MAX = 15;             // 空車で按いるときの加速
   const RELEASE_BRAKE = 50;       // 空車で離しているときの減速
   const GOAL_BRAKE = 20;          // 一周したあとに止まるときの減速
@@ -349,7 +349,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(cssColor('--sky-horizon'));
   scene.fog = new THREE.Fog(cssColor('--sky-horizon'), 250, 1100);
-  // 空：カメラを囲む大きな球を、上ほど濃い青にする（カメラに付いて動かす）
+  // 空：カメラを囲む大きな球を、上ほど濃い青にする（カメラに付いて移動）
   const skyDome = (() => {
     const geo = new THREE.SphereGeometry(1500, 32, 16), pos = geo.attributes.position, col = [];
     const top = new THREE.Color(cssColor('--sky-top')), hor = new THREE.Color(cssColor('--sky-horizon')), c = new THREE.Color();
@@ -390,7 +390,7 @@ gtag('config', 'G-41RSZLP1YQ');
   sun.shadow.camera.updateProjectionMatrix();
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.02;
-  const SUN_OFFSET = V(10, 25, 12);   // 電車から見た太陽の位置（影を落とす範囲を電車に付いて動かす）
+  const SUN_OFFSET = V(10, 25, 12);   // 電車から見た太陽の位置（影を掉落範囲を電車に付いて移動）
   scene.add(sun, sun.target);
 
   // ---------- 部品づくりの道具 ----------
@@ -1048,8 +1048,8 @@ gtag('config', 'G-41RSZLP1YQ');
     return car;
   }
 
-  // 運転台の前面（s: 1=前, -1=後ろ）。車体の端から前へふくらんだ前面。窓のあたりから上は後ろへ傾き、屋根につながる
-  const NOSE = 0.42;              // 前面がいちばん前へ出ている長さ（窓の下の真ん中）
+  // 運転台の前面（s: 1=前, -1=後ろ）。車体の端から上一頁ふくらんだ前面。窓のあたりから上は後ろへ傾き、屋根につながる
+  const NOSE = 0.42;              // 前面がいちばん上一頁出ている長さ（窓の下の真ん中）
   // 車体の断面の、横位置 z での上の端の高さ
   const bodyTopAt = (() => {
     const pts = bodyShape().getPoints(24).filter(p => p.y >= SIDE_H - 1e-6).sort((a, b) => a.x - b.x);
@@ -1060,7 +1060,7 @@ gtag('config', 'G-41RSZLP1YQ');
   })();
   function addCabFront(g, s, lit){
     const e = s * CAR_LEN / 2, NU = 28, NV = 28;
-    // 前へ出る長さ：横は真ん中が平らで角が丸く、縦は窓の下までまっすぐ、そこから上は後ろへ下がって屋根で0
+    // 上一頁出る長さ：横は真ん中が平らで角が丸く、縦は窓の下までまっすぐ、そこから上は後ろへ下がって屋根で0
     const out = (u, v) => NOSE * (1 - Math.pow(Math.abs(u), 4)) * (v <= FRONT_WIN_V0 ? 1 : 1 - Math.pow((v - FRONT_WIN_V0) / (1 - FRONT_WIN_V0), 1.6));
     const pos = [], uv = [], idx = [];
     for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) {
@@ -1072,7 +1072,7 @@ gtag('config', 'G-41RSZLP1YQ');
       const a0 = j * (NU + 1) + i, b0 = a0 + 1, c0 = a0 + NU + 1, d0 = c0 + 1;
       if (s > 0) idx.push(a0, c0, b0, b0, c0, d0); else idx.push(a0, b0, c0, b0, d0, c0);
     }
-    // 下の面（車体の端から前へ出た部分の底をふさぐ）
+    // 下の面（車体の端から上一頁出た部分の底をふさぐ）
     const base = pos.length / 3;
     for (let i = 0; i <= NU; i++) { const u = i / NU * 2 - 1; pos.push(e, 0, u * W2); uv.push((1 - s * u) / 2, 0); }
     for (let i = 0; i < NU; i++) {
@@ -1138,10 +1138,10 @@ gtag('config', 'G-41RSZLP1YQ');
     camInit = false;
   }
 
-  // ---------- 操作（画面のどこかを按いる間は加速、離すと減速。PCはスペースか↑キー） ----------
-  const presses = new Set();   // 按いる指（pointerId）とキー
+  // ---------- 操作（畫面のどこかを按いる間は加速、放開と減速。PCはスペースか↑鍵） ----------
+  const presses = new Set();   // 按いる手手指（pointerId）と鍵
   const pressing = () => presses.size > 0;
-  // メニューや結果画面のボタンを押したときは加速しない
+  // メニューや結果畫面の按鈕を押したときは加速しない
   const isControl = e => !(e.target instanceof Element && e.target.closest('button, #menu, #over'));
   function press(id){
     presses.add(id);
@@ -1158,16 +1158,16 @@ gtag('config', 'G-41RSZLP1YQ');
   const PRESS_KEYS = [' ', 'ArrowUp', 'w', 'W'];
   addEventListener('keydown', e => { if (PRESS_KEYS.includes(e.key)) { if (!e.repeat) press('key'); e.preventDefault(); } });
   addEventListener('keyup', e => { if (PRESS_KEYS.includes(e.key)) presses.delete('key'); });
-  addEventListener('blur', () => presses.clear());   // 別の画面に移ったら離したことにする
+  addEventListener('blur', () => presses.clear());   // 別の畫面に移ったら離したことにする
 
-  // ---------- メニュー（右上のボタンで開け閉めする。外側を触ると關閉） ----------
+  // ---------- メニュー（右上の按鈕で開け閉めする。外側を触ると關閉） ----------
   const menuBtn = $('menu-btn'), menu = $('menu');
   const setMenu = open => { menu.hidden = !open; menuBtn.setAttribute('aria-expanded', String(open)); };
   menuBtn.addEventListener('click', () => setMenu(menu.hidden));
   document.addEventListener('pointerdown', e => { if (!menu.hidden && !e.target.closest('#menu, #menu-btn')) setMenu(false); }, true);
   addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
 
-  // ---------- 効果音（Web Audio で合成。ブラウザの制限があるので、最初の操作で鳴らせるようにする） ----------
+  // ---------- 効果音（Web Audio で合成。瀏覽器の制限があるので、最初の操作で鳴らせるようにする） ----------
   // 走行音（つなぎ目の「タタン」とゴーという音）、按いる間のモーター音、駅の通過・脱線・一周の音
   let actx = null, master = null, noiseBuf = null, soundOn = true;
   let motorOsc, motorFilt, motorGain, rumbleFilt, rumbleGain;
@@ -1264,12 +1264,12 @@ gtag('config', 'G-41RSZLP1YQ');
     $('sound').setAttribute('aria-pressed', String(soundOn));
   });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て、按いる操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て、按いる操作が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (isControl(e)) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (pressing()) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => e.preventDefault());
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -1611,7 +1611,7 @@ gtag('config', 'G-41RSZLP1YQ');
     streakGeo.attributes.color.needsUpdate = true;
   }
 
-  // 加速の風：電車のまわりの空中に細い筋を置き（地面に対して止まっている）、通り過ぎたら前へ置き直す。速いほど長く濃くなる
+  // 加速の風：電車のまわりの空中に細い筋を置き（地面に対して止まっている）、通り過ぎたら上一頁置き直す。速いほど長く濃くなる
   const windMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0, depthWrite:false, fog:false });
   const winds = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.025, 0.025), windMat, WIND_N);
   winds.frustumCulled = false;
@@ -1631,7 +1631,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!winds.visible) return;
     const len = 1 + v * 0.2;
     windList.forEach((w, i) => {
-      if (w.s < s - 20) placeWind(w, 40 + Math.random() * 30);   // カメラの後ろへ抜けたら前へ
+      if (w.s < s - 20) placeWind(w, 40 + Math.random() * 30);   // カメラの後ろへ抜けたら上一頁
       const p = pathAt(w.s), q = offsetPt(p, w.l);
       windDummy.position.set(q.x, w.y, q.z);
       windDummy.rotation.set(0, -p.h, 0);
@@ -1676,7 +1676,7 @@ gtag('config', 'G-41RSZLP1YQ');
     guideGeo.attributes.color.needsUpdate = true;
   }
 
-  // 最速タイム：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  // 最速タイム：瀏覽器のlocalStorageに保存（使えない環境ではその回だけ保持）
   const BEST_KEY = 'trainTimeAttack.bestTime';
   let bestTime = 0;
   try { bestTime = parseFloat(localStorage.getItem(BEST_KEY)) || 0; } catch(e) {}
@@ -1705,7 +1705,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 2) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 2) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);
@@ -1929,7 +1929,7 @@ gtag('config', 'G-41RSZLP1YQ');
     updateGuide();
     stepSound();
     updateCamera(dt);
-    skyDome.position.copy(camera.position);   // 空はカメラに付いて動かす（近づくことがないように）
+    skyDome.position.copy(camera.position);   // 空はカメラに付いて移動（近づくことがないように）
     updateHud();
     updatePass(dt);
     stepLedScroll(dt);

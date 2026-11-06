@@ -34,7 +34,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
 <title>特技列車</title>
-<meta name="description" content="電車の前と後ろを別々に乗り換える">
+<meta name="description" content="電車の前と後ろを各自に乗り換える">
 <style>
   :root{
     --bg:#dfe6ea;
@@ -50,10 +50,10 @@ gtag('config', 'G-41RSZLP1YQ');
     --switch:#ffd400; --switch-mark:#1d2329;   /* 勝手に動く分岐器の標識（黄色地に黒い矢印） */
     --item0:#ffd23f; --item1:#43d9ff; --item2:#ff5fd2;   /* ポイント（地上・空中1・空中2） */
     --fg:#1d2329; --panel:rgba(255,255,255,.92); --accent:#2f9a57;
-    /* 3D表示は画面の縦横比に関わらず、この縦横比（幅:高さ = 2:3）で固定する */
+    /* 3D表示は畫面の縦横比に関わらず、この縦横比（幅:高さ = 2:3）で固定する */
     --view-ratio:2 / 3;
-    /* 3D表示の幅：画面の幅いっぱい。ただし高さが画面の80%を超える場合は、80%に収まる幅にする
-       （アドレスバーで高さが変わるモバイルに合わせて dvh を使う。dvh が使えない古いブラウザは vh） */
+    /* 3D表示の幅：畫面の幅いっぱい。ただし高さが畫面の80%を超える場合は、80%に収まる幅にする
+       （アドレスバーで高さが変わるモバイルに合わせて dvh を使う。dvh が使えない古い瀏覽器は vh） */
     --view-w:min(100vw, 80vh * 2 / 3);
     --view-w:min(100vw, 80dvh * 2 / 3);
   }
@@ -70,7 +70,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #hud{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 0;pointer-events:none;
     color:var(--fg);font-weight:700;font-size:28px;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,.7)}
   #hud small{font-size:13px;margin-left:4px}
-  #best{display:block;margin-top:6px;font-size:13px}   /* 最高記録 */
+  #best{display:block;margin-top:6px;font-size:13px}   /* 最高紀錄 */
   /* 右上のメニュー（ハンバーガー）と、開いたときの項目 */
   #menu-btn{position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 6px);width:44px;height:44px;padding:0;
     border:0;border-radius:10px;background:var(--panel);color:var(--fg);font:inherit;font-size:22px;line-height:44px;cursor:pointer}
@@ -80,8 +80,8 @@ gtag('config', 'G-41RSZLP1YQ');
   #menu button{min-width:170px;height:44px;padding:0 12px;border:0;border-radius:8px;background:#e4e8eb;color:var(--fg);
     font:inherit;font-size:15px;font-weight:700;text-align:left;cursor:pointer}
   #menu button[aria-pressed="false"]{opacity:.6}
-  /* 右下の操作ボタン（上の段が前、下の段が後ろ。左右で隣の線路へ移る。右半分の幅いっぱい） */
-  #pad{position:absolute;left:50%;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);display:grid;grid-template-columns:1fr 1fr;gap:8px}   /* 右端から画面の真ん中まで */
+  /* 右下の操作按鈕（上の段が前、下の段が後ろ。左右で隣の線路へ移る。右半分の幅いっぱい） */
+  #pad{position:absolute;left:50%;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);display:grid;grid-template-columns:1fr 1fr;gap:8px}   /* 右端から畫面の真ん中まで */
   #pad[hidden]{display:none}
   #pad button{height:56px;padding:0;border:0;border-radius:12px;background:var(--panel);color:var(--fg);
     font:inherit;font-size:16px;font-weight:700;touch-action:none;cursor:pointer}
@@ -94,7 +94,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #final{font-size:44px;font-weight:800;margin:4px 0 4px}
   #final-best{font-size:15px;font-weight:700;margin:0 0 16px}
   #final small{font-size:16px;margin-left:4px}
-  /* チュートリアル：実際に操作してもらう。上に短い指示を出し、触る場所に丸を出す（開くたびに最初に出す） */
+  /* チュートリアル：実際に操作してもらう。上に短い手手指示を出し、触る場所に丸を出す（開くたびに最初に出す） */
   #tutorial{position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 64px);z-index:2;pointer-events:none;
     background:var(--panel);color:var(--fg);border-radius:12px;padding:12px 14px;text-align:center;font-size:16px;font-weight:700;line-height:1.45;
     box-shadow:0 2px 10px rgba(0,0,0,.18)}
@@ -113,7 +113,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #retry{background:var(--accent);color:#fff}
   #share{background:#e4e8eb;color:var(--fg)}
   #over button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
-  /* 2D表示をオフにしたとき：3D表示を画面全体に広げる（縦横比は固定しない） */
+  /* 2D表示をオフにしたとき：3D表示を畫面全体に広げる（縦横比は固定しない） */
   #wrap.no-map{touch-action:none}
   #wrap.no-map #view3d{width:100%;height:100%;aspect-ratio:auto}
   #wrap.no-map #map{display:none}
@@ -127,10 +127,10 @@ gtag('config', 'G-41RSZLP1YQ');
     <button id="menu-btn" type="button" aria-label="メニュー" aria-expanded="false" aria-controls="menu">☰</button>
     <div id="menu" hidden>
       <button id="sound" type="button" aria-pressed="true">音效：開</button>
-      <button id="pad-toggle" type="button" aria-pressed="false">操作ボタン：非表示</button>
+      <button id="pad-toggle" type="button" aria-pressed="false">操作按鈕：非表示</button>
       <button id="howto-btn" type="button" data-howto-open>玩法</button>
     </div>
-    <div id="pad" role="group" aria-label="操作ボタン" hidden>
+    <div id="pad" role="group" aria-label="操作按鈕" hidden>
       <button type="button" data-end="front" data-dir="-1" aria-label="前を左の線路へ">◀ 前</button>
       <button type="button" data-end="front" data-dir="1" aria-label="前を右の線路へ">前 ▶</button>
       <button type="button" data-end="rear" data-dir="-1" aria-label="後ろを左の線路へ">◀ 後</button>
@@ -148,19 +148,19 @@ gtag('config', 'G-41RSZLP1YQ');
       <h2>遊戲結束</h2>
       <div id="final">0<small>ポイント</small></div>
       <div id="final-best">最高 0</div>
-      <button id="retry" type="button">もう一回</button>
+      <button id="retry" type="button">再來一次</button>
       <button id="share" type="button">分享</button>
     </div>
   </div>
 </div>
 <section class="howto" hidden data-pos="none">
   <h2>玩法</h2>
-  <p>3本の線路を走る電車を操り、ポイントを集めて得点を伸ばすゲームです。前と後ろの台車は別々に線路を移れます。線路の切れ目に落ちたり、ポール、岩、対向列車にぶつかったりすると遊戲結束です。速さは少しずつ上がり、最高点はこのブラウザに保存されます。</p>
+  <p>3本の線路を走る電車を操り、ポイントを集めて得分を伸ばす遊戲。前と後ろの台車は各自に線路を移れます。線路の切れ目に落ちたり、ポール、岩、対向列車にぶつかったりすると遊戲結束です。速さは少しずつ上がり、最高点はこの瀏覽器に會儲存。</p>
   <h2>操作</h2>
-  <p>画面に触れると前後の台車のうち近いほうが選ばれ、横に滑動した量に応じて線路を移ります。右上のメニューで操作ボタンを表示すれば、ボタンでも隣の線路へ移せます。PC ではマウスの拖曳で同じように動かせます。</p>
-  <h2>コツ</h2>
+  <p>畫面に触れると前後の台車のうち近いほうが選ばれ、横に滑動した量に応じて線路を移ります。右上のメニューで操作按鈕を表示すれば、按鈕でも隣の線路へ移せます。PC では滑鼠の拖曳で同じように動かせます。</p>
+  <h2>訣竅</h2>
   <p>ジャンプ台で飛ぶと空中のリングが取れて、高さに応じて30点か50点が入ります。線路の間のポイントは車体を斜めにしないと取れませんが、斜めのままだとポールに当たるので注意してください。切れ目の手前では、ポイントの並ぶ線路が通れる道です。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -168,7 +168,7 @@ gtag('config', 'G-41RSZLP1YQ');
   'use strict';
 
   // ---------- 定数 ----------
-  // 線路（直線とカーブを交互につないで、走るのに合わせて前へ伸ばし、後ろは消す）
+  // 線路（直線とカーブを交互につないで、走るのに合わせて上一頁伸ばし、後ろは消す）
   const TRACK_BEHIND = 60;   // 電車より後ろに残す線路の長さ
   const TRACK_AHEAD = 700;   // 電車より前に敷いておく線路の長さ
   const TIE_BACK = 30;       // 枕木を並べる範囲（電車より後ろ）
@@ -220,19 +220,19 @@ gtag('config', 'G-41RSZLP1YQ');
   const CAM_OFFSET = [-13, 4.2, 3.0];     // 見る点からカメラまでのずれ
 
   // 下の2D表示
-  const SHOW_MAP = false;                 // 下の2D表示を出すか（false のときは画面を滑動して操作する）
-  const MAP_LEN = 16;                     // 画面の縦幅に入れたい線路の長さ
-  const MAP_W = TRACK_SPACING * 2 + 4;    // 画面の横幅に入れたい幅（3本の線路）
+  const SHOW_MAP = false;                 // 下の2D表示を出すか（false のときは畫面を滑動して操作する）
+  const MAP_LEN = 16;                     // 畫面の縦幅に入れたい線路の長さ
+  const MAP_W = TRACK_SPACING * 2 + 4;    // 畫面の横幅に入れたい幅（3本の線路）
   const GRAB_PX = 22;                     // 電車を掴める範囲の、車体からはみ出してよい幅（ピクセル）
 
   // 滑動操作（触れた位置に近いほうの先端＝前か後ろを、横に滑動して線路を移る）
-  const SWIPE_PX = 36;                    // 指をこれだけ横に動かすごとに、線路を1本移る（ピクセル）
+  const SWIPE_PX = 36;                    // 手手指をこれだけ横に移動ごとに、線路を1本移る（ピクセル）
 
   const $ = id => document.getElementById(id);
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
   const UP = V(0, 1, 0);
 
-  // 電車の前後の台車の横位置（2D表示で指で動かす）。台車は必ずどれかの線路の上にあり、電車の位置と向きはこの2つから決まる
+  // 電車の前後の台車の横位置（2D表示で手手指で移動）。台車は必ずどれかの線路の上にあり、電車の位置と向きはこの2つから決まる
   const CROSS_TIME = 0.28;                // 隣の線路へ移るのにかかる時間（秒）。短いほどキビキビ動く
   let speed = SPEED_START;                // 今の速さ
   const ends = { front:0, rear:0 };      // 今の横位置
@@ -321,7 +321,7 @@ gtag('config', 'G-41RSZLP1YQ');
   sun.shadow.camera.updateProjectionMatrix();
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.02;
-  const SUN_OFFSET = V(8, 20, 10);   // 電車から見た太陽の位置（影を落とす範囲を電車に付いて動かす）
+  const SUN_OFFSET = V(8, 20, 10);   // 電車から見た太陽の位置（影を掉落範囲を電車に付いて移動）
   scene.add(sun, sun.target);
 
   // ---------- 部品づくりの道具 ----------
@@ -364,7 +364,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const offsetPt = (p, l) => ({ x:p.x - Math.sin(p.h) * l, z:p.z + Math.cos(p.h) * l });
 
   // 断面（道筋からの横ずれ, 高さ）を区間に沿って押し出した形
-  // ua〜ub を指定すると区間の一部だけを作る（線路の切れ目の前後でレールを分けるため）
+  // ua〜ub を手手指定すると区間の一部だけを作る（線路の切れ目の前後でレールを分けるため）
   function sweepSeg(seg, profile, closed, uLen, ua = 0, ub = seg.len){
     const n = seg.k === 0 ? 1 : Math.max(2, Math.ceil((ub - ua) / 1.5));
     const pos = [], uv = [], idx = [], m = profile.length;
@@ -390,7 +390,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return g;
   }
 
-  // ---------- 背景（空と遠くの山。カメラに付いて動かすので、近づくことはなく、カーブでは向きに合わせて流れる） ----------
+  // ---------- 背景（空と遠くの山。カメラに付いて移動ので、近づくことはなく、カーブでは向きに合わせて流れる） ----------
   const SKY_TOP = 0x6fa8dc, SKY_HORIZON = 0xdce9f2;   // 空の色（真上・地平線）
   const MOUNTAINS = [   // 遠くの山並み（遠いほど薄く空に近い色）
     { r:2200, h:[90, 260], color:0xa7bccb, seed:1 },
@@ -576,7 +576,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 沿線の木（線路の両側に散らばる。ローポリの、とがった木） ----------
   const DECOR_PER_100 = 6.5;              // 線路100あたりに置く数（両側の合計）
   const DECOR_NEAR = 9.5, DECOR_FAR = 70;  // 線路の中心からの距離の範囲
-  const DECOR_CLEAR = 9;                   // どの線路からもこれ以上離す（カーブの内側などで線路に重ならないように）
+  const DECOR_CLEAR = 9;                   // どの線路からもこれ以上放開（カーブの内側などで線路に重ならないように）
   const flat = (color, extra) => std(color, 0, 0.9, Object.assign({ flatShading:true, envMapIntensity:GROUND_ENV }, extra || {}));
   const trunkMat = flat(0x6b4a2f);
   const DECOR_KINDS = [
@@ -631,7 +631,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   const rnd = (a, b) => a + Math.random() * (b - a);
-  // 直線の次はカーブ（左右はランダム）、カーブの次は直線をつなぐ
+  // 直線の次はカーブ（左右は隨機）、カーブの次は直線をつなぐ
   function addSeg(){
     const last = segs[segs.length - 1];
     const e = segAt(last, last.len);
@@ -729,7 +729,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const LINE_AIR1 = 4;               // 空中1の高さ（レールの上から）
   const LINE_AIR2 = LINE_AIR1 * 2;   // 空中2の高さ（空中1の2倍）
   const JUMP_G = 56;                 // 飛んでいるときの重力（強いほど素早く上がって落ちる。空中1は滞空約0.7秒、空中2は約1.05秒）
-  const CAM_JUMP_FOLLOW = 0.75;      // 飛んだ高さのどれだけをカメラが追って上がるか（高く飛んでも画面から出ないように）
+  const CAM_JUMP_FOLLOW = 0.75;      // 飛んだ高さのどれだけをカメラが追って上がるか（高く飛んでも畫面から出ないように）
   const JUMP_PITCH = 0.25;     // まっすぐ飛ぶときの機首の上げ下げの強さ
   const SPIN_PIVOT_Y = 1.6;    // 回転の中心の高さ（車体の真ん中あたり）
   const JUMP_LAND = 1.5;       // 飛んだあとの着地の沈み込みを、線路を移るときの何倍にするか
@@ -773,7 +773,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const SPIN_AXIS = V(1, 0, 0);   // 斜めに飛ぶときの回転軸：車体の前後方向（斜めの向きはそのまま、横にくるっと回る）
   const FLIP_AXIS = V(0, 0, 1);   // まっすぐ飛ぶときの回転軸：車体の左右方向（縦にぐるっと宙返りする）
   const FLIP_TURNS = 1;           // まっすぐ飛ぶときの宙返りの回数
-  const FLIP_DIR = 1;             // 宙返りの向き（1：機首を上げて後ろへ回る、-1：機首から前へ回る）
+  const FLIP_DIR = 1;             // 宙返りの向き（1：機首を上げて後ろへ回る、-1：機首から上一頁回る）
   function launch(end, r, y0, p0 = 0){
     const other = end === 'front' ? 'rear' : 'front';
     const spin = Math.abs(ends[other] - r.tz) >= RAMP_HIT;
@@ -1001,7 +1001,7 @@ gtag('config', 'G-41RSZLP1YQ');
     g.strokeStyle = cssColor('--switch-mark');
     g.lineWidth = 8;
     g.strokeRect(4, 4, S - 8, S - 8);
-    // 移る側を指す太い矢印
+    // 移る側を手手指す太い矢印
     g.fillStyle = cssColor('--switch-mark');
     g.beginPath();
     const c = S / 2;
@@ -1181,16 +1181,16 @@ gtag('config', 'G-41RSZLP1YQ');
       return len;
     },
   };
-  // カーブの先は画面に映らないので、仕掛けは「届く少し前から見えている」ところにだけ置く
+  // カーブの先は畫面に映らないので、仕掛けは「届く少し前から見えている」ところにだけ置く
   const WARN_TIME = 1.6;                                // 仕掛けが見えてから届くまでに欲しい時間（いちばん速いとき）
-  const WARN_TURN = THREE.MathUtils.degToRad(12);       // その間に線路の向きがこれ以上変わると、仕掛けは画面の外になる
+  const WARN_TURN = THREE.MathUtils.degToRad(12);       // その間に線路の向きがこれ以上変わると、仕掛けは畫面の外になる
   // 距離 s での線路の向き（作っている途中の区間 seg と、すでにある区間から求める）
   function headAt(seg, s){
     if (s >= seg.s0) return seg.h0 + seg.k * (s - seg.s0);
     for (let i = segs.length - 1; i >= 0; i--) if (segs[i].s0 <= s) return segs[i].h0 + segs[i].k * (s - segs[i].s0);
     return seg.h0;
   }
-  // 電車が s の WARN_TIME 秒手前（そこを通るときの速さで）にいるときに、s が画面に映っているか（その間の線路の向きの変わり具合で見る）
+  // 電車が s の WARN_TIME 秒手前（そこを通るときの速さで）にいるときに、s が畫面に映っているか（その間の線路の向きの変わり具合で見る）
   const seenEarly = (seg, s) => Math.abs(headAt(seg, s) - headAt(seg, s - speedAt(s) * WARN_TIME)) < WARN_TURN;
 
   // 距離 s を通るときの速さ（走り始めから一定の割合で速くなるので、距離から決まる）
@@ -1457,7 +1457,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   const car = makeCar();
   let blurSpan = 0;  // この1フレームで進んだ距離（ぶれの幅）
-  // 今の電車の置かれ方。m で始まるものは2D表示用（真ん中の線路の、電車の位置を原点にした、線路に沿った向きの座標）
+  // 今の電車の置かれ方。m で開始ものは2D表示用（真ん中の線路の、電車の位置を原点にした、線路に沿った向きの座標）
   const pose = { x:0, z:0, h:0, yaw:0, mx:0, mz:0, ma:0, air:0 };
   const Z_AXIS = V(0, 0, 1);
   const qYaw = new THREE.Quaternion(), qPitch = new THREE.Quaternion(), qSpin = new THREE.Quaternion();
@@ -1468,7 +1468,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // playing：走っている / crash：脱線・衝突して止まっていくところ / over：結果を表示中
   let mode = 'playing', crashT = 0, score = 0;
   const updateHud = () => { $('score').textContent = score; };
-  // 最高記録（ブラウザに保存。保存できない環境ではその回だけ覚えておく）
+  // 最高紀錄（瀏覽器に保存。保存できない環境ではその回だけ覚えておく）
   const BEST_KEY = 'acrobatic-train.best';
   let best = 0;
   try { best = Math.max(0, parseInt(localStorage.getItem(BEST_KEY), 10) || 0); } catch (e) {}
@@ -1782,7 +1782,7 @@ gtag('config', 'G-41RSZLP1YQ');
       l.visible = blur || i === 0;
       sleeperLayerMat[i].opacity = blur ? BLUR_A : 0.95;
     });
-    // 地面と影を落とす範囲は電車に付いて動かす
+    // 地面と影を掉落範囲は電車に付いて移動
     ground.position.set(cx, -0.01, cz);
     // 地面は電車に付いて動くので、模様は逆にずらして、地面に描かれたまま止まって見えるようにする
     grassTex.offset.set((cx / GRASS_TILE) % 1, (-cz / GRASS_TILE) % 1);
@@ -2035,7 +2035,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // カーブの火花：外側のレールに車輪が押し付けられてこすれ、細かい火花が後ろへ流れる
-  const CURVE_SPARK_RATE = 110;   // 台車1つから1秒あたりに出る火花の数（いちばん速いとき。遅いと減る）
+  const CURVE_SPARK_RATE = 110;   // 台車1つから1秒あたりに出る火花の数（いちばん速いとき。遅いと減少）
   const curveAcc = { front:0, rear:0 };
   function curveSparks(dt){
     ['front', 'rear'].forEach(end => {
@@ -2159,7 +2159,7 @@ gtag('config', 'G-41RSZLP1YQ');
     g.fillRect(0, 0, MW, MH);
     g.translate(MW / 2, MH / 2);   // 電車の中心を表示の中央に置き、以降は線路の単位で描く
     g.scale(MS, MS);
-    g.rotate(-Math.PI / 2);        // 線路の前方向を画面の上、横方向を画面の右にする
+    g.rotate(-Math.PI / 2);        // 線路の前方向を畫面の上、横方向を畫面の右にする
     const half = MH / 2 / MS + 1;
 
     // 真ん中の線路の、電車の位置を原点にして、線路の向きを上にした座標に直す
@@ -2278,7 +2278,7 @@ gtag('config', 'G-41RSZLP1YQ');
     g.restore();
   }
 
-  // ---------- 2D表示での操作（前と後ろを別々の指で掴み、横へ動かす） ----------
+  // ---------- 2D表示での操作（前と後ろを各自の手手指で掴み、横へ移動） ----------
   const holds = new Map();   // pointerId → { end:'front'|'rear', off:掴んだ点と台車の横位置の差 }
   const toMap = e => {
     const r = mapCv.getBoundingClientRect();
@@ -2288,30 +2288,30 @@ gtag('config', 'G-41RSZLP1YQ');
     e.preventDefault();
     if (mode !== 'playing') return;
     const p = toMap(e), a = pose.ma;
-    // 電車から見た位置に直して、車体（指で掴みやすいよう少し広め）に触れたかを見る
+    // 電車から見た位置に直して、車体（手手指で掴みやすいよう少し広め）に触れたかを見る
     const dx = p.x - pose.mx, dz = p.z - pose.mz;
     const lx =  dx * Math.cos(a) + dz * Math.sin(a);
     const lz = -dx * Math.sin(a) + dz * Math.cos(a);
     const m = GRAB_PX / MS;
     if (Math.abs(lx) > CAR_LEN / 2 + m || Math.abs(lz) > CAR_W / 2 + m) return;
     const end = lx >= 0 ? 'front' : 'rear';          // 前半分なら前、後ろ半分なら後ろ
-    for (const h of holds.values()) if (h.end === end) return;  // すでに別の指が掴んでいる
+    for (const h of holds.values()) if (h.end === end) return;  // すでに別の手手指が掴んでいる
     mapCv.setPointerCapture(e.pointerId);
     holds.set(e.pointerId, { end, off:moves[end].to - p.z });
   });
   mapCv.addEventListener('pointermove', e => {
     const h = holds.get(e.pointerId);
     if (!h || mode !== 'playing') return;
-    setTarget(h.end, nearestTrack(toMap(e).z + h.off));  // 指にいちばん近い線路へ、S字を描いて移る
+    setTarget(h.end, nearestTrack(toMap(e).z + h.off));  // 手手指にいちばん近い線路へ、S字を描いて移る
   });
   const release = e => holds.delete(e.pointerId);
   mapCv.addEventListener('pointerup', release);
   mapCv.addEventListener('pointercancel', release);
 
-  // ---------- 滑動操作（2D表示をオフにしたとき。触れた位置に近いほうの先端＝前か後ろを動かす） ----------
+  // ---------- 滑動操作（2D表示をオフにしたとき。触れた位置に近いほうの先端＝前か後ろを移動） ----------
   const swipes = new Map();  // pointerId → { end:'front'|'rear', x0:触れた横位置, i0:触れたときの行き先の線路の番号 }
   const root = $('wrap');
-  // 前と後ろの台車を画面上の位置に直し、触れた点に近いほうを選ぶ
+  // 前と後ろの台車を畫面上の位置に直し、触れた点に近いほうを選ぶ
   const scrPt = V(0, 0, 0);
   function toScreen(obj){
     const r = renderer.domElement.getBoundingClientRect();
@@ -2328,7 +2328,7 @@ gtag('config', 'G-41RSZLP1YQ');
       if (mode !== 'playing' || e.target.closest('button, #menu, #pad')) return;
       e.preventDefault();
       const end = nearerEnd(e.clientX, e.clientY);
-      for (const [id, s] of swipes) if (s.end === end) swipes.delete(id);   // 同じ側は新しい指を優先
+      for (const [id, s] of swipes) if (s.end === end) swipes.delete(id);   // 同じ側は新しい手手指を優先
       root.setPointerCapture(e.pointerId);
       swipes.set(e.pointerId, { end, x0:e.clientX, i0:TRACKS.indexOf(moves[end].to) });
     });
@@ -2344,10 +2344,10 @@ gtag('config', 'G-41RSZLP1YQ');
     root.addEventListener('pointercancel', endSwipe);
   }
 
-  // ---------- 画面サイズ ----------
-  // 3D表示の縦横比はCSSで固定しているので、どの画面でも同じ映り方になる（大きさだけが変わる）
+  // ---------- 畫面サイズ ----------
+  // 3D表示の縦横比はCSSで固定しているので、どの畫面でも同じ映り方になる（大きさだけが変わる）
   const camTarget = V(...CAM_TARGET), camOffset = V(...CAM_OFFSET);
-  const VIEW_RATIO = 2 / 3;   // これより横長の画面では、縦に映る範囲をこの縦横比のときと同じにする
+  const VIEW_RATIO = 2 / 3;   // これより横長の畫面では、縦に映る範囲をこの縦横比のときと同じにする
   const H_FOV = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(55 / 2)) * 5 / 6);  // 横の画角（これまでの映り方に合わせた値）
   // 電車の位置から、カメラの向き camH を基準にした前後・左右のずれで置く
   const camAt = (o, out) => out.set(
@@ -2373,7 +2373,7 @@ gtag('config', 'G-41RSZLP1YQ');
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(W, H, false);
     camera.aspect = W / H;
-    // 縦長の画面では横に映る範囲をそろえて、縦に広く映す。横長の画面では縦横比2:3のときの縦の範囲をそろえて、横に広く映す
+    // 縦長の畫面では横に映る範囲をそろえて、縦に広く映す。横長の畫面では縦横比2:3のときの縦の範囲をそろえて、横に広く映す
     camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(H_FOV / 2) / Math.min(camera.aspect, VIEW_RATIO)));
     camera.updateProjectionMatrix();
     placeCamera();
@@ -2383,7 +2383,7 @@ gtag('config', 'G-41RSZLP1YQ');
   addEventListener('resize', resize);
 
   // ---------- 効果音（Web Audio で合成） ----------
-  // 音声ファイルは使わず、発振器とノイズを組み合わせて作る。ブラウザの自動再生制限があるので、最初の操作で鳴らせるようにする
+  // 音声ファイルは使わず、発振器とノイズを組み合わせて作る。瀏覽器の自動再生制限があるので、最初の操作で鳴らせるようにする
   const SE_VOLUME = 0.5;       // 全体の音量
   const RAIL_JOINT = 25;       // レールの継ぎ目の間隔（車輪が通るたびに「タタン」と鳴る）
   let actx = null, master = null, noiseBuf = null, soundOn = true;
@@ -2456,7 +2456,7 @@ gtag('config', 'G-41RSZLP1YQ');
       tone('square', 520, 470, 0.16, 0.06, 0.01);
       tone('square', 780, 700, 0.14, 0.05, 0.02);
     },
-    // ポイントを取る：キラッという2音（空中のものほど高い音）
+    // ポイントを取得：キラッという2音（空中のものほど高い音）
     point(level){
       const base = [880, 1047, 1319][level];
       tone('triangle', base, base, 0.08, 0.22);
@@ -2491,7 +2491,7 @@ gtag('config', 'G-41RSZLP1YQ');
       lastJoint[i] = j;
     });
   }
-  // ---------- メニュー（右上）：効果音のON/OFFと、操作ボタンの表示/非表示 ----------
+  // ---------- メニュー（右上）：効果音のON/OFFと、操作按鈕の表示/非表示 ----------
   const menuBtn = $('menu-btn'), menu = $('menu');
   const setMenu = open => { menu.hidden = !open; menuBtn.setAttribute('aria-expanded', String(open)); };
   ['menu-btn', 'menu'].forEach(id => $(id).addEventListener('pointerdown', e => e.stopPropagation()));
@@ -2507,10 +2507,10 @@ gtag('config', 'G-41RSZLP1YQ');
     const show = $('pad').hidden;
     $('pad').hidden = !show;
     $('pad-toggle').setAttribute('aria-pressed', String(show));
-    $('pad-toggle').textContent = show ? '操作ボタン：表示' : '操作ボタン：非表示';
+    $('pad-toggle').textContent = show ? '操作按鈕：表示' : '操作按鈕：非表示';
   });
 
-  // ---------- 操作ボタン（右下）：押すたびに、前か後ろを左右の隣の線路へ移す ----------
+  // ---------- 操作按鈕（右下）：按たびに、前か後ろを左右の隣の線路へ移す ----------
   $('pad').querySelectorAll('button').forEach(b => {
     b.addEventListener('pointerdown', e => {
       e.preventDefault();
@@ -2523,7 +2523,7 @@ gtag('config', 'G-41RSZLP1YQ');
     b.addEventListener('contextmenu', e => e.preventDefault());
   });
 
-  // ---------- 結果画面 ----------
+  // ---------- 結果畫面 ----------
   function showOver(){
     mode = 'over';
     rb.v.set(0, 0, 0);   // 結果を出したところで電車を止める
@@ -2569,7 +2569,7 @@ gtag('config', 'G-41RSZLP1YQ');
     $('over').hidden = true;
     update(0);
   }
-  // チュートリアル：開くたび（リロードのたび）に最初に出す。ブラウザには何も保存しない
+  // チュートリアル：開くたび（リロードのたび）に最初に出す。瀏覽器には何も保存しない
   // 1. 前を滑動 → 2. 後ろを滑動 → 3. 説明を読んで「はじめる」
   const TUT_TEXT = [
     '<em>前</em>を滑動',
@@ -2592,7 +2592,7 @@ gtag('config', 'G-41RSZLP1YQ');
     mark.hidden = tutStep > 1;
     if (!mark.hidden) {
       const p = toScreen(tutStep === 0 ? bogieF : bogieR), r = root.getBoundingClientRect();
-      // 画面の端からはみ出さないようにする（はみ出した側でも、近いほうの台車が選ばれる）
+      // 畫面の端からはみ出さないようにする（はみ出した側でも、近いほうの台車が選ばれる）
       mark.style.left = Math.max(56, Math.min(r.width - 56, p.x - r.left)) + 'px';
       mark.style.top = Math.max(150, Math.min(r.height - 56, p.y - r.top)) + 'px';
     }
@@ -2618,7 +2618,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 2) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 2) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);
@@ -2661,7 +2661,7 @@ gtag('config', 'G-41RSZLP1YQ');
     updateTrails(now / 1000);
     updateWinds(dt);
     updateEffects(dt);
-    bg.position.set(camera.position.x, 0, camera.position.z);   // 背景はカメラに付いて動かす
+    bg.position.set(camera.position.x, 0, camera.position.z);   // 背景はカメラに付いて移動
     renderer.render(scene, camera);
     if (SHOW_MAP) drawMap();
     requestAnimationFrame(loop);
@@ -2678,11 +2678,11 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('touchmove', e => { if (holds.size || swipes.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
 
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
-    if (now - lastTouchEnd < 350 && !(e.target.closest && e.target.closest('button'))) e.preventDefault();   // ボタンの連打は通す
+    if (now - lastTouchEnd < 350 && !(e.target.closest && e.target.closest('button'))) e.preventDefault();   // 按鈕の連打は通す
     lastTouchEnd = now;
   }, { passive:false });
 })();

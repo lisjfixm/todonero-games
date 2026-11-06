@@ -72,17 +72,17 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="over" class="hidden">
     <div class="big" id="result"></div>
     <div id="best"></div>
-    <button id="retry" type="button">もう一回</button>
+    <button id="retry" type="button">再來一次</button>
     <button id="share" type="button">分享</button>
   </div>
   <section class="howto" hidden data-pos="bottom-left">
     <h2>玩法</h2>
-    <p>レバーで金貨を弾き、レールの切れ目から下の段へ落として地底深くへ潜るゲームです。金貨が反対側のレバーの前に着くと1段進み、到達した階が記録になります。穴に落ちると終わりで、最深の階はこのブラウザに保存されます。</p>
+    <p>レバーで金貨を弾き、レールの切れ目から下の段へ落として地底深くへ潜る遊戲。金貨が反対側のレバーの前に着くと1段進み、到達した階が紀錄になります。穴に落ちると終わりで、最深の階はこの瀏覽器に會儲存。</p>
     <h2>操作</h2>
-    <p>画面のどこかを按いる間レバーが引かれ、離すと金貨を弾きます。押す時間が長いほど強くなり、約1秒でいっぱいまで引けます。金貨がレバーの前にないときに離しても空打ちになるだけです。PC ではマウスの長押しのほか、スペースキーか↓キーでも同じように操作できます。</p>
-    <h2>コツ</h2>
+    <p>畫面のどこかを按いる間レバーが引かれ、放開と金貨を弾きます。按時間が長いほど強くなり、約1秒でいっぱいまで引けます。金貨がレバーの前にないときに離しても空打ちになるだけです。PC では滑鼠の長押しのほか、スペース鍵か↓鍵でも同じように操作できます。</p>
+    <h2>訣竅</h2>
     <p>強すぎると切れ目を飛び越えて奥の穴に入り、弱いと途中の穴の上で勢いが足りずに落ちます。坂を上りきれず戻ってきた金貨は、再來一次弾けます。段ごとに形が変わり、前の段と同じ力加減は通じにくくなっています。3段目からはジャンプ台、くぼみ、落とし穴も現れます。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script>
@@ -94,7 +94,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // 縦置きの盤面。左右の壁際にレバーがあり、そこから反対側へ上り坂のレールが伸びる。
   // 弾いた金貨がレールを上りきって端から落ちると、1段下のレールを転がって反対側のレバーに着く。
   // 盤面の穴の上を遅い速さで通ると落ちる（遊戲結束）。段ごとにレールの長さ・傾き・穴の位置が変わる
-  const BOARD_W = 320;        // 盤面の内側の幅（盤面の単位。画面幅に合わせて拡縮する）
+  const BOARD_W = 320;        // 盤面の内側の幅（盤面の単位。畫面幅に合わせて拡縮する）
   const WALL = 8;             // 左右の壁の厚さ
   const LEVER_AREA = 36;      // 壁の外側のレバーを描く幅
   const COIN_R = 12;          // 金貨の半径
@@ -171,7 +171,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const TRAIL_ALPHA = 0.55;   // 通った跡のいちばん濃いところの不透明度
   const FOG_START = 10;       // いちばん下の段の下端から、塗りはじめるまでの距離
   const FOG_H = 120;          // 岩肌の色のグラデーションの高さ（この下は岩肌の色で塗りつぶす）
-  const FOG_SCREEN = 0.3;     // 画面の下からこの割合の高さを、いつも岩肌の色のグラデーションにする
+  const FOG_SCREEN = 0.3;     // 畫面の下からこの割合の高さを、いつも岩肌の色のグラデーションにする
   const VARIETY_TRIES = 10;   // これだけ試したら、仕掛けなし・上の段と同じ仕掛けでも、ほかに問題がなければ使う
   const VARIETY_PENALTY = 10; // 仕掛けなし・上の段と同じ仕掛けの段の点数（なるべく違う仕掛けが続くようにする）
   const GEN_TRIES = 40;       // 1段の配置を何通り試すか
@@ -184,11 +184,11 @@ gtag('config', 'G-41RSZLP1YQ');
   const WIN_MAX0 = 34;        // 成功する力加減の幅（%）の上限。最初の段
   const WIN_MAX_END = 20;     // 同 先の段での上限
   const WIN_LEVELS = 25;      // 何段かけて難しくするか
-  const COIN_SCREEN_Y = 0.40; // 金貨が来る画面の高さ（盤面表示域の上からの割合）
+  const COIN_SCREEN_Y = 0.40; // 金貨が来る畫面の高さ（盤面表示域の上からの割合）
   const CAM_EASE = 9;         // カメラの追従の速さ（1/秒）
   const FALL_TIME = 0.5;      // 穴に落ちてから結果を出すまで（秒）
   const STEP = 1 / 480;       // 物理の固定ステップ（秒）
-  const PLAY_SPEED = 1.8;     // 画面上の物理を何倍速で進めるか（軌道は同じまま速くなる。配置の確認は等倍で計算）
+  const PLAY_SPEED = 1.8;     // 畫面上の物理を何倍速で進めるか（軌道は同じまま速くなる。配置の確認は等倍で計算）
   const BEST_KEY = 'endlessShinkansen.bestStations';
 
   // 階の名前と深さ：段が進むほど地下深くへ潜っていく（深さは岩肌の色や暗さに使うだけで、表示はしない）
@@ -207,7 +207,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let power, fallT, fallHole, fallFrom, camY, acc;
   let trail = [], clock = 0;   // 速く動いている金貨の通った跡 {x, y, t}
 
-  // 最高分：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  // 最高分：瀏覽器のlocalStorageに保存（使えない環境ではその回だけ保持）
   let best = 0;
   try { best = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch(e) {}
   function saveBest(){ try { localStorage.setItem(BEST_KEY, String(best)); } catch(e) {} }
@@ -225,7 +225,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 盤面 ----------
   // 段 k：レバーは side 側の壁（-1 左 / 1 右）。レールはレバーの壁(a)から反対側の壁(b)まで上り坂で渡り、
   // 途中に切れ目がある。ちょうどいい勢いだと切れ目から下の段へ落ち、強すぎると切れ目を飛び越えて奥の端の穴に入る
-  // レールの形（段ごとにランダムに選ぶ）
+  // レールの形（段ごとに隨機に選ぶ）
   //  坂: 'straight' まっすぐ / 'twostep' 途中で傾きが変わる
   //  仕掛け（レバー〜切れ目のあいだに1つ）:
   //    'none'    なし
@@ -256,7 +256,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   function randomLevel(k, prev){
-    const side = k % 2 === 0 ? -1 : 1;           // 最初の段は左上から始まる
+    const side = k % 2 === 0 ? -1 : 1;           // 最初の段は左上から開始
     const dir = -side;
     const wx = side < 0 ? 0 : BOARD_W;
     const simple = k < SIMPLE_LEVELS || (failK === k && failN >= FAIL_SIMPLE);   // 何度作り直してもだめな段は、仕掛けなしにする
@@ -407,12 +407,12 @@ gtag('config', 'G-41RSZLP1YQ');
     return { side, a, t, topY: yLow - maxH, segs, holes, rocks, rest, gapPos, slopeType, featureType, farType };
   }
 
-  // 配置はランダムに何通りか作り、成功できる力加減の幅が目安に一番近いものを使う
-  // 配置づくりは重いので、毎フレーム少しずつ進める（一度に作ると画面が止まるため）
+  // 配置は隨機に何通りか作り、成功できる力加減の幅が目安に一番近いものを使う
+  // 配置づくりは重いので、毎フレーム少しずつ進める（一度に作ると畫面が止まるため）
   let failK = -1, failN = 0;   // 作り直しになった段と回数
   function noteFail(k){ if (failK === k) failN++; else { failK = k; failN = 1; } }
   // 作り直しにする。何度もだめなら、原因かもしれない一つ上の段から作り直す（まだ遊んでいない段なら）。
-  // それでもだめなら、そのまま使う（画面が止まるよりはよいので）。作り直すなら true を返す
+  // それでもだめなら、そのまま使う（畫面が止まるよりはよいので）。作り直すなら true を返す
   function retryLevel(k){
     noteFail(k);
     if (failN >= FAIL_BACK && k - 1 > here + 1){
@@ -1054,7 +1054,7 @@ gtag('config', 'G-41RSZLP1YQ');
       ctx.fillStyle = rockColor(fm);
       if (fy1 < H) ctx.fillRect(0, fy1, W, H - fy1);
     }
-    // 画面の下の方は、いつも岩肌の色のグラデーションで塗りつぶしておく
+    // 畫面の下の方は、いつも岩肌の色のグラデーションで塗りつぶしておく
     const sy0 = H * (1 - FOG_SCREEN);
     const sg = ctx.createLinearGradient(0, sy0, 0, H);
     const sm = depthM(camY + vh);
@@ -1116,7 +1116,7 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('pointerup', release);
   document.addEventListener('pointercancel', release);
 
-  // PC：スペースか↓キーを按いる間レバーを引き、離すと弾く
+  // PC：スペースか↓鍵を按いる間レバーを引き、放開と弾く
   const isKey = e => e.code === 'Space' || e.code === 'ArrowDown';
   addEventListener('keydown', e => {
     if (state === 'over' || !isKey(e)) return;
@@ -1129,13 +1129,13 @@ gtag('config', 'G-41RSZLP1YQ');
     flick();
   });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, {passive:false});
   document.addEventListener('touchmove', e => { if (activePointer !== null) e.preventDefault(); }, {passive:false});
   document.addEventListener('selectstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
 
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）。ボタンのclickは殺さない
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）。按鈕のclickは殺さない
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -1144,7 +1144,7 @@ gtag('config', 'G-41RSZLP1YQ');
     lastTouchEnd = now;
   }, {passive:false});
 
-  // ---------- 結果画面 ----------
+  // ---------- 結果畫面 ----------
   $('retry').addEventListener('pointerdown', e => e.stopPropagation());
   $('retry').addEventListener('click', reset);
 
@@ -1187,7 +1187,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);

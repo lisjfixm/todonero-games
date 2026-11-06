@@ -37,7 +37,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta name="description" content="キリンの首を伸ばして高さを競う">
 <style>
   :root {
-    --bg: #2b2b2e;               /* 画面の外側 */
+    --bg: #2b2b2e;               /* 畫面の外側 */
     --fg: #f2f0ea;               /* オーバーレイの文字 */
     --sky: #cfe3ee;              /* 地上の空（キャンバス描画前の下地） */
     --hud: #2f3a3f;              /* 明るい空の上の HUD 文字 */
@@ -129,7 +129,7 @@ gtag('config', 'G-41RSZLP1YQ');
   button {
     font: inherit;
     font-size: 15px;
-    min-height: 44px;            /* 指で押せる大きさ */
+    min-height: 44px;            /* 手手指で押せる大きさ */
     padding: 10px 24px;
     border: 1px solid var(--fg);
     border-radius: 4px;
@@ -140,7 +140,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
-  /* 分享できない環境向け：結果画像を重ねて表示し、長押し／右クリックで保存してもらう */
+  /* 分享できない環境向け：結果画像を重ねて表示し、長押し／右點擊で保存してもらう */
   #imgOverlay { z-index: 2; background: rgba(10, 12, 14, 0.92); }
   #imgOverlay img {
     display: block;
@@ -166,7 +166,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <div class="overlay" id="startOverlay">
     <div class="inner">
       <h1>ノビノビ・ジラフ</h1>
-      <p id="startHint">タップで開始</p>
+      <p id="startHint">點擊で開始</p>
     </div>
   </div>
 
@@ -185,7 +185,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <div class="overlay" id="imgOverlay" hidden>
     <div class="inner">
       <img id="shareImg" alt="結果画像">
-      <p>長押し／右クリックで画像を保存できます</p>
+      <p>長押し／右點擊で画像を保存できます</p>
       <button id="postBtn">X にポスト</button>
       <button id="imgCloseBtn">關閉</button>
     </div>
@@ -193,12 +193,12 @@ gtag('config', 'G-41RSZLP1YQ');
 
   <section class="howto" data-pos="top-right" hidden>
     <h2>玩法</h2>
-    <p>キリンの首を往上伸ばし、届いた高さを競うゲームです。首は自動で伸び続け、障害物にぶつかるか体力が尽きると終わります。長さに応じて子キリンから銀河級キリンまでの称号がつき、自己ベストはこのブラウザに保存されます。</p>
+    <p>キリンの首を往上伸ばし、届いた高さを競う遊戲。首は自動で伸び続け、障害物にぶつかるか體力が尽きると終わります。長さに応じて子キリンから銀河級キリンまでの称号がつき、自己ベストはこの瀏覽器に會儲存。</p>
     <h2>操作</h2>
-    <p>タップで始まります。画面に置いた指の左右の位置で首の向きが決まり、端に寄せるほど大きく傾きます。PC はマウスを動かすか、左右の矢印キーで操作します。</p>
-    <h2>コツ</h2>
-    <p>体力は毎秒減り続けるので、りんごを取って25回復します。金のりんごは50回復し、6秒間は速さが2倍で障害物を壊せます。長さに入るのは高さだけで、横に振った分は入りません。通路の左右の壁に触れても終わりません。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>點擊で始まります。畫面に置いた手手指の左右の位置で首の向きが決まり、端に寄せるほど大きく傾きます。PC は滑鼠を移動か、左右の矢印鍵で操作します。</p>
+    <h2>訣竅</h2>
+    <p>體力は毎秒減り続けるので、りんごを取って25回復します。金のりんごは50回復し、6秒間は速さが2倍で障害物を壊せます。長さに入るのは高さだけで、横に振った分は入りません。通路の左右の壁に触れても終わりません。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 
@@ -512,9 +512,9 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 状態 ----------
   let state = "title";
 
-  // 最高記録（最長の首）だけをブラウザに保存する（使えない環境ではその回だけ保持）
+  // 最高紀錄（最長の首）だけを瀏覽器に保存する（使えない環境ではその回だけ保持）
   const BEST_KEY = "nobinobiGiraffe.best";
-  const OLD_BEST_KEY = "giraffe_neck_best_m";   // 以前のキー。既存の記録を引き継ぐために読む
+  const OLD_BEST_KEY = "giraffe_neck_best_m";   // 以前の鍵。既存の紀錄を引き継ぐために読む
   let bestM = 0;
   try {
     bestM = parseInt(localStorage.getItem(BEST_KEY), 10) ||
@@ -572,7 +572,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // iOS で文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   document.addEventListener("selectstart", function (e) { e.preventDefault(); });
 
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener("touchend", function (e) {
     const now = Date.now();
@@ -585,7 +585,7 @@ gtag('config', 'G-41RSZLP1YQ');
     else if (e.key === "ArrowRight") { keyDir = 1; e.preventDefault(); }
     else if (e.key === "Escape" && !imgOverlay.hidden) closeImage();
     else if (e.key === "Enter" || e.key === " ") {
-      // フォーカス中のボタンは click に任せる（二重に start しないように）
+      // フォーカス中の按鈕は click に任せる（二重に start しないように）
       if (e.target instanceof HTMLButtonElement) return;
       if (state === "title" || (state === "over" && imgOverlay.hidden)) { e.preventDefault(); start(); }
     }
@@ -602,7 +602,7 @@ gtag('config', 'G-41RSZLP1YQ');
   imgOverlay.addEventListener("click", function (e) {
     if (e.target === imgOverlay || e.target === imgOverlay.firstElementChild) closeImage();   // 画像の外を點擊關閉
   });
-  // ボタンや画像表示の上の pointerdown は背景（ゲーム操作）に伝えない
+  // 按鈕や画像表示の上の pointerdown は背景（ゲーム操作）に伝えない
   [shareBtn, retryBtn, imgOverlay].forEach(function (el) {
     el.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
   });
@@ -863,7 +863,7 @@ gtag('config', 'G-41RSZLP1YQ');
     state = "over";
     document.documentElement.removeAttribute('data-howto-hidden');
     path.push({ x: head.x, y: head.y });
-    const m = Math.floor(len / 10);   // 自己ベストはゲーム内の長さで保存する（以前の記録と互換）
+    const m = Math.floor(len / 10);   // 自己ベストはゲーム内の長さで保存する（以前の紀錄と互換）
     rankTitle.textContent = rankOf(realM(len / 10));
     finalLen.textContent = lenText(len / 10);
     if (m > bestM) {
@@ -883,7 +883,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function trailHeightPx() {
     const m = Math.floor(len / 10);
     const wrapH = wrap.getBoundingClientRect().height || 640;
-    const minH = 120, maxH = clamp(wrapH * 2.2, 420, 1200);   // 画面より縦長になってもよい
+    const minH = 120, maxH = clamp(wrapH * 2.2, 420, 1200);   // 畫面より縦長になってもよい
     const t = clamp(Math.log(1 + m / 40) / Math.log(1 + 5000 / 40), 0, 1);
     return Math.round(minH + (maxH - minH) * t);
   }
@@ -969,7 +969,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 分享 ----------
   const SHARE_W = 540, SHARE_MAX_H = 2400;
   const SHARE_FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif';
-  let shareImage = null;   // { dataUrl, bytes }。結果画面を出すときに作っておく
+  let shareImage = null;   // { dataUrl, bytes }。結果畫面を出すときに作っておく
 
   function buildShareCanvas() {
     const k = SHARE_W / 152;
@@ -1012,7 +1012,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return "キリンの首が " + finalLen.textContent + " まで伸びた！\n称号：" + rankTitle.textContent + "\n\n" +
            location.href.split(/[?#]/)[0] + "\n#ノビノビジラフ";
   }
-  // スマホで x.com を開くと X アプリ内ブラウザで開いて投稿できないので、旧ドメインを使う
+  // スマホで x.com を開くと X アプリ内瀏覽器で開いて投稿できないので、旧ドメインを使う
   function shareIntent() {
     return "https://twitter.com/intent/tweet?text=" + encodeURIComponent(shareText());
   }
@@ -1024,7 +1024,7 @@ gtag('config', 'G-41RSZLP1YQ');
     imgOverlay.scrollTop = 0;
   }
   function closeImage() {
-    // 關閉ボタンにフォーカスがあったら分享ボタンへ戻す（隠れた要素にフォーカスを残さない）
+    // 關閉按鈕にフォーカスがあったら分享按鈕へ戻す（隠れた要素にフォーカスを残さない）
     if (imgOverlay.contains(document.activeElement)) shareBtn.focus();
     imgOverlay.hidden = true;
     shareImg.removeAttribute("src");
@@ -1058,7 +1058,7 @@ gtag('config', 'G-41RSZLP1YQ');
     // 2) 分享シートはあるが画像は渡せない: 画像はクリップボードに入れ、本文だけ分享シートへ
     if (navigator.share) {
       copyImage().then(function () {
-        shareMsg.textContent = "画像を已複製。投稿画面で貼り付けてください";
+        shareMsg.textContent = "画像を已複製。投稿畫面で貼り付けてください";
       }, function () {}).finally(function () {
         navigator.share({ text: text }).catch(function (err) {
           if (!err || err.name !== "AbortError") showImage(img.dataUrl);
@@ -1066,10 +1066,10 @@ gtag('config', 'G-41RSZLP1YQ');
       });
       return;
     }
-    // 3) 分享シートが無い: 画像をコピーして X の投稿画面を開く
+    // 3) 分享シートが無い: 画像をコピーして X の投稿畫面を開く
     // 4) それも失敗: 画像を重ねて表示して手動保存してもらう
     copyImage().then(function () {
-      shareMsg.textContent = "画像を已複製。投稿画面で貼り付けてください";
+      shareMsg.textContent = "画像を已複製。投稿畫面で貼り付けてください";
       window.open(intent, "_blank");
     }, function () { showImage(img.dataUrl); });
   }

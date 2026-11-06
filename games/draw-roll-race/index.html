@@ -52,12 +52,12 @@ gtag('config', 'G-41RSZLP1YQ');
 <canvas id="pad" width="300" height="180"></canvas>
 <section class="howto" data-pos="top-right" hidden>
   <h2>玩法</h2>
-  <p>手足を描いた人形を転がして、CPU と競走するレースです。先にゴールすると勝ちで下一關進み、CPU に先を越されると同じステージを重新開始ます。ステージは全部で3つあり、ゴールするとタイムが表示されます。</p>
+  <p>手足を描いた人形を転がして、CPU と競走するレースです。先にゴールすると贏で下一關進み、CPU に先を越されると同じステージを重新開始ます。ステージは全部で3つあり、ゴールするとタイムが表示されます。</p>
   <h2>操作</h2>
-  <p>下の白い枠に線を拉と、描き始めに近い肩か腰に手足が付き、反対側にも同じ形が付いて回り続けます。最初の線を描いた瞬間にレースが始まります。走っている間も描き直せて、同じ関節の前の線は置き換わります。PC ではマウスで描けます。</p>
-  <h2>コツ</h2>
+  <p>下の白い枠に線を拉と、描き始めに近い肩か腰に手足が付き、反対側にも同じ形が付いて回り続けます。最初の線を描いた瞬間にレースが始まります。走っている間も描き直せて、同じ関節の前の線は置き換わります。PC では滑鼠で描けます。</p>
+  <h2>訣竅</h2>
   <p>階段や溝、水、泥、逆走ベルトには長い脚、トンネルには小さな輪、氷の坂には輪が向いています。上の進行バーで太く白い所が形を変えたい区間です。CPU は回転が遅く、形を変えるのも区間に入って3秒後なので、素早く描き直せば追い抜けます。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 
 <script>
@@ -77,7 +77,7 @@ const DRAG = 4;
 const MUD_BUOY = 0.6;  // 泥の浮力（沈む）
 const MUD_DRAG = 9;    // 泥の抵抗      // 水の抵抗（1/s）
 const SCALE = 0.56;    // パッド座標 → ワールド座標
-const VIEW_W = 520;    // 画面に映る横幅（ワールド座標）
+const VIEW_W = 520;    // 畫面に映る横幅（ワールド座標）
 
 // ---------- 人体テンプレート（パッド座標・横向き） ----------
 const HEAD = { x: 150, y: 40, r: 14 };
@@ -87,7 +87,7 @@ const TORSO = [{ x: 150, y: 54 }, SHOULDER, HIP];
 const MAX_PER_JOINT = 1;
 
 // @@PHYS_START
-// ---------- 地形（区間プールからレースごとにランダム生成） ----------
+// ---------- 地形（区間プールからレースごとに隨機生成） ----------
 const STEP_H = 40;
 const TUNNEL_H = 74;        // トンネルの天井高（地面から）
 // 区間プール。block: CPUがその手前でポーズを持ち替える（pose: 持ち替え先）
@@ -446,7 +446,7 @@ function endStroke(){
     limbs[kind].push(limb);
     if (limbs[kind].length > MAX_PER_JOINT) limbs[kind].shift();
     if (racing) player = replaceBody(player, limbs, css('--player'));
-    else if (!result) startRace();                 // リザルト表示中は描いても始めない（ボタンで下一個）
+    else if (!result) startRace();                 // リザルト表示中は描いても始めない（按鈕で下一個）
   }
   stroke = [];
   drawPad();
@@ -605,7 +605,7 @@ function render(){
     rctx.fillText('ステージ ' + (stage + 1) + ' / ' + STAGES.length, cw / 2, py + 88);
     rctx.font = 'bold 26px sans-serif';
     rctx.fillText('タイム ' + raceTime.toFixed(2) + ' 秒', cw / 2, py + 122);
-    // ボタン
+    // 按鈕
     const bw = pw - 48, bh = 40;
     const mainLabel = result === 'WIN' ? (stage + 1 < STAGES.length ? '下一關' : 'ステージ1に返回') : '再來一次';
     hud.restart = { x: px + 24, y: py + 154, w: bw, h: bh };
@@ -665,7 +665,7 @@ race.addEventListener('click', e => {
   if (hit('share')) shareImage();
   else if (hit('restart')){ if (result === 'WIN') stage = (stage + 1) % STAGES.length; startRace(); }
 });
-// 完成した人の画像を作って分享（分享シートが使えない環境では画面内に画像を表示）
+// 完成した人の画像を作って分享（分享シートが使えない環境では畫面内に画像を表示）
 let sharing = false;
 function shareImage(){
   if (!player || sharing) return;
@@ -700,8 +700,8 @@ function shareImage(){
       .catch(err => { if (!err || err.name !== 'AbortError') showImage(dataUrl, intent); })
       .finally(() => { sharing = false; });
   } else {
-    // PC：画像をクリップボードにコピーしてXの投稿画面を開く（貼り付けで画像が付く）
-    // ポップアップがブロックされた場合は画像と投稿ボタンを表示する
+    // PC：画像をクリップボードにコピーしてXの投稿畫面を開く（貼り付けで画像が付く）
+    // ポップアップがブロックされた場合は画像と投稿按鈕を表示する
     const open = copied => {
       const w = window.open(intent, '_blank');
       if (!w || !copied) showImage(dataUrl, intent);
@@ -716,7 +716,7 @@ function shareImage(){
     }
   }
 }
-// ページ遷移せずに画像を重ねて表示（點擊關閉。長押し／右クリックで保存）
+// ページ遷移せずに画像を重ねて表示（點擊關閉。長押し／右點擊で保存）
 function showImage(dataUrl, intent){
   document.getElementById('share-box')?.remove();      // 重ねて開かない
   const box = document.createElement('div');

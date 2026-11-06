@@ -130,12 +130,12 @@ h1{font-size:1.1rem;font-weight:700}
 </div>
 <section class="howto" hidden data-pos="top-right">
   <h2>玩法</h2>
-  <p>画面の下半分がバンジョーの操作盤になっている、音を鳴らして楽しむおもちゃです。弾き始めると部屋の扉が開き、猫が出てきて一緒に弾く姿を見せます。弾くのをやめると扉の奥へ戻ります。得点や終わりはありません。</p>
+  <p>畫面の下半分がバンジョーの操作盤になっている、音を鳴らして楽しむおもちゃです。弾き始めると部屋の扉が開き、猫が出てきて一緒に弾く姿を見せます。弾くのをやめると扉の奥へ戻ります。得分や終わりはありません。</p>
   <h2>操作</h2>
-  <p>丸いヘッドを上下になぞるとストローク、タップすると近い弦の単音が鳴ります。指板のマスをタップすると弦を押さえて鳴らし、なぞるとマスを移るたびに鳴ります。G や Em などのコードボタンは按いる間だけ押さえが変わり、PC ではクリックで切り替わります。左端の再生ボタンは自動演奏です。</p>
+  <p>丸いヘッドを上下になぞるとストローク、點擊すると近い弦の単音が鳴ります。手手指板のマスを點擊すると弦を押さえて鳴らし、なぞるとマスを移るたびに鳴ります。G や Em などのコード按鈕は按いる間だけ押さえが変わり、PC では點擊で切り替わります。左端の再生按鈕は自動演奏です。</p>
   <h2>楽しみ方</h2>
-  <p>片方の指でコードボタンを押さえながら、もう片方の指でヘッドをなぞると伴奏になります。自動演奏は押すたびに3曲を順番に弾きます。猫の毛色は出てくるたびに7種類から選ばれるので、何度も呼び出してみてください。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p>片方の手手指でコード按鈕を押さえながら、もう片方の手手指でヘッドをなぞると伴奏になります。自動演奏は按たびに3曲を順番に弾きます。猫の毛色は出てくるたびに7種類から選ばれるので、何度も呼び出してみてください。</p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 
 <script>
@@ -230,7 +230,7 @@ function buffer(midi){
   const hi = Math.min(0.004, freq / 200000);
   ks(d, N, 0.93, 0.990 - hi, 1.0, 0.10);    // 金属的なアタック
   ks(d, N, 0.55, 0.9975 - hi, 0.8, 0.14);   // 余韻
-  // 指ピックが当たるカチッという音
+  // 手手指ピックが当たるカチッという音
   let prev = 0;
   for (let i = 0; i < 300; i++){
     const n = (Math.random() * 2 - 1) * Math.exp(-i / 45);
@@ -342,7 +342,7 @@ const HX = 278;   // 頭と体の中心（バンジョーの胴より少し横�
 // 毛色ごとに塗り替える要素
 const furEls = [], bellyEls = [], whiteEls = [], darkEls = [];
 const catBack = el('g', {}, P);
-furEls.push(el('rect', {x:HX-68, y:78, width:136, height:340, rx:62}, catBack));   // 胴体（下は画面外）
+furEls.push(el('rect', {x:HX-68, y:78, width:136, height:340, rx:62}, catBack));   // 胴体（下は畫面外）
 bellyEls.push(el('rect', {x:HX-32, y:100, width:64, height:320, rx:32}, catBack)); // おなか
 // 体の柄（三毛のぶち）
 const bodyPatch = el('g', {}, catBack);
@@ -442,7 +442,7 @@ const leftPaw = el('g', {}, catFront);
 whiteEls.push(el('ellipse', {cx:0, cy:0, rx:11, ry:9}, leftPaw));
 [-6,0,6].forEach(x => el('line', {x1:x, y1:5, x2:x, y2:8, stroke:'#b9bbb6', 'stroke-width':1}, leftPaw));
 
-// 毛色のパターン（出るたびにランダムで変わる）
+// 毛色のパターン（出るたびに隨機で変わる）
 const PATTERNS = [
   {name:'グレー',   fur:'#55565c', belly:'#5f6066', white:'#e9ebe6', dark:'#3d3e43'},
   {name:'ハチワレ', fur:'#26262a', belly:'#e3e5e0', white:'#eceee9', dark:'#111114', mask:true},
@@ -630,7 +630,7 @@ function flash(i){
   }, 160);
 }
 
-// 指板：タップで押さえる、なぞると別のマスに移るたびに鳴る
+// 手手指板：點擊で押さえる、なぞると別のマスに移るたびに鳴る
 const cellFrom = t => {
   const c = t && t.closest ? t.closest('.c[data-i]') : null;
   return c ? {i:+c.dataset.i, f:+c.dataset.f, el:c} : null;
@@ -660,7 +660,7 @@ board.addEventListener('pointermove', e => {
 ['pointerup','pointercancel'].forEach(t => board.addEventListener(t, e => boardDrag.delete(e.pointerId)));
 
 
-// コードボタン：按いる間だけそのコードを押さえる（マウスはクリックで切り替え）
+// コード按鈕：按いる間だけそのコードを押さえる（滑鼠は點擊で切り替え）
 // 並び：5弦,4弦,3弦,2弦,1弦（5弦は常に開放）
 const CHORDS = [
   ['G',  [0,0,0,0,0]],
@@ -721,8 +721,8 @@ function applyChord(){
   updateNotes();
 }
 
-// 自動演奏：著作権の切れた3曲を、押すたびに順番に演奏する
-// 時間の単位は16分音符。キーはすべてG
+// 自動演奏：著作権の切れた3曲を、按たびに順番に演奏する
+// 時間の単位は16分音符。鍵はすべてG
 const N = {D3:50, E3:52, Fs3:54, G3:55, A3:57, B3:59, C4:60, D4:62, E4:64};
 const twice = a => [...a, ...a];
 // 1.「おお スザンナ」スティーブン・フォスター（1848年）
@@ -736,7 +736,7 @@ const skip = [
   ['B3',4],['B3',4],['G3',4],['G3',4], ['B3',4],['B3',4],['D4',4],['D4',4],
   ['A3',4],['B3',4],['C4',4],['A3',4], ['G3',16],
 ];
-// 3.「ヤンキー・ドゥードゥル」アメリカ民謡（18世紀）
+// 3.「ヤン鍵・ドゥードゥル」アメリカ民謡（18世紀）
 const yankee = [
   ['G3',2],['G3',2],['A3',2],['B3',2], ['G3',2],['B3',2],['A3',2],['D3',2],
   ['G3',2],['G3',2],['A3',2],['B3',2], ['G3',4],['Fs3',4],
@@ -754,7 +754,7 @@ const SONGS = [
   {name:'スキップ・トゥ・マイ・ルー', bpm:150, pickup:0, barLen:16,
    bars:twice(['G','G','D7','D7','G','G','D7','G']),
    melody:twice(skip)},
-  {name:'ヤンキー・ドゥードゥル', bpm:165, pickup:0, barLen:8,
+  {name:'ヤン鍵・ドゥードゥル', bpm:165, pickup:0, barLen:8,
    bars:twice(['G','D','G','D','G','C','D7','G']),
    melody:twice(yankee)},
 ];
@@ -788,7 +788,7 @@ function scheduleStep(step, time){
   const s = auto.song;
   const delay = Math.max(0, (time - ctx.currentTime) * 1000);
   if (step >= s.total){
-    // 最後はGをジャランと鳴らして終わる
+    // 最後はGをジャランと鳴らして結束
     const shape = CHORDS[chordIndex('G')][1];
     setTimeout(() => { if (auto) setAutoChord(chordIndex('G')); }, delay);
     [0,1,2,3,4].forEach((i, k) => pluck(i, 0.85, time + k * 0.015, midiFor(i, shape)));
@@ -845,7 +845,7 @@ playBtn.addEventListener('pointerdown', e => {
   auto ? stopAuto() : startAuto();
 });
 
-// ヘッド：上下になぞるとストローク、弦の近くをタップで単音
+// ヘッド：上下になぞるとストローク、弦の近くを點擊で単音
 const padDrag = new Map();
 const lineYs = () => {
   const r = pad.getBoundingClientRect();
@@ -885,12 +885,12 @@ function updateNotes(){
 }
 updateNotes();
 
-// 読み込み時に音を準備し、最初のタッチで音を有効にする（ブラウザの制約）
+// 読み込み時に音を準備し、最初のタッチで音を有効にする（瀏覽器の制約）
 initAudio().catch(() => {});
 const unlock = () => { if (ctx && ctx.state !== 'running') ctx.resume(); };
 ['pointerdown','touchend','keydown'].forEach(t => document.addEventListener(t, unlock, true));
 
-// スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）。操作はすべて pointerdown で拾っているので click は不要
+// スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）。操作はすべて pointerdown で拾っているので click は不要
 let lastTouchEnd = 0;
 document.addEventListener('touchend', e => {
   const now = Date.now();

@@ -60,7 +60,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   #wrap{ margin:auto; max-width:100%; }
   #stage{ position:relative; display:flex; }
-  /* 幅と高さの両方に収める（縦が足りない画面でも見切れない） */
+  /* 幅と高さの両方に収める（縦が足りない畫面でも見切れない） */
   canvas{
     display:block;
     border-radius:10px;
@@ -139,15 +139,15 @@ gtag('config', 'G-41RSZLP1YQ');
       <p style="color:var(--dim)"><kbd>C</kbd> CPU対戦の切り替え</p>
 
       <h2>ルール</h2>
-      <p>自分の色のブロックはすり抜ける。</p>
-      <p>相手の色のブロックは跳ね返り、自分の色に塗り替わる。</p>
-      <p>ボールは時間とともに速くなる。落とすと元の速さに返回。</p>
-      <p>相手のボールを打ち返すと自分の色になる。奪われて0個になった側は、すぐパドルから1個出る。</p>
-      <p>ボールを全部落とすと1秒間おあずけ。</p>
-      <p>制限時間（30秒）が切れた時点で、陣地の多いほうが勝ち。</p>
+      <p>自己の色のブロックはすり抜ける。</p>
+      <p>對手の色のブロックは跳ね返り、自己の色に塗り替わる。</p>
+      <p>ボールは時間とともに速くなる。掉落と元の速さに返回。</p>
+      <p>對手のボールを打ち返すと自己の色になる。奪われて0個になった側は、すぐパドルから1個出る。</p>
+      <p>ボールを全部掉落と1秒間おあずけ。</p>
+      <p>制限時間（30秒）が切れた時点で、陣地の多いほうが贏。</p>
 
       <h2>背景画像</h2>
-      <p>ブロックの部分を好きな画像2枚に置き換えられる。塗り替えるほど自分の画像が出てくる。</p>
+      <p>ブロックの部分を好きな画像2枚に置き換えられる。塗り替えるほど自己の画像が出てくる。</p>
       <p class="file"><span class="p1">手前（青）</span><input type="file" id="img0" accept="image/*"></p>
       <p class="file"><span class="p2">奥（赤）</span><input type="file" id="img1" accept="image/*"></p>
       <p><button id="imgClear" type="button">画像を外す</button></p>
@@ -161,7 +161,7 @@ gtag('config', 'G-41RSZLP1YQ');
         
         <dt style="color:#c77dff;border-color:#c77dff"><svg viewBox="-9 -9 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="-0.8" cy="1.8" r="5" fill="currentColor" stroke="none"/><path d="M2.4-1.6C5.4-3.6 4.4-3.6 4.4-6.2" stroke-width="1.6"/><path d="M4.4-6.2 6.6-7.4M4.4-6.2 3.2-8.2M4.4-6.2 6.4-5" stroke-width="1.2"/></svg></dt><dd>爆弾：次の1回、当たったマスの3×3を塗る</dd>
         
-        <dt style="color:#4de3c8;border-color:#4de3c8"><svg viewBox="-9 -9 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g fill="currentColor" stroke="none"><circle cx="-2.6" cy="1.8" r="3.8"/><circle cx="3.4" cy="-1.6" r="2.6"/><circle cx="1.6" cy="5.4" r="1.8"/></g></svg></dt><dd>増殖：ボールが1個増える</dd>
+        <dt style="color:#4de3c8;border-color:#4de3c8"><svg viewBox="-9 -9 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g fill="currentColor" stroke="none"><circle cx="-2.6" cy="1.8" r="3.8"/><circle cx="3.4" cy="-1.6" r="2.6"/><circle cx="1.6" cy="5.4" r="1.8"/></g></svg></dt><dd>増殖：ボールが1個增加</dd>
       </dl>
     </div>
   </div>
@@ -169,12 +169,12 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <section class="howto" hidden data-pos="none">
   <h2>玩法</h2>
-  <p>手前の青と奥の赤に分かれ、ブロック崩しで陣地を塗り合う30秒の対戦です。ボールは自分の色のマスをすり抜け、相手の色のマスに当たると跳ね返り、そのマスを自分の色に変えます。時間切れの時点で、全120マスのうち多く塗ったほうが勝ちです。</p>
+  <p>手前の青と奥の赤に分かれ、ブロック崩しで陣地を塗り合う30秒の対戦です。ボールは自己の色のマスをすり抜け、對手の色のマスに当たると跳ね返り、そのマスを自己の色に変えます。時間切れの時点で、全120マスのうち多く塗ったほうが贏です。</p>
   <h2>操作</h2>
-  <p>キーボード専用で、スマホの画面操作には対応していません。青は←→、赤は A と D でパドルを動かします。按空格開始と再戦を行い、C で赤を CPU に切り替えると1人でも遊べます。</p>
-  <h2>コツ</h2>
-  <p>相手のボールを打ち返すと自分のものになりますが、速さは基本に戻ります。自分のボールは時間とともに速くなり、全部落とすと1秒待って基本の速さから出直しです。塗り替えたマスからは3割の確率でアイテムが自陣へ落ちるので、パドルで受け取ってください。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p>鍵ボード専用で、スマホの畫面操作には対応していません。青は←→、赤は A と D でパドルを動かします。按空格開始と再戦を行い、C で赤を CPU に切り替えると1人でも遊べます。</p>
+  <h2>訣竅</h2>
+  <p>對手のボールを打ち返すと自己のものになりますが、速さは基本に戻ります。自己のボールは時間とともに速くなり、全部掉落と1秒待って基本の速さから出直しです。塗り替えたマスからは3割の確率でアイテムが自陣へ落ちるので、パドルで受け取ってください。</p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 
 <script>
@@ -183,7 +183,7 @@ gtag('config', 'G-41RSZLP1YQ');
    ============================================================ */
 const TUNE = {
   ballSpeed:        4.4,  // ボールの基本速度(px/frame)
-  accelPerSec:      0.09, // 1秒あたりの加速量(px/frame)。落とすと基本速度に返回
+  accelPerSec:      0.09, // 1秒あたりの加速量(px/frame)。掉落と基本速度に返回
   maxSpeed:         8.0,  // ボール速度の上限
   maxBounceAngle:   1.05, // パドル端で跳ねる最大角(ラジアン)
   minBounceAngle:   0.10, // 真上に飛んで千日手になるのを防ぐ最小角(0で無効)
@@ -319,7 +319,7 @@ function addBall(owner, src){
   balls.push({ owner, x:from.x, y:from.y, vx:-from.vx, vy:from.vy });
 }
 
-// 自分のパドルからボールを1個撃ち出す
+// 自己のパドルからボールを1個撃ち出す
 function addBallFromPaddle(owner, speed){
   const mine = balls.filter(b => b.owner === owner && !b.dead).length;
   if (TUNE.maxBalls && mine >= TUNE.maxBalls) return;
@@ -334,7 +334,7 @@ function addBallFromPaddle(owner, speed){
   });
 }
 
-// 相手側の壁は跳ね返るだけ（落とせるのは自分側の壁だけ）
+// 對手側の壁は跳ね返るだけ（落とせるのは自己側の壁だけ）
 function breakWall(b){
   wallFlash[1 - b.owner] = 1;
 }
@@ -384,7 +384,7 @@ function stepY(b, dy){
   const rr = rad(b);
   b.y += dy;
 
-  // 相手側の壁に当てたらダメージ（落とせるのは自分側の壁だけ）
+  // 對手側の壁に当てたらダメージ（落とせるのは自己側の壁だけ）
   if (b.owner === 0 && b.y < rr)     { b.y = rr;     b.vy =  Math.abs(b.vy); breakWall(b); }
   if (b.owner === 1 && b.y > H - rr) { b.y = H - rr; b.vy = -Math.abs(b.vy); breakWall(b); }
 
@@ -413,7 +413,7 @@ function hitPaddle(b){
     if (side === 0 && b.vy <= 0) continue;
     if (side === 1 && b.vy >= 0) continue;
 
-    // 相手のボールを打ち返したら自分のものになる
+    // 對手のボールを打ち返したら自己のものになる
     const prev = b.owner;
     if (prev !== side){
       b.owner = side;
@@ -484,7 +484,7 @@ function updateItems(s){
 }
 
 /* ---------- CPU（上側・青） ---------- */
-// 相手の陣地がいちばん薄い列。ここへ打ち返せば突破に近づく
+// 對手の陣地がいちばん薄い列。ここへ打ち返せば突破に近づく
 function weakColumn(o){
   let best = 0, bestN = 99;
   for (let c = 0; c < COLS; c++){
@@ -598,11 +598,11 @@ function update(s){
     if (b.dead || b.y > H + rad(b) || b.y < -rad(b)) balls.splice(i, 1);
   }
 
-  // ボールを全部落としたらおあずけ、時間が来たら1個から再開
+  // ボールを全部落としたらおあずけ、時間が来たら1個から繼續
   for (const o of [0, 1]){
     const mine = balls.filter(b => b.owner === o).length;
     if (mine === 0 && penalty[o] <= 0) penalty[o] = TUNE.penaltyFrames;
-    // おあずけ中でも相手のボールを奪い返したらそこで復帰
+    // おあずけ中でも對手のボールを奪い返したらそこで復帰
     if (mine > 0 && penalty[o] > 0) penalty[o] = 0;
     if (penalty[o] > 0){
       penalty[o] -= s;
@@ -615,7 +615,7 @@ function update(s){
   for (const o of [0, 1])
     if (wallFlash[o] > 0) wallFlash[o] = Math.max(0, wallFlash[o] - 0.03 * s);
 
-  // 制限時間が切れたら、陣地の多いほうが勝ち
+  // 制限時間が切れたら、陣地の多いほうが贏
   timeLeft -= s;
   if (timeLeft <= 0){
     timeLeft = 0;
@@ -820,7 +820,7 @@ function overlay(){
     const blue = count(0), red = COLS * ROWS - blue;
     ctx.fillStyle = winner < 0 ? '#e8ecf7' : COL[winner].main;
     ctx.font = '700 30px Helvetica Neue, Arial, sans-serif';
-    ctx.fillText(winner < 0 ? '引き分け' : (winner === 0 ? '青の勝ち' : '赤の勝ち'), W / 2, H / 2 - 26);
+    ctx.fillText(winner < 0 ? '引き分け' : (winner === 0 ? '青の贏' : '赤の贏'), W / 2, H / 2 - 26);
     ctx.font = '700 20px Helvetica Neue, Arial, sans-serif';
     ctx.fillStyle = COL[0].main; ctx.textAlign = 'right'; ctx.fillText(String(blue), W / 2 - 14, H / 2 + 14);
     ctx.fillStyle = '#8d95b4'; ctx.textAlign = 'center'; ctx.fillText('-', W / 2, H / 2 + 14);

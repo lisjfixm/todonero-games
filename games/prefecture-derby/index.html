@@ -46,7 +46,7 @@ gtag('config', 'G-41RSZLP1YQ');
     --howto-bg:#fffaf0; --howto-fg:#1b1b1b;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  button{touch-action:manipulation;font:inherit;color:inherit} /* ダブルタップ拡大を無効化（連打しても取りこぼさない） */
+  button{touch-action:manipulation;font:inherit;color:inherit} /* ダブル點擊拡大を無効化（連打しても取りこぼさない） */
   [hidden]{display:none !important}
   html,body{margin:0;height:100%;overflow:hidden}
   body{
@@ -85,7 +85,7 @@ gtag('config', 'G-41RSZLP1YQ');
   .startrow{display:flex;gap:8px}
   .startrow #start{flex:1;width:auto;min-width:0}
   .btn.howtobtn{flex:none;width:auto;padding:0 14px;font-size:15px;letter-spacing:0}
-  .howto-dialog .howto{position:static;display:block} /* 上の section の指定がパネルに効くのを戻す */
+  .howto-dialog .howto{position:static;display:block} /* 上の section の手手指定がパネルに効くのを戻す */
 
   /* 出馬表 */
   /* お題と出馬表は上下の中央に寄せる（入りきらないときはスクロール） */
@@ -137,7 +137,7 @@ gtag('config', 'G-41RSZLP1YQ');
   .credit-title{font-size:16px;font-weight:900;margin-bottom:8px}
   .credit-full{font-size:13px;line-height:1.7;color:var(--ink);margin-bottom:16px;word-break:break-all;-webkit-user-select:text;user-select:text}
 
-  /* レース画面 */
+  /* レース畫面 */
   #race{padding-bottom:env(safe-area-inset-bottom)}
   #cv{flex:1;min-height:0;width:100%;display:block;touch-action:none}
   .live{display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--board);border-top:2px solid #2a2f36}
@@ -238,7 +238,7 @@ gtag('config', 'G-41RSZLP1YQ');
     <div class="card">
       <div class="body" style="padding:18px 16px 16px;text-align:left">
         <p class="credit-title">出典</p>
-        <p class="credit-full">総務省統計局「家計調査（二人以上の世帯）品目別都道府県庁所在市及び政令指定都市ランキング（2023年〜2025年平均）」（https://www.stat.go.jp/data/kakei/5.html）を加工して作成。品目は穀類・魚介類・肉類・乳卵類・生鮮野菜・乾物/海藻/大豆加工品等・果物の各品目（「乾めん」は「乾うどん・そば」で、そうめん・冷麦を含む）。各都道府県の値は県庁所在市（東京都は東京都区部）の値。</p>
+        <p class="credit-full">総務省統計局「家計調査（二人以上の世帯）品目別都道府県庁所在市及び政令手手指定都市ランキング（2023年〜2025年平均）」（https://www.stat.go.jp/data/kakei/5.html）を加工して作成。品目は穀類・魚介類・肉類・乳卵類・生鮮野菜・乾物/海藻/大豆加工品等・果物の各品目（「乾めん」は「乾うどん・そば」で、そうめん・冷麦を含む）。各都道府県の値は県庁所在市（東京都は東京都区部）の値。</p>
         <button id="creditClose" class="btn" type="button">關閉</button>
       </div>
     </div>
@@ -246,12 +246,12 @@ gtag('config', 'G-41RSZLP1YQ');
 
   <section class="howto" hidden data-pos="none">
     <h2>玩法</h2>
-    <p>品目ごとの1世帯あたり年間支出額や購入量について、いちばん多い都道府県を当てる競馬風の予想ゲームです。出走は毎回5県で、持ち点1000から賭けて全3レースを戦い、最後の持ち点が分數になります。途中で持ち点が0になると、そこで終わります。</p>
+    <p>品目ごとの1世帯あたり年間支出額や購入量について、いちばん多い都道府県を当てる競馬風の予想遊戲。出走は毎回5県で、持ち点1000から賭けて全3レースを戦い、最後の持ち点が分數になります。途中で持ち点が0になると、そこで終わります。</p>
     <h2>操作</h2>
-    <p>各県の右にある＋と−で、賭け金を100ずつ変えます。複数の県に分けて賭けることもでき、開始を押すとレースが始まります。PC はマウスのクリックで同じように操作できます。</p>
-    <h2>コツ</h2>
+    <p>各県の右にある＋と−で、賭け金を100ずつ変えます。複数の県に分けて賭けることもでき、開始を按とレースが始まります。PC は滑鼠の點擊で同じように操作できます。</p>
+    <h2>訣竅</h2>
     <p>紙飛行機は統計の実際の値に比例した距離を飛びます。追い風や落石で途中の順位は動きますが、着地の順は値のとおりです。オッズは実際の値にぶれを加えて決まるので、低い倍率ほど本命です。返回のは1着の県に賭けた額と倍率を掛けた分だけです。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 
   <section id="final" hidden>
@@ -263,7 +263,7 @@ gtag('config', 'G-41RSZLP1YQ');
       <div class="body" style="padding:14px 16px 16px">
         <p id="finalSub"></p>
         <button id="share" class="btn share" type="button">分享</button>
-        <button id="restart" class="btn" type="button">もう一回</button>
+        <button id="restart" class="btn" type="button">再來一次</button>
         <button type="button" class="credit js-credit">出典</button>
       </div>
     </div>
@@ -281,14 +281,14 @@ gtag('config', 'G-41RSZLP1YQ');
   const T_MAX = 10;          // いちばん遠くまで行く県が止まるまでの時間（秒）
   const BRAKE_AT = 0.72;     // 走る距離のどこから減速し始めるか（0〜1）
   const WOBBLE = 0.4;        // レース途中の抜きつ抜かれつの強さ（0〜0.9）。大きいほど途中で差が開く
-  const START_WAIT = 1.5;    // レース画面に切り替わってから飛び出すまでの間（秒）
+  const START_WAIT = 1.5;    // レース畫面に切り替わってから飛び出すまでの間（秒）
   const END_WAIT = 1.2;      // 全員ゴール後、結果を出すまでの間（秒）
   const ODDS_NOISE = 0.18;   // オッズを決めるときの数値のぶれ（大きいほど穴が出やすい）
   const ODDS_SHARP = 4;      // オッズの差のつき方（大きいほど本命と大穴の差が開く）
   const ODDS_RETURN = 0.8;   // 払い戻し率（オッズ全体の渋さ）
   const ODDS_MIN = 1.1;      // オッズの下限
   const ODDS_MAX = 99.9;     // オッズの上限（地域差の大きい品目で極端な倍率になるのを防ぐ）
-  const TRACK_SCREENS = 3.2; // コースの長さ（画面幅の何倍か。カメラが先頭を追いかける）
+  const TRACK_SCREENS = 3.2; // コースの長さ（畫面幅の何倍か。カメラが先頭を追いかける）
   let scaleMax = 1;          // コースの右端が表す数値（今回の5県の最大値より少し大きいきりのいい数）
 
   // 枠の色（1白・2黒・3赤・4青・5黄）
@@ -593,7 +593,7 @@ gtag('config', 'G-41RSZLP1YQ');
     showIntro();
   }
 
-  // オッズ: 実際の数値にぶれを掛けた「見込み」から勝ちやすさを出し、その逆数を倍率にする
+  // オッズ: 実際の数値にぶれを掛けた「見込み」から贏やすさを出し、その逆数を倍率にする
   function setOdds(f){
     const est = f.map(h => h.value * Math.exp(gauss() * ODDS_NOISE));
     const s = est.map(e => Math.pow(e, ODDS_SHARP));
@@ -617,7 +617,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return a;
   }
 
-  // 上部（レース数・持ち点）とお題の表示（賭ける画面・レース画面の両方）
+  // 上部（レース数・持ち点）とお題の表示（賭ける畫面・レース畫面の両方）
   function updateHeader(){
     $$('.js-race').forEach(e => { e.textContent = raceNo; });
     $$('.js-races').forEach(e => { e.textContent = RACES; });
@@ -652,7 +652,7 @@ gtag('config', 'G-41RSZLP1YQ');
     setTimeout(() => { el.hidden = true; el.classList.remove('out'); }, 250);
   }
 
-  // ---------- 賭ける画面 ----------
+  // ---------- 賭ける畫面 ----------
   // 持ち点を複数の県に振り分けて賭けられる（1着の県に賭けた分だけ 賭け金×オッズ が返回）
   const totalBet = () => bets.reduce((a, b) => a + b, 0);
   const payout = (amount, h) => Math.floor(amount * h.odds10 / 10);  // 賭け金×オッズ（整数計算）
@@ -765,7 +765,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return s < BRAKE_AT ? m * s : 1 - K * (1 - s) * (1 - s);
   }
 
-  // u: 0〜1 の経過割合 → 0〜1 の位置。両端で 0 と 1 に一致し、単調に増える
+  // u: 0〜1 の経過割合 → 0〜1 の位置。両端で 0 と 1 に一致し、単調に增加
   function progress(h, u){
     let x = u;
     for (const w of h.w){
@@ -779,9 +779,9 @@ gtag('config', 'G-41RSZLP1YQ');
   // イベントは各県の「時間の進み方」を一時的に早めたり遅らせたりするだけ。
   // 途中の順位は大きく動くが、着地点は必ず実際の数値の位置になる（決着は統計どおり）。
   const smooth = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
-  let evs = [];   // { type:'tail'|'head'|'rock', i:県, t0:始まる時刻, len:長さ, amt:時間の進め具合 }
+  let evs = [];   // { type:'tail'|'head'|'rock', i:県, t0:開始時刻, len:長さ, amt:時間の進め具合 }
 
-  // 時刻 t での経過割合（0〜1）。イベントの分だけ進めたり遅らせたりする。必ず単調に増える
+  // 時刻 t での経過割合（0〜1）。イベントの分だけ進めたり遅らせたりする。必ず単調に增加
   function uAt(h, t){
     let u = Math.max(0, t) / h.dur;
     for (const e of h.warp) u += e.amt * smooth((t - e.t0) / e.len);
@@ -853,7 +853,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return null;
   }
 
-  // 落石：着地が近づいた県に岩が当たり、その場で墜落する（画面に映っている県だけ）
+  // 落石：着地が近づいた県に岩が当たり、その場で墜落する（畫面に映っている県だけ）
   function planRock(){
     const len = 0.35;
     for (const i of shuffle(field.map((h, i) => i))){
@@ -1109,7 +1109,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 描画 ----------
-  // コースは画面より長く、カメラが先頭の紙飛行機を追いかける
+  // コースは畫面より長く、カメラが先頭の紙飛行機を追いかける
   let W = 0, H = 0, top = 0, laneH = 0, trackLen = 0, startWX = 0, camX = 0;
   const RAIL = 10;            // 上下の余白
   const TICKER = 0;           // 上部の余白（順位表示は廃止）
@@ -1131,17 +1131,17 @@ gtag('config', 'G-41RSZLP1YQ');
   const worldX = h => startWX + h.pos * trackLen;   // 紙飛行機の先端の位置（コース上の座標）
   const planeLen = () => Math.min(laneH * 0.9, 80);  // 紙飛行機の長さ
 
-  // 飛んでいる高さ（自分の飛距離のうちどこまで来たか s=0〜1 → レーンの高さに対する割合）。s=1 で地面
+  // 飛んでいる高さ（自己の飛距離のうちどこまで来たか s=0〜1 → レーンの高さに対する割合）。s=1 で地面
   const height = s => (1 - s * s * s) * (0.4 + 0.45 * Math.sin(Math.PI * s));
 
   function draw(dt){
     if (mode !== 'racing' && mode !== 'result') return;
-    // カメラ: 先頭の紙飛行機が画面の右寄りに来るよう追いかける。なるべく最後尾も画面に入れる（コースの右端が見えたら止める）
+    // カメラ: 先頭の紙飛行機が畫面の右寄りに来るよう追いかける。なるべく最後尾も畫面に入れる（コースの右端が見えたら止める）
     const lead = Math.max(...field.map(worldX));
     const trail = Math.min(...field.map(worldX));
     const sz = planeLen();
     let target = Math.min(lead - W * 0.6, trail - sz * 1.2);   // 先頭の右に数値を出す余白を残す
-    target = Math.max(target, lead - W * 0.72);   // 先頭は画面の7割より往右は行かせない（後ろの県は見切れてもよい）
+    target = Math.max(target, lead - W * 0.72);   // 先頭は畫面の7割より往右は行かせない（後ろの県は見切れてもよい）
     target = Math.min(Math.max(0, target), startWX + trackLen - W * 0.78);
     camX += (target - camX) * Math.min(1, dt * 6);
 
@@ -1299,7 +1299,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const fsz = Math.round(Math.max(11, Math.min(14, laneH * 0.18)));
     ctx.font = `900 ${fsz}px ${FONT}`;
     const w = ctx.measureText(label).width + 12, hh = fsz + 8;
-    const x = Math.min(nose + 4, W - w - 4);   // 画面の右端からはみ出さないように
+    const x = Math.min(nose + 4, W - w - 4);   // 畫面の右端からはみ出さないように
     const yy = y - hh / 2;   // y を中心に置く
     roundRect(x, yy, w, hh, 5);
     ctx.fillStyle = '#111418'; ctx.fill();
@@ -1415,7 +1415,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);
@@ -1425,8 +1425,8 @@ gtag('config', 'G-41RSZLP1YQ');
   $$('.js-credit').forEach(b => b.addEventListener('click', () => { $('creditBox').hidden = false; }));
   $('creditClose').addEventListener('click', () => { $('creditBox').hidden = true; });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出るのを防ぐ
-  // （ボタンの操作を殺さないよう、touchstart / touchmove はレース画面のキャンバスに限定する）
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出るのを防ぐ
+  // （按鈕の操作を殺さないよう、touchstart / touchmove はレース畫面のキャンバスに限定する）
   const onCanvas = t => t instanceof Element && !!t.closest('#cv');
   document.addEventListener('touchstart', e => { if (onCanvas(e.target)) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove',  e => { if (onCanvas(e.target)) e.preventDefault(); }, { passive:false });

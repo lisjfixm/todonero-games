@@ -74,12 +74,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <section class="howto" hidden data-pos="top-left">
     <h2>玩法</h2>
-    <p>3色の線が描かれた六角形のタイルを回し、盤全体の色をつなげるパズルです。隣り合うタイルの辺は同じ色にそろえ、盤の外周の辺は外側の短い線と同じ色に合わせます。すべての辺が合うとクリアです。手数や時間の制限はありません。盤はステージごとに大きくなり、ステージ6からはランダムな形が続きます。進み具合はブラウザに保存されます。</p>
+    <p>3色の線が描かれた六角形のタイルを回し、盤全体の色をつなげるパズルです。隣り合うタイルの辺は同じ色にそろえ、盤の外周の辺は外側の短い線と同じ色に合わせます。すべての辺が合うとクリアです。手数や時間の制限はありません。盤はステージごとに大きくなり、ステージ6からは隨機な形が続きます。進み具合は瀏覽器に會儲存。</p>
     <h2>操作</h2>
-    <p>タイルをタップすると60度回ります。2本指のピンチで3倍まで拡大でき、1本指の拖曳で表示を動かせます。PC はクリックで回し、ホイールで拡大、拖曳で移動します。</p>
-    <h2>コツ</h2>
+    <p>タイルを點擊すると60度回ります。2本手手指のピンチで3倍まで拡大でき、1本手手指の拖曳で表示を動かせます。PC は點擊で回し、ホイールで拡大、拖曳で移動します。</p>
+    <h2>訣竅</h2>
     <p>光は外周の合っている辺から流れ込み、つながった線を順にたどります。外周のタイルから合わせ、光が届いた先へ内側に進めると、合っていない所を見つけやすくなります。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script>
@@ -90,20 +90,20 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 定数 ----------
   // ステージごとの盤の半径（1で7枚、2で19枚、3で37枚）。ステージ2は外周を1周増やしたもの
   const STAGES = [1, 2, 3, 4, 5];
-  // ステージ5のあとは、ランダムな形の盤が無限に続く
-  const RAND_MIN = 40;      // ランダムな盤のタイル枚数（最小）
-  const RAND_MAX = 100;     // ランダムな盤のタイル枚数（最大）
-  const FIT = 0.94;        // 盤が画面に占める割合
+  // ステージ5のあとは、隨機な形の盤が無限に続く
+  const RAND_MIN = 40;      // 隨機な盤のタイル枚数（最小）
+  const RAND_MAX = 100;     // 隨機な盤のタイル枚数（最大）
+  const FIT = 0.94;        // 盤が畫面に占める割合
   const PATH_W = 0.26;     // パスの太さ（タイル半径に対する比）
   const CURVE = 0.45;      // パスの曲がり具合（制御点を中心へ寄せる比）
   const HINT_LEN = 0.35;   // 外周ヒントの長さ（タイル半径に対する比）
   const HINT_GAP = 0.08;   // 外周ヒントとタイルのすき間（同上）
   const ZOOM_MAX = 3;       // ズームの最大倍率（最小は等倍）
   const WHEEL_RATE = 0.0015; // PCのホイール1目盛りあたりのズーム量
-  const TAP_MOVE = 10;      // これ以上指が動いたらタップ（回転）とみなさない（px）
+  const TAP_MOVE = 10;      // これ以上手手指が動いたら點擊（回転）とみなさない（px）
   const STAGE_KEY = 'serpentile.stage';  // 進捗（次に遊ぶステージ番号）の保存先
 
-  // 辺kの隣のマス（pointy-top の軸座標、画面上で時計回り：東→南東→南西→西→北西→北東）
+  // 辺kの隣のマス（pointy-top の軸座標、畫面上で時計回り：東→南東→南西→西→北西→北東）
   const DIRS = [[1,0],[0,1],[-1,1],[-1,0],[0,-1],[1,-1]];
 
   // ---------- タイルの候補 ----------
@@ -138,13 +138,13 @@ gtag('config', 'G-41RSZLP1YQ');
   const SPARK_LIFE = 0.5;   // 火花の寿命（秒）
   const WAVE_DELAY = 0.18;  // クリア時の光の波が隣のタイルへ伝わる間隔（秒）
   const WAVE_LEN = 0.7;     // クリア時に1枚のタイルが光っている時間（秒）
-  const CLEAR_WAIT = 1.9;   // クリアしてから結果画面を出すまで（秒）
+  const CLEAR_WAIT = 1.9;   // クリアしてから結果畫面を出すまで（秒）
   const CURVE_N = 32;       // パスの曲線を折れ線にするときの分割数
 
   // ---------- 盤 ----------
   let cells = [], state = 'idle', clearT = 0;
   let sparks = [];
-  // ステージの進捗：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  // ステージの進捗：瀏覽器のlocalStorageに保存（使えない環境ではその回だけ保持）
   let stage = 0;
   try { stage = Math.max(0, parseInt(localStorage.getItem(STAGE_KEY)) || 0); } catch(e) {}
   const saveStage = n => { try { localStorage.setItem(STAGE_KEY, String(n)); } catch(e) {} };
@@ -154,7 +154,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return a;
   }
 
-  // 盤の形（マスの軸座標の一覧）を作る。ステージ1〜5は六角形、それ以降はランダムな形
+  // 盤の形（マスの軸座標の一覧）を作る。ステージ1〜5は六角形、それ以降は隨機な形
   function makeShape(){
     const out = [];
     if (stage < STAGES.length){
@@ -162,7 +162,7 @@ gtag('config', 'G-41RSZLP1YQ');
       for (let r = -R; r <= R; r++) for (let q = -R; q <= R; q++) if (Math.abs(q + r) <= R) out.push([q, r]);
       return out;
     }
-    // 中央の1マスから、今ある盤のどこかの隣へランダムに1マスずつ広げていく
+    // 中央の1マスから、今ある盤のどこかの隣へ隨機に1マスずつ広げていく
     const n = RAND_MIN + Math.floor(Math.random() * (RAND_MAX - RAND_MIN + 1));
     const set = new Set(['0,0']), list = [[0, 0]];
     while (list.length < n){
@@ -243,7 +243,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return true;
   }
 
-  // 画面上の辺kが繋がっているか（回転中のタイルは繋がっていない扱い）
+  // 畫面上の辺kが繋がっているか（回転中のタイルは繋がっていない扱い）
   function edgeOk(c, k){
     if (!settled(c)) return false;
     const n = c.nb[k];
@@ -251,7 +251,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return settled(n) && colorAt(c, k) === colorAt(n, (k+3)%6);
   }
 
-  // 画面上の辺kにつながっているパスと、そのパスのどちらの端か
+  // 畫面上の辺kにつながっているパスと、そのパスのどちらの端か
   function segAt(c, k){
     const o = (k - c.rot + 6) % 6;
     for (const g of c.segs){
@@ -259,7 +259,7 @@ gtag('config', 'G-41RSZLP1YQ');
       if (g.q === o) return [g, 1];
     }
   }
-  // パスの出口（entry の反対側の端）の画面上の辺
+  // パスの出口（entry の反対側の端）の畫面上の辺
   const exitSide = g => ((g.entry ? g.p : g.q) + g.c.rot) % 6;
 
   // 外周のヒントから、繋がっている辺をたどって光が届くパスを調べる
@@ -308,7 +308,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let W = 0, H = 0, S = 30, OX = 0, OY = 0;
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   let COLORS = [], TILE = '', LINE = '', BG = '';
-  // 表示のズーム：画面上の座標 = 盤の座標 × zoom + (panX, panY)
+  // 表示のズーム：畫面上の座標 = 盤の座標 × zoom + (panX, panY)
   let zoom = 1, panX = 0, panY = 0, DPR = 1;
 
   function resize(){
@@ -316,7 +316,7 @@ gtag('config', 'G-41RSZLP1YQ');
     W = cv.clientWidth; H = cv.clientHeight;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     clampPan();
-    // 盤の外接範囲（タイル半径1のときの座標）を求め、外周ヒントがはみ出す分も含めて画面に収める
+    // 盤の外接範囲（タイル半径1のときの座標）を求め、外周ヒントがはみ出す分も含めて畫面に収める
     const m = Math.sqrt(3) / 2 + HINT_GAP + HINT_LEN;   // マスの中心から外周ヒントの先端まで
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (const c of cells){
@@ -548,20 +548,20 @@ gtag('config', 'G-41RSZLP1YQ');
   function clear(){
     state = 'over';
     $('clearTitle').textContent = `ステージ${stage + 1} 過關！`;
-    // クリアしたら、次に開いたときは次のステージから始まるようにする
+    // クリアしたら、次に開いたときは次のステージから開始ようにする
     saveStage(stage + 1);
     $('over').classList.remove('hidden');
   }
 
   // ---------- 入力 ----------
-  // ---------- ズーム（このゲームだけ例外的に、スマホは2本指ピンチ・PCはホイールで拡大できる） ----------
+  // ---------- ズーム（このゲームだけ例外的に、スマホは2本手手指ピンチ・PCはホイールで拡大できる） ----------
   function resetZoom(){ zoom = 1; panX = 0; panY = 0; }
-  // 盤が画面の外へ逃げないよう、表示位置を画面内に収める
+  // 盤が畫面の外へ逃げないよう、表示位置を畫面内に収める
   function clampPan(){
     panX = Math.min(0, Math.max(W - W * zoom, panX));
     panY = Math.min(0, Math.max(H - H * zoom, panY));
   }
-  // 画面上の点 (sx, sy) を動かさずに倍率を z にする
+  // 畫面上の点 (sx, sy) を動かさずに倍率を z にする
   function zoomAt(sx, sy, z){
     z = Math.min(ZOOM_MAX, Math.max(1, z));
     const wx = (sx - panX) / zoom, wy = (sy - panY) / zoom;
@@ -576,7 +576,7 @@ gtag('config', 'G-41RSZLP1YQ');
     zoomAt(sx, sy, zoom * Math.exp(-e.deltaY * WHEEL_RATE));
   }, {passive:false});
 
-  // 指（またはマウス）の管理。2本になったらピンチ、1本で動かしたら拖曳移動、1本で動かずに離したらタップ
+  // 手手指（または滑鼠）の管理。2本になったらピンチ、1本で動かしたら拖曳移動、1本で動かずに離したら點擊
   const pointers = new Map();
   let pinch = null, gestureHadPinch = false;
   cv.addEventListener('pointerdown', e => {
@@ -596,7 +596,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!p) return;
     const px = p.x, py = p.y;
     [p.x, p.y] = localPos(e);
-    // 1本指（またはマウス）の拖曳で表示位置を動かす。タップと区別するため、少し動いてから動かし始める
+    // 1本手手指（または滑鼠）の拖曳で表示位置を移動。點擊と区別するため、少し動いてから動かし始める
     if (pointers.size === 1){
       if (!p.drag && (gestureHadPinch || Math.hypot(p.x - p.x0, p.y - p.y0) > TAP_MOVE)) p.drag = true;
       if (p.drag){ panX += p.x - px; panY += p.y - py; clampPan(); }
@@ -605,7 +605,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (pinch && pointers.size >= 2){
       const [a, b] = [...pointers.values()];
       const d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-      // ピンチ開始時に指の中点の下にあった盤の位置が、今の中点の下に来るようにする（指の移動でずらすこともできる）
+      // ピンチ開始時に手手指の中点の下にあった盤の位置が、今の中点の下に来るようにする（手手指の移動でずらすこともできる）
       const z = Math.min(ZOOM_MAX, Math.max(1, pinch.zoom * d / pinch.d));
       const wx = (pinch.mx - pinch.panX) / pinch.zoom, wy = (pinch.my - pinch.panY) / pinch.zoom;
       zoom = z; panX = mx - wx * z; panY = my - wy * z;
@@ -617,7 +617,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!p) return;
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch = null;
-    // ピンチを含む操作や、指が動いた操作はタイルを回さない
+    // ピンチを含む操作や、手手指が動いた操作はタイルを回さない
     if (e.type !== 'pointerup' || gestureHadPinch || p.drag || Math.hypot(p.x - p.x0, p.y - p.y0) > TAP_MOVE) return;
     tapAt((p.x - panX) / zoom, (p.y - panY) / zoom);
   };
@@ -673,12 +673,12 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- iOS対策 ----------
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, {passive:false});
   document.addEventListener('touchmove', e => { if (e.target === cv) e.preventDefault(); }, {passive:false});
   document.addEventListener('selectstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => e.preventDefault());
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();

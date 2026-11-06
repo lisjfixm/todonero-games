@@ -171,12 +171,12 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <section class="howto" hidden data-pos="top-left">
   <h2>玩法</h2>
-  <p>14枚の辺でできた図形を回し、中のボールを受け止めて辺を壊していくブロック崩しです。辺を1枚壊すごとに1点入り、全部壊すと形が変わって下一關進みます。辺のない所からボールが外へ出ると消え、全部なくなると遊戲結束です。最高分はこのブラウザに保存されます。</p>
+  <p>14枚の辺でできた図形を回し、中のボールを受け止めて辺を壊していくブロック崩しです。辺を1枚壊すごとに1点入り、全部壊すと形が変わって下一關進みます。辺のない所からボールが外へ出ると消え、全部なくなると遊戲結束です。最高分はこの瀏覽器に會儲存。</p>
   <h2>操作</h2>
-  <p>画面を點擊始め、図形の中心のまわりをなぞるように指を拖曳すると、動かした角度の分だけ図形が回ります。右下のスライダーで回転の感度を変えられます。PC ではマウスの拖曳で回します。</p>
-  <h2>コツ</h2>
+  <p>畫面を點擊始め、図形の中心のまわりをなぞるように手手指を拖曳すると、動かした角度の分だけ図形が回ります。右下のスライダーで回転の感度を変えられます。PC では滑鼠の拖曳で回します。</p>
+  <h2>訣竅</h2>
   <p>色の付いた辺を壊すとアイテムが出ます。シールドは外へ出るボールを1回はね返し、ボムは辺を3枚続けて壊し、マルチボールはボールを増やします(最大4個)。中心の近くをなぞると、小さな動きで大きく回せます。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 
 <script>
@@ -213,7 +213,7 @@ gtag('config', 'G-41RSZLP1YQ');
   var OUT_MARGIN    = 0.28;   // 輪郭からこれだけ外に出たら場外
   var SHIELD_MARGIN = 0.05;   // 輪郭からこれだけ外でシールド発動
   var SWEEP_RESCUE  = 0.60;   // 回転で壁に追い越された時、これ以内なら内側へ戻す
-  var ROT_GAIN      = 1.0;    // 回転の感度（開始／リザルト画面のスライダーで変更）
+  var ROT_GAIN      = 1.0;    // 回転の感度（開始／リザルト畫面のスライダーで変更）
   var SUBSTEPS      = 6;
   var EDGE_TRIM     = 0.45;   // 辺の描画の切り詰め（隙間の見た目）
 
@@ -359,7 +359,7 @@ gtag('config', 'G-41RSZLP1YQ');
     cx = W / 2; cy = H / 2;
     R = Math.min(W, H) * 0.40;
 
-    // UI を図形のすぐ外側に寄せる（縦長画面で離れすぎないように）
+    // UI を図形のすぐ外側に寄せる（縦長畫面で離れすぎないように）
     hudEl.style.top = Math.max(12, cy - R - 64) + 'px';
     setEl.style.top = Math.min(H - 56, cy + R + 22) + 'px';
   }
@@ -376,7 +376,7 @@ gtag('config', 'G-41RSZLP1YQ');
   var stage = 1, broken = 0, score = 0, highScore = 0;
   var elapsed = 0, overAt = 0, clearMsg = 0, slowT = 0;
 
-  // 最高分だけブラウザに保存する
+  // 最高分だけ瀏覽器に保存する
   function loadHigh() {
     try {
       var v = parseInt(localStorage.getItem(HIGH_KEY), 10);
@@ -713,7 +713,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   function onUp() { dragging = false; }
 
-  // 分享ボタン
+  // 分享按鈕
   var shareLabel = 'Share';
   function onShare(e) {
     e.stopPropagation();
@@ -867,7 +867,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (state !== STATE_OVER) shareEl.textContent = shareLabel;
 
     if (state === STATE_READY) {
-      setMsg('Circle Bounce', '', 'タップで開始');
+      setMsg('Circle Bounce', '', '點擊で開始');
     } else if (state === STATE_OVER) {
       setMsg('Game Over', 'Stage ' + stage, '點擊重新開始');
     } else if (clearMsg > 0) {

@@ -61,7 +61,7 @@ gtag('config', 'G-41RSZLP1YQ');
     aspect-ratio:9/16;
   }
   canvas{display:block;width:100%;height:100%;touch-action:none}
-  /* フォントの読み込みに失敗したときの表示（画面下）。赤字 */
+  /* フォントの読み込みに失敗したときの表示（畫面下）。赤字 */
   #fontMsg{position:absolute;left:8px;right:8px;bottom:2px;margin:0;font-size:11px;line-height:1.4;color:var(--danger);pointer-events:none}
   #over{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
   .panel{background:var(--panel);border-radius:12px;padding:24px;width:min(300px,86%);text-align:center;font-size:20px}
@@ -81,18 +81,18 @@ gtag('config', 'G-41RSZLP1YQ');
       <div>仕分けた数</div>
       <div id="r-score" aria-live="polite">0</div>
       <div id="r-detail"></div>
-      <button type="button" id="retry" class="btn">もう一回</button>
+      <button type="button" id="retry" class="btn">再來一次</button>
       <button type="button" id="share" class="btn">分享</button>
     </div>
   </div>
   <section class="howto" data-pos="top-right" hidden>
     <h2>玩法</h2>
-    <p>上の箱に降り積もる文字を、フォントごとに下のエリアへ仕分けるゲームです。エリアにはお手本の「永」とフォント名が書かれています。正しく仕分けた数が分數になり、積もった文字が点線より上に2秒とどまると遊戲結束です。10個を超えるとエリアが2つから4つに増えます。</p>
+    <p>上の箱に降り積もる文字を、フォントごとに下のエリアへ仕分ける遊戲。エリアにはお手本の「永」とフォント名が書かれています。正しく仕分けた数が分數になり、積もった文字が点線より上に2秒とどまると遊戲結束です。10個を超えるとエリアが2つから4つに増えます。</p>
     <h2>操作</h2>
-    <p>箱の中の文字を指でつかみ、エリアまで拖曳して離します。同時に持てるのは1文字です。PC ではマウスの拖曳で操作します。</p>
-    <h2>コツ</h2>
-    <p>違うエリアで離すと文字が3個追加で降り、正解のエリアの枠が点滅します。エリアの外で離せば罰はないので、迷ったら無理に入れないほうが安全です。正しく仕分けるたびに降る間隔は短くなり、最短で0.7秒になりますが、エリアが増えたときは最初の2.2秒に戻ります。</p>
-    <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+    <p>箱の中の文字を手手指でつかみ、エリアまで拖曳して離します。同時に持てるのは1文字です。PC では滑鼠の拖曳で操作します。</p>
+    <h2>訣竅</h2>
+    <p>違うエリアで放開と文字が3個追加で降り、正解のエリアの枠が点滅します。エリアの外で離せば罰はないので、迷ったら無理に入れないほうが安全です。正しく仕分けるたびに降る間隔は短くなり、最短で0.7秒になりますが、エリアが増えたときは最初の2.2秒に戻ります。</p>
+    <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
   </section>
 </div>
 <script>
@@ -109,7 +109,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const BOX_B = 420;             // 箱の底
   const LINE_Y = 110;            // 遊戲結束ライン（積もった文字の一番上がこれより上だとアウト判定）
   const OVER_TIME = 2.0;         // ラインより上にこの秒数とどまると遊戲結束
-  const SPAWN_Y = 10;            // 文字が現れる高さ（文字の重心の位置。画面の上端あたりから降ってくる）
+  const SPAWN_Y = 10;            // 文字が現れる高さ（文字の重心の位置。畫面の上端あたりから降ってくる）
   const SPAWN_START = 2.2;       // 文字が降ってくる最初の間隔（秒）
   const SPAWN_RATE = 0.97;       // 1個正しく仕分けるごとに間隔に掛ける倍率（小さいほど早く忙しくなる）
   const SPAWN_MIN = 0.7;         // 降ってくる間隔の下限（秒）
@@ -122,18 +122,18 @@ gtag('config', 'G-41RSZLP1YQ');
   const ADD_AT = 10;
   // 間違えたときの演出
   const MISS_TIME = 0.8;         // 正しいエリアの枠を点滅させる時間（秒）
-  const SHAKE_PX = 8;            // 画面の揺れの大きさ
-  const SHAKE_TIME = 0.3;        // 画面が揺れる時間（秒）
+  const SHAKE_PX = 8;            // 畫面の揺れの大きさ
+  const SHAKE_TIME = 0.3;        // 畫面が揺れる時間（秒）
   const SAMPLE_CH = '永';        // 仕分けエリアに出すお手本の文字
   const SAMPLE_MAX = 72;         // お手本の文字の最大の大きさ（エリアが低いときはエリアに合わせて小さくする）
   const NAME_MAX = 14;           // エリアのフォント名の最大の大きさ
   const NAME_RATE = 0.14;        // エリアが低いときのフォント名の大きさ（エリアの高さに対する割合）
   const SAMPLE_GAP = 4;          // お手本の文字とフォント名の間
   const HUD_Y = 30;              // 分數の高さ
-  const GRAB_PAD = 24;           // 文字の線（当たり判定）からこの距離までは掴める（指で掴みやすくする）
+  const GRAB_PAD = 24;           // 文字の線（当たり判定）からこの距離までは掴める（手手指で掴みやすくする）
   const HELD_ALPHA = 0.35;       // 拖曳中、箱に残っている元の文字の不透明度
   const FLASH_TIME = 0.3;        // 仕分けたときエリアの色が変わっている時間（秒）
-  const RETRY_LOCK = 600;        // 終了直後の連打で「もう一回」を按しまわないための待ち（ミリ秒）
+  const RETRY_LOCK = 600;        // 結束直後の連打で「再來一次」を按しまわないための待ち（ミリ秒）
 
   // 物理
   const G = 1600;                // 重力
@@ -180,7 +180,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const cv = $('cv');
   const ctx = cv.getContext('2d');
   const css = getComputedStyle(document.documentElement);
-  // 紙のざらつき：小さな濃淡の点をランダムに置いた模様を作り、背景に敷き詰める
+  // 紙のざらつき：小さな濃淡の点を隨機に置いた模様を作り、背景に敷き詰める
   const GRAIN_SIZE = 128;        // 模様1枚の大きさ（これを繰り返して敷く）
   const GRAIN_DOTS = 2600;       // 模様1枚に置く点の数
   const GRAIN_ALPHA = 0.05;      // 点の濃さ
@@ -202,14 +202,14 @@ gtag('config', 'G-41RSZLP1YQ');
   let poolLeft = [];             // 今回のゲームでまだ使っていない候補（シャッフル済み）
   let active = [];               // 今使っているフォント（仕分けエリアの並び順）
   let bodies = [];
-  let held = null;               // 掴んでいる文字 {b, lx, ly, ang, x, y, id}。元の文字は箱に剩餘（半透明・当たり判定あり）、指には写しがついてくる
+  let held = null;               // 掴んでいる文字 {b, lx, ly, ang, x, y, id}。元の文字は箱に剩餘（半透明・当たり判定あり）、手手指には写しがついてくる
   let score = 0, miss = 0, spawnInt = SPAWN_START, spawnT = 0;
   let acc = 0, danger = false, overAt = 0;
   let lastCh = '';
   let nextId = 1;
   let flashes = {};              // エリアの色 フォント名 → {cls, t}
   let missFx = null;             // 間違えたときの演出 {right, t}（正しいエリアのフォント名）
-  let shake = 0;                 // 画面の揺れの剩餘時間
+  let shake = 0;                 // 畫面の揺れの剩餘時間
   const chars = Array.from(CHARS);
 
   function resize(){
@@ -373,7 +373,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const zone = zoneAt(x, y);
     if (zone === b.font){
       score++;
-      // 一定数を超えたらフォントが増える。増えたときは、降ってくる間隔を最初の長さに戻す
+      // 一定数を超えたらフォントが增加。増えたときは、降ってくる間隔を最初の長さに戻す
       const before = active.length;
       if (score > ADD_AT) addFonts(MORE_FONTS);
       if (active.length > before) spawnInt = SPAWN_START;
@@ -517,7 +517,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
     for (let it = 0; it < ITER; it++){
       for (const c of cs){
-        // 法線：離れる方向にだけ押す（蓄積値が負にならないようにする）
+        // 法線：離れる方向にだけ按（蓄積値が負にならないようにする）
         const [vn] = relVel(c);
         let old = c.jn;
         c.jn = Math.max(old + (c.target - vn) / c.kn, 0);
@@ -572,7 +572,7 @@ gtag('config', 'G-41RSZLP1YQ');
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = paperGrain; // 紙のざらつき
     ctx.fillRect(0, 0, W, H);
-    // 間違えた直後は画面を揺らす
+    // 間違えた直後は畫面を揺らす
     ctx.save();
     if (shake > 0){
       const a = SHAKE_PX * shake / SHAKE_TIME;
@@ -626,7 +626,7 @@ gtag('config', 'G-41RSZLP1YQ');
       ctx.globalAlpha = HELD_ALPHA;
       drawGlyph(held.b.x, held.b.y, held.b.font, held.b.ch, held.b.ang, colorOf(held.b));
       ctx.globalAlpha = 1;
-      // 指についてくる写し（掴んだ点が指の位置に来るように描く）
+      // 手手指についてくる写し（掴んだ点が手手指の位置に来るように描く）
       const c = Math.cos(held.ang), s = Math.sin(held.ang);
       drawGlyph(held.x - (held.lx * c - held.ly * s), held.y - (held.lx * s + held.ly * c), held.b.font, held.b.ch, held.ang);
     }
@@ -663,7 +663,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 入力 ----------
-  // 箱の中の文字を掴んで、下のエリアまで拖曳して離す
+  // 箱の中の文字を掴んで、下のエリアまで拖曳して放開
   const toLogical = e => {
     const r = cv.getBoundingClientRect();
     return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
@@ -707,7 +707,7 @@ gtag('config', 'G-41RSZLP1YQ');
     held = null;
   });
 
-  // ---------- 結果画面 ----------
+  // ---------- 結果畫面 ----------
   $('retry').addEventListener('pointerdown', e => e.stopPropagation());
   $('retry').addEventListener('click', () => {
     if (state !== 'over' || performance.now() - overAt < RETRY_LOCK) return;
@@ -739,7 +739,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       btn.textContent = '已複製';
       setTimeout(() => { btn.textContent = '分享'; }, 1500);
@@ -747,12 +747,12 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- iOS 対策 ----------
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て操作が奪われるのを防ぐ
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
   document.addEventListener('touchmove', e => { if (held) e.preventDefault(); }, { passive: false });
   document.addEventListener('selectstart', e => e.preventDefault());
   cv.addEventListener('contextmenu', e => e.preventDefault());
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
@@ -794,7 +794,7 @@ gtag('config', 'G-41RSZLP1YQ');
         loadingText = '遊べません（フォント不足）';
         return;
       }
-      start(); // 開始画面は無いので、読み込みが終わったらすぐ始める
+      start(); // 開始畫面は無いので、読み込みが終わったらすぐ始める
     });
   })();
 

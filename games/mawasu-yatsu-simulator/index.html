@@ -34,7 +34,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
 <title>轉動やつシミュレーター</title>
-<meta name="description" content="石臼を回して時速1000kmを目指す">
+<meta name="description" content="石臼を回して時速1000kmを目手手指す">
 <style>
   :root{
     --howto-bg:#d9d4c7; --howto-fg:#333;
@@ -62,7 +62,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   #wrap{position:fixed;inset:0}
   canvas{display:block;width:100%;height:100%;touch-action:none}
-  /* 指の操作を邪魔しないよう、表示だけでタッチは下のキャンバスに通す */
+  /* 手手指の操作を邪魔しないよう、表示だけでタッチは下のキャンバスに通す */
   #result{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;pointer-events:none}
   #result[hidden]{display:none}
   #resultTitle{font-size:48px;font-weight:bold;text-shadow:0 0 4px #000,0 0 4px #000,0 2px 3px #000}
@@ -82,7 +82,7 @@ gtag('config', 'G-41RSZLP1YQ');
 </head>
 <body>
 <div id="wrap"></div>
-<!-- デバッグ用の倍率切り替えボタン。公開版では非表示（倍率は ×1 のまま） -->
+<!-- デバッグ用の倍率切り替え按鈕。公開版では非表示（倍率は ×1 のまま） -->
 <button id="mult" type="button" hidden></button>
 <div id="result" hidden>
   <div id="resultTitle"></div>
@@ -94,12 +94,12 @@ gtag('config', 'G-41RSZLP1YQ');
 </div>
 <section class="howto" data-pos="top-left" hidden>
   <h2>玩法</h2>
-  <p>石臼を回して、押す人の歩く速さを時速1000kmまで上げるゲームです。20km/hごとに人が増え、町や空も変わります。目標に届くと宇宙へ打ち上げられ、UFOとのベイゴマ勝負になります。UFOの体力を0にすれば防守成功、400km/hを下回ると防守失敗です。</p>
+  <p>石臼を回して、按人の歩く速さを時速1000kmまで上げる遊戲。20km/hごとに人が増え、町や空も変わります。目標に届くと宇宙へ打ち上げられ、UFOとのベイゴマ勝負になります。UFOの體力を0にすれば防守成功、400km/hを下回ると防守失敗です。</p>
   <h2>操作</h2>
-  <p>画面をなぞって石臼のまわりを轉動と加速します。向きはどちらでも同じです。勝負中は触れた所へ石臼が動き、離すとUFOへ向かいます。PC はマウスの拖曳か、右矢印キーで加速します。</p>
-  <h2>コツ</h2>
+  <p>畫面をなぞって石臼のまわりを轉動と加速します。向きはどちらでも同じです。勝負中は触れた所へ石臼が動き、放開とUFOへ向かいます。PC は滑鼠の拖曳か、右矢印鍵で加速します。</p>
+  <h2>訣竅</h2>
   <p>地上では減速せず、速いほど増え方が良くなります。勝負中は毎秒120km/h落ち、ぶつかるたびに8%減りますが、与えるダメージは速さに比例します。打ち上げまでなぞって速さをためておくと有利です。</p>
-  <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
+  <p class="howto-home"><a href="../../index.html">遊戲列表</a></p>
 </section>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <!-- ブルーム（光のにじみ）用。読み込めなかったときはブルームなしで動く -->
@@ -125,42 +125,42 @@ gtag('config', 'G-41RSZLP1YQ');
   const WALL = 0.1;         // 上の石の厚み
   const BEAM = 0.12;        // 木枠・押し棒の太さ
   const ARM_LEN = 1.9;      // 最初の押し棒の先端までの中心からの距離
-  const PUSH_R = 1.55;      // いちばん内側の押す人が立つ位置（中心からの距離）。速さの表示もこの人の歩く速さ
-  const PUSH_BACK = 0.6;    // 押す人と押し棒の間隔（押し棒の後ろに立つ）
-  const GAP = 0.65;         // 押す人どうしの間隔（押し棒に沿って外へ並ぶ）
-  const HIP_Y = 0.85;       // 押す人の腰の高さ
-  const LEAN = 0.35;        // 押す人の前かがみの角度（rad）
-  const STEP_LEN = 0.6;     // 押す人が1歩で進む距離（足の動きと回転量を合わせる）
+  const PUSH_R = 1.55;      // いちばん内側の按人が立つ位置（中心からの距離）。速さの表示もこの人の歩く速さ
+  const PUSH_BACK = 0.6;    // 按人と押し棒の間隔（押し棒の後ろに立つ）
+  const GAP = 0.65;         // 按人どうしの間隔（押し棒に沿って外へ並ぶ）
+  const HIP_Y = 0.85;       // 按人の腰の高さ
+  const LEAN = 0.35;        // 按人の前かがみの角度（rad）
+  const STEP_LEN = 0.6;     // 按人が1歩で進む距離（足の動きと回転量を合わせる）
   const SWING = 0.4;        // 足を前後に振る最大角度（rad）
   const SEG = 16;           // 石の分割数（少なめにして面の向きで回転が見えるようにする）
   const BASE_SPEED = 0.0;   // 最初の回転の速さ（rad/秒）。何もしなくてもこの速さで回り続ける
-  const DRAG_GAIN = 0.02;   // 指で回した角度1radあたりに増える速さ（rad/秒）。上限は無し
-  const KEY_ACCEL = 1.6;    // 右矢印キーを按いる間に1秒あたり増える速さ（rad/秒）
+  const DRAG_GAIN = 0.02;   // 手手指で回した角度1radあたりに增加速さ（rad/秒）。上限は無し
+  const KEY_ACCEL = 1.6;    // 右矢印鍵を按いる間に1秒あたり增加速さ（rad/秒）
   const LATE_BOOST = 4;     // 後半ほど増え方が良くなる。目標の速さで増え方が (1 + この値) 倍になる
   const LATE_CURVE = 2;     // 増え方の伸び方（1：速さに比例してじわじわ、2以上：後半で一気に良くなる）
   const ROT_MULT = 2;       // 速さに対して実際に回る量の倍率（km/h の表示は変えずに回転だけ速くする）
-  const DEBUG_MULTS = [1, 10, 100];  // デバッグ用：画面右上のボタンを押すたびに、なぞったときの増え方の倍率がこの順に切り替わる
+  const DEBUG_MULTS = [1, 10, 100];  // デバッグ用：畫面右上の按鈕を按たびに、なぞったときの増え方の倍率がこの順に切り替わる
   const MIN_GRAB_R = 0.25;  // 中心に近すぎる位置では角度が暴れるので数えない
   const FOV = 40;           // カメラの縦の画角（度）
-  const KMH_PER_PERSON = 20;// この速さ（km/h）ごとに押す人が1人増える
-  const MAX_ARMS = 8;       // 押し棒の最大本数。人が増えるとまず棒の本数が増え、これに達したら棒が伸びる
+  const KMH_PER_PERSON = 20;// この速さ（km/h）ごとに按人が1人增加
+  const MAX_ARMS = 8;       // 押し棒の最大本数。人が增加とまず棒の本数が増え、これに達したら棒が伸びる
   const GOAL_KMH = 1000;    // 目標の速さ（km/h）。人の増加と演出の強まりはここで頭打ち
   const POP_TIME = 0.35;    // 増えた人がふくらんで現れる時間（秒）
   const ARM_EASE = 4;       // 押し棒が伸びる・角度を変える速さ（大きいほどすぐ動く）
   const CAM_EASE = 2;       // カメラが拉速さ（大きいほどすぐ拉）
-  // 演出が始まる速さ（km/h）。始まった後は目標の速さに向けて徐々に強くなる
+  // 演出が開始速さ（km/h）。始まった後は目標の速さに向けて徐々に強くなる
   const FX = {
     dust:20,     // 石の下から粉が舞う
     swirl:50,    // 押し棒の下の砂が回転に引っぱられて舞う
     sky:100,     // 空が夕焼け → 夜へ変わっていく
-    shock:100,   // SHOCK_EVERY ごとの節目で、地面に衝撃波が広がり画面が光る
+    shock:100,   // SHOCK_EVERY ごとの節目で、地面に衝撃波が広がり畫面が光る
     ring:200,    // 押し棒の先の軌跡に光の輪
-    kick:250,    // 押す人の足元から土ぼこり
+    kick:250,    // 按人の足元から土ぼこり
     spark:300,   // 石のこすれる所から火花
     stars:350,   // 空に星が出る（夜になるほど明るい）
     glow:400,    // 石が光りだす
     smoke:450,   // 石のてっぺんから煙が立ちのぼる
-    shake:500,   // 画面が揺れる
+    shake:500,   // 畫面が揺れる
     cracks:550,  // 地面にひびが入り、溶岩のように光る
     pillar:600,  // 中心から光の柱
     meteor:650,  // 流れ星が町の向こうに落ちる
@@ -168,7 +168,7 @@ gtag('config', 'G-41RSZLP1YQ');
     bolt:750,    // 稲妻が落ちる
     rainbow:800, // 輪・柱・火花・炎・ひび・魔法陣などが虹色に
     circle:850,  // 石臼の下にローマ数字の魔法陣が回る
-    aura:900,    // 押す人が金色に光る
+    aura:900,    // 按人が金色に光る
     rocks:950,   // 地面の岩が浮かび上がる
     fireworks:1000, // 目標の後、町の上に花火が上がり続ける
   };
@@ -182,19 +182,19 @@ gtag('config', 'G-41RSZLP1YQ');
   const LAUNCH_TOP = 900;    // この高さまで上がったら宇宙へ
   const ARENA_R = 20;        // 宇宙のベイゴマ台の半径
   const UFO_R = 4.5;         // UFO の半径
-  const UFO_HP = 100;        // UFO の体力
-  // 勝ち負け：バトル中は回転がどんどん落ちる。なぞって回転を保ちながら UFO の体力を 0 にすれば防守成功、
+  const UFO_HP = 100;        // UFO の體力
+  // 贏輸：バトル中は回転がどんどん落ちる。なぞって回転を保ちながら UFO の體力を 0 にすれば防守成功、
   // 回転が LOSE_KMH を下回ったら石臼が吹き飛ばされて防守失敗
   const HIT_DMG = 25;        // 目標の速さでぶつかったときのダメージ（速さに比例して増減）
   const BATTLE_DRAIN = 120;  // バトル中に1秒ごとに落ちる速さ（km/h）
   const HIT_COST = 0.08;     // ぶつかるたびに失う速さの割合
-  const BATTLE_TRACE = 40;   // バトル中に指で1周なぞるごとに上がる速さ（km/h）。1秒に2周ほどなぞり続ければ勝てる
-  const LOSE_KMH = 400;      // この速さを下回ったら負け
-  const KO_SPEED = 120;      // 負けたときに石臼が吹き飛ぶ速さ
+  const BATTLE_TRACE = 40;   // バトル中に手手指で1周なぞるごとに上がる速さ（km/h）。1秒に2周ほどなぞり続ければ勝てる
+  const LOSE_KMH = 400;      // この速さを下回ったら輸
+  const KO_SPEED = 120;      // 輸たときに石臼が吹き飛ぶ速さ
   const TITLE_STEP = 0.35;   // 「防守成功」を一文字ずつ出す間隔（秒）
   const RESULT_DELAY = 2.5;  // 決着の演出が終わってから結果を出すまでの秒数
   const BATTLE = { bowl:0.8, seek:30, swirl:8, damp:0.5, vmax:45, kick:40 };
-  const MOVE = { accel:60, brake:1.5 };  // バトル中に指で石臼を動かすときの、指へ向かう強さとブレーキ（指を離すと自動で UFO へ向かう）  // 中心へ返回力・相手へ向かう力・回り込む力・減速・最高速・弾き合う強さ
+  const MOVE = { accel:60, brake:1.5 };  // バトル中に手手指で石臼を移動ときの、手手指へ向かう強さとブレーキ（手手指を放開と自動で UFO へ向かう）  // 中心へ返回力・對手へ向かう力・回り込む力・減速・最高速・弾き合う強さ
   const UFO_BOOM_DELAY = 0.7; // 最後の惑星を壊してから UFO が大爆発するまでの秒数
   const SMASH_SPEED = 160;   // 吹き飛ばされた UFO の速さ（惑星を壊すたびに 1.15 倍）
   // 吹き飛んだ UFO が壊していく惑星 [色, 半径, 吹き飛び始めからの距離]
@@ -245,9 +245,9 @@ gtag('config', 'G-41RSZLP1YQ');
   const TOWN_SEED = 7;      // 町の並びを決める乱数の種（変えると別の町並みになる）
   const LAMP_KMH = [300, 700];  // 窓のランプがともり始める速さと、全部ともる速さ（km/h）
 
-  const MAX_PEOPLE = 2 + Math.floor(GOAL_KMH / KMH_PER_PERSON);  // 押す人の最大人数
+  const MAX_PEOPLE = 2 + Math.floor(GOAL_KMH / KMH_PER_PERSON);  // 按人の最大人数
   const WAIST_Y = MILL_Y + MILL_H / 2;                        // くびれ（押し棒）の高さ
-  const BASE_FIT = ARM_LEN + 0.4;                             // 最初に画面へ収める半径
+  const BASE_FIT = ARM_LEN + 0.4;                             // 最初に畫面へ収める半径
   const CAM_PITCH0 = Math.atan2(0.75, 1);                     // 最初の見下ろす角度（斜め上から）
   const SUN_DIR = new THREE.Vector3(4, 8, 3).normalize();     // 太陽の方向
 
@@ -256,7 +256,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const col = n => new THREE.Color(css(n));
   const clamp01 = v => Math.min(Math.max(v, 0), 1);
   const rand = (a, b) => a + Math.random() * (b - a);
-  // 演出の強さ：始まる速さで 0.2、目標の速さで 1 になる
+  // 演出の強さ：開始速さで 0.2、目標の速さで 1 になる
   const fxk = (kmh, start) => kmh < start ? 0 : FX_BASE + (1 - FX_BASE) * clamp01((kmh - start) / (GOAL_KMH - start));
 
   // ---------- 描画の準備 ----------
@@ -685,7 +685,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 木枠と押し棒 ----------
   // くびれを四角い枠で挟み、そこから外へ押し棒を出す。
-  // 人が増えるとまず押し棒の本数が増えて等間隔に開き、最大本数に達したら棒が外へ伸びる
+  // 人が增加とまず押し棒の本数が増えて等間隔に開き、最大本数に達したら棒が外へ伸びる
   const woodMat = mat('--wood');
   const markMat = mat('--wood-mark');  // 1本だけ色を変えて、1周したのが分かるようにする
   const C = WAIST_R + BEAM * 0.6;  // 枠の木材の中心位置
@@ -694,7 +694,7 @@ gtag('config', 'G-41RSZLP1YQ');
     add(rotor, new THREE.BoxGeometry(BEAM, BEAM, 2 * C + BEAM), woodMat).position.set(s * C, yw, 0);
   }
   const barGeo = new THREE.BoxGeometry(1, BEAM, BEAM);  // 長さ1の棒を伸ばして使う
-  // 押し棒1本ごとに、角度（ang）と長さ（len）を目標へ向けてなめらかに動かす
+  // 押し棒1本ごとに、角度（ang）と長さ（len）を目標へ向けてなめらかに移動
   const arms = [];
   for (let j = 0; j < MAX_ARMS; j++){
     const g = new THREE.Group();
@@ -725,8 +725,8 @@ gtag('config', 'G-41RSZLP1YQ');
     });
   }
 
-  // ---------- 押す人 ----------
-  // 押し棒の後ろに立ち、前かがみで棒を押す姿勢。石と一緒に回る。
+  // ---------- 按人 ----------
+  // 押し棒の後ろに立ち、前かがみで棒を按姿勢。石と一緒に回る。
   // 人数が多くなるので、部位ごとに InstancedMesh でまとめて描く
   const skinMat = mat('--skin'), clothMat = mat('--cloth');
   const Y = new THREE.Vector3(0, 1, 0), Z = new THREE.Vector3(0, 0, 1);
@@ -761,10 +761,10 @@ gtag('config', 'G-41RSZLP1YQ');
     const q = new THREE.Quaternion().setFromUnitVectors(Z, hand.clone().sub(sh).normalize());
     return new THREE.Matrix4().compose(sh.add(hand).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1));
   });
-  // +x 方向の押し棒の後ろに立ち、回転の正の向き（右矢印キーの向き）＝ -z を向く。ほかの棒はこれを棒の角度だけ轉動
+  // +x 方向の押し棒の後ろに立ち、回転の正の向き（右矢印鍵の向き）＝ -z を向く。ほかの棒はこれを棒の角度だけ轉動
   const faceQ = new THREE.Quaternion().setFromAxisAngle(Y, Math.PI);
 
-  // 押す人。k 番目の人は k % 本数 番目の棒の、内側から k / 本数 番目に立つ
+  // 按人。k 番目の人は k % 本数 番目の棒の、内側から k / 本数 番目に立つ
   const people = [];  // { born:現れた時刻 }
   const addPerson = born => { people.push({ born }); armCount = Math.min(MAX_ARMS, Math.max(2, people.length)); };
   const peopleOnArm = j => j < people.length ? Math.floor((people.length - 1 - j) / armCount) + 1 : 0;
@@ -801,7 +801,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 粒（粉・火花・炎など） ----------
   // 粒ごとに色・透明度・大きさを持たせたいので、小さなシェーダーで点を描く
-  const projU = { value:1 };  // 世界の大きさ → 画面のピクセル数への換算（resize で更新）
+  const projU = { value:1 };  // 世界の大きさ → 畫面のピクセル数への換算（resize で更新）
   const P_VS = `
     attribute float size; attribute vec4 pcol; uniform float uProj; varying vec4 vCol;
     void main(){
@@ -1007,7 +1007,7 @@ gtag('config', 'G-41RSZLP1YQ');
       dustP.emit(x, 0.1, z, z / r * tv, rand(0.2, 1), -x / r * tv, C_DUST, 0.3, 0.3 * zk, rand(0.8, 1.5), 0.3, 1.5);
     });
 
-    // 節目の衝撃波と画面の光
+    // 節目の衝撃波と畫面の光
     const ms = kmh >= FX.shock ? Math.floor(kmh / SHOCK_EVERY) : 0;
     if (ms > lastMilestone){
       lastMilestone = ms;
@@ -1025,7 +1025,7 @@ gtag('config', 'G-41RSZLP1YQ');
       s.m.material.color.copy(rainbow ? rainbowAt(hue) : C_RING);
     }
 
-    // 足元の土ぼこり：押す人が地面を蹴るたびに
+    // 足元の土ぼこり：按人が地面を蹴るたびに
     const fKick = fxk(kmh, FX.kick);
     if (fKick > 0 && people.length && onGround()) each('kick', 30 + 200 * fKick, dt, () => {
       const k = (Math.random() * people.length) | 0, { arm, r } = personSpot(k);
@@ -1076,7 +1076,7 @@ gtag('config', 'G-41RSZLP1YQ');
       } else if (m.life <= 0) meteors.splice(i, 1);
     }
 
-    // 稲妻：空から地面へ落ちて、画面が光る
+    // 稲妻：空から地面へ落ちて、畫面が光る
     const fBolt = fxk(kmh, FX.bolt);
     if (fBolt > 0 && Math.random() < (0.4 + 2.5 * fBolt) * FX_RATE * dt){
       const b = bolts.find(o => o.t < 0);
@@ -1110,7 +1110,7 @@ gtag('config', 'G-41RSZLP1YQ');
     magic.material.opacity = fMagic * (0.8 + 0.2 * Math.sin(tNow * 4));
     magic.material.color.copy(rainbow ? rainbowAt(hue + 0.6) : C_MAGIC);
 
-    // 押す人が金色に光る
+    // 按人が金色に光る
     const fAura = fxk(kmh, FX.aura);
     for (const m of [skinMat, clothMat]){
       m.emissive.copy(rainbow ? rainbowAt(hue + 0.15) : C_AURA);
@@ -1156,17 +1156,17 @@ gtag('config', 'G-41RSZLP1YQ');
     composer.addPass(bloom);
   }
 
-  // ---------- 画面サイズとカメラ ----------
-  let camFit = BASE_FIT;  // 今カメラが画面に収めている半径（押し棒の伸びに遅れてついていく）
+  // ---------- 畫面サイズとカメラ ----------
+  let camFit = BASE_FIT;  // 今カメラが畫面に収めている半径（押し棒の伸びに遅れてついていく）
   let camDist = 1;
   let camTilt = 0;  // カメラの起き上がり具合（0〜1）
   const camTarget = new THREE.Vector3(), camDir = new THREE.Vector3();
   function placeCamera(){
     const vHalf = THREE.MathUtils.degToRad(FOV / 2);
     const hHalf = Math.atan(Math.tan(vHalf) * camera.aspect);
-    // 縦持ちでも押し棒の先まで画面に収まる距離にカメラを拉
+    // 縦持ちでも押し棒の先まで畫面に収まる距離にカメラを拉
     camDist = camFit / Math.sin(Math.min(vHalf, hHalf));
-    // 速くなるほど起き上がり、注視点も上げて、空と遠くの町が画面に入るようにする
+    // 速くなるほど起き上がり、注視点も上げて、空と遠くの町が畫面に入るようにする
     const tk = camTilt * camTilt * (3 - 2 * camTilt);
     const pitch = CAM_PITCH0 + (CAM_PITCH_END - CAM_PITCH0) * tk;
     camTarget.set(0, 0.8 + tk * camFit * 0.5, 0);
@@ -1190,7 +1190,7 @@ gtag('config', 'G-41RSZLP1YQ');
   resize();
   addEventListener('resize', resize);
 
-  // 押し棒が伸びたら影を落とす範囲と太陽の距離も広げる
+  // 押し棒が伸びたら影を掉落範囲と太陽の距離も広げる
   let shadowR = 0;
   function updateShadow(){
     const R = armLen + 1.5;
@@ -1202,9 +1202,9 @@ gtag('config', 'G-41RSZLP1YQ');
     sun.position.copy(SUN_DIR).multiplyScalar(R * 2 + 8);
   }
 
-  // ---------- 操作：指で回した分だけ回転を速くする ----------
-  // 画面上の指の位置を押し棒の高さの水平面に投影し、中心まわりで回った角度を測る。
-  // どちら向きに回しても、回した角度の分だけ速さが増える（石の回る向きは変わらない）
+  // ---------- 操作：手手指で回した分だけ回転を速くする ----------
+  // 畫面上の手手指の位置を押し棒の高さの水平面に投影し、中心まわりで回った角度を測る。
+  // どちら向きに回しても、回した角度の分だけ速さが增加（石の回る向きは変わらない）
   let speed = BASE_SPEED;
   // 今の速さに応じた増え方の倍率。目標の速さに近づくほど大きくなり、目標を超えたらそのまま
   const lateBoost = () => 1 + LATE_BOOST * Math.pow(clamp01(speed * PUSH_R * 3.6 / GOAL_KMH), LATE_CURVE);
@@ -1218,10 +1218,10 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!ray.ray.intersectPlane(plane, hit)) return null;
     fingerPt.set(hit.x, hit.z); fingerOn = true;  // バトル中の移動先として使う
     if (Math.hypot(hit.x, hit.z) < MIN_GRAB_R) return null;
-    return Math.atan2(-hit.z, hit.x);  // rotation.y が増える向き（回転の向き）を正にする
+    return Math.atan2(-hit.z, hit.x);  // rotation.y が增加向き（回転の向き）を正にする
   }
 
-  // デバッグ用：押すたびに倍率を切り替えるボタン
+  // デバッグ用：按たびに倍率を切り替える按鈕
   let multIdx = 0;
   const multBtn = $('mult');
   const showMult = () => { multBtn.textContent = `倍率 ×${DEBUG_MULTS[multIdx]}`; };
@@ -1230,7 +1230,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   const drags = new Map();
   const fingerPt = new THREE.Vector2();
-  let fingerOn = false;  // 画面に触れていて、指の位置が分かっているか
+  let fingerOn = false;  // 畫面に触れていて、手手指の位置が分かっているか
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
     cv.setPointerCapture(e.pointerId);
@@ -1242,7 +1242,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const a = angleAt(e.clientX, e.clientY);
     if (a !== null && d.a !== null){
       const da = Math.atan2(Math.sin(a - d.a), Math.cos(a - d.a));  // -π〜π に丸めて境目での跳びを防ぐ
-      // どちら向きになぞっても速くなる。バトル中は回転を保つための専用の増え方。倍率はデバッグ用ボタンで切り替え
+      // どちら向きになぞっても速くなる。バトル中は回転を保つための専用の増え方。倍率はデバッグ用按鈕で切り替え
       const gain = inBattle() ? BATTLE_TRACE / (PUSH_R * 3.6) / (Math.PI * 2) : DRAG_GAIN * lateBoost();
       speed += Math.abs(da) * gain * DEBUG_MULTS[multIdx];
     }
@@ -1252,7 +1252,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', endDrag);
   cv.addEventListener('pointercancel', endDrag);
 
-  // PC 用：右矢印キーを按いる間だけ速くする
+  // PC 用：右矢印鍵を按いる間だけ速くする
   let keyRight = false;
   const setKey = (e, on) => {
     if (e.key === 'ArrowRight'){ keyRight = on; e.preventDefault(); }
@@ -1261,16 +1261,16 @@ gtag('config', 'G-41RSZLP1YQ');
   addEventListener('keyup', e => setKey(e, false));
   addEventListener('blur', () => { keyRight = false; });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
+  // iPhone(Safari)で長押しや手手指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
 
-  // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
+  // スマホでのダブル點擊拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
-    if (e.target.closest && e.target.closest('button')) return;  // ボタンの連打は止めない
+    if (e.target.closest && e.target.closest('button')) return;  // 按鈕の連打は止めない
     const now = Date.now();
     if (now - lastTouchEnd < 350) e.preventDefault();
     lastTouchEnd = now;
@@ -1383,7 +1383,7 @@ gtag('config', 'G-41RSZLP1YQ');
       });
     }
 
-    // 画面の揺れ
+    // 畫面の揺れ
     const fShake = fxk(kmh, FX.shake);
     if (fShake > 0){
       const amp = 0.011 * camDist * fShake;
@@ -1416,7 +1416,7 @@ gtag('config', 'G-41RSZLP1YQ');
     dustP.update(dt);
     glowP.update(dt);
 
-    // 画面の光はすぐに消えていく
+    // 畫面の光はすぐに消えていく
   }
 
   // ---------- 目標達成後：打ち上げ → 宇宙で UFO とベイゴマバトル → 吹き飛んだ UFO が惑星を壊す ----------
@@ -1425,7 +1425,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let launchAt = Infinity;
   const onGround = () => phase === 'ground';
   const inBattle = () => phase === 'space' && space && space.stage === 'battle';
-  let shakeT = 0;         // 宇宙での画面の揺れの剩餘時間（秒）
+  let shakeT = 0;         // 宇宙での畫面の揺れの剩餘時間（秒）
   const C_BLACK = new THREE.Color(0x000000);
   const camLook = new THREE.Vector3();
   const v3 = new THREE.Vector3(), v3b = new THREE.Vector3(), v2 = new THREE.Vector2();
@@ -1604,7 +1604,7 @@ gtag('config', 'G-41RSZLP1YQ');
     space.startSpeed = speed;  // 戦いからやり直すときは、この速さに戻す
   }
 
-  // ベイゴマの動き：台の中心へ返回力・相手へ向かう力・回り込む力
+  // ベイゴマの動き：台の中心へ返回力・對手へ向かう力・回り込む力
   function stepTop(me, other, seek, dt){
     if (other){
       const to = v2.copy(other.p).sub(me.p);
@@ -1615,7 +1615,7 @@ gtag('config', 'G-41RSZLP1YQ');
     me.v.x -= BATTLE.bowl * me.p.x * dt;
     me.v.y -= BATTLE.bowl * me.p.y * dt;
   }
-  // 指の位置へ向かって動く（台の外は狙わない）
+  // 手手指の位置へ向かって動く（台の外は狙わない）
   function steerTop(me, rMe, dt){
     const lim = ARENA_R - rMe * 0.7;
     const tgt = v2.copy(fingerPt);
@@ -1692,7 +1692,7 @@ gtag('config', 'G-41RSZLP1YQ');
       + '回転数 : ' + turnCount().toLocaleString('ja-JP') + ' 回\n'
       + location.href.split(/[?#]/)[0] + '\n#轉動やつシミュレーター';
   }
-  // 今の3D画面の上に結果の文字を書き込んだ画像を作る。
+  // 今の3D畫面の上に結果の文字を書き込んだ画像を作る。
   // 描画バッファを残していないので、直前に描き直してから同じ処理の中でコピーする
   function drawResultImage(){
     if (composer) composer.render(); else renderer.render(curScene, camera);
@@ -1738,7 +1738,7 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCの瀏覽器など）: 文面をコピーして按鈕の文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
       shareBtn.textContent = '已複製';
       setTimeout(() => { shareBtn.textContent = '分享'; }, 1500);
@@ -1830,11 +1830,11 @@ gtag('config', 'G-41RSZLP1YQ');
       }
       if (s.t > 3.0) s.stage = 'battle';
     } else if (s.stage === 'battle'){
-      if (fingerOn) steerTop(A, rA, dt); else stepTop(A, B, BATTLE.seek, dt);  // 触れている間は指の位置へ動く
+      if (fingerOn) steerTop(A, rA, dt); else stepTop(A, B, BATTLE.seek, dt);  // 触れている間は手手指の位置へ動く
       moveTop(A, rA, dt);
       stepTop(B, A, BATTLE.seek, dt);
       moveTop(B, UFO_R, dt);
-      // 回転はどんどん落ちる。下回ったら負け
+      // 回転はどんどん落ちる。下回ったら輸
       speed = Math.max(0, speed - BATTLE_DRAIN / (PUSH_R * 3.6) * dt);
       if (kmh < LOSE_KMH){ startKO(); }
       // ぶつかり合い
@@ -1883,7 +1883,7 @@ gtag('config', 'G-41RSZLP1YQ');
         }
       } else if (s.t - s.endT > RESULT_DELAY) showResult(true);
     } else if (s.stage === 'ko'){
-      // 負け：石臼がくるくる回りながら吹き飛ばされる。UFO は台の上で回り続ける
+      // 輸：石臼がくるくる回りながら吹き飛ばされる。UFO は台の上で回り続ける
       s.pos.addScaledVector(s.d, KO_SPEED * dt);
       rotor.position.copy(s.pos);
       rotor.rotation.x += 5 * dt; rotor.rotation.z += 3 * dt;
@@ -1945,7 +1945,7 @@ gtag('config', 'G-41RSZLP1YQ');
       camLook.set(0, 0, 0);
     } else {
       // UFO を斜め後ろから追いかける。全部壊した少し後からは止まって見送る
-      const done = s.stage === 'ko' ? s.t > 1.2 : s.kira;  // 勝ちのときは UFO が爆発したら止まって見届ける
+      const done = s.stage === 'ko' ? s.t > 1.2 : s.kira;  // 贏のときは UFO が爆発したら止まって見届ける
       if (!done){
         const side = v3b.set(-s.d.z, 0, s.d.x).normalize();
         v3.copy(s.pos).addScaledVector(s.d, -45).addScaledVector(side, 18);
