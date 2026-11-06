@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>インフレホッケー</title>
+<title>膨脹曲棍球</title>
 <meta name="description" content="パックがどんどん増えるエアホッケー">
 <style>
   :root{
@@ -67,20 +67,20 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="menu">
     <button id="modeCpu" type="button">CPUと対戦</button>
     <button id="mode2p" type="button">ふたりで対戦</button>
-    <button type="button" data-howto-open>遊び方</button>
+    <button type="button" data-howto-open>玩法</button>
   </div>
   <div id="over" class="hidden">
     <div id="resTitle" aria-live="assertive"></div>
     <div id="resScore"></div>
     <button id="retry" type="button">もう一回</button>
     <button id="toMenu" type="button">モード選択へ</button>
-    <button id="share" type="button">共有</button>
+    <button id="share" type="button">分享</button>
   </div>
   <section class="howto" hidden data-pos="none">
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>パックがゲートを通るたびに増えていくエアホッケーです。お互いのHPは1000で、ゴールされたパック1個につき1減り、先に0になったほうが負けです。パックが全部なくなると次のサーブが出ます。CPUとの対戦のほか、1台の端末を2人で触るふたり対戦も選べます。</p>
     <h2>操作</h2>
-    <p>台を指でなぞるとマレットが動きます。動かせるのは自分の陣地の中だけです。ふたり対戦では、台の手前半分を触った指が手前、奥半分を触った指が奥のマレットを動かします。PC はマウスのドラッグか矢印キーで、奥のマレットは WASD です。</p>
+    <p>台を指でなぞるとマレットが動きます。動かせるのは自分の陣地の中だけです。ふたり対戦では、台の手前半分を触った指が手前、奥半分を触った指が奥のマレットを動かします。PC はマウスの拖曳か矢印キーで、奥のマレットは WASD です。</p>
     <h2>コツ</h2>
     <p>ゲートは+10から+50まであり、通ったパックのそばにその数だけ増えます。増えた分は元のパックと同じ速さで近い向きへ飛ぶので、相手のゴールへ向かうパックをゲートに通すと一気にHPを削れます。通過されたゲートは別の場所へ移り、薄い表示で次の位置が分かります。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -124,13 +124,13 @@ gtag('config', 'G-41RSZLP1YQ');
   const MAX_HP = 1000;          // 両者の最初のHP。ゴールされるたびに1減り、先に0になったほうが負け
   const HP_W = 160, HP_H = 64;  // ゴール近くに出すHPの数字の大きさ
   const HP_POP = 1.35;          // HPが変わった瞬間に数字が膨らむ倍率
-  const HP_POP_TIME = 0.3;      // 膨らんだ数字が元の大きさに戻るまでの時間（秒）
+  const HP_POP_TIME = 0.3;      // 膨らんだ数字が元の大きさに返回までの時間（秒）
   const GATE_Y = 250;           // サーブ時のゲートの位置（相手陣地側）
   const GATE_Y_MIN = 80;        // 通過後にゲートが出現する範囲（奥側の端）
   const GATE_Y_MAX = FH - 120;  // 通過後にゲートが出現する範囲（手前側の端）
   const GATE_MOVE_MIN = 100;    // 出現位置を元の場所からこれ以上離す
   const GATE_COUNT = 3;         // 台に出るゲートの最大数
-  const GATE_ADD_MIN = 2, GATE_ADD_MAX = 8;   // 試合開始時は1つだけ。残りはこの範囲（秒）のランダムなタイミングで1つずつ追加
+  const GATE_ADD_MIN = 2, GATE_ADD_MAX = 8;   // 試合開始時は1つだけ。剩餘はこの範囲（秒）のランダムなタイミングで1つずつ追加
   const GATE_RESPAWN = 0.6;     // 通過されたゲートが次の場所に出現するまでの時間（秒）。その間は効かない
   const GATE_PREVIEW_ALPHA = 0.25; // 出現を待っている間、次の場所に予告として薄く出すときの不透明度
   const GATE_TALL = 56;         // ゲートの高さ（見た目）
@@ -149,7 +149,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const cv = $('cv');
   let W = 0, H = 0;
   let state = 'idle';            // idle（対戦相手を選ぶ画面）/ playing / ending（決着後のスロー）/ over
-  let slowLeft = 0;              // ending の残り時間
+  let slowLeft = 0;              // ending の剩餘時間
   let mode = 'cpu';              // 'cpu'：CPUと対戦 / 'pvp'：ふたりで対戦（奥のマレットも人が動かす）
   let pucks = [], alive = 0, gates = [];
   let pHP = MAX_HP, cHP = MAX_HP;
@@ -387,7 +387,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const list = free.length ? free : GATE_TYPES;
     return list[Math.floor(Math.random() * list.length)];
   }
-  // 試合開始時：ゲートは中央に1つだけ。残りは開始後ランダムなタイミングで追加する
+  // 試合開始時：ゲートは中央に1つだけ。剩餘は開始後ランダムなタイミングで追加する
   let gateAddTimers = [];
   function makeGates(){
     gates = [];
@@ -676,7 +676,7 @@ gtag('config', 'G-41RSZLP1YQ');
   });
   addEventListener('keyup', e => { keys.delete(e.key); keys.delete(e.key.toLowerCase()); });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   const isDraggable = t => t instanceof Element && !!t.closest('canvas');
   document.addEventListener('touchstart', e => { if (isDraggable(e.target)) e.preventDefault(); }, {passive:false});
   document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, {passive:false});
@@ -707,7 +707,7 @@ gtag('config', 'G-41RSZLP1YQ');
       cpu.ty = clamp(cpu.y + qy * KEY_SPEED * 0.05, MALLET_R, FH / 2 - MALLET_R);
     }
     acc += state === 'ending' ? dt * SLOW_RATE : dt;
-    // 重いときは時間の上限まで計算して残りは捨てる（固まらずにスローになる）
+    // 重いときは時間の上限まで計算して剩餘は捨てる（固まらずにスローになる）
     const t0 = performance.now();
     while (acc >= STEP){
       step(STEP); acc -= STEP;
@@ -751,8 +751,8 @@ gtag('config', 'G-41RSZLP1YQ');
   const nameFar = () => mode === 'cpu' ? 'CPU' : '赤';
   function resultWord(){
     if (pHP === cHP) return '引き分け';
-    if (mode === 'cpu') return pHP > cHP ? '勝ち！' : '負け…';
-    return (pHP > cHP ? '青' : '赤') + 'の勝ち！';
+    if (mode === 'cpu') return pHP > cHP ? '獲勝！' : '負け…';
+    return (pHP > cHP ? '青' : '赤') + 'の獲勝！';
   }
   const scoreLine = () => `${nameNear()} ${Math.max(0, pHP)} - ${Math.max(0, cHP)} ${nameFar()}`;
   function finish(){
@@ -778,7 +778,7 @@ gtag('config', 'G-41RSZLP1YQ');
     $(id).addEventListener('pointerdown', e => e.stopPropagation());
     $(id).addEventListener('click', () => { mode = md; restart(); });
   }
-  // 結果画面からモード選択の画面へ戻る（盤面は止まったまま、選んだら新しい試合を始める）
+  // 結果画面からモード選択の画面へ返回（盤面は止まったまま、選んだら新しい試合を始める）
   $('toMenu').addEventListener('pointerdown', e => e.stopPropagation());
   $('toMenu').addEventListener('click', () => {
     state = 'idle';
@@ -788,14 +788,14 @@ gtag('config', 'G-41RSZLP1YQ');
   $('retry').addEventListener('pointerdown', e => e.stopPropagation());
   $('retry').addEventListener('click', restart);
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return `インフレホッケーで${resultWord()}\n${scoreLine()}\n`
       + location.href.split(/[?#]/)[0] + '\n#インフレホッケー';
   }
   // 結果をPNG画像にする：試合終了時の3D盤面（HPの数字も写る）をそのまま画像にする。
   // WebGLの画面は描画後に消えることがあるので、直前に描き直してから同じ処理の中で読み出す。
-  // （共有シートの制約があるため同期処理で作る）
+  // （分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const c = cv;
     renderer.render(scene, camera);
@@ -818,8 +818,8 @@ gtag('config', 'G-41RSZLP1YQ');
       return;
     }
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 

@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ドーナツメーカー3D</title>
+<title>甜甜圈製作3D</title>
 <meta name="description" content="描いた形のドーナツを揚げて飾る">
 <style>
   :root{
@@ -63,7 +63,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #bottom{position:absolute;left:0;right:0;bottom:0;padding:0 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
   #bottom, #bottom *{pointer-events:none}
   #bottom button, #bottom input{pointer-events:auto}
-  /* 1行を左・中央・右の3列に分け、次へ進むボタン（.go）は中央、道具（.tool）は右端に置く */
+  /* 1行を左・中央・右の3列に分け、下一個進むボタン（.go）は中央、道具（.tool）は右端に置く */
   .row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end}
   .row > .go{grid-column:2}
   .row > .tool{grid-column:3;justify-self:end}
@@ -152,22 +152,22 @@ gtag('config', 'G-41RSZLP1YQ');
     <div id="result" class="hidden">
       <div class="row">
         <button id="again" class="go" type="button">もう一回</button>
-        <button id="share" class="tool" type="button">共有</button>
+        <button id="share" class="tool" type="button">分享</button>
       </div>
     </div>
   </div>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される結果画像">
+      <img id="share-img" alt="分享される結果画像">
       <p id="share-text"></p>
-      <button id="share-close" type="button">閉じる</button>
+      <button id="share-close" type="button">關閉</button>
     </div>
   </div>
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
-    <p>指で描いた形の生地を油で揚げ、トッピングして皿に盛り付けるまでを3Dで楽しむ作品です。点数や制限時間はありません。「完成」を押すと仕上がりを好きな角度から眺められ、共有もできます。</p>
+    <h2>玩法</h2>
+    <p>指で描いた形の生地を油で揚げ、トッピングして皿に盛り付けるまでを3Dで楽しむ作品です。点数や制限時間はありません。「完成」を押すと仕上がりを好きな角度から眺められ、分享もできます。</p>
     <h2>操作</h2>
-    <p>鍋の上をなぞると生地になり、描き終わりを描き始めに近づけると輪になります。太さはスライダーで変えられ、一度に12個まで作れます。「揚げる」のあとは、生地をタップすると跳ねて裏返り、ドラッグで持ち上げて網バットに置けます。全部置くとトッピングに進み、最後に生地を皿へ運びます。PC ではマウスで同じように操作できます。</p>
+    <p>鍋の上をなぞると生地になり、描き終わりを描き始めに近づけると輪になります。太さはスライダーで変えられ、一度に12個まで作れます。「揚げる」のあとは、生地をタップすると跳ねて裏返り、拖曳で持ち上げて網バットに置けます。全部置くとトッピングに進み、最後に生地を皿へ運びます。PC ではマウスで同じように操作できます。</p>
     <h2>楽しみ方</h2>
     <p>片面は14秒ほどできつね色になり、長く揚げるほど濃くなって、35秒ほどで焦げ色になります。トッピングはソース、線がけ、粉砂糖、カラースプレーの4種類で、ソースと線がけは色も選べます。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -317,7 +317,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const FL_ADH_BAND = 0.06;   // 面からこの距離までの粒が貼りつく
   const FL_TOUCH = 0.015;     // 面からこの距離までの粒を「触れている」とみなす
   const FL_FRICTION = 0.25;   // 面の近くの粒が面に沿ってすべる速さを1ステップごとに落とす割合
-  const FL_STICK = 0.96;      // 面に触れている粒が面に沿ってすべる速さを1ステップごとに落とす割合（薄い膜は残り、厚い所だけ流れる）
+  const FL_STICK = 0.96;      // 面に触れている粒が面に沿ってすべる速さを1ステップごとに落とす割合（薄い膜は剩餘、厚い所だけ流れる）
   const FL_SET = 1.8;         // 冷えて動きにくくなっていく速さ（落ちてからの時間に掛ける）
   const FL_FREEZE_AGE = 1.5;  // 落ちてからこの時間がたち、面に触れてゆっくりになった粒は固まる（秒）
   const FL_FREEZE_V = 0.12;   // 固まるときの速さの上限（単位/秒）
@@ -362,27 +362,27 @@ gtag('config', 'G-41RSZLP1YQ');
   const FINALE_ZOOM = 0.8;       // 完成したときに寄る倍率（寄りすぎない）
   const FINALE_PITCH = 28;       // 完成したときに見下ろす角度（度）
   const FINALE_TIME = 1.2;       // 寄っていく時間（秒）
-  const AUTO_ROTATE = 12;        // 完成品を自動で回す速さ（度/秒）。操作したら止まる
+  const AUTO_ROTATE = 12;        // 完成品を自動で轉動速さ（度/秒）。操作したら止まる
   const AUTO_RESUME = 5;         // 操作をやめてからこの時間（秒）たつと、また自動で回り始める
   const AUTO_EASE = 1;           // 回り始めるとき、この時間（秒）かけてゆっくり速くなる
-  const ORBIT_SPEED = 0.4;       // 完成品を見るとき、ドラッグ1pxで回る角度（度）
+  const ORBIT_SPEED = 0.4;       // 完成品を見るとき、拖曳1pxで回る角度（度）
   const ORBIT_PITCH_MIN = 8, ORBIT_PITCH_MAX = 88;   // 見下ろす角度の範囲（度）
   const ZOOM_MIN = 0.55, ZOOM_MAX = 2.0;              // 近づける・離れる倍率の範囲
   const CAM_MOVE = 3;            // 完成品を見るカメラが目標へ向かう速さ
   const SPARK_COUNT = 90;        // 完成したときに飛び散るきらきらの数（2回に分けてはじける）
   const SPARK_WAVE_GAP = 0.35;   // 1回目と2回目のはじけの間（秒）
   const SPARK_LIFE = 3.2;        // きらきらが消えるまでの時間（秒）
-  const SPARK_UP = 4.2;          // きらきらが上へ飛び出す速さ
+  const SPARK_UP = 4.2;          // きらきらが往上飛び出す速さ
   const SPARK_OUT = 2.2;         // きらきらが横へ広がる速さ
   const SPARK_GRAVITY = 3.0;     // きらきらが落ちる速さ（重力）
   const SPARK_DRAG = 1.6;        // 空気でだんだん遅くなる強さ（ふわっと舞う）
   const SPARK_SIZE = 0.7;        // きらきらの大きさ
   const SPARK_SPIN = 1.5;        // きらきらが回る速さ（ラジアン/秒）
   const SPARK_COLORS = [0xffc21a, 0xff4f8b, 0x3fb6ff, 0x6fd64a, 0xffffff];   // きらきらの色
-  const GHOST_GUARD = 400;       // 結果を出してからこの時間（ミリ秒）は共有ボタンを受け付けない（完成ボタンを離した指が押してしまうのを防ぐ）
+  const GHOST_GUARD = 400;       // 結果を出してからこの時間（ミリ秒）は分享ボタンを受け付けない（完成ボタンを離した指が按しまうのを防ぐ）
 
   // 結果
-  const SHARE_INSTANT = 0.5;  // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5;  // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   // 揚げ時間（秒）→ 揚げ色（RGB 0〜1）。間は直線でつなぐ
   const FRY_COLORS = [
     [0,               [0.95, 0.76, 0.36]],   // 生（卵の入った黄色い生地）
@@ -1141,7 +1141,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     return COUNTER_Y;
   }
-  // g があるときは、つまんだ点（g.anchor）を指の位置（g.target）へばねで引く
+  // g があるときは、つまんだ点（g.anchor）を指の位置（g.target）へばねで拉
   function bodyStep(p, dt, g){
     const q = p.pivot.quaternion, c = p.pivot.position;
     const pos = p.geo.attributes.position.array;
@@ -1168,14 +1168,14 @@ gtag('config', 'G-41RSZLP1YQ');
       // 鍋の底・網・皿・台：めり込んだ分だけ押し返し、横すべりを止める
       const fy = floorAt(vW.x, vW.z);
       if (vW.y < fy){
-        // めり込んでいる間は、沈む向きにも戻る向きにも速さを止める（戻るときに止めないとゴムのように跳ねる）。引きつける力にはしない
+        // めり込んでいる間は、沈む向きにも返回向きにも速さを止める（返回ときに止めないとゴムのように跳ねる）。引きつける力にはしない
         vFs.y += Math.max(0, FLOOR_K * (fy - vW.y) - vP.y * FLOOR_C) * ms;
         vFs.x -= vP.x * FLOOR_FRICTION * ms;
         vFs.z -= vP.z * FLOOR_FRICTION * ms;
       }
       vF.add(vFs);
       vT.add(vA.copy(vR).cross(vFs));
-      // 生地が上下に動くと油面を押して波が立つ
+      // 生地が上下に動くと油面を按波が立つ
       if (f > 0){
         const k = cellAt(vW.x, vW.z);
         if (k >= 0) wv[k] += COUPLE * vP.y * f * dt;
@@ -1493,7 +1493,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const up = POKE_UP + POKE_UP_K * Math.sqrt(p.radius);
     const w = Math.PI * POKE_TURN / (2 * up / GRAVITY);
     p.vel.y = up;
-    p.angVel.set(dz * w, 0, -dx * w);   // 上向き×突いた向き：突いた側が下へ回る
+    p.angVel.set(dz * w, 0, -dx * w);   // 上向き×突いた向き：突いた側が往下回る
     splash(at.x, at.z, POKE_RADIUS, POKE_SPLASH);
   }
   function pickPiece(x, y, ok){
@@ -1558,7 +1558,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   const grabs = new Map();    // 指ごとの操作 pointerId → { piece, x0, y0, anchor, carry, ... }
-  // つまむ：触った点（生地から見た位置 g.anchor）を指の位置へ引っぱり、残りは重さでぶら下がる
+  // つまむ：触った点（生地から見た位置 g.anchor）を指の位置へ引っぱり、剩餘は重さでぶら下がる
   function beginCarry(g, x, y){
     const p = g.piece, piv = p.pivot;
     p.settle = null;
@@ -2009,7 +2009,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 線がけ：細口のボトルから細い線を垂らし、なぞった所の表面（生地かソース）に沿って線を置く ----------
   // 線は生地の子にするので、盛り付けでも一緒に運べる。ソースとは混ざらない
-  const lineMats = new Map();   // 色ごとの材質（同じ色は使い回す）
+  const lineMats = new Map();   // 色ごとの材質（同じ色は使い轉動）
   function lineMat(color){
     const key = color.getHexString();
     let m = lineMats.get(key);
@@ -2545,10 +2545,10 @@ gtag('config', 'G-41RSZLP1YQ');
     if (state !== 'topping') return;
     for (const g of grabs.values()) if (g.paint){ if (tool === 'sauce') pour(g, dt); else if (tool === 'drizzle') drizzle(g); else shake(g, dt); break; }
     if (!fluidAwake) return;
-    updateChocoMeshes();   // 面は毎フレーム作り直す（間引くと動きがカクつく）
+    updateChocoMeshes();   // 面は毎フレーム作り直す（間拉と動きがカクつく）
     if (!fn && !stream.visible){ fluidAwake = false; updateChocoMeshes(); }
   }
-  // 盛り付けに移るとき：流れている粒のうち生地に近いものは固め、残りは捨てる
+  // 盛り付けに移るとき：流れている粒のうち生地に近いものは固め、剩餘は捨てる
   function bakeChoco(){
     for (let i = fn - 1; i >= 0; i--){
       if (fcd[i] < 0.15 && fcp[i] >= 0) freezeParticle(i, fcp[i]);
@@ -2626,10 +2626,10 @@ gtag('config', 'G-41RSZLP1YQ');
     // 操作していない時間が続いたら、ゆっくり回り始める
     orbitIdle = orbitPtrs.size ? 0 : orbitIdle + dt;
     const ramp = Math.min(1, Math.max(0, (orbitIdle - AUTO_RESUME) / AUTO_EASE));
-    if (orbitStart) orbit.yaw += AUTO_ROTATE * dt;   // 完成した直後は止めずに回す（まだ操作していない）
+    if (orbitStart) orbit.yaw += AUTO_ROTATE * dt;   // 完成した直後は止めずに轉動（まだ操作していない）
     else orbit.yaw += AUTO_ROTATE * ramp * dt;
   }
-  // ドラッグで回す・2本指でつまんで寄る（ホイールでも寄る）
+  // 拖曳で轉動・2本指でつまんで寄る（ホイールでも寄る）
   const orbitPtrs = new Map();
   let orbitIdle = 0, orbitStart = true;   // 操作していない時間（秒）、完成してからまだ一度も操作していないか
   const orbitTouched = () => { orbitIdle = 0; orbitStart = false; };
@@ -2701,7 +2701,7 @@ gtag('config', 'G-41RSZLP1YQ');
     scene.add(sp);
     sparks.push(sp);
   }
-  // ドーナツのあたりから、きらきらを上へはじけるように飛ばす
+  // ドーナツのあたりから、きらきらを往上はじけるように飛ばす
   let sparkNext = 0;
   function burstSparks(count){
     for (let n = 0; n < count; n++){
@@ -2829,7 +2829,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 画面の操作 ----------
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
-    showPresets(false);   // 色を選ぶ所は、画面に触ったら閉じる
+    showPresets(false);   // 色を選ぶ所は、画面に触ったら關閉
     const id = e.pointerId, x = e.clientX, y = e.clientY;
     if (state === 'drawing'){
       if (grabs.size) return;   // 描くのは1本指だけ
@@ -2905,7 +2905,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return 'ドーナツを作った！\n'
       + location.href.split(/[?#]/)[0] + '\n#ドーナツメーカー3D';
@@ -2934,7 +2934,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 共有シートが無い・使えない環境：文面をコピーし、共有される内容を画面に出す
+    // 3) 分享シートが無い・使えない環境：文面をコピーし、分享される内容を画面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -2942,18 +2942,18 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll: true });
     };
-    // 失敗、または押してすぐのキャンセル扱いは共有シートが出なかったとみなして 3) へ
+    // 失敗、または按すぐのキャンセル扱いは分享シートが出なかったとみなして 3) へ
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート：文面＋結果画像
+    // 1) 画像を渡せる分享シート：文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })){
       navigator.share({ text, files: [file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート：文面のみ
+    // 2) 画像を渡せない分享シート：文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(failed);
       return;

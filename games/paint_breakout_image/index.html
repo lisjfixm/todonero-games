@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>塗り合いバトル</title>
+<title>塗地對戰</title>
 <meta name="description" content="ブロック崩しで陣地を塗り合う対戦">
 <style>
   :root{
@@ -130,18 +130,18 @@ gtag('config', 'G-41RSZLP1YQ');
     <button id="menuBtn" type="button" aria-label="メニュー">☰</button>
 
     <div id="panel" hidden>
-      <p><button type="button" data-howto-open>遊び方</button></p>
+      <p><button type="button" data-howto-open>玩法</button></p>
 
       <h2>そうさ</h2>
       <p class="p1">手前（青）　<kbd>←</kbd><kbd>→</kbd></p>
       <p class="p2">奥（赤）　<kbd>A</kbd><kbd>D</kbd></p>
-      <p style="color:var(--dim)"><kbd>Space</kbd> スタート / 再戦</p>
+      <p style="color:var(--dim)"><kbd>Space</kbd> 開始 / 再戦</p>
       <p style="color:var(--dim)"><kbd>C</kbd> CPU対戦の切り替え</p>
 
       <h2>ルール</h2>
       <p>自分の色のブロックはすり抜ける。</p>
       <p>相手の色のブロックは跳ね返り、自分の色に塗り替わる。</p>
-      <p>ボールは時間とともに速くなる。落とすと元の速さに戻る。</p>
+      <p>ボールは時間とともに速くなる。落とすと元の速さに返回。</p>
       <p>相手のボールを打ち返すと自分の色になる。奪われて0個になった側は、すぐパドルから1個出る。</p>
       <p>ボールを全部落とすと1秒間おあずけ。</p>
       <p>制限時間（30秒）が切れた時点で、陣地の多いほうが勝ち。</p>
@@ -168,10 +168,10 @@ gtag('config', 'G-41RSZLP1YQ');
 </div>
 
 <section class="howto" hidden data-pos="none">
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>手前の青と奥の赤に分かれ、ブロック崩しで陣地を塗り合う30秒の対戦です。ボールは自分の色のマスをすり抜け、相手の色のマスに当たると跳ね返り、そのマスを自分の色に変えます。時間切れの時点で、全120マスのうち多く塗ったほうが勝ちです。</p>
   <h2>操作</h2>
-  <p>キーボード専用で、スマホの画面操作には対応していません。青は←→、赤は A と D でパドルを動かします。Space でスタートと再戦を行い、C で赤を CPU に切り替えると1人でも遊べます。</p>
+  <p>キーボード専用で、スマホの画面操作には対応していません。青は←→、赤は A と D でパドルを動かします。按空格開始と再戦を行い、C で赤を CPU に切り替えると1人でも遊べます。</p>
   <h2>コツ</h2>
   <p>相手のボールを打ち返すと自分のものになりますが、速さは基本に戻ります。自分のボールは時間とともに速くなり、全部落とすと1秒待って基本の速さから出直しです。塗り替えたマスからは3割の確率でアイテムが自陣へ落ちるので、パドルで受け取ってください。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -183,7 +183,7 @@ gtag('config', 'G-41RSZLP1YQ');
    ============================================================ */
 const TUNE = {
   ballSpeed:        4.4,  // ボールの基本速度(px/frame)
-  accelPerSec:      0.09, // 1秒あたりの加速量(px/frame)。落とすと基本速度に戻る
+  accelPerSec:      0.09, // 1秒あたりの加速量(px/frame)。落とすと基本速度に返回
   maxSpeed:         8.0,  // ボール速度の上限
   maxBounceAngle:   1.05, // パドル端で跳ねる最大角(ラジアン)
   minBounceAngle:   0.10, // 真上に飛んで千日手になるのを防ぐ最小角(0で無効)
@@ -735,7 +735,7 @@ function draw(){
     ctx.globalAlpha = 1;
   }
 
-  // 残り時間
+  // 剩餘時間
   const sec = Math.max(0, Math.ceil(timeLeft / 60));
   ctx.textAlign = 'center';
   ctx.font = '700 22px Helvetica Neue, Arial, sans-serif';
@@ -815,7 +815,7 @@ function overlay(){
     }
     ctx.fillStyle = '#e8ecf7';
     ctx.font = '600 16px "Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif';
-    ctx.fillText('Space でスタート', W / 2, H / 2 + 14);
+    ctx.fillText('按空格開始', W / 2, H / 2 + 14);
   } else {
     const blue = count(0), red = COLS * ROWS - blue;
     ctx.fillStyle = winner < 0 ? '#e8ecf7' : COL[winner].main;
@@ -828,7 +828,7 @@ function overlay(){
     ctx.textAlign = 'center';
     ctx.fillStyle = '#8d95b4';
     ctx.font = '400 14px Helvetica Neue, Arial, sans-serif';
-    ctx.fillText('Space でもう一度', W / 2, H / 2 + 54);
+    ctx.fillText('按空格再來一次', W / 2, H / 2 + 54);
   }
 }
 

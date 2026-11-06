@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>カラフル爆弾仕分け</title>
+<title>彩色炸彈分類</title>
 <meta name="description" content="爆弾を同じ色のエリアへ仕分ける">
 <style>
   :root{
@@ -69,7 +69,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #res-unit{font-size:20px;font-weight:700}
   button{display:block;width:100%;min-height:50px;margin:10px 0 0;border:0;border-radius:14px;font:inherit;font-size:18px;font-weight:700;color:var(--fg);background:var(--btn);cursor:pointer}
   #retry{background:var(--accent);color:var(--accent-fg)}
-  .howto-open{width:auto;min-height:0}   /* 上の button の全幅指定を「遊び方」ボタンに効かせない */
+  .howto-open{width:auto;min-height:0}   /* 上の button の全幅指定を「玩法」ボタンに効かせない */
   button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:5}
   #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;padding:16px;border-radius:20px;background:var(--panel)}
@@ -85,23 +85,23 @@ gtag('config', 'G-41RSZLP1YQ');
     <div class="panel">
       <p id="result"><span id="res-num">0</span><span id="res-unit">個 仕分けた</span></p>
       <button id="retry" type="button">もう一回</button>
-      <button id="share" type="button">共有</button>
+      <button id="share" type="button">分享</button>
     </div>
   </div>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される結果画像">
+      <img id="share-img" alt="分享される結果画像">
       <p id="share-text"></p>
-      <button id="share-close" type="button">閉じる</button>
+      <button id="share-close" type="button">關閉</button>
     </div>
   </div>
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>中央の十字に落ちてくる爆弾を、同じ色の四隅のエリアへ運んで仕分けるゲームです。仕分けた個数が得点になります。導火線が燃え尽きるか、違う色のエリアに入れると爆発して終わります。時間がたつほど出る間隔と導火線は短くなり、一度に落ちる数も最大4個まで増えます。</p>
     <h2>操作</h2>
-    <p>爆弾を指でつかんで運び、離すと落ちます。動かした勢いは離したあとも残るので、投げることもできます。指を2本使えば2個を同時に持てます。PC ではマウスのドラッグで操作します。</p>
+    <p>爆弾を指でつかんで運び、離すと落ちます。動かした勢いは離したあとも残るので、投げることもできます。指を2本使えば2個を同時に持てます。PC ではマウスの拖曳で操作します。</p>
     <h2>コツ</h2>
-    <p>導火線の残りが2.5秒を切った爆弾は脈打つので、先に片付けましょう。エリアの境のブロックは投げた爆弾なら越えられますが、勢いが余って違う色に入ると失敗になります。赤と橙は対角にあります。</p>
+    <p>導火線の剩餘が2.5秒を切った爆弾は脈打つので、先に片付けましょう。エリアの境のブロックは投げた爆弾なら越えられますが、勢いが余って違う色に入ると失敗になります。赤と橙は対角にあります。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
   </section>
 </div>
@@ -146,7 +146,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const SPAWN_DEC = 0.018;    // 経過1秒ごとに出現間隔が縮む秒数（約60秒で下限になる）
   const DROP_MAX = 4;         // 一度に落ちてくる個数の上限
   const DROP_STEP = 20;       // この秒数ごとに一度に落ちてくる個数が1個増える（1個→最大 DROP_MAX 個）
-  const BLINK_TIME = 2.5;     // 導火線の残りがこの秒数を切ったら脈打ち始める
+  const BLINK_TIME = 2.5;     // 導火線の剩餘がこの秒数を切ったら脈打ち始める
   const PULSE = 0.12;         // 脈打つときに大きくなる割合（色は変えない。光らせると白の爆弾と区別できなくなるため）
   const SORT_TIME = 0.25;     // 仕分けた爆弾が消えるまでの時間（秒）
   const EXPLODE_TIME = 0.9;   // 爆発してから結果を出すまでの時間（秒）
@@ -167,9 +167,9 @@ gtag('config', 'G-41RSZLP1YQ');
   const SPARK_MAX = 800;      // 同時に出せる火の粉の数の上限
   const SHAKE = 0.18;         // 爆発で画面が揺れる強さ
   const SHAKE_TIME = 0.5;     // 画面が揺れる時間（秒）
-  const SHARE_INSTANT = 0.5;  // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5;  // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
 
-  // 色はCSS変数から読む（共有画像の描画と揃えるため）
+  // 色はCSS変数から読む（分享画像の描画と揃えるため）
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const COLOR_KEYS = ['--c-red', '--c-blue', '--c-white', '--c-orange'];   // AREAS と同じ並び（赤と橙が対角になる）
   // エリアの並び：奥左・奥右・手前左・手前右
@@ -183,7 +183,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return (z < 0 ? 0 : 2) + (x < 0 ? 0 : 1);
   }
 
-  // 2Dで爆弾を描く（床のエリアの目印と共有画像で使う）。gloss で光沢を付ける
+  // 2Dで爆弾を描く（床のエリアの目印と分享画像で使う）。gloss で光沢を付ける
   function drawBomb2D(g, x, y, r, color, alpha, gloss){
     g.save();
     g.globalAlpha = alpha;
@@ -228,7 +228,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return t;
   }
 
-  // 背景：上から下へのグラデーション
+  // 背景：上から往下のグラデーション
   {
     const c = document.createElement('canvas');
     c.width = 4; c.height = 256;
@@ -372,7 +372,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return canvasTexture(c);
   })();
 
-  // 爆弾の部品（形は共有し、点滅させる本体の材質と、短くしていく導火線だけ爆弾ごとに作る）
+  // 爆弾の部品（形は分享し、点滅させる本体の材質と、短くしていく導火線だけ爆弾ごとに作る）
   const bodyGeo  = new THREE.SphereGeometry(BOMB_R, 32, 24);
   const capGeo   = new THREE.CylinderGeometry(0.13, 0.15, 0.1, 24);
   const ringGeo  = new THREE.TorusGeometry(0.12, 0.022, 8, 24).rotateX(Math.PI / 2);
@@ -399,7 +399,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let boomT = -1;          // 爆発してからの時間（爆発していなければ -1）
   let doomBomb = null;     // 間違えたエリアに入れられ、これから爆発する爆弾
   let doomT = 0;           // 間違えたエリアに入れてからの時間
-  let shakeT = 0;          // 画面の揺れの残り時間
+  let shakeT = 0;          // 画面の揺れの剩餘時間
   const bombs = [];
   const effects = [];      // 演出（仕分けの粒・爆発の煙など）
   const scorches = [];     // 床に残る焦げ跡
@@ -805,7 +805,7 @@ gtag('config', 'G-41RSZLP1YQ');
         b.g.quaternion.premultiply(_rq);
       }
     }
-    // 投げた爆弾も、床で止まったら普通の爆弾に戻る（その後はブロックで止められる）
+    // 投げた爆弾も、床で止まったら普通の爆弾に返回（その後はブロックで止められる）
     if (b.thrown && b.vy === 0 && Math.hypot(b.vx, b.vz) < 0.05) b.thrown = false;
     return judge(b);
   }
@@ -890,7 +890,7 @@ gtag('config', 'G-41RSZLP1YQ');
         const s = Math.max(1 - b.doneT / SORT_TIME, 0.001);
         b.g.scale.setScalar(s);
       } else if (!doom && b.left < BLINK_TIME){
-        // 残りが少ないほど速く脈打つ
+        // 剩餘が少ないほど速く脈打つ
         b.blink += dt * (4 + 10 * (1 - b.left / BLINK_TIME));
         b.g.scale.setScalar(1 + PULSE * Math.max(Math.sin(b.blink * Math.PI * 2), 0));
       } else if (!doom){
@@ -923,8 +923,8 @@ gtag('config', 'G-41RSZLP1YQ');
     camera.lookAt(LOOK);
     camera.updateMatrixWorld();
   }
-  // 台（外枠の上端まで）が画面いっぱいに収まる距離を探す（上側はスコア表示のぶんだけ空ける）
-  const SCORE_SPACE = 90;   // 画面上端からスコア表示の下までの高さ（px）
+  // 台（外枠の上端まで）が画面いっぱいに収まる距離を探す（上側は分數表示のぶんだけ空ける）
+  const SCORE_SPACE = 90;   // 画面上端から分數表示の下までの高さ（px）
   function fitCamera(H){
     const h = FIELD / 2 + FRAME_W;
     const pts = [];
@@ -1022,7 +1022,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', release);
   cv.addEventListener('pointercancel', release);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => {
@@ -1069,7 +1069,7 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('keydown', e => {
     if (!$('share-view').classList.contains('hidden')){
       if (e.key === 'Escape') closeShareView();
-      return;   // 共有の画面を出している間は結果画面のキー操作を止める
+      return;   // 分享の画面を出している間は結果画面のキー操作を止める
     }
     if (state === 'over' && (e.key === ' ' || e.key === 'Enter')){
       e.preventDefault();
@@ -1077,7 +1077,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return 'カラフル爆弾を' + score + '個仕分けた！\n'
       + location.href.split(/[?#]/)[0] + '\n#カラフル爆弾仕分け';
@@ -1111,7 +1111,7 @@ gtag('config', 'G-41RSZLP1YQ');
     g.fillText(unit, x0 + numW + 10, 450);
     return c;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(c){
     const bin = atob(c.toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -1124,7 +1124,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
     const fallback = () => {
       if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1132,20 +1132,20 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll:true });
     };
-    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
-    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files:[file] })){
       navigator.share({ text, files:[file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(failed);
       return;

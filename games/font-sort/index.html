@@ -35,7 +35,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<title>フォント仕分け</title>
+<title>字體分類</title>
 <meta name="description" content="降ってくる文字をフォントごとに仕分ける">
 <style>
   :root{
@@ -82,14 +82,14 @@ gtag('config', 'G-41RSZLP1YQ');
       <div id="r-score" aria-live="polite">0</div>
       <div id="r-detail"></div>
       <button type="button" id="retry" class="btn">もう一回</button>
-      <button type="button" id="share" class="btn">共有</button>
+      <button type="button" id="share" class="btn">分享</button>
     </div>
   </div>
   <section class="howto" data-pos="top-right" hidden>
-    <h2>遊び方</h2>
-    <p>上の箱に降り積もる文字を、フォントごとに下のエリアへ仕分けるゲームです。エリアにはお手本の「永」とフォント名が書かれています。正しく仕分けた数がスコアになり、積もった文字が点線より上に2秒とどまるとゲームオーバーです。10個を超えるとエリアが2つから4つに増えます。</p>
+    <h2>玩法</h2>
+    <p>上の箱に降り積もる文字を、フォントごとに下のエリアへ仕分けるゲームです。エリアにはお手本の「永」とフォント名が書かれています。正しく仕分けた数が分數になり、積もった文字が点線より上に2秒とどまると遊戲結束です。10個を超えるとエリアが2つから4つに増えます。</p>
     <h2>操作</h2>
-    <p>箱の中の文字を指でつかみ、エリアまでドラッグして離します。同時に持てるのは1文字です。PC ではマウスのドラッグで操作します。</p>
+    <p>箱の中の文字を指でつかみ、エリアまで拖曳して離します。同時に持てるのは1文字です。PC ではマウスの拖曳で操作します。</p>
     <h2>コツ</h2>
     <p>違うエリアで離すと文字が3個追加で降り、正解のエリアの枠が点滅します。エリアの外で離せば罰はないので、迷ったら無理に入れないほうが安全です。正しく仕分けるたびに降る間隔は短くなり、最短で0.7秒になりますが、エリアが増えたときは最初の2.2秒に戻ります。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -107,8 +107,8 @@ gtag('config', 'G-41RSZLP1YQ');
   const BOX_L = 16, BOX_R = 344; // 箱の左右の内壁
   const BOX_T = 70;              // 箱の壁の上端（上は開いている）
   const BOX_B = 420;             // 箱の底
-  const LINE_Y = 110;            // ゲームオーバーライン（積もった文字の一番上がこれより上だとアウト判定）
-  const OVER_TIME = 2.0;         // ラインより上にこの秒数とどまるとゲームオーバー
+  const LINE_Y = 110;            // 遊戲結束ライン（積もった文字の一番上がこれより上だとアウト判定）
+  const OVER_TIME = 2.0;         // ラインより上にこの秒数とどまると遊戲結束
   const SPAWN_Y = 10;            // 文字が現れる高さ（文字の重心の位置。画面の上端あたりから降ってくる）
   const SPAWN_START = 2.2;       // 文字が降ってくる最初の間隔（秒）
   const SPAWN_RATE = 0.97;       // 1個正しく仕分けるごとに間隔に掛ける倍率（小さいほど早く忙しくなる）
@@ -129,11 +129,11 @@ gtag('config', 'G-41RSZLP1YQ');
   const NAME_MAX = 14;           // エリアのフォント名の最大の大きさ
   const NAME_RATE = 0.14;        // エリアが低いときのフォント名の大きさ（エリアの高さに対する割合）
   const SAMPLE_GAP = 4;          // お手本の文字とフォント名の間
-  const HUD_Y = 30;              // スコアの高さ
+  const HUD_Y = 30;              // 分數の高さ
   const GRAB_PAD = 24;           // 文字の線（当たり判定）からこの距離までは掴める（指で掴みやすくする）
-  const HELD_ALPHA = 0.35;       // ドラッグ中、箱に残っている元の文字の不透明度
+  const HELD_ALPHA = 0.35;       // 拖曳中、箱に残っている元の文字の不透明度
   const FLASH_TIME = 0.3;        // 仕分けたときエリアの色が変わっている時間（秒）
-  const RETRY_LOCK = 600;        // 終了直後の連打で「もう一回」を押してしまわないための待ち（ミリ秒）
+  const RETRY_LOCK = 600;        // 終了直後の連打で「もう一回」を按しまわないための待ち（ミリ秒）
 
   // 物理
   const G = 1600;                // 重力
@@ -172,7 +172,7 @@ gtag('config', 'G-41RSZLP1YQ');
   };
   const ALL_FONTS = FONT_POOL.flat();
   const labelOf = f => FONT_LABEL[f] || f;
-  // Google Fonts から読み込む文字（出題する文字＋フォント名の文字）
+  // Google Fonts から讀取文字（出題する文字＋フォント名の文字）
   const GF_TEXT = [...new Set(CHARS + ALL_FONTS.map(labelOf).join(''))].join('');
   const FONT_TIMEOUT = 20000;    // フォント読み込みを待つ最大時間（ミリ秒）
 
@@ -202,14 +202,14 @@ gtag('config', 'G-41RSZLP1YQ');
   let poolLeft = [];             // 今回のゲームでまだ使っていない候補（シャッフル済み）
   let active = [];               // 今使っているフォント（仕分けエリアの並び順）
   let bodies = [];
-  let held = null;               // 掴んでいる文字 {b, lx, ly, ang, x, y, id}。元の文字は箱に残り（半透明・当たり判定あり）、指には写しがついてくる
+  let held = null;               // 掴んでいる文字 {b, lx, ly, ang, x, y, id}。元の文字は箱に剩餘（半透明・当たり判定あり）、指には写しがついてくる
   let score = 0, miss = 0, spawnInt = SPAWN_START, spawnT = 0;
   let acc = 0, danger = false, overAt = 0;
   let lastCh = '';
   let nextId = 1;
   let flashes = {};              // エリアの色 フォント名 → {cls, t}
   let missFx = null;             // 間違えたときの演出 {right, t}（正しいエリアのフォント名）
-  let shake = 0;                 // 画面の揺れの残り時間
+  let shake = 0;                 // 画面の揺れの剩餘時間
   const chars = Array.from(CHARS);
 
   function resize(){
@@ -310,7 +310,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function clampX(b, x){
     return Math.max(BOX_L - b.sh.minX + 1, Math.min(BOX_R - b.sh.maxX - 1, x));
   }
-  // 箱の上へ移して降らせる（新しい文字・箱に戻す文字）
+  // 箱の往上移して降らせる（新しい文字・箱に戻す文字）
   function toTop(b, x){
     b.x = clampX(b, x); b.y = SPAWN_Y;
     b.vx = b.vy = b.w = 0; b.age = 0; b.over = 0;
@@ -344,7 +344,7 @@ gtag('config', 'G-41RSZLP1YQ');
     state = 'over'; overAt = performance.now();
     document.documentElement.removeAttribute('data-howto-hidden');
     held = null;
-    draw(); // 共有画像用に最終盤面を描いておく
+    draw(); // 分享画像用に最終盤面を描いておく
     $('r-score').textContent = score;
     $('r-detail').textContent = `間違えた数 ${miss}`;
     $('over').classList.remove('hidden');
@@ -542,7 +542,7 @@ gtag('config', 'G-41RSZLP1YQ');
       b.px = b.py = b.pw = 0;
     }
 
-    // ゲームオーバー判定（文字の一番上の点で判定。降ってきたばかりの文字は外す）
+    // 遊戲結束判定（文字の一番上の点で判定。降ってきたばかりの文字は外す）
     danger = false;
     for (const b of bodies){
       if (b.age > FRESH_TIME && b.top < LINE_Y){
@@ -612,7 +612,7 @@ gtag('config', 'G-41RSZLP1YQ');
     ctx.lineTo(BOX_R, BOX_B); ctx.lineTo(BOX_R, BOX_T);
     ctx.stroke();
 
-    // ゲームオーバーライン
+    // 遊戲結束ライン
     ctx.setLineDash([6, 6]);
     ctx.strokeStyle = danger ? C.danger : C.line; ctx.lineWidth = danger ? 2 : 1;
     ctx.beginPath(); ctx.moveTo(BOX_L, LINE_Y); ctx.lineTo(BOX_R, LINE_Y); ctx.stroke();
@@ -642,7 +642,7 @@ gtag('config', 'G-41RSZLP1YQ');
       ctx.fillText(loadingText, W / 2, (BOX_T + BOX_B) / 2);
     }
   }
-  let loadingText = 'フォント読み込み中…';
+  let loadingText = 'フォント載入中…';
 
   // ---------- ループ ----------
   let last = performance.now();
@@ -663,7 +663,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 入力 ----------
-  // 箱の中の文字を掴んで、下のエリアまでドラッグして離す
+  // 箱の中の文字を掴んで、下のエリアまで拖曳して離す
   const toLogical = e => {
     const r = cv.getBoundingClientRect();
     return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
@@ -717,7 +717,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function shareText(){
     return `フォント仕分けで${score}個仕分けた！\n間違えた数 ${miss}\n${location.href.split(/[?#]/)[0]}\n#フォント仕分け`;
   }
-  // 最終盤面をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 最終盤面をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const bin = atob(cv.toDataURL('image/png').split(',')[1]);  // toBlob の非同期コールバックは避ける
     const buf = new Uint8Array(bin.length);
@@ -729,20 +729,20 @@ gtag('config', 'G-41RSZLP1YQ');
     const btn = $('share');
     const text = shareText();
     const file = resultImageFile();
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ text, files: [file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 
@@ -761,8 +761,8 @@ gtag('config', 'G-41RSZLP1YQ');
   }, { passive: false });
 
   // ---------- フォント読み込み ----------
-  // Google Fonts のものは使う文字だけに絞って読み込む（日本語フォント全体だと重いため）。
-  // 自前配信のものはファイルをそのまま読み込む。
+  // Google Fonts のものは使う文字だけに絞って讀取（日本語フォント全体だと重いため）。
+  // 自前配信のものはファイルをそのまま讀取。
   // 読み込めなかったフォントは使わない。使えるフォントが2つ未満なら遊べない
   (function loadFonts(){
     const all = ALL_FONTS;

@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>ヘキサルート</title>
+<title>六邊形路線</title>
 <meta name="description" content="タイルを回してコマを盤の外へ逃がす">
 <style>
   :root{
@@ -184,11 +184,11 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <div class="controls">
   <button class="btn" id="resetBtn" type="button">やり直す</button>
-  <button class="btn" type="button" data-howto-open>遊び方</button>
+  <button class="btn" type="button" data-howto-open>玩法</button>
 </div>
 
 <section class="howto" hidden data-pos="none">
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>矢印つきのコマをすべて盤の外へ逃がす、1手ずつ考えるパズルです。コマは矢印の向きへ飛び出し、タイルの線をたどって進みます。外へ出たコマは消え、全部消えるとクリアです。暗いマスや別のコマに阻まれたり、同じ道を回り続けたりすると元の位置へ戻ります。発射できる回数はコマの数に3を足した回数で、使い切ると同じ問題の最初に戻ります。</p>
   <h2>操作</h2>
   <p>タイルをタップすると60度回り、コマをタップすると発射します。丸い印のあるタイルは回せません。PC はクリックで同じように遊べます。</p>
@@ -425,7 +425,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const dx=b[0]-a[0], dy=b[1]-a[1];
     if(dx||dy){
       let deg=Math.atan2(dy,dx)*180/Math.PI;
-      if(i>=f.fwd) deg+=180;                      // 復路も前を向いたまま戻る
+      if(i>=f.fwd) deg+=180;                      // 復路も前を向いたまま返回
       f.arrow.setAttribute("transform",`rotate(${deg.toFixed(2)})`);
     }
     raf=requestAnimationFrame(step);

@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>もじ串焼き</title>
+<title>文字串燒</title>
 <meta name="description" content="好きな文字を串に刺して炭火で焼く">
 <style>
 :root{
@@ -95,10 +95,10 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     <div id="gradePop" aria-live="polite"><small>焼き加減</small><b></b></div>
     <button id="snd" type="button" aria-label="効果音" aria-pressed="true">🔊</button>
     <section class="howto" data-pos="top-left" hidden>
-      <h2>遊び方</h2>
+      <h2>玩法</h2>
       <p>好きな文字を串に刺し、炭火で焼いて食べる遊びです。勝ち負けはありません。8文字まで入力でき、画像のボタンから写真を切り抜いて1文字として刺すこともできます。「食べる」を押すと、全体の焼き加減が生焼けから完璧、まっくろこげまでの7段階で出ます。</p>
       <h2>操作</h2>
-      <p>「刺す」のあと串をドラッグして火の上へ運び、「ひっくり返す」で裏も焼きます。食べるときは文字をタップしてかじります。PC は矢印キーで動かし、スペースで返し、Enter で食べます。</p>
+      <p>「刺す」のあと串を拖曳して火の往上運び、「ひっくり返す」で裏も焼きます。食べるときは文字を點擊かじります。PC は矢印キーで動かし、スペースで返し、Enter で食べます。</p>
       <h2>コツ</h2>
       <p>網の真ん中ほど火が強く、評価には表と裏の両方が入ります。細い線の文字は早く焼け、太い文字は芯に火が通りにくいので、火の当て方を変えてみてください。</p>
       <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -118,7 +118,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     </div>
   </div>
   <div id="eatBar" class="hidden">
-    <button id="eatShare" type="button" class="sub">共有</button>
+    <button id="eatShare" type="button" class="sub">分享</button>
     <button id="done" type="button">ごちそうさま</button>
   </div>
 </div>
@@ -223,7 +223,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   const BLUR_STEP = 1.8;     // 1回のぼかしの広がり（ぼかす画像の画素数）
   const BLUR_PASSES = 3;     // ぼかしを重ねる回数（多いほど強くぼける）
   const FINISH_DELAY = 0.7;  // 最後の文字を食べてから「ごちそうさま」を出すまで（秒）
-  const BYE_TIME = 1.8;      // 「ごちそうさま」を出してから最初に戻るまで（秒）
+  const BYE_TIME = 1.8;      // 「ごちそうさま」を出してから最初に返回まで（秒）
   const EAT_CLOSE = 0.28;    // 食べるときに串をカメラへ寄せる割合（文字が少ないとき。多いと画面に収まるまでしか寄せない）
   const EAT_MARGIN = 0.25;   // 食べるときに串の両端に空ける余白
 
@@ -235,7 +235,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   const BITE_TEETH = 0.07;     // 縁の歯形のでこぼこの深さ（半径に対する割合）
   const BITE_TEETH_N = 9;      // 縁の歯形の数（1周あたり）
   const BITE_POINTS = 64;      // 形を表す点の数
-  const BITE_FINISH = 0.1;   // 身の残りがこの割合を下回ったら、残りもまとめて食べる
+  const BITE_FINISH = 0.1;   // 身の剩餘がこの割合を下回ったら、剩餘もまとめて食べる
 
   const $ = id => document.getElementById(id);
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -390,7 +390,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
       },
       // 刺さる：ズッと刺さる音と、小さな手応え
       stab(){ burst({ dur: 0.09, f0: 2600, f1: 500, q: 1.2, vol: 0.35 }); tone({ dur: 0.07, f0: 160, f1: 80, vol: 0.25 }); },
-      // ひっくり返す：串を回すシュッという音
+      // ひっくり返す：串を轉動シュッという音
       flip(){ burst({ dur: 0.22, f0: 500, f1: 2200, q: 0.8, vol: 0.18, attack: 0.05 }); },
       // 焼き面が火に当たった瞬間のジュッ
       sear(strength){ if (strength > 0.05) burst({ dur: 0.35, type: 'highpass', f0: 3000, f1: 1800, q: 0.7, vol: 0.12 + 0.3 * Math.min(1, strength), attack: 0.01 }); },
@@ -542,7 +542,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     mult.forEach((x, k) => { if (x >= THIN_FAST - 1e-6) edge.push(k); });
     return { ch, glyph, art: colored ? art : null, artData: colored ? ad : null, slot, near, u, v, mult, edge, volume, ease,
       sides: [new Float32Array(m), new Float32Array(m)], eaten:false, eatenAt:0, appearAt:0,
-      bitten: new Uint8Array(m), left: m,   // 身のマスごとの食べたかどうかと、残りの数
+      bitten: new Uint8Array(m), left: m,   // 身のマスごとの食べたかどうかと、剩餘の数
       biteCv: (() => { const b = newCanvas(GLYPH_PX), x = b.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, GLYPH_PX, GLYPH_PX); return b; })(),   // かじった跡（黒い所が消える）
       faceCv: [newCanvas(GLYPH_PX), newCanvas(GLYPH_PX)], dirty: [false, false] };   // 表と裏の面の画像（3Dの板に貼る）
   }
@@ -1512,7 +1512,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   function startGrill(){
     const list = splitChars($('word').value);
     if (!list.length){ $('word').focus(); return; }
-    $('word').blur();   // スマホのキーボードを閉じる
+    $('word').blur();   // スマホのキーボードを關閉
     word = list.join('');
     clearSkewer();
     geo = makeGeom(list.length);
@@ -1523,7 +1523,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     buildSkewer();
     chars.forEach(buildCharMesh);
     flipped = false; flip = null; lift = null; floats = [];
-    document.documentElement.setAttribute('data-howto-hidden', '');   // 焼いている間は「遊び方」を隠す
+    document.documentElement.setAttribute('data-howto-hidden', '');   // 焼いている間は「玩法」を隠す
     mode = 'grill';
     $('form').classList.add('hidden');
     $('controls').classList.remove('hidden');
@@ -1531,7 +1531,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     // 最初は焼き台の手前（火の外）に置く
     sx = 0; sz = GRILL_D/2 + 1.1;
     clampSkewer();
-    setHint('串をドラッグして火の上で焼く');
+    setHint('串を拖曳して火の上で焼く');
   }
 
   function doFlip(){
@@ -1567,7 +1567,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     lift = { t0: nowSec(), from: skewer.position.clone(), to, r0: fromRot, r1: base + (Math.PI/2 - el) };
     blurT0 = lift.t0;   // 持ち上げるのに合わせて背景をぼかす
     gradeTimer = setTimeout(showGradePop, LIFT_TIME * 1000);
-    setHint('文字をタップしてかじる');
+    setHint('文字を點擊かじる');
   }
 
   // ひと口の形：角度ごとの半径の表（毎回ランダムに作る）
@@ -1623,7 +1623,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     bx.fillStyle = '#000';
     bx.fill();
     c.biteTex[0].needsUpdate = c.biteTex[1].needsUpdate = true;
-    // 残りがわずかなら、残りもまとめて食べる
+    // 剩餘がわずかなら、剩餘もまとめて食べる
     if (c.left < c.bitten.length * BITE_FINISH){
       for (let k = 0; k < c.bitten.length; k++) if (!c.bitten[k]){ c.bitten[k] = 1; ks.push(k); }
       c.left = 0;
@@ -1648,7 +1648,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     if (chars.every(c => c.eaten)) setTimeout(finishMeal, FINISH_DELAY * 1000);
   }
 
-  // 食べ終わり（全部食べた・ごちそうさまを押した）：「ごちそうさま」と出して最初に戻る
+  // 食べ終わり（全部食べた・ごちそうさまを押した）：「ごちそうさま」と出して最初に返回
   let byeTimer = 0;
   function finishMeal(){
     if (mode !== 'eat') return;
@@ -1704,7 +1704,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   $('pic').addEventListener('click', () => { if (mode === 'input') $('picFile').click(); });
   $('picFile').addEventListener('change', e => {
     const file = e.target.files && e.target.files[0];
-    e.target.value = '';   // 同じ画像をもう一度選べるようにする
+    e.target.value = '';   // 同じ画像を再來一次選べるようにする
     if (!file || splitChars(wordEl.value).length >= MAX_CHARS) return;
     // 画像を文字と同じ大きさの枠に、縦横の比率を保って収める（透明な所はそのまま形になる）
     // 読み込み方：ファイルから直接 → だめなら data URL 経由（埋め込み表示などで blob: の画像が止められることがあるため、blob: は使わない）
@@ -1860,7 +1860,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     placePic(out);
   });
   $('cropCancel').addEventListener('click', closeCrop);
-  // 自動切り抜き：押すと、画像を押した所を中心に物の形を自動で囲む状態になる（もう一度押すと、なぞって囲む状態に戻る）
+  // 自動切り抜き：押すと、画像を押した所を中心に物の形を自動で囲む状態になる（再來一次押すと、なぞって囲む状態に返回）
   let autoMode = false;
   function setAutoMode(on){ autoMode = on; $('cropAuto').setAttribute('aria-pressed', String(on)); }
   $('cropAuto').addEventListener('click', () => setAutoMode(!autoMode));
@@ -1942,7 +1942,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     }
     return th / bins * max;
   }
-  // level：広げる段階（0が最初。切り抜いた所をもう一度押すたびに1ずつ上がり、物とみなす色の範囲を緩める）
+  // level：広げる段階（0が最初。切り抜いた所を再來一次押すたびに1ずつ上がり、物とみなす色の範囲を緩める）
   // method：前と同じ求め方で広げるときに渡す（-1 なら順に試す）
   function autoOutline(cr, px, py, level = 0, method = -1){
     const D = cr.auto || (cr.auto = autoData(cr.img));
@@ -2082,7 +2082,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     }
     return pts;
   }
-  // 点を間引く（ほぼ一直線に並んだ点を省く）
+  // 点を間拉（ほぼ一直線に並んだ点を省く）
   function simplifyClosed(pts, eps){
     const rdp = (a, b, out) => {
       const [x1, y1] = pts[a], [x2, y2] = pts[b % pts.length];
@@ -2170,7 +2170,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
   document.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => {
@@ -2201,7 +2201,7 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
     }
   });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function canvasFile(c, name){
     const bin = atob(c.toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -2220,23 +2220,23 @@ button:focus-visible,#word:focus-visible{outline:3px solid #fff;outline-offset:2
   }
 
   function share(btn, text, file){
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files:[file] })){
       navigator.share({ text, files:[file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   }
-  // 食べている途中の共有：今の画面の画像
+  // 食べている途中の分享：今の画面の画像
   $('eatShare').addEventListener('pointerdown', e => e.stopPropagation());
   $('eatShare').addEventListener('click', () => {
     if (mode !== 'eat') return;

@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>回すやつシミュレーター</title>
+<title>轉動やつシミュレーター</title>
 <meta name="description" content="石臼を回して時速1000kmを目指す">
 <style>
   :root{
@@ -67,7 +67,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #result[hidden]{display:none}
   #resultTitle{font-size:48px;font-weight:bold;text-shadow:0 0 4px #000,0 0 4px #000,0 2px 3px #000}
   #resultBtns{display:flex;gap:12px;pointer-events:auto}
-  /* 防衛成功の文字：一文字ずつ大きく飛び込んで、着地したら光ってから落ち着く */
+  /* 防守成功の文字：一文字ずつ大きく飛び込んで、着地したら光ってから落ち着く */
   #resultTitle .ch{display:inline-block;opacity:0;animation:chIn .45s cubic-bezier(.2,1.6,.4,1) forwards, chGlow 1.2s ease-out forwards}
   @keyframes chIn{0%{opacity:0;transform:translateY(-60px) scale(3) rotate(-25deg)}100%{opacity:1;transform:none}}
   @keyframes chGlow{0%,30%{text-shadow:0 0 4px #000,0 0 4px #000}45%{text-shadow:0 0 24px #fff,0 0 48px var(--win),0 0 4px #000}100%{text-shadow:0 0 4px #000,0 0 4px #000,0 2px 3px #000}}
@@ -86,17 +86,17 @@ gtag('config', 'G-41RSZLP1YQ');
 <button id="mult" type="button" hidden></button>
 <div id="result" hidden>
   <div id="resultTitle"></div>
-  <div id="resultBtns"><button id="shareBtn" type="button">共有</button><button id="retryBtn" type="button">リトライ</button></div>
+  <div id="resultBtns"><button id="shareBtn" type="button">分享</button><button id="retryBtn" type="button">重試</button></div>
 </div>
 <div id="hud">
   <div id="speed"></div>
   <div id="turns"></div>
 </div>
 <section class="howto" data-pos="top-left" hidden>
-  <h2>遊び方</h2>
-  <p>石臼を回して、押す人の歩く速さを時速1000kmまで上げるゲームです。20km/hごとに人が増え、町や空も変わります。目標に届くと宇宙へ打ち上げられ、UFOとのベイゴマ勝負になります。UFOの体力を0にすれば防衛成功、400km/hを下回ると防衛失敗です。</p>
+  <h2>玩法</h2>
+  <p>石臼を回して、押す人の歩く速さを時速1000kmまで上げるゲームです。20km/hごとに人が増え、町や空も変わります。目標に届くと宇宙へ打ち上げられ、UFOとのベイゴマ勝負になります。UFOの体力を0にすれば防守成功、400km/hを下回ると防守失敗です。</p>
   <h2>操作</h2>
-  <p>画面をなぞって石臼のまわりを回すと加速します。向きはどちらでも同じです。勝負中は触れた所へ石臼が動き、離すとUFOへ向かいます。PC はマウスのドラッグか、右矢印キーで加速します。</p>
+  <p>画面をなぞって石臼のまわりを轉動と加速します。向きはどちらでも同じです。勝負中は触れた所へ石臼が動き、離すとUFOへ向かいます。PC はマウスの拖曳か、右矢印キーで加速します。</p>
   <h2>コツ</h2>
   <p>地上では減速せず、速いほど増え方が良くなります。勝負中は毎秒120km/h落ち、ぶつかるたびに8%減りますが、与えるダメージは速さに比例します。打ち上げまでなぞって速さをためておくと有利です。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -135,7 +135,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const SEG = 16;           // 石の分割数（少なめにして面の向きで回転が見えるようにする）
   const BASE_SPEED = 0.0;   // 最初の回転の速さ（rad/秒）。何もしなくてもこの速さで回り続ける
   const DRAG_GAIN = 0.02;   // 指で回した角度1radあたりに増える速さ（rad/秒）。上限は無し
-  const KEY_ACCEL = 1.6;    // 右矢印キーを押している間に1秒あたり増える速さ（rad/秒）
+  const KEY_ACCEL = 1.6;    // 右矢印キーを按いる間に1秒あたり増える速さ（rad/秒）
   const LATE_BOOST = 4;     // 後半ほど増え方が良くなる。目標の速さで増え方が (1 + この値) 倍になる
   const LATE_CURVE = 2;     // 増え方の伸び方（1：速さに比例してじわじわ、2以上：後半で一気に良くなる）
   const ROT_MULT = 2;       // 速さに対して実際に回る量の倍率（km/h の表示は変えずに回転だけ速くする）
@@ -147,7 +147,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const GOAL_KMH = 1000;    // 目標の速さ（km/h）。人の増加と演出の強まりはここで頭打ち
   const POP_TIME = 0.35;    // 増えた人がふくらんで現れる時間（秒）
   const ARM_EASE = 4;       // 押し棒が伸びる・角度を変える速さ（大きいほどすぐ動く）
-  const CAM_EASE = 2;       // カメラが引く速さ（大きいほどすぐ引く）
+  const CAM_EASE = 2;       // カメラが拉速さ（大きいほどすぐ拉）
   // 演出が始まる速さ（km/h）。始まった後は目標の速さに向けて徐々に強くなる
   const FX = {
     dust:20,     // 石の下から粉が舞う
@@ -183,18 +183,18 @@ gtag('config', 'G-41RSZLP1YQ');
   const ARENA_R = 20;        // 宇宙のベイゴマ台の半径
   const UFO_R = 4.5;         // UFO の半径
   const UFO_HP = 100;        // UFO の体力
-  // 勝ち負け：バトル中は回転がどんどん落ちる。なぞって回転を保ちながら UFO の体力を 0 にすれば防衛成功、
-  // 回転が LOSE_KMH を下回ったら石臼が吹き飛ばされて防衛失敗
+  // 勝ち負け：バトル中は回転がどんどん落ちる。なぞって回転を保ちながら UFO の体力を 0 にすれば防守成功、
+  // 回転が LOSE_KMH を下回ったら石臼が吹き飛ばされて防守失敗
   const HIT_DMG = 25;        // 目標の速さでぶつかったときのダメージ（速さに比例して増減）
   const BATTLE_DRAIN = 120;  // バトル中に1秒ごとに落ちる速さ（km/h）
   const HIT_COST = 0.08;     // ぶつかるたびに失う速さの割合
   const BATTLE_TRACE = 40;   // バトル中に指で1周なぞるごとに上がる速さ（km/h）。1秒に2周ほどなぞり続ければ勝てる
   const LOSE_KMH = 400;      // この速さを下回ったら負け
   const KO_SPEED = 120;      // 負けたときに石臼が吹き飛ぶ速さ
-  const TITLE_STEP = 0.35;   // 「防衛成功」を一文字ずつ出す間隔（秒）
+  const TITLE_STEP = 0.35;   // 「防守成功」を一文字ずつ出す間隔（秒）
   const RESULT_DELAY = 2.5;  // 決着の演出が終わってから結果を出すまでの秒数
   const BATTLE = { bowl:0.8, seek:30, swirl:8, damp:0.5, vmax:45, kick:40 };
-  const MOVE = { accel:60, brake:1.5 };  // バトル中に指で石臼を動かすときの、指へ向かう強さとブレーキ（指を離すと自動で UFO へ向かう）  // 中心へ戻る力・相手へ向かう力・回り込む力・減速・最高速・弾き合う強さ
+  const MOVE = { accel:60, brake:1.5 };  // バトル中に指で石臼を動かすときの、指へ向かう強さとブレーキ（指を離すと自動で UFO へ向かう）  // 中心へ返回力・相手へ向かう力・回り込む力・減速・最高速・弾き合う強さ
   const UFO_BOOM_DELAY = 0.7; // 最後の惑星を壊してから UFO が大爆発するまでの秒数
   const SMASH_SPEED = 160;   // 吹き飛ばされた UFO の速さ（惑星を壊すたびに 1.15 倍）
   // 吹き飛んだ UFO が壊していく惑星 [色, 半径, 吹き飛び始めからの距離]
@@ -368,7 +368,7 @@ gtag('config', 'G-41RSZLP1YQ');
     });
     const lamp = col('--lamp');
     const std = (v, opt = {}) => new THREE.MeshStandardMaterial(Object.assign({ color:col(v), roughness:0.9, metalness:0 }, opt));
-    // 窓のある壁の材質。窓の並びの細かさ（rx, ry）ごとに作って使い回す
+    // 窓のある壁の材質。窓の並びの細かさ（rx, ry）ごとに作って使い轉動
     const wallCache = {};
     const wall = (v, rx, ry) => {
       const key = `${v}:${rx.toFixed(2)}:${ry.toFixed(2)}`;
@@ -679,7 +679,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const millPts = [
     [MILL_R, y0], [WAIST_R, yw], [MILL_R, y1],                      // 外側
     [MILL_R - WALL, y1], [WAIST_R - WALL, yw], [MILL_R - WALL, y0], // 内側
-    [MILL_R, y0]                                                    // 輪郭を閉じる
+    [MILL_R, y0]                                                    // 輪郭を關閉
   ].map(([x, y]) => new THREE.Vector2(x, y));
   add(rotor, new THREE.LatheGeometry(millPts, SEG), stoneMat);
 
@@ -761,7 +761,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const q = new THREE.Quaternion().setFromUnitVectors(Z, hand.clone().sub(sh).normalize());
     return new THREE.Matrix4().compose(sh.add(hand).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1));
   });
-  // +x 方向の押し棒の後ろに立ち、回転の正の向き（右矢印キーの向き）＝ -z を向く。ほかの棒はこれを棒の角度だけ回す
+  // +x 方向の押し棒の後ろに立ち、回転の正の向き（右矢印キーの向き）＝ -z を向く。ほかの棒はこれを棒の角度だけ轉動
   const faceQ = new THREE.Quaternion().setFromAxisAngle(Y, Math.PI);
 
   // 押す人。k 番目の人は k % 本数 番目の棒の、内側から k / 本数 番目に立つ
@@ -771,7 +771,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const personSpot = k => ({ arm:arms[k % armCount], r:PUSH_R + Math.floor(k / armCount) * GAP });
   addPerson(-99); addPerson(-99);  // 最初の2人は最初からいる
 
-  // 現れるときに少し大きくなってから戻る
+  // 現れるときに少し大きくなってから返回
   const popScale = t => { const k = t - 1; return 1 + 2.70158 * k * k * k + 1.70158 * k * k; };
 
   const mP = new THREE.Matrix4(), mO = new THREE.Matrix4(), mRx = new THREE.Matrix4(), mArm = new THREE.Matrix4();
@@ -835,7 +835,7 @@ gtag('config', 'G-41RSZLP1YQ');
       mat:m, pts,
       // すべての粒を消す
       clear(){ life.fill(0); for (let i = 0; i < max; i++){ pc[i*4+3] = 0; size[i] = 0; } aCol.needsUpdate = aSize.needsUpdate = true; },
-      // 古い粒から順に上書きして使い回す
+      // 古い粒から順に上書きして使い轉動
       // grow：0 なら小さくなりながら消え、正の値なら（煙のように）その倍率まで大きくなりながら消える
       emit(x, y, z, vx, vy, vz, c, a, s, l, g, grow = 0){
         const i = next; next = (next + 1) % max;
@@ -963,7 +963,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // 流れ星：遠くの空から町の向こうへ落ちる
   const meteors = [];
-  // 稲妻：空から地面へ。ギザギザの線をいくつか使い回す
+  // 稲妻：空から地面へ。ギザギザの線をいくつか使い轉動
   const BOLT_N = 18;
   const bolts = [0, 1, 2].map(() => {
     const g = new THREE.BufferGeometry();
@@ -1164,7 +1164,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function placeCamera(){
     const vHalf = THREE.MathUtils.degToRad(FOV / 2);
     const hHalf = Math.atan(Math.tan(vHalf) * camera.aspect);
-    // 縦持ちでも押し棒の先まで画面に収まる距離にカメラを引く
+    // 縦持ちでも押し棒の先まで画面に収まる距離にカメラを拉
     camDist = camFit / Math.sin(Math.min(vHalf, hHalf));
     // 速くなるほど起き上がり、注視点も上げて、空と遠くの町が画面に入るようにする
     const tk = camTilt * camTilt * (3 - 2 * camTilt);
@@ -1252,7 +1252,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', endDrag);
   cv.addEventListener('pointercancel', endDrag);
 
-  // PC 用：右矢印キーを押している間だけ速くする
+  // PC 用：右矢印キーを按いる間だけ速くする
   let keyRight = false;
   const setKey = (e, on) => {
     if (e.key === 'ArrowRight'){ keyRight = on; e.preventDefault(); }
@@ -1261,7 +1261,7 @@ gtag('config', 'G-41RSZLP1YQ');
   addEventListener('keyup', e => setKey(e, false));
   addEventListener('blur', () => { keyRight = false; });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
@@ -1395,7 +1395,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!goalDone && kmh >= GOAL_KMH){
       goalDone = true;
       launchAt = tNow + LAUNCH_DELAY;
-      document.documentElement.setAttribute('data-howto-hidden', '');   // 打ち上げから決着までは「遊び方」を隠す
+      document.documentElement.setAttribute('data-howto-hidden', '');   // 打ち上げから決着までは「玩法」を隠す
       turnsAtGoal = turnCount();  // 回転数は目標達成で止める
       for (let i = 0; i < 3500; i++){
         const th = rand(0, Math.PI * 2), up = rand(0.2, 1), v = rand(8, 25) * zk;
@@ -1425,7 +1425,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let launchAt = Infinity;
   const onGround = () => phase === 'ground';
   const inBattle = () => phase === 'space' && space && space.stage === 'battle';
-  let shakeT = 0;         // 宇宙での画面の揺れの残り時間（秒）
+  let shakeT = 0;         // 宇宙での画面の揺れの剩餘時間（秒）
   const C_BLACK = new THREE.Color(0x000000);
   const camLook = new THREE.Vector3();
   const v3 = new THREE.Vector3(), v3b = new THREE.Vector3(), v2 = new THREE.Vector2();
@@ -1604,7 +1604,7 @@ gtag('config', 'G-41RSZLP1YQ');
     space.startSpeed = speed;  // 戦いからやり直すときは、この速さに戻す
   }
 
-  // ベイゴマの動き：台の中心へ戻る力・相手へ向かう力・回り込む力
+  // ベイゴマの動き：台の中心へ返回力・相手へ向かう力・回り込む力
   function stepTop(me, other, seek, dt){
     if (other){
       const to = v2.copy(other.p).sub(me.p);
@@ -1671,7 +1671,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (win){
       // 一文字ずつ出す
       resultTitle.textContent = '';
-      [...'防衛成功'].forEach((c, i) => {
+      [...'防守成功'].forEach((c, i) => {
         const sp = document.createElement('span');
         sp.className = 'ch'; sp.textContent = c;
         sp.style.animationDelay = `${i * TITLE_STEP}s, ${i * TITLE_STEP}s`;
@@ -1680,17 +1680,17 @@ gtag('config', 'G-41RSZLP1YQ');
       btns.classList.add('later');
       btns.style.animationDelay = `${4 * TITLE_STEP + 0.5}s`;
     } else {
-      resultTitle.textContent = '防衛失敗';
+      resultTitle.textContent = '防守失敗';
       btns.classList.remove('later');
     }
     resultEl.hidden = false;
   }
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   // 文面：見出し（成績） → 詳細 → このページの URL → ハッシュタグ の順に1行ずつ
   function shareText(){
-    return (resultWin ? '防衛成功' : '防衛失敗') + '！\n'
+    return (resultWin ? '防守成功' : '防守失敗') + '！\n'
       + '回転数 : ' + turnCount().toLocaleString('ja-JP') + ' 回\n'
-      + location.href.split(/[?#]/)[0] + '\n#回すやつシミュレーター';
+      + location.href.split(/[?#]/)[0] + '\n#轉動やつシミュレーター';
   }
   // 今の3D画面の上に結果の文字を書き込んだ画像を作る。
   // 描画バッファを残していないので、直前に描き直してから同じ処理の中でコピーする
@@ -1709,42 +1709,42 @@ gtag('config', 'G-41RSZLP1YQ');
     g.shadowOffsetY = 2 * k;
     g.fillStyle = css(resultWin ? '--win' : '--lose');
     g.font = `bold ${48 * k}px ${font}`;
-    g.fillText(resultWin ? '防衛成功' : '防衛失敗', c.width / 2, c.height / 2 - 20 * k);
+    g.fillText(resultWin ? '防守成功' : '防守失敗', c.width / 2, c.height / 2 - 20 * k);
     g.fillStyle = '#fff';
     g.font = `bold ${22 * k}px ${font}`;
     g.fillText(`回転数 ${turnCount().toLocaleString('ja-JP')} 回`, c.width / 2, c.height / 2 + 30 * k);
     return c;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const bin = atob(drawResultImage().toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
     return new File([buf], 'result.png', { type:'image/png' });
   }
-  // 背景（石臼のキャンバス）のドラッグ判定に吸われないようにする
+  // 背景（石臼のキャンバス）の拖曳判定に吸われないようにする
   shareBtn.addEventListener('pointerdown', e => e.stopPropagation());
   shareBtn.addEventListener('click', () => {
     const text = shareText();
     let file = null;
-    try { file = resultImageFile(); } catch (e){}   // 画像が作れなくても文面だけは共有する
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    try { file = resultImageFile(); } catch (e){}   // 画像が作れなくても文面だけは分享
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (file && navigator.canShare && navigator.canShare({ files:[file] })){
       navigator.share({ text, files:[file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      shareBtn.textContent = 'コピーしました';
-      setTimeout(() => { shareBtn.textContent = '共有'; }, 1500);
+      shareBtn.textContent = '已複製';
+      setTimeout(() => { shareBtn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
-  // リトライ：成功したときは最初から、失敗したときは宇宙での戦いの始めから
+  // 重試：成功したときは最初から、失敗したときは宇宙での戦いの始めから
   $('retryBtn').addEventListener('click', () => { if (!resultWin && space) retryBattle(); else location.reload(); });
   function retryBattle(){
     const s = space;
@@ -1974,7 +1974,7 @@ gtag('config', 'G-41RSZLP1YQ');
     rotor.rotation.y += speed * ROT_MULT * dt;
     const kmh = speed * PUSH_R * 3.6;  // いちばん内側の人の歩く速さ。1単位＝1mとして、速さ＝角速度×半径
 
-    // 押し棒を人数に合わせて伸ばし、カメラも遅れて引く
+    // 押し棒を人数に合わせて伸ばし、カメラも遅れて拉
     const zk = Math.pow(camFit / BASE_FIT, 0.8);  // 引いた分だけ粒を大きくして見えるようにする
     checkPeople(kmh, zk);
     placeArms(dt);

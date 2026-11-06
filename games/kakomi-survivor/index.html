@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>かこみサバイバー</title>
+<title>包圍倖存者</title>
 <meta name="description" content="体で地面を囲んで落とすサバイバル">
 <style>
 :root{
@@ -77,7 +77,7 @@ button{flex:1;min-height:48px;font-size:18px;font-weight:800;border:none;border-
 button.sub{background:#fff;color:var(--p-body);border:2px solid var(--p-body)}
 button:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.2)}
 button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
-.howto-open{min-height:0}   /* 上の button の min-height を「遊び方」ボタンに効かせない */
+.howto-open{min-height:0}   /* 上の button の min-height を「玩法」ボタンに効かせない */
 #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);touch-action:none}
 #share-view.hidden{display:none}
 #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y}
@@ -97,22 +97,22 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
       <p id="resSub"></p>
       <div class="btns">
         <button id="retry">もう一回</button>
-        <button id="share" class="sub">共有</button>
+        <button id="share" class="sub">分享</button>
       </div>
     </div>
   </div>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される結果画像">
+      <img id="share-img" alt="分享される結果画像">
       <p id="share-text"></p>
-      <div class="btns"><button id="share-close" type="button">閉じる</button></div>
+      <div class="btns"><button id="share-close" type="button">關閉</button></div>
     </div>
   </div>
   <section class="howto" hidden data-pos="top-left">
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>自分の体で地面を囲み、囲んだ床を海へ落として生き残るサバイバルゲームです。CPU4人を合わせた5人で戦い、最後の1人になれば1位です。頭の下の床がなくなると海に落ちて脱落し、順位と囲った回数、倒した数が結果に出ます。</p>
     <h2>操作</h2>
-    <p>指を置いてドラッグした方向へ頭が曲がります。頭は止まらずに進み続けます。PC ではマウスのドラッグか矢印キーです。</p>
+    <p>指を置いて拖曳した方向へ頭が曲がります。頭は止まらずに進み続けます。PC ではマウスの拖曳か矢印キーです。</p>
     <h2>コツ</h2>
     <p>自分の体を横切ると輪が閉じ、内側の床が赤く点滅して約0.7秒後に落ちます。落ちるのは床の上に頭があるときだけなので、点滅中に抜ければ助かります。球を拾うと体が伸びて、大きく囲めるようになります。開始30秒後からは10秒ごとに外側が崩れるので、端に長くいるのは危険です。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -151,7 +151,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   const PELLET_BOB_T = 1.6;  // 球が1往復する秒数
   const EAT_TIME = 0.3;      // 球を拾ったときに頭がぷるんとふくらむ秒数
   const EAT_SCALE = 0.45;    // そのときに横へふくらむ大きさ（元の何割増しか）
-  const SHARE_INSTANT = 0.5; // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5; // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   const TOAST_TIME = 1.5;    // 「たおした！」を出しておく秒数
   const SKIP = 3;            // 頭の直近の節は交差判定から外す（曲がっただけで囲ったことにならないように）
   const BODY_W = 5;          // 体の太さ
@@ -167,8 +167,8 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   const VIEW_MAX = WORLD / 2;  // 画面に映す幅の最大値（いちばん引いたとき。ステージ全体の半分の幅）
   const VIEW_MIN = 380;      // 画面に映す幅の最小値（ワールド単位）
   const VIEW_K = 0.45;       // 画面に映す幅 = 今の体の長さ × VIEW_K（体いっぱいの輪でも画面に収まるように）
-  const DEAD = 8;            // ドラッグの遊び（px）
-  const STICK_R = 40;        // ドラッグの起点が指についてくる距離（px）
+  const DEAD = 8;            // 拖曳の遊び（px）
+  const STICK_R = 40;        // 拖曳の起点が指についてくる距離（px）
   const GRID_STEP = 50;      // 地面のマス目の間隔（動いているのが分かるように）
   // ----- 3D表示 -----
   const GROUND_T = 10;       // 地面の厚み（穴から断面が見える）
@@ -409,7 +409,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   const crumbleAt = (x, y) => !!crumble && crumble.phase === 'flash' &&
     Math.hypot(x - FIELD_R, y - FIELD_R) > edgeAt(Math.atan2(y - FIELD_R, x - FIELD_R)) * crumble.to;
   const aliveCount = () => snakes.filter(o => o.alive).length;
-  function updateHud(){ hud.textContent = '残り ' + aliveCount() + '人'; }
+  function updateHud(){ hud.textContent = '剩餘 ' + aliveCount() + '人'; }
 
   // (x,y) が穴か
   function holeAt(x, y){
@@ -518,7 +518,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   }
 
   // ---------- 落ちる床 ----------
-  // 輪を閉じると、囲った床が FLASH_TIME 秒赤く点滅し、そのあと床ごと海へ落ちて穴になる
+  // 輪を關閉と、囲った床が FLASH_TIME 秒赤く点滅し、そのあと床ごと海へ落ちて穴になる
   const pend = new Uint8Array(GRID * GRID);   // 1 = 落ちる予定のマス
   let pendings = [];
   // 囲った形（白）だけを描いたキャンバスと、その形に切り抜いた地面の模様のキャンバスを作る
@@ -638,7 +638,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     s.fallVx = dirX(s.ang) * speedOf(s); s.fallVy = dirY(s.ang) * speedOf(s);
     updateHud();
     // CPUが減ったら知らせる（プレイヤーが倒したときは「たおした！」）。勝ちが決まったときは出さない
-    if (s.cpu && player.alive && aliveCount() > 1) showToast(s, by === player ? 'たおした！' : '脱落！');
+    if (s.cpu && player.alive && aliveCount() > 1) showToast(s, by === player ? 'たおした！' : '淘汰！');
     if (!s.cpu){ rank = aliveCount() + 1; deathReason = reason; overTimer = FALL_TIME; }
     else if (player.alive && aliveCount() === 1){ rank = 1; deathReason = 'win'; overTimer = FALL_TIME; }
   }
@@ -698,7 +698,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   }
 
   // ---------- CPUの動き ----------
-  // うろつく → 四角く回って輪を閉じる → うろつく… を繰り返し、他人の頭を囲えそうなら狙う
+  // うろつく → 四角く回って輪を關閉 → うろつく… を繰り返し、他人の頭を囲えそうなら狙う
   const toCenter = h => Math.atan2(WORLD / 2 - h.y, WORLD / 2 - h.x);
   const inField = (x, y) => fieldDist(x, y) < FIELD_R - WALL_MARGIN;
 
@@ -892,7 +892,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     }
     return inside;
   }
-  // 輪を閉じる近道：自分の体の近い所へまっすぐ向かえば、相手の頭を囲んだ輪ができるか。できるならその点を返す
+  // 輪を關閉近道：自分の体の近い所へまっすぐ向かえば、相手の頭を囲んだ輪ができるか。できるならその点を返す
   function closeShortcut(s, h){
     const pts = s.pts, n = pts.length;
     let best = null, bd = CPU_CLOSE_DIST;
@@ -978,11 +978,11 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     }
   }
 
-  // CPUが減ったら少しの間出す（減った相手の色の丸と残り人数つき）
+  // CPUが減ったら少しの間出す（減った相手の色の丸と剩餘人数つき）
   let toastTimer = 0;
   function showToast(o, msg){
     const t = $('toast');
-    t.innerHTML = '<span class="dot" style="background:' + BODY_COL[o.id] + '"></span>' + msg + '<small>残り ' + aliveCount() + '人</small>';
+    t.innerHTML = '<span class="dot" style="background:' + BODY_COL[o.id] + '"></span>' + msg + '<small>剩餘 ' + aliveCount() + '人</small>';
     t.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), TOAST_TIME * 1000);
@@ -1045,7 +1045,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
         const dd = Math.hypot(dx, dy);
         if (dd < f1){ f2 = f1; f1 = dd; } else if (dd < f2) f2 = dd;
       }
-      // 網目の境目からの距離（f2-f1 の半分）で線を引く
+      // 網目の境目からの距離（f2-f1 の半分）で線を拉
       const e = (f2 - f1) / 2;
       const k = Math.max(0, Math.min(1, lw / 2 + 0.5 - e));
       const o = (y * n + x) * 4;
@@ -1258,7 +1258,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   for (let id = 1; id <= CPU_COUNT + 1; id++){
     const col = new THREE.Color(BODY_COL[id]);
     const body = makeRibbon(col);
-    // 頭：グループに球・目・影をまとめ、進む向きに回す（グループの +x が前）
+    // 頭：グループに球・目・影をまとめ、進む向きに轉動（グループの +x が前）
     const group = new THREE.Group();
     const head = new THREE.Mesh(headGeo, new THREE.MeshLambertMaterial({color: id === 1 ? C.head : BODY_COL[id]}));
     head.position.y = HEAD_R;
@@ -1315,13 +1315,13 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     // キャラごとに高さの層を分ける。同じ高さに2本の線があるとちらつくため
     fillRibbon(m.body, s.pts, -BODY_W / 2, BODY_W / 2, BODY_Y + s.id * BODY_LAYER);
     const h = headOf(s);
-    // 落ちている間は体ごと、落ちる直前の速さで前へ進みながら下へ
+    // 落ちている間は体ごと、落ちる直前の速さで前へ進みながら往下
     const drop = s.alive ? 0 : FALL_G * s.fallT * s.fallT / 2;
     const fx = s.alive ? 0 : s.fallVx * s.fallT, fz = s.alive ? 0 : s.fallVy * s.fallT;
     m.body.position.set(fx, -drop, fz);
     m.group.position.set(h.x + fx, -drop, h.y + fz);
     m.group.rotation.y = -s.ang;
-    // 球を拾った直後：頭が横にふくらみ縦につぶれてから戻る
+    // 球を拾った直後：頭が横にふくらみ縦につぶれてから返回
     const e = s.eatT < EAT_TIME ? Math.sin(Math.PI * s.eatT / EAT_TIME) : 0;
     m.group.scale.set(1 + EAT_SCALE * e, 1 - EAT_SCALE * 0.4 * e, 1 + EAT_SCALE * e);
     m.shadow.visible = s.alive;
@@ -1360,7 +1360,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   }
 
   // ---------- 入力 ----------
-  // 指を置いた位置からドラッグした方向へ曲がる（起点は指に一定距離でついてくる）
+  // 指を置いた位置から拖曳した方向へ曲がる（起点は指に一定距離でついてくる）
   let pid = null, sx = 0, sy = 0;
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
@@ -1391,17 +1391,17 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   addEventListener('keydown', e => {
     if (e.key.startsWith('Arrow')){ e.preventDefault(); keys.add(e.key); keyDir(); return; }
     // ボタンにフォーカスがあるときはボタン側の動作に任せる
-    // 共有される内容の画面を出している間は、リスタートのキー操作を止める
+    // 分享される内容の画面を出している間は、リ開始のキー操作を止める
     if (mode === 'over' && !shareViewOpen() && (e.key === ' ' || e.key === 'Enter') && !(e.target.closest && e.target.closest('button'))){
       e.preventDefault(); start();
     }
   });
   addEventListener('keyup', e => { keys.delete(e.key); });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, {passive:false});
   document.addEventListener('touchmove', e => { if (pid !== null) e.preventDefault(); }, {passive:false});
-  // 共有される文面だけは選んでコピーできるようにする
+  // 分享される文面だけは選んでコピーできるようにする
   document.addEventListener('selectstart', e => { if (!(e.target instanceof Element && e.target.closest('#share-text')) && !(e.target.parentElement && e.target.parentElement.closest('#share-text'))) e.preventDefault(); });
   document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
   // スマホでのダブルタップ拡大を防ぐ（ボタンのclickは止めないように除外）
@@ -1418,7 +1418,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   $('retry').addEventListener('click', start);
 
   function shareText(){
-    return (snakes.length) + '人中' + rank + '位' + (rank === 1 ? 'で生き残った！' : 'で脱落！') + '\n囲った回数 ' + player.loops + '回・倒した数 ' + player.kills + '\n'
+    return (snakes.length) + '人中' + rank + '位' + (rank === 1 ? 'で生き残った！' : 'で淘汰！') + '\n囲った回数 ' + player.loops + '回・倒した数 ' + player.kills + '\n'
       + location.href.split(/[?#]/)[0] + '\n#かこみサバイバー';
   }
 
@@ -1436,7 +1436,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     g.fillText(rank + '位', c.width / 2, bh / 2);
     return c;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(c){
     const bin = atob(c.toDataURL('image/png').split(',')[1]);   // toBlob の非同期コールバックは避ける
     const buf = new Uint8Array(bin.length);
@@ -1449,7 +1449,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1457,20 +1457,20 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll:true });
     };
-    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
-    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ text, files: [file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share) {
       navigator.share({ text }).catch(failed);
       return;

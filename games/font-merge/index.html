@@ -35,7 +35,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<title>フォントマージ</title>
+<title>字體合成</title>
 <meta name="description" content="同じフォントをくっつけて育てる落ちもの">
 <style>
   :root{
@@ -101,29 +101,29 @@ gtag('config', 'G-41RSZLP1YQ');
 
 
   <div id="over" class="ov hidden">
-    <h2>ゲームオーバー</h2>
+    <h2>遊戲結束</h2>
     <p id="final" aria-live="polite"></p>
     <button id="retryBtn">もう一回</button>
-    <button id="shareBtn">共有</button>
+    <button id="shareBtn">分享</button>
   </div>
 
   <button id="menuBtn" aria-label="成長の順番を見る">
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
   </button>
 
-  <p id="fontMsg" aria-live="polite">フォント読み込み中…</p>
+  <p id="fontMsg" aria-live="polite">フォント載入中…</p>
 
   <div id="fontView" class="ov hidden">
     <div id="fontRing"></div>
-    <button id="howtoBtn" type="button" data-howto-open>遊び方</button>
+    <button id="howtoBtn" type="button" data-howto-open>玩法</button>
     <p id="excludeNote"></p>
     <div id="licenseBox"></div>
-    <p>タップで閉じる</p>
+    <p>點擊關閉</p>
   </div>
 
   <section class="howto" data-pos="none" hidden>
-    <h2>遊び方</h2>
-    <p>同じひらがな1文字を箱に落とし、同じフォントどうしをくっつけて次のフォントへ育てる落ちものゲームです。段階は全11段階で、合体させた段階が高いほど得点が増え、最初の1点から最後は66点になります。最終段階どうしは合体すると消えます。文字が点線より上に2秒とどまるとゲームオーバーです。</p>
+    <h2>玩法</h2>
+    <p>同じひらがな1文字を箱に落とし、同じフォントどうしをくっつけて次のフォントへ育てる落ちものゲームです。段階は全11段階で、合体させた段階が高いほど得点が増え、最初の1点から最後は66点になります。最終段階どうしは合体すると消えます。文字が点線より上に2秒とどまると遊戲結束です。</p>
     <h2>操作</h2>
     <p>箱の上で指を動かして落とす位置を決め、離すと落ちます。PC ではマウスを動かしてクリックするか、矢印キーとスペースキーで操作します。右上のメニューを開くとフォントの成長順を確認でき、その間はゲームが止まります。</p>
     <h2>コツ</h2>
@@ -142,9 +142,9 @@ gtag('config', 'G-41RSZLP1YQ');
   const GLYPH_PX = 126;          // 文字のフォントサイズ（全段階同じ）
   const BOX_L = 20, BOX_R = 340; // 箱の左右の内壁
   const BOX_B = 620;             // 箱の底
-  const LINE_Y = 196;            // ゲームオーバーライン（文字の一番上がこれより上だとアウト判定）
+  const LINE_Y = 196;            // 遊戲結束ライン（文字の一番上がこれより上だとアウト判定）
   const DROP_Y = 126;            // 落とす文字を構える高さ（文字の重心の位置）
-  const OVER_TIME = 2.0;         // ラインより上にこの秒数とどまるとゲームオーバー
+  const OVER_TIME = 2.0;         // ラインより上にこの秒数とどまると遊戲結束
   const FRESH_TIME = 1.0;        // 落とした直後・合体直後の文字はこの秒数だけ判定から外す
   const G = 1600;                // 重力
   const REST = 0.15;             // 反発係数（小さいほど跳ねない）
@@ -182,7 +182,7 @@ gtag('config', 'G-41RSZLP1YQ');
     ['BIZ UDMincho', 'BIZ UDPMincho'],   // 明朝
     ['IPAexMincho'],                     // 明朝（自前配信）
   ];
-  // Google Fonts にないフォントは、HTMLと同じ場所に置いたファイルから読み込む（パスはHTMLからの相対）
+  // Google Fonts にないフォントは、HTMLと同じ場所に置いたファイルから讀取（パスはHTMLからの相対）
   const LOCAL_FONTS = {
     'IPAexGothic':   'fonts/ipaexg.ttf',
     'IPAexMincho':   'fonts/ipaexm.ttf',
@@ -202,8 +202,8 @@ gtag('config', 'G-41RSZLP1YQ');
     { fonts: 'Noto Sans JP / Noto Serif JP / IBM Plex Sans JP / BIZ UDゴシック / BIZ UDPゴシック / BIZ UD明朝 / BIZ UDP明朝 / M PLUS 1p / M PLUS Rounded 1c / Zen Maru Gothic',
       text: 'SIL Open Font License 1.1', url: 'https://openfontlicense.org/' },
   ];
-  const ALL_FONTS = FONT_POOL.flat();    // 読み込むのは候補すべて
-  const GF_FONTS = ALL_FONTS.filter(f => !LOCAL_FONTS[f]); // Google Fonts から読み込むもの
+  const ALL_FONTS = FONT_POOL.flat();    // 讀取のは候補すべて
+  const GF_FONTS = ALL_FONTS.filter(f => !LOCAL_FONTS[f]); // Google Fonts から讀取もの
   const LEVELS = 11;                     // 1ゲームの成長段階の数（FONT_POOL の組数以下）
   let usablePool = FONT_POOL;            // 読み込めたフォントだけの候補（読み込み後に決まる）
   let FONTS = [];                        // 今回のゲームで使うフォント（成長順）。ゲーム開始ごとにランダムに決める
@@ -218,7 +218,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // 合体したときの得点。本家と同じく「合体させた2つの段階」で決まる（1段目同士で1点、2段目同士で3点…）
   const SCORE = [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66];
   const NEXT_SCALE = 0.27;       // 「つぎ」表示の縮小率
-  const HUD_Y = 52;              // スコアと「つぎ」の高さ
+  const HUD_Y = 52;              // 分數と「つぎ」の高さ
   // 合体演出
   const POP_TIME = 0.3;          // 新しい文字がポンと膨らむ時間（秒）
   const FX_R = 57;               // 演出の基準の大きさ（輪の初期半径など）
@@ -374,13 +374,13 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   function gameOver(){
     state = 'over';
-    draw(); // 共有画像用に最終盤面を描いておく
-    $('final').textContent = `スコア ${score}点`;
+    draw(); // 分享画像用に最終盤面を描いておく
+    $('final').textContent = `分數 ${score}点`;
     $('over').classList.remove('hidden');
   }
 
   function drop(){
-    // 文字がゲームオーバーラインを超えている間は落とせない
+    // 文字が遊戲結束ラインを超えている間は落とせない
     if (state !== 'playing' || cool > 0 || viewOpen || danger) return;
     bodies.push(makeBody(cur.lv, cur.ch, aimX, DROP_Y));
     cur = next; next = randPiece();
@@ -569,7 +569,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
     }
 
-    // ゲームオーバー判定（文字の一番上の点で判定）
+    // 遊戲結束判定（文字の一番上の点で判定）
     danger = false;
     for (const b of bodies){
       if (b.age > FRESH_TIME && b.top < LINE_Y){
@@ -604,7 +604,7 @@ gtag('config', 'G-41RSZLP1YQ');
     fx = fx.filter(e => e.t < (e.k === 'ring' ? RING_TIME : e.k === 'part' ? PART_LIFE : TEXT_TIME));
   }
 
-  // 少し行き過ぎてから戻る補間（ポンと膨らむ感じ）
+  // 少し行き過ぎてから返回補間（ポンと膨らむ感じ）
   const easeOutBack = p => 1 + 2.7 * Math.pow(p - 1, 3) + 1.7 * Math.pow(p - 1, 2);
 
   function drawFx(){
@@ -656,7 +656,7 @@ gtag('config', 'G-41RSZLP1YQ');
     ctx.lineTo(BOX_R, BOX_B); ctx.lineTo(BOX_R, LINE_Y - 10);
     ctx.stroke();
 
-    // ゲームオーバーライン
+    // 遊戲結束ライン
     ctx.setLineDash([6, 6]);
     ctx.strokeStyle = danger ? C.danger : C.line; ctx.lineWidth = danger ? 2 : 1;
     ctx.beginPath(); ctx.moveTo(BOX_L, LINE_Y); ctx.lineTo(BOX_R, LINE_Y); ctx.stroke();
@@ -688,7 +688,7 @@ gtag('config', 'G-41RSZLP1YQ');
     // HUD
     ctx.fillStyle = C.fg; ctx.textBaseline = 'middle';
     ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText(`スコア ${score}`, BOX_L, HUD_Y);
+    ctx.fillText(`分數 ${score}`, BOX_L, HUD_Y);
     const nw = GLYPH_PX * NEXT_SCALE;
     ctx.font = '14px sans-serif'; ctx.textAlign = 'right';
     ctx.fillText('つぎ', BOX_R - nw - 8, HUD_Y);
@@ -755,7 +755,7 @@ gtag('config', 'G-41RSZLP1YQ');
       const fn = document.createElement('span'); fn.className = 'f'; fn.textContent = FONT_LABEL[f] || f; // フォント名
       cell.append(g, fn); ring.append(cell);
     });
-    // ライセンス表記（リンクを押しても閉じないようにする）
+    // ライセンス表記（リンクを按も閉じないようにする）
     $('excludeNote').textContent = `※「${[...EXCLUDED].join('・')}」は出題されません`;
 
     const lb = $('licenseBox');
@@ -779,7 +779,7 @@ gtag('config', 'G-41RSZLP1YQ');
     $('fontView').classList.add('hidden');
   });
 
-  $('howtoBtn').addEventListener('click', e => e.stopPropagation());   // 押しても成長の順番の画面を閉じない
+  $('howtoBtn').addEventListener('click', e => e.stopPropagation());   // 按も成長の順番の画面を閉じない
 
   cv.addEventListener('pointerdown', e => {
     if (state !== 'playing') return;
@@ -790,7 +790,7 @@ gtag('config', 'G-41RSZLP1YQ');
   });
   cv.addEventListener('pointermove', e => {
     if (state !== 'playing') return;
-    // マウスはボタンを押していなくても狙いを動かせる
+    // マウスはボタンを按いなくても狙いを動かせる
     if (pointerDown || e.pointerType === 'mouse') aimX = clampAim(toLogicalX(e));
   });
   cv.addEventListener('pointerup', e => {
@@ -826,12 +826,12 @@ gtag('config', 'G-41RSZLP1YQ');
     lastTouchEnd = now;
   }, { passive: false });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return `「${gameCh}」で${score}点！\n最高到達：${maxLv + 1}段階目\n`
       + location.href.split(/[?#]/)[0] + '\n#フォントマージ';
   }
-  // 共有：共有シートがあれば文面＋結果画像を渡し、無ければ文面をコピーする
+  // 分享：分享シートがあれば文面＋結果画像を渡し、無ければ文面をコピーする
   $('shareBtn').addEventListener('pointerdown', e => e.stopPropagation());
   $('shareBtn').addEventListener('click', () => {
     const btn = $('shareBtn');
@@ -845,14 +845,14 @@ gtag('config', 'G-41RSZLP1YQ');
       navigator.share({ text }).catch(() => {});                // 画像非対応なら文面のみ
       return;
     }
-    // 共有シートがない環境（PCのブラウザなど）は文面をコピー
+    // 分享シートがない環境（PCのブラウザなど）は文面をコピー
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 
-  // 最終盤面をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 最終盤面をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const bin = atob(cv.toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -861,9 +861,9 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- フォント読み込み ----------
-  // Google Fonts のものは使う文字だけに絞って読み込む（日本語フォント全体だと重いため）。
-  // 自前配信のものはファイルをそのまま読み込む。
-  // 読み込めなかったフォントは候補から外し、残りで段階数が足りればそのまま遊べる
+  // Google Fonts のものは使う文字だけに絞って讀取（日本語フォント全体だと重いため）。
+  // 自前配信のものはファイルをそのまま讀取。
+  // 読み込めなかったフォントは候補から外し、剩餘で段階数が足りればそのまま遊べる
   (function loadFonts(){
     const loaded = new Set();
     const gf = new Promise(res => {
@@ -892,7 +892,7 @@ gtag('config', 'G-41RSZLP1YQ');
         $('fontMsg').textContent = `フォントを読み込めませんでした：${missing.join('、')}`;
         $('fontMsg').classList.add('error');
       }
-      start(); // スタート画面は無いので、読み込みが終わったらすぐ始める
+      start(); // 開始画面は無いので、読み込みが終わったらすぐ始める
     });
   })();
 

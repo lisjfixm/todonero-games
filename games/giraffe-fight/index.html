@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>キリン喧嘩</title>
+<title>長頸鹿打架</title>
 <meta name="description" content="長い首をぶつけ合うキリンの喧嘩">
 <style>
   :root {
@@ -218,7 +218,7 @@ gtag('config', 'G-41RSZLP1YQ');
   .dlg-btn:active { background: rgba(240,246,240,.26); }
   .dlg-btn:focus-visible { outline: 2px solid #7fb2e5; outline-offset: 2px; }
 
-  /* ---- 共有シートが使えない環境で出す、共有される内容 ---- */
+  /* ---- 分享シートが使えない環境で出す、分享される内容 ---- */
   #share-view {
     position: absolute;
     inset: 0;
@@ -302,24 +302,24 @@ gtag('config', 'G-41RSZLP1YQ');
       <h1 id="ttl" hidden></h1>
       <p id="sub" hidden></p>
       <div id="row" hidden>
-        <button class="dlg-btn" id="share" type="button">共有</button>
+        <button class="dlg-btn" id="share" type="button">分享</button>
         <button class="dlg-btn" id="again" type="button">もう一回</button>
       </div>
     </div>
   </div>
 
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
       <p id="share-text"></p>
-      <button class="dlg-btn" id="share-close" type="button">閉じる</button>
+      <button class="dlg-btn" id="share-close" type="button">關閉</button>
     </div>
   </div>
 
   <section class="howto" hidden data-pos="top-left">
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>長い首を振ってぶつけ合い、CPUのキリンと1対1で戦う対戦ゲームです。お互いの体力は100で、相手の体力を先に0にすれば勝ちです。ページを開くとすぐに試合が始まり、決着がつくと結果と連勝数が表示されます。</p>
     <h2>操作</h2>
-    <p>左下のパッドで移動します。パッド以外の場所を押している間は首を溜め、離すと振ります。溜めは約0.36秒で最大になり、そこで自動的に振ります。PC では矢印キーか WASD で移動し、スペースキーで溜めて振ります。</p>
+    <p>左下のパッドで移動します。パッド以外の場所を按いる間は首を溜め、離すと振ります。溜めは約0.36秒で最大になり、そこで自動的に振ります。PC では矢印キーか WASD で移動し、スペースキーで溜めて振ります。</p>
     <h2>コツ</h2>
     <p>攻撃の動作をしていない間は、歩いていても相手の攻撃を完全に弾き、弾かれた側には硬直が生まれます。逆に溜めている最中に当てられるとダメージが増えるので、相手の溜めには短い突きを合わせてください。長く溜めるほど首は速く遠くまで届きますが、攻撃の動作中は足が止まります。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -339,7 +339,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
   'use strict';
 
   // 長押しの虫眼鏡・選択・スクロール・コンテキストメニューを抑止する
-  // ただし共有内容のパネルだけは、文面を選んでコピーできるように除外する
+  // ただし分享内容のパネルだけは、文面を選んでコピーできるように除外する
   var inShareView = function (t) { return !!(t && t.closest && t.closest('#share-view')); };
   ['touchstart', 'touchmove'].forEach(function (t) {
     document.addEventListener(t, function (e) {
@@ -703,7 +703,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
 
   var LEG_BONES = ['FrontLUpper', 'FrontRUpper', 'HindLUpper', 'HindRUpper'];
   var HOOF_BONES = ['FrontLHoof', 'FrontRHoof', 'HindLHoof', 'HindRHoof'];
-  // three.js はノード名から . : / [ ] を取り除くので、こちらも同じ形にして引く
+  // three.js はノード名から . : / [ ] を取り除くので、こちらも同じ形にして拉
   function boneKey(n) { return String(n).replace(/\s/g, '_').replace(/[\[\].:\/]/g, ''); }
 
   function m_neckUpPos(bones) {
@@ -739,7 +739,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     var root = f.g.root;
     function inRoot(o) { return root.worldToLocal(o.getWorldPosition(new THREE.Vector3())); }
 
-    // 向き：尾 → 頭 が +X を向くように回す
+    // 向き：尾 → 頭 が +X を向くように轉動
     var need = ['Neck', 'NeckUpper', 'Head', 'Tail'].concat(LEG_BONES);
     for (i = 0; i < need.length; i++) {
       if (!bones[need[i]]) throw new Error('bone not found: ' + need[i]);
@@ -1172,7 +1172,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     f.g.tail.rotation.x = Math.sin(f.walk * 0.5 + 1.0) * f.legAmp * 0.6;
   }
 
-  // ===== 敗北時のラグドール（3D Verlet質点＋距離拘束） =====
+  // ===== 失敗時のラグドール（3D Verlet質点＋距離拘束） =====
   // 体のローカル座標（x=前, y=上, z=横）で解き、結果から各パーツの姿勢を復元する
   var RAG_NECK = SEG_LEN, RAG_HEAD = 0.5, RAG_LEG = 2.0;
   var REST_REAR = new THREE.Vector3(-1.1, 2.6, 0);
@@ -1673,7 +1673,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
   var sub = document.getElementById('sub');
   var row = document.getElementById('row');
   var shareView = document.getElementById('share-view');
-  var last = null;                            // 直近の結果（共有用）
+  var last = null;                            // 直近の結果（分享用）
   var streak = 0;                             // 連勝数
   var hp1 = document.getElementById('hp1');
   var hp2 = document.getElementById('hp2');
@@ -1747,7 +1747,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
   var retryLock = 0;        // 連打していても結果が一瞬で消えないようにする猶予
   function retry(e) {
     if (mode !== 'over' || retryLock > 0) return;
-    if (!shareView.classList.contains('hidden')) return;   // 共有内容を見ている間は再戦しない
+    if (!shareView.classList.contains('hidden')) return;   // 分享内容を見ている間は再戦しない
     if (e) e.preventDefault();
     startGame();
   }
@@ -1759,15 +1759,15 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     retry(e);
   });
 
-  // ===== 結果の共有 =====
+  // ===== 結果の分享 =====
   const SHARE_TAG = '#キリン喧嘩';
-  const SHARE_INSTANT = 0.5;   // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5;   // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
 
   const $ = id => document.getElementById(id);
 
   // 見出し（成績）→ 詳細 → このページのURL → ハッシュタグ
   function shareText() {
-    const head = last.win ? '勝利！' : '敗北…';
+    const head = last.win ? '勝利！' : '失敗…';
     const detail = last.win ? last.streak + '連勝'
                             : (last.streak > 0 ? last.streak + '連勝でストップ' : '');
     const url = location.href.split(/[?#]/)[0];
@@ -1782,21 +1782,21 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
   function doShare() {
     if (!last) return;
     const text = shareText();
-    // 2) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容を画面に出す
+    // 2) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容を画面に出す
     const fallback = () => {
       if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
       $('share-text').textContent = text;
       shareView.classList.remove('hidden');
       $('share-close').focus({ preventScroll: true });
     };
-    // 共有シートが出なかったとき（失敗、または押してすぐのキャンセル）は 2) へ。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったとき（失敗、または按すぐのキャンセル）は 2) へ。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 共有シート: 文面のみ
+    // 1) 分享シート: 文面のみ
     if (navigator.share) {
       navigator.share({ text: text }).catch(failed);
       return;
@@ -1804,7 +1804,7 @@ var PLANT_DATA = {"tree_plateau":{"h":1.2493,"r":0.3275,"v":738,"f":215,"pos":"4
     fallback();
   }
 
-  // 背景のタップ判定に吸われて、共有した瞬間に再戦するのを防ぐ
+  // 背景のタップ判定に吸われて、分享した瞬間に再戦するのを防ぐ
   $('share').addEventListener('pointerdown', e => e.stopPropagation());
   // タッチでは click が出ない作りなので pointerup で拾い、マウス・キーボードは click で拾う
   $('share').addEventListener('pointerup', e => {

@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ぼくらのホームランダービー</title>
+<title>全壘打大賽</title>
 <meta name="description" content="変化球を打ってホームランの数を競う">
 <style>
 :root{
@@ -89,7 +89,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 #ovList li{display:flex;gap:14px;justify-content:space-between}
 #ovList .hr{color:var(--hr);font-weight:bold}
 button{min-width:220px;min-height:48px;font-size:18px;font-weight:bold;border:0;border-radius:12px;background:var(--btn);color:var(--btn-fg);font-family:inherit;touch-action:manipulation;box-shadow:0 2px 0 rgba(0,0,0,.3)}
-/* 控えめなボタン（やめる・戻るなど） */
+/* 控えめなボタン（やめる・返回など） */
 button.sub{background:var(--btn-sub);color:var(--fg);box-shadow:inset 0 0 0 2px var(--btn-line)}
 button small{display:block;font-size:12px;font-weight:normal;opacity:.75}
 #menu button{min-width:260px;min-height:64px}
@@ -109,21 +109,21 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   <div id="hud" class="hidden" aria-live="polite"><span id="hA"></span><span id="hB"></span></div>
   <div id="hint" class="hidden"><span>ピッチャーの手元から線を引いて球を作る</span></div>
   <div id="slots" class="hidden" role="group" aria-label="編集する球"></div>
-  <button id="back" type="button" class="sub hidden">戻る</button>
-  <div id="gauge" class="hidden" role="progressbar" aria-label="描ける線の残り" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="gaugeFill"></div></div>
+  <button id="back" type="button" class="sub hidden">返回</button>
+  <div id="gauge" class="hidden" role="progressbar" aria-label="描ける線の剩餘" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="gaugeFill"></div></div>
   <div id="flash"></div>
   <div id="msg" aria-live="assertive"></div>
   <div id="bar" class="hidden">
     <button id="loadCode" type="button" class="sub">コード読み込み</button>
     <button id="preview" type="button" class="sub">プレビュー</button>
-    <button id="export" type="button">書き出す</button>
+    <button id="export" type="button">匯出</button>
   </div>
   <div id="menu" class="panel" role="dialog" aria-modal="true" aria-label="モードを選ぶ">
     <button id="goPlay" type="button">プレイモード<small>用意した5球を打つ</small></button>
     <button id="goEndless" type="button">エンドレスモード<small>ホームランが何球続くかに挑む</small></button>
     <button id="goCode" type="button">コード入力<small>コードの5球を打つ</small></button>
     <button id="goEdit" type="button">Editモード<small>5球の魔球を描いて作る</small></button>
-    <button type="button" data-howto-open>遊び方<small>ルールと操作を読む</small></button>
+    <button type="button" data-howto-open>玩法<small>規則與操作を読む</small></button>
   </div>
   <div id="codeDlg" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="codeTitle">
     <h2 id="codeTitle">コードを入力</h2>
@@ -136,22 +136,22 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     <h2 id="showTitle">書き出したコード</h2>
     <input id="codeOut" type="text" readonly aria-label="書き出したコード">
     <p>自動でコピーできなかったので、長押し（PCは右クリック）でコピーしてください</p>
-    <button id="showClose" type="button">閉じる</button>
+    <button id="showClose" type="button">關閉</button>
   </div>
   <div id="ov" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
     <h2 id="ovTitle"></h2>
     <ul id="ovList"></ul>
     <button id="retry" type="button">もう一回</button>
-    <button id="share" type="button" class="sub">共有</button>
+    <button id="share" type="button" class="sub">分享</button>
     <button id="toMenu" type="button" class="sub">やめる</button>
   </div>
   <section class="howto" hidden data-pos="none">
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>変化する球をバットの芯でとらえ、ホームランを狙う野球ゲームです。プレイモードは用意された5球を打ち、ホームランの本数が結果になります。エンドレスモードはホームラン以外になると終わり、連続本数に挑みます。Editモードでは線を引いて5球の魔球を作ってコードに書き出せ、コード入力からその5球を打てます。</p>
     <h2>操作</h2>
     <p>指でなぞるとバットの芯が動き、指を離すとスイングします。PC ではマウスで芯を動かしてクリックで振るか、矢印キーとスペースキーで操作します。</p>
     <h2>コツ</h2>
-    <p>芯の中心に近いほど打球は速く、高く上がります。フェンスはセンターが100m、両翼が88mです。打つのが早いと左へ、遅いと右へ飛び、左右に45度より外へ飛ぶとファウルです。球は線の上を一定の速さで進むので、指を置いたまま通り道に芯を合わせ、離す瞬間だけに集中してください。</p>
+    <p>芯の中心に近いほど打球は速く、高く上がります。フェンスはセンターが100m、両翼が88mです。打つのが早いと往左、遅いと往右飛び、左右に45度より外へ飛ぶとファウルです。球は線の上を一定の速さで進むので、指を置いたまま通り道に芯を合わせ、離す瞬間だけに集中してください。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
   </section>
 </div>
@@ -183,7 +183,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   const GRIP_X = 6;          // 構えたときの手の位置（バッターの体の中心から。px。胸の前）
   const GRIP_Y = -24;
   const SWING_HOLD = 0.08;   // 当たる瞬間のあと「振っている」絵を出しておく時間（秒）。そのあと「振り抜いた」絵になる
-  const BAT_FOLLOW = -2.0;   // 振り抜いたときのバットの角度（反対の肩の上へ回す）
+  const BAT_FOLLOW = -2.0;   // 振り抜いたときのバットの角度（反対の肩の往上轉動）
   const FOLLOW_X = -16;      // 振り抜いたときの手の位置（バッターの体の中心から。px）
   const FOLLOW_Y = -36;
   const BAT_LEN = 64;        // バットの長さ
@@ -256,7 +256,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   const BALLS = 5;           // 1つのコードに入れる球数
   // プレイモードでコードを入れずに始めたときの5球（まっすぐ／大きなカーブ／途中で折れる／ジグザグ／一回転）
   const DEFAULT_CODE = 'CNQRQQRQQRQQRQQRaZaZZXXUROLJIIHGHPTUTTTUTTUTRHFEFUEGOabbbWKFFGLYabZSIGaQQQQQJFKOTYcgmpvy48MRRQRRQl';
-  const GAUGE_LOW = 20;      // 描ける線の残りがこの割合（%）以下になったらゲージを赤くする
+  const GAUGE_LOW = 20;      // 描ける線の剩餘がこの割合（%）以下になったらゲージを赤くする
 
   // ---------- 球場の描き方（真上から見た図。単位はm） ----------
   const MOUND_DIST = 18.4;   // ホームからマウンドまで（m）。画面の PLATE_Y〜MOUND_Y がこの長さになる縮尺で描く
@@ -311,13 +311,13 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   // ---------- 状態 ----------
   // mode:
   //   menu（モード選択）
-  //   Editモード： eaim（線を引く前）/ edraw（線を引いている）/ epreview（プレビュー中）
+  //   Editモード： eaim（線を拉前）/ edraw（線を引いている）/ epreview（プレビュー中）
   //   プレイモード：bwait（次の球待ち）/ pitch（投球中）/ flight（打球）/ result（結果表示）/ over（5球終わった）
   let mode = 'menu', timer = 0;
   let zoneNgAt = -1e9;
   let hitFx = null;      // 打った瞬間のエフェクト { x, y, t, q, rays }
   let confetti = [];     // ホームランのお祝いの紙吹雪・花火の火花（画面の座標）
-  let fireworkQueue = []; // これから打ち上げる花火 { at: 残り秒, x, y }   // ゾーンの枠を赤く点滅させ始めた時刻
+  let fireworkQueue = []; // これから打ち上げる花火 { at: 剩餘秒, x, y }   // ゾーンの枠を赤く点滅させ始めた時刻
   let sweet = null;          // バッターのバットの芯の位置
   let stroke = null;         // 描いている線 [{x,y}]
   let strokeLen = 0;         // 描いている線の長さ（ピッチャーの手から）
@@ -379,7 +379,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     }
     const T = pts[pts.length - 1].t;
     const e = pts[pts.length - 1], back = posOn(pts, T - 0.05, T);
-    // 線が途切れた後は、最後の向きのまま同じ速さでまっすぐ進む（向きが取れないときは下へ）
+    // 線が途切れた後は、最後の向きのまま同じ速さでまっすぐ進む（向きが取れないときは往下）
     const dl = Math.hypot(e.x - back.x, e.y - back.y);
     const ux = dl ? (e.x - back.x) / dl : 0, uy = dl ? (e.y - back.y) / dl : 1;
     return { pts, T, vx: ux * PITCH_SPEED, vy: uy * PITCH_SPEED, t: 0 };
@@ -497,7 +497,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   }
 
   // ---------- Editモード ----------
-  // 5球を1つずつ描いて作る。コードを読み込んで直すこともできる。できたらコードに書き出す
+  // 5球を1つずつ描いて作る。コードを読み込んで直すこともできる。できたらコードに匯出
   for (let i = 0; i < BALLS; i++){
     const b = document.createElement('button');
     b.type = 'button';
@@ -536,11 +536,11 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     $('export').disabled = mode !== 'eaim' || slots.some(s => !s);   // 5球そろったら書き出せる
     // まだ書き出せないときは、何球描けたかと理由をボタンに出す
     const filled = slots.filter(Boolean).length;
-    if (filled < BALLS) $('export').innerHTML = `書き出す ${filled}/${BALLS}<small>${BALLS}球描くと書き出せます</small>`;
-    else if ($('export').textContent !== 'コピーしました') $('export').textContent = '書き出す';
+    if (filled < BALLS) $('export').innerHTML = `匯出 ${filled}/${BALLS}<small>${BALLS}球描くと書き出せます</small>`;
+    else if ($('export').textContent !== '已複製') $('export').textContent = '匯出';
   }
   function finishStroke(){
-    // 描いた線をいったんコードにしてから戻したものを保存する（共有したときと同じ形で見えるように）
+    // 描いた線をいったんコードにしてから戻したものを保存する（分享したときと同じ形で見えるように）
     const dirs = encodeBall(makePitch(stroke).pts);
     stroke = null;
     // ストライクゾーンを通らない球は保存しない（前に描いた球はそのまま残す）
@@ -555,12 +555,12 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     mode = 'epreview';
     refreshEdit();
   });
-  // モード選択に戻る（作りかけの球は、ページを開いている間は残る）
+  // モード選択に返回（作りかけの球は、ページを開いている間は残る）
   $('back').addEventListener('click', () => { if (mode === 'eaim') showMenu(); });
   $('loadCode').addEventListener('click', () => { if (mode === 'eaim') openCodeDlg('load'); });
   $('export').addEventListener('click', () => {
     if (mode !== 'eaim' || slots.some(s => !s)) return;
-    copyText(encodeBundle(slots), $('export'), '書き出す');
+    copyText(encodeBundle(slots), $('export'), '匯出');
   });
 
   // ---------- コードのコピー ----------
@@ -587,7 +587,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   }
   $('showClose').addEventListener('click', () => $('showDlg').classList.add('hidden'));
   function copyText(text, btn, label){
-    const done = () => { btn.textContent = 'コピーしました'; setTimeout(() => { btn.textContent = label; }, 1500); };
+    const done = () => { btn.textContent = '已複製'; setTimeout(() => { btn.textContent = label; }, 1500); };
     // 1) 選択してコピー（ボタンを押した処理の中でそのまま行うので、多くの環境で通る）
     if (copyByTextarea(text)){ done(); return; }
     // 2) クリップボードAPI
@@ -600,11 +600,11 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   }
 
   // ---------- コードの入力 ----------
-  // purpose: load（Editモードで読み込む）/ play（プレイモードで打つ）
+  // purpose: load（Editモードで讀取）/ play（プレイモードで打つ）
   let codePurpose = '';
   function openCodeDlg(purpose){
     codePurpose = purpose;
-    $('codeGo').textContent = purpose === 'load' ? '読み込む' : '打つ';
+    $('codeGo').textContent = purpose === 'load' ? '讀取' : '打つ';
     $('codeIn').value = ''; $('codeErr').textContent = '';
     $('codeDlg').classList.remove('hidden');
     $('codeIn').focus();
@@ -631,7 +631,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') submitCode(); });
   $('codeCancel').addEventListener('click', () => {
     $('codeDlg').classList.add('hidden');
-    if (codePurpose === 'play') showMenu();   // プレイモードで入力をやめたらモード選択に戻る
+    if (codePurpose === 'play') showMenu();   // プレイモードで入力をやめたらモード選択に返回
   });
 
   // ---------- プレイモード ----------
@@ -690,7 +690,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     const q = 1 - d / MEET;
     const v = EXIT_MIN + (EXIT_MAX - EXIT_MIN) * Math.pow(q, 0.7);
     const la = BEST_ANGLE - ANGLE_DROP * Math.pow(1 - q, 2);
-    const th = dy / MEET * SPRAY_MAX;   // ボールがまだ芯より上（手前に来ていない）＝打つのが早い → 左へ
+    const th = dy / MEET * SPRAY_MAX;   // ボールがまだ芯より上（手前に来ていない）＝打つのが早い → 往左
     // バットに当たった位置（画面）→ 球場の位置（m）。そこから打球を計算する
     const ppm = pxPerM();
     const x0 = (b.x - cx) / ppm, z0 = (plateY - b.y) / ppm - HIT_Y * HEIGHT_K;
@@ -887,13 +887,13 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     if (usingKeyboard) $('retry').focus();
   }
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     const url = location.href.split(/[?#]/)[0];
     const head = play.endless ? `エンドレスモードで連続ホームラン${play.hr}本！` : `ホームラン${play.hr}本！`;
     return `${head}\n${url}\n#ぼくらのホームランダービー`;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）。
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）。
   // 結果画面に出ている部分（ホームランの数と1球ずつの結果）を、画面の見た目のまま切り出す
   function resultImageFile(){
     const S = 2;                                   // 画像を画面の何倍の細かさで作るか
@@ -935,20 +935,20 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     const btn = $('share');
     const text = shareText();
     const file = resultImageFile();
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ text, files: [file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 
@@ -959,7 +959,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
   $('goCode').addEventListener('click', () => { $('menu').classList.add('hidden'); openCodeDlg('play'); });
 
   // ---------- 入力 ----------
-  // Editモード：指（マウス）で線を引くと、ピッチャーの手からその線の形の球になる
+  // Editモード：指（マウス）で線を拉と、ピッチャーの手からその線の形の球になる
   // プレイモード：PCはバットの芯がマウスカーソルに重なるように動いてクリックでスイング、
   //              スマホは指でなぞった分だけ動いて、指を離すとスイング
   const drags = new Map();
@@ -1071,7 +1071,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
       if (swingAt !== null && !resolved && pitch.t >= swingAt + SWING_DELAY) resolveSwing();
       if (mode === 'pitch' && ballGone(pitch)) showResult(swingAt !== null ? '空振り' : '見逃し', null, false);
     } else if (mode === 'flight'){
-      // 着地した瞬間にあまった時間は、着地した後の時間に回す（着地で一瞬止まって見えないように）
+      // 着地した瞬間にあまった時間は、着地した後の時間に轉動（着地で一瞬止まって見えないように）
       const nu = flight.u + dt / flight.airTime;
       if (nu >= 1){ flight.post += (nu - 1) * flight.airTime; flight.u = 1; } else flight.u = nu;
       if (flight.u >= 1){
@@ -1084,7 +1084,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
       if (timer >= (play.results[play.results.length - 1]?.isHr ? HR_RESULT_TIME : RESULT_TIME)) afterResult();
     }
     updateCamera(dt);
-    // 描ける線の残りのゲージ：満タンから描いた分だけ減る。空になるとそれ以上線が伸びない
+    // 描ける線の剩餘のゲージ：満タンから描いた分だけ減る。空になるとそれ以上線が伸びない
     const showGauge = mode === 'eaim' || mode === 'edraw';
     $('gauge').classList.toggle('hidden', !showGauge || !$('codeDlg').classList.contains('hidden'));
     if (showGauge){
@@ -1364,7 +1364,7 @@ button:focus-visible{outline:3px solid var(--hr);outline-offset:2px}
     const p = { x: a.x + (c.x - a.x) * u, y: a.y + (c.y - a.y) * u, z: a.z + (c.z - a.z) * u };
     return { f, p, sc: flightScreen(p) };
   }
-  // 打球を追いかけるカメラ。打ったらボールを追い、遠くへ行くほど寄る。それ以外は元の位置へ戻る
+  // 打球を追いかけるカメラ。打ったらボールを追い、遠くへ行くほど寄る。それ以外は元の位置へ返回
   function updateCamera(dt){
     let t = camHome();
     if (flight && (mode === 'flight' || mode === 'result')){

@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>スピード物理</title>
+<title>速度卡牌</title>
 <meta name="description" content="トランプのスピードでCPUと対戦">
 <style>
 :root{--bg:#2a2a2a;--light:#fff;--felt:#1d6b3a;--wood:#6d4527;--shirt:#f2f2f2;--vest:#4a4a4a;--vest-line:#2b2b2b;--button:#1c1c1c;--skin:#f1c7a5;--hair:#3b2a20;--tie:#1a1a1a;--pants:#2b2b2b;--fist:#ffc83d;--flash:#fff;--spark1:#fff;--spark2:#ffe066;--spark3:#ff8a00;--burst:#ffd23f;--burst-edge:#ff5a1f;--power:#ffb300;--fg:#fff;--sub:#d5e8da;--card:#fff;--line:#999;--red:#c62828;--black:#222;--back:#2f5d9e;--back-line:rgba(255,255,255,.35);--hl:#f9a825;--panel:rgba(0,0,0,.6);--howto-bg:#1d6b3a;--howto-fg:#fff}
@@ -56,7 +56,7 @@ body{background:var(--bg);color:var(--fg);font-family:"Hiragino Sans","Hiragino 
   75%{opacity:1;transform:translateY(-50%) scale(1.06) rotate(-5deg)}
   100%{opacity:0;transform:translateY(-50%) scale(1.6) rotate(-5deg)}
 }
-#msg{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:56px;font-weight:bold;text-shadow:0 2px 8px var(--panel);pointer-events:none}   /* 「よーい」「スタート！」を画面の中央に大きく。影は白いカードの上でも読めるように */
+#msg{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:56px;font-weight:bold;text-shadow:0 2px 8px var(--panel);pointer-events:none}   /* 「よーい」「開始！」を画面の中央に大きく。影は白いカードの上でも読めるように */
 #over{position:absolute;inset:0;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;z-index:20}
 #over.hidden{display:none}
 #result{font-size:32px;font-weight:bold}
@@ -79,15 +79,15 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
     <div id="result" aria-live="polite"></div>
     <div id="detail"></div>
     <div class="btns">
-      <button id="share">共有</button>
+      <button id="share">分享</button>
       <button id="retry">もう一回</button>
     </div>
   </div>
 <section class="howto" data-pos="top-left" hidden>
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>CPUと同時にカードを出し合い、先に全部出し切ったほうが勝ちのスピードです。あなたは赤、CPUは黒のカードを使い、手前の場札4枚から、中央の台札と数字が1つ違うカードを重ねます。KとAもつながります。両者とも出せないと、1秒後に台札がめくられます。</p>
   <h2>操作</h2>
-  <p>場札をドラッグして台札の上で離すと出せます。タップだけでは出ません。パワーカードは画面の上半分まで運んで離すと、ディーラーへのパンチになります。吹き飛んで散らばったカードは、スワイプで押しのけられます。PC はマウスで同じ操作です。</p>
+  <p>場札を拖曳して台札の上で離すと出せます。タップだけでは出ません。パワーカードは画面の上半分まで運んで離すと、ディーラーへのパンチになります。吹き飛んで散らばったカードは、滑動で押しのけられます。PC はマウスで同じ操作です。</p>
   <h2>コツ</h2>
   <p>出せる場札には枠が付きますが、どの台札に出せるかは自分で見ます。パワーカードは補充のときに出ることがあり、枚数には数えません。当てると約5秒CPUが止まるので、その間に一気に減らしましょう。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -104,9 +104,9 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
   const CPU_FLY = 0.25;     // CPUのカードが台札まで飛ぶ時間（秒）
   const MOVE_TIME = 0.2;    // あなたのカードや、めくったカードが移動する時間（秒）
   const READY_TIME = 1.0;   // 開始してから最初の台札を出すまでの時間（秒）
-  const START_MSG_TIME = 0.8; // 「スタート！」を出しておく時間（秒）
+  const START_MSG_TIME = 0.8; // 「開始！」を出しておく時間（秒）
   const STALL_TIME = 1.0;   // 両者とも出せないとき、台札をめくり直すまでの時間（秒）
-  const TAP_MOVE = 8;       // これ以下の移動ならドラッグではなくタップ扱い（px）
+  const TAP_MOVE = 8;       // これ以下の移動なら拖曳ではなくタップ扱い（px）
 
   const CW = 1, CH = 1.4, CT = 0.012;         // カードの幅・縦・厚み
   const FIELD_X = [-1.65, -0.55, 0.55, 1.65]; // 場札4枚の横位置
@@ -114,7 +114,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
   const PILE_X = [-0.6, 0.6]; // 台札の横位置（左がCPU側、右があなた側）
   const DECK_X = 1.8;       // 山札の横位置（あなたは右、CPUは左）
   const DROP_RANGE = 0.8;   // 台札の中心からこの距離以内で離すと、その台札に出す
-  const DRAG_Y = 0.35;      // ドラッグ中にカードを浮かせる高さ
+  const DRAG_Y = 0.35;      // 拖曳中にカードを浮かせる高さ
   const CAM_TILT = 45;      // カメラの見下ろし角度（度）
   const TABLE_W = 5.4, TABLE_D = 7.0; // 羅紗（緑の布）の幅・奥行き
   const RIM = 0.3;          // テーブルの木のふちの幅
@@ -125,23 +125,23 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
   const POWER_MAX = 5;      // この回数補充しても出なければ次は必ず出す
   const PUNCH_TIME = 0.2;   // パンチがディーラーに届くまでの時間（秒）
   const STUN_TIME = 5.0;    // ディーラーが倒れている時間（秒）。この間CPUはカードを出せない
-  const RECOVER_TIME = 0.7; // ディーラーが起き上がり、散らばったカードが山札に戻る時間（秒）
+  const RECOVER_TIME = 0.7; // ディーラーが起き上がり、散らばったカードが山札に返回時間（秒）
   const PUNCH_ZONE = 0.5;   // パワーカードを画面の上からこの割合までの範囲で離すとパンチ
   const RAG_G = 20;         // ぶっ飛んだディーラーと散らばるカードにかかる重力
   const FLOOR_Y = -3.6;     // 床の高さ（テーブルの奥の床は画面にほぼ映らない）
-  const WINDUP_TIME = 0.1;  // パンチを放つ前にこぶしを引く時間（秒）
+  const WINDUP_TIME = 0.1;  // パンチを放つ前にこぶしを拉時間（秒）
   const HIT_STOP = 0.12;    // 当たった瞬間に全体を止める時間（秒）
   const SHAKE_TIME = 0.55;  // 画面の揺れが収まるまでの時間（秒）
   const SHAKE_AMP = 0.6;    // 画面の揺れの大きさ
   const FOV_PUNCH = 7;      // 当たった瞬間にカメラが寄る量（画角の度数）
   const FLASH_TIME = 0.25;  // 画面が白く光ってから消えるまでの時間（秒）
   const SPARK_COUNT = 70;   // 火花の数
-  const SHOT_DELAY = 0.06;  // パンチが当たってから共有用の画像を撮るまでの時間（秒）。爆発が広がりかけた瞬間を撮る
-  const SHOT_W = 600;       // 共有用の画像の横幅（px）
+  const SHOT_DELAY = 0.06;  // パンチが当たってから分享用の画像を撮るまでの時間（秒）。爆発が広がりかけた瞬間を撮る
+  const SHOT_W = 600;       // 分享用の画像の横幅（px）
   const VIEW_SIDE = 0.85;   // 吹っ飛んだディーラーが出られない画面の左右の端（画面の幅の割合、1で端）
   const VIEW_FLOOR_TOP = 0.85; // 奥の壁の足元が、画面の上からはみ出さない高さ（画面の高さの割合）
-  const SWIPE_GAIN = 1.3;   // スワイプの速さに対して、カードを押し出す速さの倍率
-  const SWIPE_MAX = 30;     // スワイプで押し出す速さの上限
+  const SWIPE_GAIN = 1.3;   // 滑動の速さに対して、カードを押し出す速さの倍率
+  const SWIPE_MAX = 30;     // 滑動で押し出す速さの上限
   const RANKS = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
   const $ = id => document.getElementById(id);
@@ -329,7 +329,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
       knL: [0, 15, -2], knR: [0, 15, -2], ftL: [0, 17, 8], ftR: [0, 17, 8],
     };
     for (const k in J) {
-      // 腕はばらばらに振り回す
+      // 腕はばらばらに振り轉動
       const v = vel[k] || [(Math.random() * 2 - 1) * 14, 12 + Math.random() * 12, -16 + (Math.random() * 2 - 1) * 12];
       J[k].prev.copy(J[k].pos).sub(new V3(v[0] + side, v[1], v[2]).multiplyScalar(RAG_H));
     }
@@ -390,7 +390,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
   }
   updateDealer();
 
-  // 👊のこぶし：パワーカードをドラッグし始めるとこれに持ち替え、離すとディーラーへ飛ぶ。
+  // 👊のこぶし：パワーカードを拖曳し始めるとこれに持ち替え、離すとディーラーへ飛ぶ。
   // 右手を甲を上にして握った形。向きは lookAt で合わせるので、指の付け根側をローカルの +z に作る。
   // 指や親指を距離関数（表面までの距離）でなめらかにつなぎ、そこから三角形の面を作る
   const fistSDF = (() => {
@@ -574,7 +574,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
   const suitCards = suits => suits.flatMap(([s, red]) => Array.from({ length: 13 }, (_, k) => makeCard(k + 1, s, red)));
   const pCards = suitCards([['♥', true], ['♦', true]]);
   const cCards = suitCards([['♠', false], ['♣', false]]);
-  // パワーカードは1枚だけ用意して使い回す（場に出ていないときは隠す）
+  // パワーカードは1枚だけ用意して使い轉動（場に出ていないときは隠す）
   const powerCard = makeCard(0, '', false, powerTexture());
   powerCard.power = true;
   powerCard.mesh.visible = false;
@@ -642,7 +642,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
     }
   }
 
-  // 吹き飛んだカードを押し出す（タップ・スワイプ）。少し浮かせて回しながら滑らせる
+  // 吹き飛んだカードを押し出す（タップ・滑動）。少し浮かせて回しながら滑らせる
   function pushCard(c, vx, vz){
     const f = c.phys;
     if (!f) return;
@@ -657,19 +657,19 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
   // 台札 piles[0] は CPU 側、piles[1] はあなた側（行き詰まったときにそれぞれの山札からめくって乗せる）
   let pDeck, cDeck, pField, cField, piles;
   let mode;          // 'ready' | 'playing' | 'over'
-  let timer = 0;     // ready の残り時間
+  let timer = 0;     // ready の剩餘時間
   let cpuTimer = 0;  // CPUが次に出すまでの時間
-  let startMsgT = 0; // 「スタート！」を消すまでの残り時間
+  let startMsgT = 0; // 「開始！」を消すまでの剩餘時間
   let stallTimer = 0;
   let playTime = 0;
   let drag = null;
-  let sweep = null;  // 吹き飛んだカードをどかすタップ・スワイプ
+  let sweep = null;  // 吹き飛んだカードをどかすタップ・滑動
   let cpuFly = null; // CPUが台札へ飛ばしている途中のカード
   let punch = null;  // ディーラーへ飛んでいる途中のパンチ
   let powerWait = 0; // パワーカードが出ないまま補充した回数
   let gloveHide = 0; // 当たったあとグローブを消すまでの時間
-  let stun = 0;      // ディーラーが倒れている残り時間
-  let recT = 0;      // ディーラーが起き上がっている残り時間
+  let stun = 0;      // ディーラーが倒れている剩餘時間
+  let recT = 0;      // ディーラーが起き上がっている剩餘時間
   const dealerDown = () => !!punch || stun > 0 || recT > 0;
 
   const top = p => p[p.length - 1];
@@ -831,8 +831,8 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
     layout();
     const win = pr === 0;
     $('msg').textContent = '';
-    $('result').textContent = win ? 'あなたの勝ち！' : 'CPUの勝ち';
-    $('detail').textContent = win ? `タイム : ${playTime.toFixed(1)}秒` : `あなたの残り : ${pr}枚`;
+    $('result').textContent = win ? 'あなたの獲勝！' : 'CPUの勝ち';
+    $('detail').textContent = win ? `時間：${playTime.toFixed(1)}秒` : `あなたの剩餘 : ${pr}枚`;
     $('over').classList.remove('hidden');
     document.documentElement.removeAttribute('data-howto-hidden');
   }
@@ -843,7 +843,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
     if (mode === 'ready') {
       timer -= dt;
       if (timer <= 0) {
-        $('msg').textContent = 'スタート！';
+        $('msg').textContent = '開始！';
         startMsgT = START_MSG_TIME;
         mode = 'playing';
         document.documentElement.setAttribute('data-howto-hidden', '');
@@ -983,7 +983,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 
   function impactFx(at){
     hitStop = HIT_STOP; shakeT = SHAKE_TIME; flashT = FLASH_TIME;
-    shotT = SHOT_DELAY;   // 少しあとのフレームで画面を撮る（共有用）
+    shotT = SHOT_DELAY;   // 少しあとのフレームで画面を撮る（分享用）
     // 「パワー！！！」を画面に大きく出す（クラスを付け直してアニメーションを最初から再生）
     const pw = $('power');
     pw.classList.remove('show'); void pw.offsetWidth; pw.classList.add('show');
@@ -1051,7 +1051,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
   }
 
   // ---------- 画面サイズ ----------
-  // 盤面全体（場札の外側まで）が収まる距離までカメラを引く（ディーラーは奥に入る分だけ見える）
+  // 盤面全体（場札の外側まで）が収まる距離までカメラを拉（ディーラーは奥に入る分だけ見える）
   function resize(){
     const W = cv.clientWidth, H = cv.clientHeight;
     renderer.setSize(W, H, false);
@@ -1071,7 +1071,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
       for (const p of pts) { const v = p.clone().project(camera); m = Math.max(m, Math.abs(v.x) / 0.95, Math.abs(v.y) / 0.8); }
       d *= m;
     }
-    // 山札の残り枚数は、それぞれの山札のすぐ手前に出す
+    // 山札の剩餘枚数は、それぞれの山札のすぐ手前に出す
     [['pInfo', DECK_X], ['cInfo', -DECK_X]].forEach(([id, x]) => {
       const q = new THREE.Vector3(x, 0, CH / 2 + 0.08).project(camera);
       $(id).style.left = ((q.x + 1) / 2 * W) + 'px';
@@ -1117,7 +1117,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
     if (gloveHide > 0) { gloveHide -= gdt; if (gloveHide <= 0) { glove.visible = false; glove.scale.setScalar(1); } }
     updateFx(dt);
     renderer.render(scene, camera);
-    // パンチの瞬間を共有用に撮る。WebGLの画面は描いた直後でないと読めないので、ここで写し取る
+    // パンチの瞬間を分享用に撮る。WebGLの画面は描いた直後でないと読めないので、ここで写し取る
     if (shotT > 0 && (shotT -= dt) <= 0) takeShot();
     requestAnimationFrame(loop);
   }
@@ -1141,7 +1141,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
     const loose = scattered();
     const hit = ray.intersectObjects([...pField.filter(Boolean), ...loose].map(c => c.mesh), false)[0];
     const looseHit = hit && loose.find(c => c.mesh === hit.object);
-    // 吹き飛んだカードが散らばっている間は、カードの上でも空いた所でもスワイプでどかせる
+    // 吹き飛んだカードが散らばっている間は、カードの上でも空いた所でも滑動でどかせる
     if (looseHit || (!hit && loose.length)) {
       cv.setPointerCapture(e.pointerId);
       const pt = tablePoint(e);
@@ -1188,7 +1188,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
       if (!hit) { glove.visible = false; d.card.mesh.visible = true; }
     }
     else if (!cancel && d.moved) {
-      // 場札はドラッグして台札の上で離したときだけ出す（タップでは出さない）
+      // 場札は拖曳して台札の上で離したときだけ出す（タップでは出さない）
       const p = d.card.mesh.position;
       let best = -1, bestD = DROP_RANGE;
       PILE_X.forEach((x, pi) => { const dd = Math.hypot(p.x - x, p.z); if (dd < bestD) { bestD = dd; best = pi; } });
@@ -1196,7 +1196,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
     }
     layout();   // 出せなかったときは場札に戻す
   }
-  // スワイプ：指が通ったところのカードを、指の動きの向きと速さで押し出す
+  // 滑動：指が通ったところのカードを、指の動きの向きと速さで押し出す
   function moveSweep(e){
     if (Math.hypot(e.clientX - sweep.x0, e.clientY - sweep.y0) > TAP_MOVE) sweep.moved = true;
     const pt = tablePoint(e), now = performance.now();
@@ -1228,7 +1228,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
     if (mode === 'over' && (e.key === 'Enter' || e.key === ' ') && document.activeElement.tagName !== 'BUTTON') start();
   });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   const isDraggable = t => t instanceof Element && !!t.closest('#cv');
   document.addEventListener('touchstart', e => { if (isDraggable(e.target)) e.preventDefault(); }, { passive: false });
   document.addEventListener('touchmove', e => { if (drag || sweep) e.preventDefault(); }, { passive: false });
@@ -1243,8 +1243,8 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
     lastTouchEnd = now;
   }, { passive: false });
 
-  // ---------- 結果の共有 ----------
-  // パンチが当たった瞬間の画面（何度もパンチしたら最後の1回）。パンチしなかったときは画像なしで共有する
+  // ---------- 結果の分享 ----------
+  // パンチが当たった瞬間の画面（何度もパンチしたら最後の1回）。パンチしなかったときは画像なしで分享
   const shot = document.createElement('canvas');
   let hasShot = false, shotT = 0;
   function takeShot(){
@@ -1257,10 +1257,10 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
     const url = location.href.split(/[?#]/)[0];
     const pr = remain(pDeck, pField);
     return pr === 0
-      ? `勝ち！\nタイム : ${playTime.toFixed(1)}秒\n相手の残り : ${remain(cDeck, cField)}枚\n${url}\n#スピード物理`
-      : `負け...\n残り${pr}枚\n${url}\n#スピード物理`;
+      ? `獲勝！\n時間：${playTime.toFixed(1)}秒\n相手の剩餘 : ${remain(cDeck, cField)}枚\n${url}\n#スピード物理`
+      : `負け...\n剩餘${pr}枚\n${url}\n#スピード物理`;
   }
-  // パンチの瞬間の画像をPNGにする（共有シートの制約があるため同期処理で作る）
+  // パンチの瞬間の画像をPNGにする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const bin = atob(shot.toDataURL('image/png').split(',')[1]);   // toBlob の非同期コールバックは避ける
     const buf = new Uint8Array(bin.length);
@@ -1272,20 +1272,20 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
     const btn = $('share');
     const text = shareText();
     const file = hasShot ? resultImageFile() : null;   // パンチしていなければ画像なし
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋パンチの瞬間の画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋パンチの瞬間の画像
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ text, files: [file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート、またはパンチしていないとき: 文面のみ
+    // 2) 画像を渡せない分享シート、またはパンチしていないとき: 文面のみ
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
   $('retry').addEventListener('click', start);

@@ -48,10 +48,10 @@
   <button class="btn" id="jumpBtn" aria-label="ジャンプ"><canvas width="30" height="30"></canvas></button>
 </div>
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
-    <p>円柱の塔の周りに並ぶ足場を跳び移り、できるだけ高く登るアクションゲームです。キャラクターは自動で歩き続け、到達した一番高い段の数がスコアになります。2段落ちて画面の下へ消えるか、出ているトゲに触れるとゲームオーバーです。ハイスコアはこのブラウザに保存されます。</p>
+    <h2>玩法</h2>
+    <p>円柱の塔の周りに並ぶ足場を跳び移り、できるだけ高く登るアクションゲームです。キャラクターは自動で歩き続け、到達した一番高い段の数が分數になります。2段落ちて画面の往下消えるか、出ているトゲに触れると遊戲結束です。最高分はこのブラウザに保存されます。</p>
     <h2>操作</h2>
-    <p>画面下の JUMP でジャンプし、STOP を押している間は立ち止まります。どちらかを押すと始まり、ゲームオーバーの後は JUMP でやり直せます。PC ではスペース、Z、上キーがジャンプ、X、左 Shift、下キーがストップです。</p>
+    <p>画面下の JUMP でジャンプし、STOP を按いる間は立ち止まります。どちらかを押すと始まり、遊戲結束の後は JUMP でやり直せます。PC ではスペース、Z、上キーがジャンプ、X、左 Shift、下キーがストップです。</p>
     <h2>コツ</h2>
     <p>トゲは2.5秒の周期で出入りし、途中まで出ている間は当たりません。手前で STOP して引っ込むのを待つと安全です。Uターンの看板で向きが変わった先に次の足場があるので、看板を見つけたらそのまま歩いて折り返してください。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -138,12 +138,12 @@ function genRow(){
 
 // ===== プレイヤー =====
 const P={s:0,y:0,vy:0,dir:1,on:'g',coy:0,anim:0,standTop:0,sx:0};
-// ハイスコア：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+// 最高分：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
 const HI_KEY='towerClimb.hiScore';
 let hiScore=0;
 try{hiScore=parseInt(localStorage.getItem(HI_KEY))||0;}catch(e){}
 function saveHi(){try{localStorage.setItem(HI_KEY,String(hiScore));}catch(e){}}
-const RETRY_LOCK=1200;                        // ゲームオーバー後に入力を受け付けない時間(ms)
+const RETRY_LOCK=1200;                        // 遊戲結束後に入力を受け付けない時間(ms)
 let fallAnim=null,overAt=0,wasStopped=false,camY=0,gt=0,score=0,started=false,over=false,touching=new Set(),jumpQueued=0,stopKey=false;const stopPtrs=new Set();
 const stopHeld=()=>stopKey||stopPtrs.size>0;
 
@@ -252,9 +252,9 @@ function bgmStop(){
 }
 
 // ===== 砂ぼこり：踏み切りと着地で足元に出る（描画コマに合わせて4コマで消える） =====
-let dust=[];                                  // {s, y, f}  s=円周位置 / y=高さ / f=残りコマ
+let dust=[];                                  // {s, y, f}  s=円周位置 / y=高さ / f=剩餘コマ
 function addDust(y){dust.push({s:P.s,y,f:4});}
-const DUST=[                                  // 中央から左右へ広がる4コマ（3=白、0=輪郭）
+const DUST=[                                  // 中央から左往右広がる4コマ（3=白、0=輪郭）
  ["...0...","..303..","...0..."],
  [".0...0.","30...03",".0...0."],
  ["0.....0","3.....3","0.....0"],
@@ -267,7 +267,7 @@ function startFallAnim(pop){
 }
 function step(){
   while(topRow*ROW<camY+BASE+60)genRow();
-  if(over){                                   // ゲームオーバー演出：キャラが手前に落ちていく
+  if(over){                                   // 遊戲結束演出：キャラが手前に落ちていく
     if(fallAnim){fallAnim.sy-=fallAnim.vy;fallAnim.vy=Math.max(fallAnim.vy-0.35,-7);fallAnim.spin++;}
     return;
   }
@@ -466,7 +466,7 @@ function panel(x0,y0,x1,y1){
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)
     put(x,y,(y===y0||y===y1||x===x0||x===x1)?0:(y===y0+1||y===y1-1||x===x0+1||x===x1-1)?2:3);
 }
-function drawScore(){                          // 左上：スコア / 右上：ハイスコア
+function drawScore(){                          // 左上：分數 / 右上：最高分
   const n=String(score),h=String(hiScore);
   panel(2,2,Math.max(26,8+n.length*4),20);
   drawText("SCORE",5,5,1,0);drawText(n,5,12,1,0);
@@ -521,7 +521,7 @@ function render(){
   for(let k=k0;k<=k1;k++)if(rows[k])for(const l of rows[k])drawLedge(l,cs,cy);
   for(const z of spikes)drawSpike(z,cs,cy);
   for(const g of signs)drawSign(g,cs,cy);
-  if(!over)drawPlayer(cy);                   // ゲームオーバー後は落下演出側だけを描く
+  if(!over)drawPlayer(cy);                   // 遊戲結束後は落下演出側だけを描く
   drawDust(cs,cy);                            // キャラの手前に重ねる
   if(over){drawGameOver();drawFallAnim();}   // 落ちるキャラはパネルより手前
   else drawScore();

@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ジャック・オー・ランタンメーカー</title>
+<title>南瓜燈製作</title>
 <meta name="description" content="かぼちゃを彫って玄関先に飾る">
 <style>
 :root{
@@ -75,7 +75,7 @@ body{
 .btn{min-width:132px;min-height:52px;padding:0 22px;border:1px solid var(--line);border-radius:26px;
   background:var(--panel);color:var(--fg);font:inherit;font-size:17px;font-weight:700;touch-action:manipulation}
 .btn:disabled{opacity:.4}
-/* アイコンだけのボタン（やり直し） */
+/* アイコンだけのボタン（重新開始） */
 .iconBtn{min-width:52px;width:52px;padding:0;display:flex;align-items:center;justify-content:center}
 .iconBtn svg{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 /* 太さのスライダー：左に小さい丸、右に大きい丸 */
@@ -85,7 +85,7 @@ body{
   padding:12px calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));touch-action:manipulation}
 .mrow{display:flex;align-items:center;gap:12px;width:min(340px,100%);font-size:15px}
 .mrow span{flex:none;width:3.5em}
-/* 削除は押し間違えないよう、閉じるから離して右の端に置く */
+/* 刪除は押し間違えないよう、關閉から離して右の端に置く */
 .menuBtns{position:relative;display:flex;justify-content:center;width:100%;margin-top:8px}
 .menuBtns .danger{position:absolute;right:0;top:0}
 .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
@@ -123,7 +123,7 @@ input.sw.on::-moz-color-swatch{opacity:1}
 #stairBtn[aria-pressed="false"] .slash{display:inline}
 /* 最初の画面の見出し */
 #pickTitle{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top, 0px) + 28px);text-align:center;font-size:24px;font-weight:700;letter-spacing:.05em;pointer-events:none}
-/* 狭い画面では見出しが左上の「遊び方」ボタンに重なるので、その下へずらす */
+/* 狭い画面では見出しが左上の「玩法」ボタンに重なるので、その往下ずらす */
 @media (max-width:370px){#pickTitle{top:calc(env(safe-area-inset-top, 0px) + 62px)}}
 @keyframes barIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);touch-action:none}
@@ -147,7 +147,7 @@ input.sw.on::-moz-color-swatch{opacity:1}
       <span class="dot large" aria-hidden="true"></span>
     </div>
     <div class="row">
-      <button id="undo" class="btn iconBtn" type="button" aria-label="やり直し" disabled><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+      <button id="undo" class="btn iconBtn" type="button" aria-label="重新開始" disabled><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
       <button id="done" class="btn" type="button">できた</button>
     </div>
   </div>
@@ -160,29 +160,29 @@ input.sw.on::-moz-color-swatch{opacity:1}
     <label class="mrow"><span>回転</span><input id="pkRot" type="range" min="0" max="359" step="1"></label>
     <label class="mrow"><span>大きさ</span><input id="pkScale" type="range" step="1"></label>
     <div class="menuBtns">
-      <button id="pkClose" class="btn" type="button">閉じる</button>
-      <button id="pkDelete" class="btn iconBtn danger" type="button" aria-label="削除"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></button>
+      <button id="pkClose" class="btn" type="button">關閉</button>
+      <button id="pkDelete" class="btn iconBtn danger" type="button" aria-label="刪除"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></button>
     </div>
   </div>
   <div id="showBar" class="bar hidden">
     <p id="fullMsg" class="hidden" aria-live="polite">これ以上置けません</p>
     <div class="row">
       <button id="again" class="btn" type="button">もう1個つくる</button>
-      <button id="share" class="btn" type="button">共有</button>
+      <button id="share" class="btn" type="button">分享</button>
     </div>
   </div>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される結果画像">
+      <img id="share-img" alt="分享される結果画像">
       <p id="share-text"></p>
-      <button id="share-close" type="button">閉じる</button>
+      <button id="share-close" type="button">關閉</button>
     </div>
   </div>
   <section class="howto" hidden data-pos="top-left">
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>かぼちゃを彫って光を灯し、夜の玄関先に飾る作品です。勝ち負けや時間制限はありません。4種類から1つ選んで彫り、光の色を選んで飾ります。30個まで並べられ、このブラウザに保存されます。</p>
     <h2>操作</h2>
-    <p>かぼちゃの表面をなぞると切れ、書き始めの近くまで戻して囲むと中がくり抜かれ、タップすると丸い穴が開きます。かぼちゃの外をドラッグすると回せます。飾った後はドラッグで移動し、タップで回転、大きさ、削除の調整ができます。背景のドラッグで見る向きが変わり、2本指で拡大と移動ができます。PC ではホイールで拡大し、Shift を押しながらのドラッグで移動します。</p>
+    <p>かぼちゃの表面をなぞると切れ、書き始めの近くまで戻して囲むと中がくり抜かれ、タップすると丸い穴が開きます。かぼちゃの外を拖曳すると回せます。飾った後は拖曳で移動し、タップで回転、大きさ、刪除の調整ができます。背景の拖曳で見る向きが変わり、2本指で拡大と移動ができます。PC ではホイールで拡大し、Shift を押しながらの拖曳で移動します。</p>
     <h2>楽しみ方</h2>
     <p>光は4色のほかに好きな色も選べます。かぼちゃは別のかぼちゃの上に重ねられます。右上のボタンで家の電気を消すと周りが暗くなり、かぼちゃの光が引き立ちます。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -204,8 +204,8 @@ input.sw.on::-moz-color-swatch{opacity:1}
   const STROKE_STEP_PX = 3;   // 指の動きの点の間を、皮の絵の上でこの間隔（px）ごとに補う
   const GUIDE_PX = 3;         // 書いている途中の線の最低の太さ（px）
   const INNER_SCALE = 0.92;   // 内側の果肉の大きさ（外側に対する比）。これが皮の厚みになる
-  const ROT_SPEED = 0.01;     // ドラッグ1pxあたりの回転（ラジアン）
-  const KEY_SPEED = 1.6;      // 矢印キーを押している間の回転の速さ（ラジアン/秒）
+  const ROT_SPEED = 0.01;     // 拖曳1pxあたりの回転（ラジアン）
+  const KEY_SPEED = 1.6;      // 矢印キーを按いる間の回転の速さ（ラジアン/秒）
   const TILT_MAX = 0.6;       // 掘るときに前後へ傾けられる角度（ラジアン）
   const LIGHT_POWER = 6;      // 中の光の強さ
   const LIGHT_GLOW = 0.35;    // 中の果肉が光の色で光って見える強さ（0〜1）
@@ -246,14 +246,14 @@ input.sw.on::-moz-color-swatch{opacity:1}
   const FOG_NIGHT = [12, 50]; // 夜のときの霧の始まりと終わり。遠くの景色ほど闇に溶ける
   const ZOOM_MIN = 0.4, ZOOM_MAX = 2.5;    // 並べた所を見るときの寄り・引きの範囲（倍）
   const EL_MIN = 0.08, EL_MAX = 1.25;      // 並べた所を見るときの見下ろす角度の範囲（ラジアン）
-  const TAP_PX = 10;          // これ以上動いたらタップではなくドラッグとみなす（px）
+  const TAP_PX = 10;          // これ以上動いたらタップではなく拖曳とみなす（px）
   const T_PICK = 0.9;         // 選ぶ→掘る の演出の長さ（秒）
   const T_NIGHT = 1.3;        // 掘る→光 の演出の長さ（秒）
   const T_PUT = 1.5;          // 光→並べる の演出の長さ（秒）
   const T_BACK = 1.3;         // 並べる→選ぶ の演出の長さ（秒）
   const HOP_PICK = 0.6;       // 選んだカボチャが真ん中へ跳ねる高さ
   const HOP_PUT = 1.4;        // 飾るときに置き場所へ跳ねる高さ
-  const SINK = 2.8;           // 選ぶ画面の見本を床の下へ沈める深さ
+  const SINK = 2.8;           // 選ぶ画面の見本を床の往下沈める深さ
   const VIEW_MARGIN_W = 5, VIEW_MARGIN_H = 4.5;  // 並べた画面で、カボチャのまわりにとる余白（大きいほど引きで見る）
   const FLOOR_TILE = 6;       // 床の木目の画像1枚ぶんの大きさ（カボチャの直径がおよそ2）
   const GRASS_TILE = 4;       // 草の画像1枚ぶんの大きさ
@@ -264,12 +264,12 @@ input.sw.on::-moz-color-swatch{opacity:1}
   const PAN_LIMIT = 20, PAN_FRONT = 18;  // 並べた画面で移動できる範囲（左右、手前）
   const HOUSE_OFF_DIM = 0.3;  // 家の電気を消したときの夜の明るさ（ついているときを1として）
   const HOUSE_OFF_GLOW = 0.04; // 家の電気を消したときの窓とランプの明るさ
-  const SIDE_PUSH = 1.0;      // 段の前や横の面にドラッグしたとき、面から手前へ出す距離
+  const SIDE_PUSH = 1.0;      // 段の前や横の面に拖曳したとき、面から手前へ出す距離
   const STACK_SINK = 0.15;    // 重ねたとき、下のカボチャのてっぺんのくぼみに沈む深さ
   const STACK_REACH = 0.75;   // 下のカボチャの大きさに対して、この割合より中心が近ければ上に載る
   const OUTLINE_SCALE = 1.06;  // 選んでいるカボチャの輪郭の太さ（カボチャに対する大きさの比）
   const SCALE_MIN = 0.5, SCALE_MAX = 1.6;  // 並べたカボチャの大きさを変えられる範囲（倍）
-  const SHARE_INSTANT = 0.5;  // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5;  // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
 
   // カボチャの種類：sy=縦の比率、size=大きさ、ribs=溝の数、rib=溝の深さ、dimple=上下のくぼみ、c=色の番号
   const TYPES = [
@@ -313,7 +313,7 @@ input.sw.on::-moz-color-swatch{opacity:1}
   scene.add(selectGroup, displayGroup);
 
   // ---------- カボチャの形 ----------
-  // 球を溝のある形にする。種類ごとに一度だけ作って使い回す
+  // 球を溝のある形にする。種類ごとに一度だけ作って使い轉動
   const geoCache = new Map();
   const SEAM_ROT = new THREE.Matrix4().makeRotationY(-Math.PI / 2);  // 絵のつなぎ目を後ろに回し、正面を掘りやすくする
   // 球の上の点 (x,y,z) をカボチャの形に動かす
@@ -382,7 +382,7 @@ input.sw.on::-moz-color-swatch{opacity:1}
   atlas.needsUpdate = true;
   const freeSlots = Array.from({ length: ATLAS_SLOTS }, (_, i) => i);
 
-  // すべての材質で共有する光のデータ（毎フレーム中身だけ書き換える）
+  // すべての材質で分享光のデータ（毎フレーム中身だけ書き換える）
   const LU = {
     lanternCount: { value: 0 },
     lanternPos: { value: Array.from({ length: MAX_LANTERNS }, () => new THREE.Vector4()) },   // xyz=光の位置、w=向きを戻す角度
@@ -414,7 +414,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   vec3 dirW = toL / max(dist, 1e-4);
   float vis = lanternOwnVis;
   if (j != lanternOwn) {
-    // 光から見たこの点の向きを、カボチャの向きに戻してから光の型を引く
+    // 光から見たこの点の向きを、カボチャの向きに戻してから光の型を拉
     float a = lanternPos[j].w;
     vec3 w = -dirW;
     vec3 d = vec3(w.x * cos(a) + w.z * sin(a), w.y, -w.x * sin(a) + w.z * cos(a));
@@ -532,7 +532,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     if (!stairsOn) return 0;  // 階段なしのときは踊り場もない
     return k * RISE;
   }
-  // 並べる場所：各段と踊り場に左右へ、そのあと玄関前の地面へ
+  // 並べる場所：各段と踊り場に左往右、そのあと玄関前の地面へ
   const SLOTS = [];
   {
     const xs = [-1.4, 1.4, -4.1, 4.1, -6.2, 6.2];
@@ -814,7 +814,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     stem.position.y = top + stemH * 0.4;
     stem.rotation.z = 0.18;
 
-    const pivot = new THREE.Group();  // 回す・傾けるときの中心（カボチャの中心）
+    const pivot = new THREE.Group();  // 轉動・傾けるときの中心（カボチャの中心）
     pivot.add(outer, lining, inner, wall, stem);
     pivot.position.y = -geo.boundingBox.min.y;
     const root = new THREE.Group();   // 床の上の置き場所
@@ -870,7 +870,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   }
 
   // ---------- 削る：カボチャの表面の上での距離で削る ----------
-  // 皮の絵（展開図）の上で線を引くと、場所や向きで縮み方が違うので丸が楕円になる。
+  // 皮の絵（展開図）の上で線を拉と、場所や向きで縮み方が違うので丸が楕円になる。
   // そこで皮の絵の各点がカボチャ表面のどこにあるかを先に表にしておき、表面の上で線から一定の距離以内を削る
   const pxWorld = ti => Math.PI * 2 * TYPES[ti].size / TEX_W;   // 胴回りでの皮の絵1pxの長さ
   const brushR = (ti, w) => w / 2 * pxWorld(ti);                // スライダーの太さ（px）→ 表面での半径
@@ -1059,7 +1059,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     let len = 0;
     for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
     const closed = pts.length >= 3 && Math.hypot(a.x - b.x, a.y - b.y) < CLOSE_PX && len > CLOSE_PX * 3;
-    const cut = { pts, closed, w: slitPx };  // やり直し用に切った順番と太さを覚えておく
+    const cut = { pts, closed, w: slitPx };  // 重新開始用に切った順番と太さを覚えておく
     pk.cuts.push(cut);
     drawCut(pk, cut);
     carveFx(pk, pts);
@@ -1068,7 +1068,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     buildWall(pk);
     updateUndo();
   }
-  // 最後に切った1本を取り消す：皮と穴を最初の状態に戻し、残りの線を切り直す（絵を丸ごと保存しておくより軽い）
+  // 最後に切った1本を取り消す：皮と穴を最初の状態に戻し、剩餘の線を切り直す（絵を丸ごと保存しておくより軽い）
   function undoCut(pk){
     if (!pk.cuts.length) return;
     pk.cuts.pop();
@@ -1497,7 +1497,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   });
   pkScale.addEventListener('change', savePumpkins);
   $('pkClose').addEventListener('click', closeMenu);
-  // 選んだカボチャを片付ける。最後の1個を消したら選ぶ画面へ戻る
+  // 選んだカボチャを片付ける。最後の1個を消したら選ぶ画面へ返回
   $('pkDelete').addEventListener('click', () => {
     if (!menuPk || anim) return;
     const pk = menuPk;
@@ -1524,7 +1524,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     setHouseLights(!houseLights);
     savePumpkins();
   });
-  // 階段を消す・出す。段の上のカボチャは床へ下ろす（出したときは段の上へ戻す）
+  // 階段を消す・出す。段の上のカボチャは床へ下ろす（出したときは段の往上戻す）
   $('stairBtn').addEventListener('pointerdown', e => e.stopPropagation());
   $('stairBtn').addEventListener('click', () => {
     if (anim) return;
@@ -1536,7 +1536,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   $('done').addEventListener('click', () => { if (work && !anim) carveToLight(); });
   $('put').addEventListener('click', () => { if (work && !anim) lightToDisplay(); });
   $('again').addEventListener('click', () => { if (!anim && displayList.length < maxDisplay) displayToSelect(); });
-  // 置ける数がいっぱいなら「もう1個つくる」を押せなくして、赤い文字で知らせる（削除すればまた押せる）
+  // 置ける数がいっぱいなら「もう1個つくる」を押せなくして、赤い文字で知らせる（刪除すればまた押せる）
   function updateFull(){
     const full = displayList.length >= maxDisplay;
     $('again').disabled = full;
@@ -1737,7 +1737,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
 
 
 
-  const ptrs = new Map();   // 押している指（pointerId → 位置）
+  const ptrs = new Map();   // 按いる指（pointerId → 位置）
   let drag = null;          // 今の操作 {mode: tap/cut/rot/orbit/move/pinch, ...}
   const pinchMid = () => { const [a, b] = [...ptrs.values()]; return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
   // 画面を移動する：指の動きに合わせて、見ている点を床に沿ってずらす
@@ -1788,7 +1788,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
         const carried = stackAbove(pk).map(o => ({ o, dx: o.root.position.x - pk.root.position.x, dy: o.root.position.y - pk.root.position.y, dz: o.root.position.z - pk.root.position.z }));
         drag = { mode: 'move', id, pk, carried, ox: pk.root.position.x - f.x, oz: pk.root.position.z - f.z };
       } else {
-        // 右ボタンかShiftを押しながらのドラッグは画面の移動、それ以外は見る向きを回す
+        // 右ボタンかShiftを押しながらの拖曳は画面の移動、それ以外は見る向きを轉動
         drag = { mode: e.button === 2 || e.shiftKey ? 'pan' : 'orbit', id };
       }
     }
@@ -1865,7 +1865,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     if (drag.mode === 'pinch'){ drag = null; return; }
     if (drag.id !== e.pointerId) return;
     const tapped = !cancelled && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < TAP_PX;
-    // 並べたカボチャを動かさずに離したらメニューを開く。何もない所をタップしたら閉じる
+    // 並べたカボチャを動かさずに離したらメニューを開く。何もない所をタップしたら關閉
     if (drag.mode === 'move' && tapped){ openMenu(drag.pk); drag = null; return; }
     if (drag.mode === 'move'){ settleAll(); savePumpkins(); }  // 動かし終わったら置き場所を保存
     if (drag.mode === 'orbit' && tapped) closeMenu();
@@ -1888,7 +1888,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     updateCamera();
   }, { passive: false });
 
-  // 矢印キー：掘る・光を選ぶときはカボチャを回す、並べたときは見る向きを変える
+  // 矢印キー：掘る・光を選ぶときはカボチャを轉動、並べたときは見る向きを変える
   const keys = new Set();
   document.addEventListener('keydown', e => {
     if (!$('share-view').classList.contains('hidden')){
@@ -1925,7 +1925,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
   document.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive: false });
   document.addEventListener('selectstart', e => {
     const el = e.target instanceof Element ? e.target : e.target && e.target.parentElement;
-    if (!(el && el.closest('#share-text'))) e.preventDefault();  // 共有の文面だけは選んでコピーできるようにする
+    if (!(el && el.closest('#share-text'))) e.preventDefault();  // 分享の文面だけは選んでコピーできるようにする
   });
   document.addEventListener('contextmenu', e => { if (onCanvas(e.target)) e.preventDefault(); });
   // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
@@ -1938,7 +1938,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     lastTouchEnd = now;
   }, { passive: false });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return `カボチャを${displayList.length}個掘った\n${location.href.split(/[?#]/)[0]}\n#ジャック・オー・ランタンメーカー`;
   }
@@ -1951,7 +1951,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     c.getContext('2d').drawImage(src, 0, 0);
     return c;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(c){
     const bin = atob(c.toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -1963,7 +1963,7 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 共有シートが無い・使えない環境：文面をコピーし、共有される内容を画面に出す
+    // 3) 分享シートが無い・使えない環境：文面をコピーし、分享される内容を画面に出す
     const fallback = () => {
       if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1971,18 +1971,18 @@ for (int j = 0; j < MAX_LANTERNS; j++) {
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll: true });
     };
-    // 失敗、または押してすぐのキャンセル扱いは共有シートが出なかったとみなして 3) へ
+    // 失敗、または按すぐのキャンセル扱いは分享シートが出なかったとみなして 3) へ
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート：文面＋結果画像
+    // 1) 画像を渡せる分享シート：文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })){
       navigator.share({ text, files: [file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート：文面のみ
+    // 2) 画像を渡せない分享シート：文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(failed);
       return;

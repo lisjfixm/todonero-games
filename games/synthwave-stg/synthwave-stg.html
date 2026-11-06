@@ -57,15 +57,15 @@
 <div id="overlay">
   <h1>SynthwaveSTG</h1>
   <p id="msg">矢印 / WASD で移動　ショットは自動</p>
-  <p>スマホはドラッグで移動</p>
-  <button class="go" id="start">スタート</button>
-  <button class="go" type="button" data-howto-open>遊び方</button>
+  <p>スマホは拖曳で移動</p>
+  <button class="go" id="start">開始</button>
+  <button class="go" type="button" data-howto-open>玩法</button>
 </div>
 <section class="howto" data-pos="none" hidden>
-  <h2>遊び方</h2>
-  <p>夕日のグリッドの上を奥へ飛び続ける3Dシューティングです。ショットは自動で出るので、自機を動かして敵に当てながら、敵や敵弾、壁を避けます。ライフは3つで、ぶつかるたびに減り、なくなると終了です。スコアは飛んでいるだけで増え、敵を倒すと100点から500点が加わります。速度は少しずつ上がります。</p>
+  <h2>玩法</h2>
+  <p>夕日のグリッドの上を奥へ飛び続ける3Dシューティングです。ショットは自動で出るので、自機を動かして敵に当てながら、敵や敵弾、壁を避けます。ライフは3つで、ぶつかるたびに減り、なくなると終了です。分數は飛んでいるだけで増え、敵を倒すと100点から500点が加わります。速度は少しずつ上がります。</p>
   <h2>操作</h2>
-  <p>画面をドラッグすると、指の動きに合わせて自機が上下左右に動きます。PC は矢印キーか WASD でも動かせます。</p>
+  <p>画面を拖曳すると、指の動きに合わせて自機が上下左右に動きます。PC は矢印キーか WASD でも動かせます。</p>
   <h2>コツ</h2>
   <p>弾を撃つ三角の敵は1発で倒せて300点、地上の砲台は3発必要で500点です。低い壁は高度を上げれば越えられ、高い壁は左右によけます。壁は敵の弾も止めます。当たったあとは約1.5秒無敵です。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -489,8 +489,8 @@ function gameOver(){
   running=false;
   playSound('over');
   document.querySelector('#overlay h1').textContent='GAME OVER';
-  msg.textContent=`スコア ${Math.floor(score)}`;
-  startBtn.textContent='もう一度';
+  msg.textContent=`分數 ${Math.floor(score)}`;
+  startBtn.textContent='再來一次';
   overlay.classList.remove('hidden');
 }
 function hit(){

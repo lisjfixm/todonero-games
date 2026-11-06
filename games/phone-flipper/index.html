@@ -87,17 +87,17 @@ gtag('config', 'G-41RSZLP1YQ');
     <h2 id="msgTitle"></h2>
     <p id="msgBody"></p>
     <button class="main" id="msgBtn"></button>
-    <a class="share hide" id="share" target="_blank" rel="noopener">Xでシェア</a>
+    <a class="share hide" id="share" target="_blank" rel="noopener">分享到X</a>
   </div>
 </div>
 
 <section class="howto" hidden data-pos="bottom-left">
-  <h2>遊び方</h2>
-  <p>折りたたみスマホの開閉の反動だけで進み、ゴールまでのタイムを競う全3ステージのゲームです。最初に操作した瞬間に計測が始まり、ゴールを越えるとタイムが決まります。穴に落ちると自動でスタート地点に戻り、タイムも0に戻ります。</p>
+  <h2>玩法</h2>
+  <p>折りたたみスマホの開閉の反動だけで進み、ゴールまでのタイムを競う全3ステージのゲームです。最初に操作した瞬間に計測が始まり、ゴールを越えるとタイムが決まります。穴に落ちると自動で開始地点に戻り、タイムも0に戻ります。</p>
   <h2>操作</h2>
-  <p>スマホは画面を押している間だけ機体が閉じ、離すと勢いよく開きます。PC はマウスの長押しか Space で同じ操作になり、R か右上のボタンでやり直せます。</p>
+  <p>スマホは画面を按いる間だけ機体が閉じ、離すと勢いよく開きます。PC はマウスの長押しか Space で同じ操作になり、R か右上のボタンでやり直せます。</p>
   <h2>コツ</h2>
-  <p>閉じる動きより開く動きのほうが速いので、開く瞬間に床を蹴る力が進む力になります。氷の床では加速できないため、手前の滑りにくい床で勢いをつけてから入ってください。幅の広い穴の前にあるピンクの床は、当たった勢いで機体を跳ね返します。</p>
+  <p>關閉動きより開く動きのほうが速いので、開く瞬間に床を蹴る力が進む力になります。氷の床では加速できないため、手前の滑りにくい床で勢いをつけてから入ってください。幅の広い穴の前にあるピンクの床は、当たった勢いで機体を跳ね返します。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
 </section>
 
@@ -1089,7 +1089,7 @@ function show(title, body, btn, cb, shareText){
     share.classList.remove('hide');
   } else share.classList.add('hide');
 }
-const shareLine = () => 'ステージ ' + stage + 'クリア!\nクリアタイム : ' + time.toFixed(1) + '秒';
+const shareLine = () => 'ステージ ' + stage + '過關！\nクリア時間：' + time.toFixed(1) + '秒';
 
 let acc = 0, last = performance.now();
 function frame(now){
@@ -1108,8 +1108,8 @@ function frame(now){
       burstConfetti(cx, cy);
       const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
       const line = shareLine();
-      if (stage >= TOTAL_STAGES) show('ALL CLEAR', time.toFixed(1) + ' 秒', 'もう一度', () => { tries = 0; startStage(1); }, line);
-      else show('STAGE ' + stage + ' CLEAR', time.toFixed(1) + ' 秒', '次へ', () => startStage(stage + 1), line);
+      if (stage >= TOTAL_STAGES) show('ALL CLEAR', time.toFixed(1) + ' 秒', '再來一次', () => { tries = 0; startStage(1); }, line);
+      else show('STAGE ' + stage + ' CLEAR', time.toFixed(1) + ' 秒', '下一個', () => startStage(stage + 1), line);
     }
   }
   draw(dt);

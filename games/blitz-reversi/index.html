@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>超速リバーシ</title>
+<title>閃電黑白棋</title>
 <meta name="description" content="順番なしで同時に石を置くリバーシ">
 <style>
 :root{--bg:#123516;--fg:#eee;--sub:#ccc;--green:#2e7d32;--line:#123d15;--black:#111;--white:#f5f5f5;
@@ -120,13 +120,13 @@ main{--tray:clamp(48px,10dvh,110px);--tally:30px;width:100%;max-width:420px;heig
         <label class="size"><span>盤面 <output id="sizeOut">8×8</output></span>
           <input type="range" id="size" min="0" max="4" step="1" value="3">
         </label>
-        <button class="start" id="go">スタート</button>
-        <button class="start" id="howtoBtn" type="button" data-howto-open>遊び方</button>
+        <button class="start" id="go">開始</button>
+        <button class="start" id="howtoBtn" type="button" data-howto-open>玩法</button>
       </div>
       <div class="ends" id="ends" hidden>
         <button class="start" id="next">もう一回</button>
-        <button class="start" id="toSetup">設定に戻る</button>
-        <button class="start" id="share">共有</button>
+        <button class="start" id="toSetup">設定に返回</button>
+        <button class="start" id="share">分享</button>
         <button class="close" id="close" aria-label="閉じて盤面を見る">✕</button>
       </div>
     </div>
@@ -137,10 +137,10 @@ main{--tray:clamp(48px,10dvh,110px);--tally:30px;width:100%;max-width:420px;heig
 </main>
 <div class="hero" id="hero" hidden><div class="heroText" id="heroText"><span>完</span><span>全</span><span>王</span><span>者</span></div></div>
 <section class="howto" hidden data-pos="none">
-  <h2>遊び方</h2>
-  <p>手番のないリバーシです。カウントダウンのあとは、両者が同時に、好きな速さで石を置いていきます。置けるのは相手の石を1枚以上裏返せるマスだけです。どちらも置けなくなると終わり、石の多いほうが勝ちます。同数なら自動で再戦になります。スタート画面で CPU の強さか対人戦、盤面の大きさを選べます。</p>
+  <h2>玩法</h2>
+  <p>手番のないリバーシです。カウントダウンのあとは、両者が同時に、好きな速さで石を置いていきます。置けるのは相手の石を1枚以上裏返せるマスだけです。どちらも置けなくなると終わり、石の多いほうが勝ちます。同数なら自動で再戦になります。開始画面で CPU の強さか対人戦、盤面の大きさを選べます。</p>
   <h2>操作</h2>
-  <p>下のトレイの白い石を指でドラッグし、置きたいマスの近くで離します。持っている間は置けるマスに薄い石が出て、近くのマスへ吸い付きます。対人戦では上のトレイの黒い石をもう1人が動かし、2人同時に操作できます。PC ではマウスのドラッグで置きます。</p>
+  <p>下のトレイの白い石を指で拖曳し、置きたいマスの近くで離します。持っている間は置けるマスに薄い石が出て、近くのマスへ吸い付きます。対人戦では上のトレイの黒い石をもう1人が動かし、2人同時に操作できます。PC ではマウスの拖曳で置きます。</p>
   <h2>コツ</h2>
   <p>角の石は裏返されないので、空いていれば先に取る価値があります。相手が石を運んでいる間にそのマスを取れば、狙いを崩せます。盤上をすべて自分の色にすると「完全王者」の演出が出ます。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -235,11 +235,11 @@ main{--tray:clamp(48px,10dvh,110px);--tally:30px;width:100%;max-width:420px;heig
   }
   addEventListener('resize',fitPiece);
 
-  // ---- ドラッグ操作（トレイから。ポインターごとに独立）----
+  // ---- 拖曳操作（トレイから。ポインターごとに独立）----
   const drags=new Map();
 
   // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て
-  // ドラッグが奪われるのを防ぐ
+  // 拖曳が奪われるのを防ぐ
   const isDraggable=t=>t instanceof Element && !!t.closest('.piece');
   document.addEventListener('touchstart',e=>{ if(isDraggable(e.target)) e.preventDefault(); },{passive:false});
   document.addEventListener('touchmove',e=>{ if(drags.size) e.preventDefault(); },{passive:false});
@@ -311,7 +311,7 @@ main{--tray:clamp(48px,10dvh,110px);--tally:30px;width:100%;max-width:420px;heig
   }
   function releaseAll(){ [...drags.keys()].forEach(release); }
 
-  // ドラッグ中の色の石を置けるマスに半透明のガイドを出す
+  // 拖曳中の色の石を置けるマスに半透明のガイドを出す
   function updateGuides(){
     boardEl.querySelectorAll('.guide').forEach(g=>g.remove());
     if(!playing) return;
@@ -347,7 +347,7 @@ main{--tray:clamp(48px,10dvh,110px);--tally:30px;width:100%;max-width:420px;heig
     startGame();
   });
   nextBtn.addEventListener('click',startGame);
-  // ✕：パネルを閉じて終了時の盤面を見せる。画面をタップで戻る
+  // ✕：パネルを閉じて終了時の盤面を見せる。画面をタップで返回
   let viewing=false;
   $('close').addEventListener('click',()=>{
     panelEl.hidden=true;
@@ -360,7 +360,7 @@ main{--tray:clamp(48px,10dvh,110px);--tally:30px;width:100%;max-width:420px;heig
     panelEl.hidden=false;
   },true);
 
-  // 結果をXに投稿する（文面を入れた投稿画面を開くだけ）
+  // 結果を發文到Xする（文面を入れた投稿画面を開くだけ）
   let shareText='';
   $('share').addEventListener('click',()=>{
     const btn=$('share');
@@ -373,14 +373,14 @@ main{--tray:clamp(48px,10dvh,110px);--tally:30px;width:100%;max-width:420px;heig
       navigator.share({text:shareText}).catch(()=>{});               // 画像非対応なら文面のみ
       return;
     }
-    // 共有シートがない環境（PCのブラウザなど）は文面をコピー
+    // 分享シートがない環境（PCのブラウザなど）は文面をコピー
     navigator.clipboard?.writeText(shareText).then(()=>{
-      btn.textContent='コピーしました';
-      setTimeout(()=>{ btn.textContent='共有'; },1500);
+      btn.textContent='已複製';
+      setTimeout(()=>{ btn.textContent='分享'; },1500);
     }).catch(()=>{});
   });
 
-  // 今の盤面をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 今の盤面をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function boardImageFile(){
     const px=64, pad=10, w=size*px;
     const c=document.createElement('canvas');
@@ -535,7 +535,7 @@ main{--tray:clamp(48px,10dvh,110px);--tally:30px;width:100%;max-width:420px;heig
       return;
     }
     const w=n.o>n.x?'o':'x';
-    const head = mode==='cpu' ? (w==='o'?'勝利':'敗北') : (w==='x'?'黒の勝利':'白の勝利');
+    const head = mode==='cpu' ? (w==='o'?'勝利':'失敗') : (w==='x'?'黒の勝利':'白の勝利');
     shareText=`${head}${perfectWinner()===w?'（完全王者！）':''}\n`
       +`盤面${size}×${size} : ${tally}\n${location.href}\n#超速リバーシ`;
     endTimer=setTimeout(()=>{
@@ -550,7 +550,7 @@ main{--tray:clamp(48px,10dvh,110px);--tally:30px;width:100%;max-width:420px;heig
   initBoard();
   buildBoard();
 
-  // ---- CPU：×をトレイからマスまでドラッグして置く ----
+  // ---- CPU：×をトレイからマスまで拖曳して置く ----
   // 運んでいる間も一定間隔で盤面を見直し、置けなくなったり
   // より良いマスがあれば向きを変える。
   let order=[];
@@ -582,7 +582,7 @@ main{--tray:clamp(48px,10dvh,110px);--tally:30px;width:100%;max-width:420px;heig
       const mv=speed*(now-last); last=now;
       const d=Math.hypot(tx-x,ty-y);
       if(d<=mv){
-        place(i,'x'); // 既に置けなくなっていたら置けずに戻る
+        place(i,'x'); // 既に置けなくなっていたら置けずに返回
         retry();
         return;
       }

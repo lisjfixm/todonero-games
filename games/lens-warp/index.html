@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ゆがみレンズ</title>
+<title>扭曲透鏡</title>
 <meta name="description" content="レンズを置いて写真をゆがませるおもちゃ">
 <style>
   :root{
@@ -92,7 +92,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <body>
 <div id="app">
   <div id="stage">
-    <canvas id="cv" role="img" aria-label="レンズで歪ませた画像。レンズをドラッグで動かせます"></canvas>
+    <canvas id="cv" role="img" aria-label="レンズで歪ませた画像。レンズを拖曳で動かせます"></canvas>
     <div id="lensPanel" hidden>
       <div class="row">
         <label for="strength">ゆがみ</label>
@@ -106,10 +106,10 @@ gtag('config', 'G-41RSZLP1YQ');
       </div>
     </div>
     <section class="howto" data-pos="top-left" hidden>
-      <h2>遊び方</h2>
-      <p>丸いレンズを画像に重ねて、絵をゆがませるおもちゃです。勝ち負けはありません。最初は顔のイラストにレンズが1枚置かれていて、「画像を選ぶ」で手持ちの写真に替えられます。できた絵は共有でき、レンズの配置はコードにして渡せます。</p>
+      <h2>玩法</h2>
+      <p>丸いレンズを画像に重ねて、絵をゆがませるおもちゃです。勝ち負けはありません。最初は顔のイラストにレンズが1枚置かれていて、「画像を選ぶ」で手持ちの写真に替えられます。できた絵は分享でき、レンズの配置はコードにして渡せます。</p>
       <h2>操作</h2>
-      <p>レンズをドラッグすると動きます。触った直後はスライダーが出て、ゆがみと大きさを変えられます。＋のボタンで追加し、ゴミ箱をオンにして触ると消せます。目のボタンは枠を隠します。PC では矢印キーでも動かせます。</p>
+      <p>レンズを拖曳すると動きます。触った直後はスライダーが出て、ゆがみと大きさを変えられます。＋のボタンで追加し、ゴミ箱をオンにして触ると消せます。目のボタンは枠を隠します。PC では矢印キーでも動かせます。</p>
       <h2>楽しみ方</h2>
       <p>プラスは膨らみ、マイナスは縮みます。プラスは50ほど、マイナスは25ほどを超えると絵が裏返り始めます。レンズを重ねると、ゆがみも重なります。</p>
       <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -127,29 +127,29 @@ gtag('config', 'G-41RSZLP1YQ');
       <button id="rings" class="btn icon" type="button" aria-label="レンズの枠を表示" aria-pressed="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path id="ringsOff" d="M4 4l16 16" style="display:none"/></svg>
       </button>
-      <button id="share" class="btn icon" type="button" aria-label="共有">
+      <button id="share" class="btn icon" type="button" aria-label="分享">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg>
       </button>
     </div>
   </div>
-  <!-- 共有ボタンで出す画面：画像の共有・配置の共有・配置の読み込み -->
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有">
+  <!-- 分享ボタンで出す画面：画像の分享・配置の分享・配置の読み込み -->
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享">
     <div class="panel">
-      <img id="share-img" alt="共有される画像">
+      <img id="share-img" alt="分享される画像">
       <div class="actions">
-        <button id="share-send" class="btn icon" type="button" aria-label="画像を共有">
+        <button id="share-send" class="btn icon" type="button" aria-label="画像を分享">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v8h14v-8"/></svg>
         </button>
-        <button id="layout-share" class="btn" type="button">配置を共有</button>
+        <button id="layout-share" class="btn" type="button">配置を分享</button>
         <button id="layout-load" class="btn" type="button">配置を読み込み</button>
       </div>
       <input id="layout-code" class="hidden" type="text" readonly aria-label="配置のコード">
       <div id="load-area" class="hidden">
-        <input id="load-code" type="text" placeholder="配置のコードを貼り付け" aria-label="読み込む配置のコード" autocomplete="off" autocapitalize="off" spellcheck="false">
-        <button id="load-go" class="btn" type="button">読み込む</button>
+        <input id="load-code" type="text" placeholder="配置のコードを貼り付け" aria-label="讀取配置のコード" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button id="load-go" class="btn" type="button">讀取</button>
       </div>
       <p id="share-status" aria-live="polite"></p>
-      <button id="share-close" class="btn" type="button">閉じる</button>
+      <button id="share-close" class="btn" type="button">關閉</button>
     </div>
   </div>
 </div>
@@ -173,9 +173,9 @@ gtag('config', 'G-41RSZLP1YQ');
   const PANEL_MARGIN = 8;       // スライダーの箱を画面の端から離す量（CSSピクセル）
   const PANEL_HIDE = 2;         // 操作をやめてからスライダーの箱が消え始めるまでの時間（秒）
   const PANEL_FADE = 0.4;       // スライダーの箱がフェードアウトにかける時間（秒）
-  const STATUS_TIME = 2.5;      // 共有の画面に出すお知らせ（コピーしました等）を出しておく時間（秒）
-  const MAX_LOAD_LENSES = 50;   // 配置のコードから読み込むレンズの上限（変なコードで重くならないように）
-  const SHARE_INSTANT = 0.5;    // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const STATUS_TIME = 2.5;      // 分享の画面に出すお知らせ（已複製等）を出しておく時間（秒）
+  const MAX_LOAD_LENSES = 50;   // 配置のコードから讀取レンズの上限（変なコードで重くならないように）
+  const SHARE_INSTANT = 0.5;    // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   const ANIM_IN = 0.3;          // レンズを追加したとき、0から元の大きさに広がるまでの時間（秒）
   const ANIM_OUT = 0.2;         // レンズを消したとき、0まで縮んで消えるまでの時間（秒）
 
@@ -315,14 +315,14 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 描画 ----------
   const colors = {};
 
-  // forImage が true のときは、共有用に歪ませた画像だけを描く（枠を描かない）
+  // forImage が true のときは、分享用に歪ませた画像だけを描く（枠を描かない）
   function render(forImage){
     const cw = cv.width, ch = cv.height;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(srcCv, 0, 0);
 
     // レンズを画素単位の値にしておく（消えかけのレンズは今のレンズの下に重ねる）
-    // 追加・削除のアニメーション中は、半径を shownRadius で縮めて描く
+    // 追加・刪除のアニメーション中は、半径を shownRadius で縮めて描く
     const all = fading.concat(lenses).filter(l => shownRadius(l) > 0.5);
     const L = all.map(l => ({
       cx: l.x * dpr, cy: l.y * dpr, R2: (shownRadius(l) * dpr) ** 2,
@@ -354,7 +354,7 @@ gtag('config', 'G-41RSZLP1YQ');
             const dx = sx - l.cx, dy = sy - l.cy;
             const r2 = dx * dx + dy * dy;
             if (r2 >= l.R2) continue;
-            // 中心ほど強く拡大（k>0）／縮小（k<0）し、縁でちょうど元の位置に戻る
+            // 中心ほど強く拡大（k>0）／縮小（k<0）し、縁でちょうど元の位置に返回
             const f = 1 + l.k * (r2 / l.R2 - 1);
             sx = l.cx + dx * f; sy = l.cy + dy * f;
             hit = true;
@@ -379,7 +379,7 @@ gtag('config', 'G-41RSZLP1YQ');
       ctx.putImageData(out, x0, y0);
     }
 
-    // レンズの範囲が分かるように縁だけ線を引く（選んでいるレンズは太く濃く）
+    // レンズの範囲が分かるように縁だけ線を拉（選んでいるレンズは太く濃く）
     // 白い画像の上でも見えるように、暗い線を下に敷く
     if (forImage) return;
     placePanel();
@@ -429,7 +429,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // 操作のたびに呼ぶ：箱を出し、指やマウスを離してから PANEL_HIDE 秒後に隠す
-  // （レンズをドラッグ中・スライダーを押さえている間は隠さない）
+  // （レンズを拖曳中・スライダーを押さえている間は隠さない）
   let panelShown = false, panelTimer = 0, panelHeld = false;
   function poke(){
     panelShown = true;
@@ -459,7 +459,7 @@ gtag('config', 'G-41RSZLP1YQ');
     poke();
   }
 
-  // ---------- 追加・削除のアニメーション ----------
+  // ---------- 追加・刪除のアニメーション ----------
   const fading = [];   // 消している途中のレンズ（触れない・選べない）
   const easeOut = t => 1 - (1 - t) ** 3;
   // アニメーション込みで今描く半径
@@ -595,7 +595,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // PC：矢印キーで選んでいるレンズを動かす（スライダー操作中はスライダーに任せる）
   document.addEventListener('keydown', e => {
     if (e.target instanceof HTMLInputElement) return;
-    if (!$('share-view').classList.contains('hidden')) return;  // 共有内容の画面を出している間は動かさない
+    if (!$('share-view').classList.contains('hidden')) return;  // 分享内容の画面を出している間は動かさない
     const step = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
     if (!step || !lenses[selected]) return;
     e.preventDefault();
@@ -616,12 +616,12 @@ gtag('config', 'G-41RSZLP1YQ');
     if (lenses.length) setDeleting(!deleting);
   });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return location.href.split(/[?#]/)[0] + '\n#ゆがみレンズ';
   }
 
-  // 歪ませた画像（枠なし）をPNGのdata URLにする（共有シートの制約があるため同期処理で作る）
+  // 歪ませた画像（枠なし）をPNGのdata URLにする（分享シートの制約があるため同期処理で作る）
   function resultDataUrl(){
     render(true);
     const url = cv.toDataURL('image/png');
@@ -642,7 +642,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (msg) statusTimer = setTimeout(() => { $('share-status').textContent = ''; }, STATUS_TIME * 1000);
   }
 
-  // 共有ボタン：どの端末でも共有の画面を出す。共有する画像はここで作っておく
+  // 分享ボタン：どの端末でも分享の画面を出す。分享画像はここで作っておく
   let shareFile = null;
   $('share').addEventListener('pointerdown', e => e.stopPropagation());
   $('share').addEventListener('click', () => {
@@ -656,30 +656,30 @@ gtag('config', 'G-41RSZLP1YQ');
     $('share-close').focus({ preventScroll: true });
   });
 
-  // 画像を共有（共有シートで文面＋画像を渡す）
+  // 画像を分享（分享シートで文面＋画像を渡す）
   $('share-send').addEventListener('click', () => {
     const text = shareText();
     const file = shareFile;
-    // 共有シートが無い・使えない環境では、文面をコピーして知らせる
+    // 分享シートが無い・使えない環境では、文面をコピーして知らせる
     const fallback = () => {
       navigator.clipboard?.writeText(text)
-        .then(() => setStatus('共有できないため、文面をコピーしました'))
-        .catch(() => setStatus('この環境では共有できません'));
+        .then(() => setStatus('分享できないため、文面を已複製'))
+        .catch(() => setStatus('この環境では分享できません'));
     };
-    // 共有シートが出なかったときは fallback へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
-    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったときは fallback へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋画像
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ text, files: [file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share) {
       navigator.share({ text }).catch(failed);
       return;
@@ -723,7 +723,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return out;
   }
 
-  // 配置を共有：コードを出してコピーする（コピーできない環境でも選んでコピーできるよう欄に出す）
+  // 配置を分享：コードを出してコピーする（コピーできない環境でも選んでコピーできるよう欄に出す）
   $('layout-share').addEventListener('click', () => {
     const code = layoutCode();
     const box = $('layout-code');
@@ -731,7 +731,7 @@ gtag('config', 'G-41RSZLP1YQ');
     box.classList.remove('hidden');
     $('load-area').classList.add('hidden');
     navigator.clipboard?.writeText(code)
-      .then(() => setStatus('配置のコードをコピーしました'))
+      .then(() => setStatus('配置のコードを已複製'))
       .catch(() => setStatus('コードを選んでコピーしてください'));
   });
   $('layout-code').addEventListener('focus', e => e.target.select());
@@ -840,10 +840,10 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- iOS対策 ----------
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive: false });
   document.addEventListener('touchmove', e => { if (drags.size) e.preventDefault(); }, { passive: false });
-  // 共有の画面の入力欄だけは文字を選べるようにする（コードのコピー・貼り付けのため）
+  // 分享の画面の入力欄だけは文字を選べるようにする（コードのコピー・貼り付けのため）
   document.addEventListener('selectstart', e => {
     if (e.target instanceof Node && $('share-view').contains(e.target)) return;
     e.preventDefault();

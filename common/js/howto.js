@@ -1,9 +1,9 @@
-// ゲーム共通の「遊び方」パネル
+// ゲーム共通の「玩法」パネル
 //
 // 使い方(ゲーム側に書くのはこの2つだけ):
 //   1. 文章を HTML に直接書く。ボタンを置きたい親要素(#game など)の中に入れる
-//        <section class="howto" hidden><h2>遊び方</h2><p>...</p></section>
-//   2. </body> の直前で読み込む
+//        <section class="howto" hidden><h2>玩法</h2><p>...</p></section>
+//   2. </body> の直前で讀取
 //        <script src="/common/js/howto.js" defer></script>
 //
 // 任意の調整:
@@ -69,18 +69,18 @@
     openBtn.className = 'howto-open';
     openBtn.dataset.howtoOpen = '';
     openBtn.dataset.pos = section.dataset.pos || 'top-left';
-    openBtn.textContent = '遊び方';
+    openBtn.textContent = '玩法';
   }
 
   // <dialog> の showModal は最前面に出て背景も操作不能にするので、ゲームごとの z-index に左右されない
   const dialog = document.createElement('dialog');
   dialog.className = 'howto-dialog';
-  dialog.setAttribute('aria-label', '遊び方');
+  dialog.setAttribute('aria-label', '玩法');
 
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
   closeBtn.className = 'howto-close';
-  closeBtn.textContent = '閉じる';
+  closeBtn.textContent = '關閉';
 
   if (openBtn) section.parentNode.insertBefore(openBtn, section);
   section.hidden = false;
@@ -94,14 +94,14 @@
     if (!dialog.open && e.target.closest?.('[data-howto-open]')) dialog.showModal();
   }, true);
   closeBtn.addEventListener('click', () => dialog.close());
-  // 閉じるとフォーカスが開いたボタンに戻り、PC のスペースや Enter がゲームに届かず再び開いてしまうので外す
+  // 關閉とフォーカスが開いたボタンに戻り、PC のスペースや Enter がゲームに届かず再び開いてしまうので外す
   dialog.addEventListener('close', () => document.activeElement?.blur());
-  // 枠の外(背景)を押しても閉じる。文字を選択するドラッグが枠の外で終わった場合は閉じない
+  // 枠の外(背景)を按も關閉。文字を選択する拖曳が枠の外で終わった場合は閉じない
   let downOnBackdrop = false;
   dialog.addEventListener('pointerdown', e => { downOnBackdrop = e.target === dialog; });
   dialog.addEventListener('click', e => { if (downOnBackdrop && e.target === dialog) dialog.close(); });
 
-  // パネルとボタンの操作がゲーム側に届くと、裏でゲームが進んだりリスタートしたりするので止める
+  // パネルとボタンの操作がゲーム側に届くと、裏でゲームが進んだりリ開始したりするので止める
   const STOP = [
     'pointerdown', 'pointermove', 'pointerup', 'pointercancel',
     'mousedown', 'mousemove', 'mouseup',

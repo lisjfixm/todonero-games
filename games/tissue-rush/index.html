@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ティッシュラッシュ</title>
+<title>衛生紙衝鋒</title>
 <meta name="description" content="50枚のティッシュを出し切るタイム勝負">
 <style>
   :root{
@@ -68,7 +68,7 @@ gtag('config', 'G-41RSZLP1YQ');
     font-size:52px;font-weight:700;font-variant-numeric:tabular-nums;margin:0 0 4px;
   }
   #result-best{font-size:15px;font-weight:bold;font-variant-numeric:tabular-nums;color:var(--box-ink);opacity:.7;margin:0 0 20px}
-  /* ベスト更新！：ぽんと飛び出してから、ゆっくり弾みつづける */
+  /* 刷新紀錄！：ぽんと飛び出してから、ゆっくり弾みつづける */
   #result-best.new{
     color:var(--accent);opacity:1;font-size:18px;
     animation:best-pop .6s cubic-bezier(.2,1.6,.4,1) both, best-bounce 1.4s ease-in-out .6s infinite;
@@ -103,24 +103,24 @@ gtag('config', 'G-41RSZLP1YQ');
 </head>
 <body>
 <div id="game">
-  <canvas id="cv" aria-label="ティッシュ箱。ティッシュを上にスワイプして引き抜く"></canvas>
+  <canvas id="cv" aria-label="ティッシュ箱。ティッシュを上に滑動して引き抜く"></canvas>
   <div id="over" class="hidden">
     <div class="panel" aria-live="polite">
       <p id="result-head">50枚 出し切った！</p>
       <p id="result-time">0.00秒</p>
       <p id="result-best">ベスト 0.00秒</p>
-      <button id="share" type="button">共有</button>
+      <button id="share" type="button">分享</button>
       <button id="retry" type="button">もう一回</button>
     </div>
   </div>
   <button id="mute" type="button" aria-label="効果音" aria-pressed="false"></button>
   <section class="howto" hidden>
-    <h2>遊び方</h2>
-    <p>箱に入った50枚のティッシュを、できるだけ速く全部引き抜くタイムアタックです。最初の1枚に触れた瞬間に計測が始まり、50枚目を抜いたところでタイムが決まります。ベストタイムはこのブラウザに保存され、結果は画像つきで共有できます。</p>
+    <h2>玩法</h2>
+    <p>箱に入った50枚のティッシュを、できるだけ速く全部引き抜くタイムアタックです。最初の1枚に触れた瞬間に計測が始まり、50枚目を抜いたところでタイムが決まります。ベストタイムはこのブラウザに保存され、結果は画像つきで分享できます。</p>
     <h2>操作</h2>
-    <p>箱から出ているティッシュに指を置き、上へスワイプすると1枚抜けます。1回のスワイプで抜けるのは1枚だけなので、1枚ごとに指を離して掴み直してください。PC ではマウスのドラッグで同じように遊べます。</p>
+    <p>箱から出ているティッシュに指を置き、往上滑動すると1枚抜けます。1回の滑動で抜けるのは1枚だけなので、1枚ごとに指を離して掴み直してください。PC ではマウスの拖曳で同じように遊べます。</p>
     <h2>コツ</h2>
-    <p>途中で指を離しても、引き出した分はそのまま残り、続きから引けます。大きく振り上げるより、一定の短い距離をテンポよく繰り返すほうがタイムは縮みます。</p>
+    <p>途中で指を離しても、引き出した分はそのまま剩餘、続きから引けます。大きく振り上げるより、一定の短い距離をテンポよく繰り返すほうがタイムは縮みます。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
   </section>
 </div>
@@ -131,7 +131,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 定数 ----------
   const TOTAL = 50;        // 箱に入っているティッシュの枚数
-  const PULL_DIST = 110;   // 1枚が抜けるまでに上へ引く距離（画面上のpx）
+  const PULL_DIST = 110;   // 1枚が抜けるまでに往上拉距離（画面上のpx）
   const SWAY = 0.5;        // 指の横移動にティッシュの先端がついていく割合
   // 箱とティッシュの大きさ（3D空間の単位）
   const BOX_W = 2.4, BOX_H = 0.7, BOX_D = 1.2;   // 横幅・高さ（厚み）・奥行き
@@ -177,7 +177,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const GRAVITY = 9.8;     // 重力
   const AIR_FLAT = 9;      // 面に垂直な空気抵抗（大きいほどふわっと落ちる）
   const AIR_ALL = 0.993;   // 全体の空気抵抗（1ステップごとに速度に掛ける。1に近いほど勢いが残る）
-  const FRICTION = 0.5;    // 床や箱に触れているときの横すべりの残り具合
+  const FRICTION = 0.5;    // 床や箱に触れているときの横すべりの剩餘具合
   const ITER = 4;          // 布の形を保つ計算の繰り返し回数（多いほど伸びにくい）
   const STEP = 1 / 120;    // 落下計算の刻み（秒）
   const FLING = 1.0;       // 引いた指の速さをティッシュに伝える割合（1で指と同じ速さで飛ぶ）
@@ -350,7 +350,7 @@ gtag('config', 'G-41RSZLP1YQ');
     g.stroke();
   }
 
-  // 正面：残り枚数を印刷してあるように描く（枚数が変わるたびに描き直す）
+  // 正面：剩餘枚数を印刷してあるように描く（枚数が変わるたびに描き直す）
   const frontCv = faceCanvas(BOX_W, BOX_H);
   const frontTex = faceTexture(frontCv);
   function drawBoxLabel(left){
@@ -362,16 +362,16 @@ gtag('config', 'G-41RSZLP1YQ');
     // 見出し
     g.font = '600 ' + Math.round(h * 0.055) + 'px ' + FONT_NUM;
     spacedText(g, 'TISSUE RUSH', w * 0.06, h * 0.14, h * 0.014);
-    // 「残り ○○ 枚」：数字を大きく、前後の文字は小さく
+    // 「剩餘 ○○ 枚」：数字を大きく、前後の文字は小さく
     const num = String(left);
     const big = '700 ' + Math.round(h * 0.38) + 'px ' + FONT_NUM;
     const small = '700 ' + Math.round(h * 0.085) + 'px ' + FONT_JP;
     g.font = big;   const nw = g.measureText(num).width;
-    g.font = small; const lw = g.measureText('残り').width, mw = g.measureText('枚').width;
+    g.font = small; const lw = g.measureText('剩餘').width, mw = g.measureText('枚').width;
     const gap = h * 0.035;
     let x = (w - (lw + gap + nw + gap + mw)) / 2;
     const base = h * 0.51;
-    g.font = small; g.fillText('残り', x, base); x += lw + gap;
+    g.font = small; g.fillText('剩餘', x, base); x += lw + gap;
     g.font = big;   g.fillText(num, x, base);    x += nw + gap;
     g.font = small; g.fillText('枚', x, base);
     frontTex.needsUpdate = true;
@@ -1021,11 +1021,11 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 表示 ----------
-  // 残り枚数を箱に表示する（時間はプレイ中は出さない）
+  // 剩餘枚数を箱に表示する（時間はプレイ中は出さない）
   function updateHud(){
     const left = TOTAL - count;
     drawBoxLabel(left);
-    cv.setAttribute('aria-label', 'ティッシュ箱。残り' + left + '枚。ティッシュを上にスワイプして引き抜く');
+    cv.setAttribute('aria-label', 'ティッシュ箱。剩餘' + left + '枚。ティッシュを上に滑動して引き抜く');
   }
 
   // ---------- 進行 ----------
@@ -1042,7 +1042,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const isNew = bestTime === 0 || elapsed < bestTime;
     if (isNew){ bestTime = elapsed; saveBest(); }
     const best = $('result-best');
-    best.textContent = isNew ? 'ベスト更新！' : 'ベスト ' + bestTime.toFixed(2) + '秒';
+    best.textContent = isNew ? '刷新紀錄！' : 'ベスト ' + bestTime.toFixed(2) + '秒';
     best.classList.toggle('new', isNew);
     $('over').classList.remove('hidden');
     $('retry').focus({ preventScroll:true });
@@ -1089,7 +1089,7 @@ gtag('config', 'G-41RSZLP1YQ');
     // 最初の1枚に触れた瞬間から計測する
     if (state === 'ready'){
       state = 'playing'; t0 = performance.now();
-      // 計測中はパネルを開けないように「遊び方」ボタンを隠す
+      // 計測中はパネルを開けないように「玩法」ボタンを隠す
       document.documentElement.setAttribute('data-howto-hidden', '');
     }
   });
@@ -1112,7 +1112,7 @@ gtag('config', 'G-41RSZLP1YQ');
       playPop();
       newLook();   // 次の1枚は別の形で出てくる
       pullExt = 0; pullTx = 0;
-      // 1枚ごとに指を離して掴み直す（1回のスワイプで何枚も抜けないように）
+      // 1枚ごとに指を離して掴み直す（1回の滑動で何枚も抜けないように）
       grab = null;
       count++;
       if (count >= TOTAL) finish();
@@ -1128,7 +1128,7 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('pointerup', release);
   document.addEventListener('pointercancel', release);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
   document.addEventListener('touchmove', e => { if (grab) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
@@ -1144,13 +1144,13 @@ gtag('config', 'G-41RSZLP1YQ');
 
   $('retry').addEventListener('click', restart);
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return 'ティッシュを出し切った！\n' + TOTAL + '枚 ' + elapsed.toFixed(2) + '秒\n'
       + location.href.split(/[?#]/)[0] + '\n#ティッシュラッシュ';
   }
 
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const c = document.createElement('canvas');
     c.width = 600; c.height = 600;
@@ -1172,20 +1172,20 @@ gtag('config', 'G-41RSZLP1YQ');
     const btn = $('share');
     const text = shareText();
     const file = resultImageFile();
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files:[file] })){
       navigator.share({ text, files:[file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 

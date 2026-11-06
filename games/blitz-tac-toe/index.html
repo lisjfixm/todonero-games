@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>超速マルバツゲーム</title>
+<title>閃電圈圈叉叉</title>
 <meta name="description" content="順番なしで同時に置くマルバツゲーム">
 <style>
 :root{--bg:#fff;--fg:#222;--sub:#666;--o:#d33;--x:#236;--howto-bg:var(--bg);--howto-fg:var(--fg)}
@@ -114,13 +114,13 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
         </label>
         <label><input type="checkbox" id="moveOpp" checked>相手の駒を動かせる</label>
         <div class="ends">
-          <button class="start" id="go">スタート</button>
-          <button class="start" id="howtoBtn" type="button" data-howto-open>遊び方</button>
+          <button class="start" id="go">開始</button>
+          <button class="start" id="howtoBtn" type="button" data-howto-open>玩法</button>
         </div>
       </div>
       <div class="ends" id="ends" hidden>
         <button class="start" id="next">もう一回</button>
-        <button class="start" id="toSetup">設定に戻る</button>
+        <button class="start" id="toSetup">設定に返回</button>
         <button class="start" id="showBoard">結果を表示</button>
       </div>
     </div>
@@ -132,10 +132,10 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
 </main>
 <div class="discards" id="discards"></div>
 <section class="howto" hidden data-pos="none">
-  <h2>遊び方</h2>
-  <p>手番がなく、両者が同時に印を置くマルバツゲームです。縦、横、斜めのどれか1列を自分の印で埋めると勝ちで、勝った回数が画面に残ります。全部のマスが埋まって揃わなければ、自動で再戦になります。スタート画面で CPU の強さか対人戦、1×1から10×10までの盤面を選べます。</p>
+  <h2>玩法</h2>
+  <p>手番がなく、両者が同時に印を置くマルバツゲームです。縦、横、斜めのどれか1列を自分の印で埋めると勝ちで、勝った回数が画面に剩餘ます。全部のマスが埋まって揃わなければ、自動で再戦になります。開始画面で CPU の強さか対人戦、1×1から10×10までの盤面を選べます。</p>
   <h2>操作</h2>
-  <p>下のトレイの○を指でドラッグし、空いたマスの上で離します。「相手の駒を動かせる」がオンなら、盤上のどちらの駒も掴んで別のマスへ移せるほか、盤の外へ出すと取り除けます。外に出した駒はまた掴んで盤に戻せます。対人戦ではもう1人が上のトレイの×を動かします。PC ではマウスのドラッグで操作します。</p>
+  <p>下のトレイの○を指で拖曳し、空いたマスの上で離します。「相手の駒を動かせる」がオンなら、盤上のどちらの駒も掴んで別のマスへ移せるほか、盤の外へ出すと取り除けます。外に出した駒はまた掴んで盤に戻せます。対人戦ではもう1人が上のトレイの×を動かします。PC ではマウスの拖曳で操作します。</p>
   <h2>コツ</h2>
   <p>あと1つで揃いそうな相手の列は、空きマスをふさぐだけでなく、駒を盤の外へ捨てても崩せます。CPU は駒を運ぶ間も盤面を見直すので、置く直前に狙いが変わることがあります。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -152,7 +152,7 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
     strong:{cross:[280,380], grab:[50,150],  look:[30,90],   notice:{win:1,   block:0.95,fork:0.9}, noise:0.1},
   };
   const REMATCH_MS=1500;  // 「仕切り直し」を表示してから再戦するまで(ms)
-  const LINE_DRAW_MS=350;     // 勝利ラインを引く時間(ms)
+  const LINE_DRAW_MS=350;     // 勝利ラインを拉時間(ms)
   const RESULT_DELAY_MS=800;  // 勝利ラインを引き始めてから結果を出すまで(ms)
   const COUNTDOWN=3;          // 表示するカウント（3→2→1）
   const COUNTDOWN_MS=1500;    // 実際にかける合計時間(ms)
@@ -193,13 +193,13 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
     board.forEach((_,i)=>render(i));
   }
 
-  // ---- ドラッグ操作（トレイ・盤面・捨てた駒。ポインターごとに独立）----
+  // ---- 拖曳操作（トレイ・盤面・捨てた駒。ポインターごとに独立）----
   // from: null=トレイ / 数値=盤面のマス / 'out'=盤面の外に捨てた駒
   const drags=new Map();
   const discardsEl=$('discards');
 
   // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て
-  // ドラッグが奪われるのを防ぐ
+  // 拖曳が奪われるのを防ぐ
   const isDraggable=t=>t instanceof Element && !!(t.closest('.piece,.mark') || t.closest('.cell')?.querySelector('.mark'));
   document.addEventListener('touchstart',e=>{ if(isDraggable(e.target)) e.preventDefault(); },{passive:false});
   document.addEventListener('touchmove',e=>{ if(drags.size) e.preventDefault(); },{passive:false});
@@ -320,7 +320,7 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
     startGame();
   });
   nextBtn.addEventListener('click',startGame);
-  // 結果を表示：パネルを隠して終了時の盤面を見せる。画面をタップで戻る
+  // 結果を表示：パネルを隠して終了時の盤面を見せる。画面をタップで返回
   let viewing=false;
   $('showBoard').addEventListener('click',()=>{
     panelEl.hidden=true;
@@ -421,7 +421,7 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
     },RESULT_DELAY_MS);
   }
 
-  // 揃った列の最初と最後のマスを結ぶ線を引く
+  // 揃った列の最初と最後のマスを結ぶ線を拉
   const winEl=$('winline');
   let endTimer=0;
   function drawWinLine(l,m){
@@ -452,7 +452,7 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
     $('sO').textContent=score.o; $('sX').textContent=score.x;
   }
 
-  // ---- CPU：×をトレイからマスまでドラッグして置く ----
+  // ---- CPU：×をトレイからマスまで拖曳して置く ----
   // 運んでいる間も毎フレーム盤面を見直し、より良いマスがあれば向きを変える。
   let order=[];
   function cpuDrag(){
@@ -479,7 +479,7 @@ main{--tray:clamp(48px,10dvh,110px);--score:28px;width:100%;max-width:420px;heig
       const d=Math.hypot(tx-x,ty-y);
       if(d<=mv){
         el.style.transform='';
-        place(i,'x'); // 既に埋まっていたら置けずに戻る
+        place(i,'x'); // 既に埋まっていたら置けずに返回
         if(playing) cpuTimer=setTimeout(cpuDrag,rand(CPU_LEVELS[level].grab));
         return;
       }

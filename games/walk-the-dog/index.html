@@ -112,10 +112,10 @@ gtag('config', 'G-41RSZLP1YQ');
     </div>
   </div>
   <section class="howto" data-pos="bottom-right" hidden>
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>犬がリードをくわえて飼い主を振り回し、放り投げて飛距離を競うゲームです。リードの端は犬の口に固定されていて、指で動かすのは犬のほうです。指を離すと飼い主がリードから手を放して飛んでいき、止まるまでの距離が記録になります。左右どちらへ飛んでも距離に数えられ、ベストはこのブラウザに保存されます。</p>
     <h2>操作</h2>
-    <p>画面を押すと犬が指の位置へ移動します。押したまま動かして振り回し、離すと投げます。飼い主が飛んでいる間は、画面をタップすると進行方向へ加速し、TAP!! のゲージがたまると空中でもう一度跳ね上がります。PC ではマウスで同じように遊べます。</p>
+    <p>画面を押すと犬が指の位置へ移動します。押したまま動かして振り回し、離すと投げます。飼い主が飛んでいる間は、画面をタップすると進行方向へ加速し、TAP!! のゲージがたまると空中で再來一次跳ね上がります。PC ではマウスで同じように遊べます。</p>
     <h2>コツ</h2>
     <p>投げる勢いには、離す直前で一番速かった瞬間の速さが使われます。勢いが足りないと投げられず、最初に戻ります。ゲージは手を止めると減っていき、跳ねるたびに必要なタップ数が増えるので、止まるまで連打を続けてください。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -185,7 +185,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function build(){
     P.length = 0; cons.length = 0; IDX = {};
 
-    // 手（振り回す側）
+    // 手（振り轉動側）
     IDX.hand = addP(HAND_REST.x, HAND_REST.y, 0, 0.05);
 
     // 人（立ちポーズ・腕を上げてロープを握る）
@@ -408,7 +408,7 @@ gtag('config', 'G-41RSZLP1YQ');
       const nvx = vx * ca - vy * sa;
       const nvy = vx * sa + vy * ca;
       p.x = nx; p.y = ny;
-      // 重心速度はそのまま。回すのは重心まわりの成分だけ
+      // 重心速度はそのまま。轉動のは重心まわりの成分だけ
       p.px = nx - (nvx + cvx);
       p.py = ny - (nvy + cvy);
     }
@@ -492,7 +492,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if(isBest){ state.best = state.dist; saveBest(); }
     elBest.textContent = state.best.toFixed(1);
     elRDist.textContent = state.dist.toFixed(1);
-    elRNote.textContent = isBest ? 'ベスト更新！' : '';
+    elRNote.textContent = isBest ? '刷新紀錄！' : '';
     elResult.classList.add('show');
     hearts(6, true);
   }

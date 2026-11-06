@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ダブルブッキング</title>
+<title>時間表崩壞</title>
 <meta name="description" content="動く予定を空き時間にねじ込む">
 <style>
 :root{
@@ -67,7 +67,7 @@ body{
 #over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--overlay);padding:16px;text-align:center}
 .hidden{display:none !important}
 #result{font-size:26px;font-weight:bold}
-#result.big{font-size:52px}  /* ゲームオーバーの「予定崩壊」だけ2倍 */
+#result.big{font-size:52px}  /* 遊戲結束の「予定崩壊」だけ2倍 */
 #detail{font-size:15px;color:var(--sub)}
 #over button{min-width:180px;min-height:48px;font-size:18px;font-weight:bold;border-radius:8px;border:none;background:var(--ev);color:var(--evtext);font-family:inherit}
 #over button#share{background:var(--bg);color:var(--ev);border:2px solid var(--ev)}
@@ -86,12 +86,12 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     <button id="next" type="button">次の日へ</button>
     <button id="endless" type="button">エンドレスモード</button>
     <button id="retry" type="button">もう一回</button>
-    <button id="share" type="button">共有</button>
+    <button id="share" type="button">分享</button>
   </div>
   <button id="mode" type="button" class="hidden"></button>
   <section class="howto" data-pos="bottom-left" hidden>
-    <h2>遊び方</h2>
-    <p>空き時間の少ない1日の予定表に、上下に動き続ける予定をねじ込むゲームです。隙間に収まる位置で押せば次の予定へ進み、全部入れるとその日はクリアです。既存の予定に重なると崩れて失敗し、通常はその日の最初からやり直します。月曜から金曜へ進むほど動きは速くなり、隙間の余裕は40分から15分まで減ります。金曜日を終えると、何日続くかを競うエンドレスモードも遊べます。</p>
+    <h2>玩法</h2>
+    <p>空き時間の少ない1日の予定表に、上下に動き続ける予定をねじ込むゲームです。隙間に収まる位置で押せば次の予定へ進み、全部入れるとその日はクリアです。既存の予定に重なると崩れて失敗し、通常はその日の最初から重新開始ます。月曜から金曜へ進むほど動きは速くなり、隙間の余裕は40分から15分まで減ります。金曜日を終えると、何日続くかを競うエンドレスモードも遊べます。</p>
     <h2>操作</h2>
     <p>予定表をタップすると、動いている予定を今の位置で右の欄へ押し込みます。PC ではクリックのほか、スペースキーや Enter キーでも押し込めます。</p>
     <h2>コツ</h2>
@@ -126,11 +126,11 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   const ENDLESS_SPEED_MAX = 520; // 速さの上限（分/秒）
   const INSERT_TIME = 0.25;      // 押し込んで右の欄に入るまでの時間（秒）
   // ---------- 物理（ぶつかったときの崩壊） ----------
-  const PUSH_SPEED = 1400;       // ぶつかるとき、押し込む予定が右へ進む速さ（px/秒）
+  const PUSH_SPEED = 1400;       // ぶつかるとき、押し込む予定が往右進む速さ（px/秒）
   const BURST_X = 700;           // 当たって外れた予定が左右に弾け飛ぶ速さ（px/秒）
   const BURST_UP = 500;          // 弾け飛ぶときの上向きの勢い（px/秒）
   const BURST_SPIN = 10;         // 弾け飛ぶときの回転の速さ（ラジアン/秒）
-  const REQ_BACK_X = 900;        // ぶつかったとき、押し込んだ予定が左へ跳ね返される速さ（px/秒）
+  const REQ_BACK_X = 900;        // ぶつかったとき、押し込んだ予定が往左跳ね返される速さ（px/秒）
   const REQ_BACK_UP = 400;       // 跳ね返されるときの上向きの勢い（px/秒）
   const REQ_BACK_SPIN = 8;       // 跳ね返されるときの回転の速さ（ラジアン/秒）
   const GRAVITY = 1800;          // 重力（px/秒²）
@@ -149,10 +149,10 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   const WALL_FLOOR_OUT = 20;     // 床を画面の外へずらす量（px）
   const CRASH_AFTER = 0.5;       // 崩れた箱が全部止まってから結果を出すまでの時間（秒）
   const CRASH_MAX = 4;           // ぶつかってから結果を出すまでの最長時間（秒）
-  const SHOT_DELAY = 0.1;        // ぶつかってから共有画像用の画面を撮るまでの時間（秒）
+  const SHOT_DELAY = 0.1;        // ぶつかってから分享画像用の画面を撮るまでの時間（秒）
   const SHAKE_TIME = 0.4;        // 予定が崩れるたびに画面が揺れる時間（秒）
   const SHAKE_AMP = 12;          // 画面の揺れの大きさ（px）。時間とともに小さくなる
-  const QUEUE_W = 80;            // 左端の「残りの予定」の列の幅
+  const QUEUE_W = 80;            // 左端の「剩餘の予定」の列の幅
   const AXIS_W = 40;             // 時刻欄の幅
   const LANE_RATE = 0.36;        // 動く予定の欄の幅（時刻欄を除いた幅に対する割合）
   const LANE_GAP = 12;           // 動く予定の欄と1日の予定の欄の間
@@ -180,7 +180,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   let evs = [];          // 1日の予定 {s:開始(分), e:終了(分), t:件名, len:長さ(分)}
   let queue = [];        // まだ出ていないねじ込む予定
   let req = null;        // 動いている予定 {len, t}
-  let left = 0;          // この日の残りのねじ込む予定の数
+  let left = 0;          // この日の剩餘のねじ込む予定の数
   let pos = 0, dir = 1;  // 動いている予定の開始位置（分）と向き
   let speed = 0;
   let score = 0;         // これまでにねじ込んだ数（全ステージ合計）
@@ -190,10 +190,10 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   let anim = null;       // 押し込み中 {t:0〜1, s, e}
   let bodies = [];       // ぶつかった後の物理の箱。空でなければ1日の予定の代わりにこれを描く
   let crashTime = 0, goneTime = 0, physAcc = 0;
-  let crashShot = null;   // ぶつかって少し経ったときの画面（ミスしたときの共有画像に使う）
-  let shotT = -1;         // 共有画像用の画面を撮るまでの残り時間（秒）。負のときは待っていない
-  let shotPending = false;   // 次の描画を共有画像用に撮る
-  let shakeT = 0;        // 画面の揺れの残り時間（秒）
+  let crashShot = null;   // ぶつかって少し経ったときの画面（ミスしたときの分享画像に使う）
+  let shotT = -1;         // 分享画像用の画面を撮るまでの剩餘時間（秒）。負のときは待っていない
+  let shotPending = false;   // 次の描画を分享画像用に撮る
+  let shakeT = 0;        // 画面の揺れの剩餘時間（秒）
   let W = 0, H = 0, top = 0, bottom = 0, k = 1, axisR = 0, laneX = 0, laneW = 0, colX = 0, colW = 0;
 
   // エンドレスモードの解放と最長記録：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
@@ -214,7 +214,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 
   // ---------- ステージの生成 ----------
   // ねじ込む予定1つにつき、それより slack 分だけ長い隙間を1つ用意する。
-  // 残りの時間を最初から入っている予定で埋める。
+  // 剩餘の時間を最初から入っている予定で埋める。
   function buildStage(cfg){
     const lens = [...Array(cfg.count)].map(() => randStep(REQ_LEN_MIN, cfg.lenMax));
     const gapSizes = shuffle(lens.map(l => l + cfg.slack));
@@ -268,7 +268,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 
   // ---------- 物理 ----------
   // 1日の予定は、何かが当たるまでその場に固定された箱。当たった瞬間に固定が外れて重力で落ち、
-  // 当たった箱にさらに当たった箱も外れていく。押し込む予定は右へ飛んでいく箱。
+  // 当たった箱にさらに当たった箱も外れていく。押し込む予定は往右飛んでいく箱。
   function makeBody(x, y, w, h, kind, ev, pinned){
     const b = { x, y, w, h, a: 0, vx: 0, vy: 0, av: 0, kind, ev, pinned, noGravity: false };
     setMass(b);
@@ -404,7 +404,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
         // 既存の予定が崩れるたびに画面を揺らす
         if (A.pinned && !A.wall){ release(A); burst(A, B); shakeT = SHAKE_TIME; }
         if (B.pinned && !B.wall){ release(B); burst(B, A); shakeT = SHAKE_TIME; }
-        // 押し込んだ予定は、最初にぶつかった瞬間に左へ跳ね返される。共有画像はここから少し経った画面を使う
+        // 押し込んだ予定は、最初にぶつかった瞬間に往左跳ね返される。分享画像はここから少し経った画面を使う
         for (const P of [A, B]) if (P.kind === 'req' && P.noGravity){ bounceBack(P); shotT = SHOT_DELAY; }
         A.noGravity = false; B.noGravity = false;
         pairs.push({ A, B, ...c });
@@ -491,10 +491,10 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   }
   function gameOver(){
     mode = 'over';
-    const detail = endless ? `エンドレス ${dayName()}　${newBest ? '新記録！' : `最長 ${best}日目`}` : dayName();
+    const detail = endless ? `エンドレス ${dayName()}　${newBest ? '新紀錄！' : `最長 ${best}日目`}` : dayName();
     showOverlay('予定崩壊', detail, { retry: true, share: true, big: true });
   }
-  function updateHud(){ $('hud').textContent = `${dayName()}　残り${left}件`; }
+  function updateHud(){ $('hud').textContent = `${dayName()}　剩餘${left}件`; }
 
   function update(dt){
     shakeT = Math.max(0, shakeT - dt);
@@ -575,7 +575,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     drawCard(x, top + s * k + 0.5, w, Math.max(1, (e - s) * k - 1), color, lines);
   }
 
-  // noShake：画面の揺れを入れずに描く（共有画像用の画面をブレさせないため）
+  // noShake：画面の揺れを入れずに描く（分享画像用の画面をブレさせないため）
   function draw(noShake){
     if (!W) return;
     const cLine = css('--line'), cSub = css('--sub'), cReq = css('--req'), cEv = css('--ev');
@@ -597,7 +597,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
       ctx.fillText(`${START_HOUR + h}:00`, axisR - 5, y);
     }
 
-    // 左端：このあとねじ込む残りの予定（長さは1日の欄と同じ縮尺）
+    // 左端：このあとねじ込む剩餘の予定（長さは1日の欄と同じ縮尺）
     ctx.fillStyle = cSub; ctx.font = `11px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
     ctx.fillText('このあと', 4, 0);
     let qy = top;
@@ -670,7 +670,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     if (mode === 'playing') insert();
   });
   function onNext(){ stageStartScore = score; startStage(stage + 1); }
-  // 失敗したらその日からやり直し。全部クリアしたら月曜日から。エンドレスモードは必ず1日目から
+  // 失敗したらその日から重新開始。全部クリアしたら月曜日から。エンドレスモードは必ず1日目から
   function onRetry(){
     if (endless || mode === 'clear') startRun(endless);
     else startStage(stage);
@@ -689,7 +689,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   $('endless').addEventListener('click', () => startRun(true));
   // 右上のボタン：通常モードとエンドレスモードを行き来する（どちらも最初の日から）
   $('mode').addEventListener('click', () => {
-    $('mode').blur();   // フォーカスが残ると、スペース・Enterキーでのねじ込みがこのボタンを押してしまう
+    $('mode').blur();   // フォーカスが残ると、スペース・Enterキーでのねじ込みがこのボタンを按しまう
     startRun(!endless);
   });
 
@@ -707,7 +707,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     lastTouchEnd = now;
   }, { passive:false });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function headline(){
     if (endless) return `エンドレス${dayName()}で予定崩壊`;
     return mode === 'clear' ? '月〜金の予定を全部ねじ込んだ！' : '予定崩壊';
@@ -718,7 +718,7 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     const detail = mode === 'clear' ? `${score}件ねじ込んだ` : dayName();
     return `${headline()}\n${detail}\n${url}\n#ダブルブッキング`;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   // ミスしたときは、ぶつかって少し経ったときの画面を使う
   function resultImageFile(){
     const src = mode === 'over' && crashShot ? crashShot : cv;
@@ -743,20 +743,20 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
     const btn = $('share');
     const text = shareText();
     const file = resultImageFile();
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ text, files: [file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 

@@ -102,9 +102,9 @@ gtag('config', 'G-41RSZLP1YQ');
 <div id="menu" class="panel hidden">
   <button id="btn-ik">操作モード: 簡単</button>
   <button id="btn-reset">ポーズをリセット</button>
-  <button id="btn-share">ポーズを共有</button>
-  <button id="btn-load">ポーズを読み込む</button>
-  <button type="button" data-howto-open>遊び方</button>
+  <button id="btn-share">ポーズを分享</button>
+  <button id="btn-load">ポーズを讀取</button>
+  <button type="button" data-howto-open>玩法</button>
 </div>
 
 <div id="bottom">
@@ -125,14 +125,14 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <div id="result" class="panel hidden">
   <h2 id="r-title"></h2>
-  <button id="btn-again" class="primary">もう一度</button>
+  <button id="btn-again" class="primary">再來一次</button>
 </div>
 
 <section class="howto" hidden data-pos="none">
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>人間にポーズをとらせ、コマのように回して戦わせるゲームです。「決定」を押すと、ランダムなポーズのCPUとすり鉢状のステージで対戦します。相手を場外へ出すか、回転を尽きさせれば勝ちです。60秒たつと回転の多いほうが勝ちます。</p>
   <h2>操作</h2>
-  <p>ポーズは関節の印をドラッグして作ります。胴の印を選ぶと全身を回すリングが出ます。何もない所のドラッグで視点が回り、右上のメニューからリセットやコードでの共有ができます。対戦中は左下のパッドで移動し、スピンのボタンで回転を上乗せできます。使えるのは3秒に1回です。PC では矢印キーか WASD とスペースキーです。</p>
+  <p>ポーズは関節の印を拖曳して作ります。胴の印を選ぶと全身を轉動リングが出ます。何もない所の拖曳で視点が回り、右上のメニューからリセットやコードでの分享ができます。対戦中は左下のパッドで移動し、スピンのボタンで回転を上乗せできます。使えるのは3秒に1回です。PC では矢印キーか WASD とスペースキーです。</p>
   <h2>コツ</h2>
   <p>手足を広げると当てたときの力は増しますが、回転は早く減ります。重心が軸からずれると外へ流されやすく、接地点がずれると回転が減りやすくなります。速く動きすぎても回転を失います。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -157,7 +157,7 @@ const TUNE = {
   boostSpin   : 14.0,  // 高速スピンで上乗せされる回転(rad/s)
   boostTime   : 0.80,  // 上乗せしきるまでの時間(秒)
   boostFall   : 1.20,  // 上乗せ分が抜けきるまでの時間(秒)
-  boostCool   : 3.00,  // 高速スピンのクールダウン(押してから再使用できるまで/秒)
+  boostCool   : 3.00,  // 高速スピンのクールダウン(按から再使用できるまで/秒)
   cpuAccel    : 6.30,  // CPU が寄せてくる強さ(プレイヤーの moveAccel より弱め)
   cpuBoost    : 0.100, // CPU が高速スピンを使う確率(1フレームあたり)
 
@@ -256,7 +256,7 @@ const BODY = {
 /* 簡単モードで出すハンドル(IK の効く先端だけ) */
 const SIMPLE_HANDLES = ['Spine','Head','LeftHandTip','RightHandTip','LeftToeBase','RightToeBase'];
 
-/* ドラッグで動かせる関節 */
+/* 拖曳で動かせる関節 */
 const POSABLE = ['Spine','Spine2','Neck','Head',
   'LeftArm','LeftForeArm','LeftHand',
   'RightArm','RightForeArm','RightHand',
@@ -265,7 +265,7 @@ const POSABLE = ['Spine','Spine2','Neck','Head',
   'LeftHandTip','RightHandTip'];
 
 /* 指先に置くハンドル。指は動かさず、手首(Hand)の向きだけを変える。
-   at = ハンドルを表示する骨 / bone = 実際に回す骨 */
+   at = ハンドルを表示する骨 / bone = 実際に轉動骨 */
 const TIPS = {
   LeftHandTip:  { at:'LeftHandMiddle4',  bone:'LeftHand',  label:'左手の向き' },
   RightHandTip: { at:'RightHandMiddle4', bone:'RightHand', label:'右手の向き' },
@@ -493,7 +493,7 @@ function applySkin(f){
   }
 }
 
-/* ボーンを root ローカル基準の軸まわりに回す */
+/* ボーンを root ローカル基準の軸まわりに轉動 */
 function rotateBone(f, bone, axis, rad){
   const pq = (bone.p < 0 ? f.armQ.clone() : f.bones[bone.p].wq.clone());
   const wq = pq.clone().multiply(bone.quat);
@@ -520,7 +520,7 @@ function aimBone(f, bone, dirWorld){
    Mixamo リグはどちらの手もローカルX軸の正方向が手のひら側。
    ------------------------------------------------------------------------- */
 const FINGERS = ['Thumb','Index','Middle','Ring','Pinky'];
-// 握り切ったときの角度(rad)。親指だけ回す向きが逆(手のひらを横切って人差し指に添う)
+// 握り切ったときの角度(rad)。親指だけ轉動向きが逆(手のひらを横切って人差し指に添う)
 const CURL = { Thumb:[-0.15, -0.30, -0.30], other:[1.40, 1.55, 1.05] };
 // 手の形。指ごとに CURL を何割かけるか
 const HANDS = {
@@ -546,7 +546,7 @@ function setHandPose(f, side, key){
   updateBones(f);
   applySkin(f);
 }
-/* --- ポーズの保存・共有 -------------------------------------------------
+/* --- ポーズの保存・分享 -------------------------------------------------
    姿勢を決めている骨のクォータニオンを1成分1バイトに量子化して並べ、
    最後に手の形を1バイト足して base64url にする。誤差は0.5度程度。
    ----------------------------------------------------------------------- */
@@ -641,13 +641,13 @@ function handSideOf(name){
 }
 
 /* --- IK ------------------------------------------------------------------
-   掴んだ関節そのものを目標位置へ持っていくため、親側の関節を CCD で回す。
+   掴んだ関節そのものを目標位置へ持っていくため、親側の関節を CCD で轉動。
    ------------------------------------------------------------------------- */
 function boneWorld(f, b, out){
   return out.setFromMatrixPosition(b.world).applyMatrix4(f.pivot.matrixWorld);
 }
 
-/* ボーンをワールド空間の回転 q で回す */
+/* ボーンをワールド空間の回転 q で轉動 */
 function applyWorldRot(f, bone, q){
   const rq = f.root.quaternion;
   const pW = new THREE.Quaternion().copy(rq).multiply(bone.p < 0 ? f.armQ : f.bones[bone.p].wq);
@@ -657,7 +657,7 @@ function applyWorldRot(f, bone, q){
 }
 
 /* 掴んだ関節から親をたどって IK チェーンを作る(動かせない関節で打ち切り)
-   start を渡すと、そこから上を回す(指先を掴んで手首から動かす場合に使う) */
+   start を渡すと、そこから上を轉動(指先を掴んで手首から動かす場合に使う) */
 function ikChainOf(f, bone, start){
   const chain = [];
   let b = bone;
@@ -677,7 +677,7 @@ function solveIK(f, bone, target, start){
   if (!chain.length) return false;
   for (let it=0; it<TUNE.ikIters; it++){
     for (const c of chain){
-      boneWorld(f, c, _ia);          // 回す関節の位置
+      boneWorld(f, c, _ia);          // 轉動関節の位置
       boneWorld(f, bone, _ib);       // 今のエフェクタ位置
       const v1 = _ib.sub(_ia), v2 = _ic.copy(target).sub(_ia);
       if (v1.lengthSq() < 1e-8 || v2.lengthSq() < 1e-8) continue;
@@ -955,7 +955,7 @@ let flashes = [];
 const PMAX = 900;
 let phase = 'pose', selected = null, elapsed = 0, ikMode = true;
 const cam = { theta:0.45, phi:1.15, dist:4.2, target:new THREE.Vector3(0,0.9,0), shake:0 };
-let slowT = 0;   // 決着時のスローモーション残り時間
+let slowT = 0;   // 決着時のスローモーション剩餘時間
 let introT = 0, goT = 0;
 
 /* 上下グラデーションの背景。2×128 の画像を伸ばして使う */
@@ -1179,7 +1179,7 @@ function updateParticles(dt){
   }
 }
 
-/* Unity の Rotate ツールのような3軸リング。Spine を選ぶと出て、体全体を回す。 */
+/* Unity の Rotate ツールのような3軸リング。Spine を選ぶと出て、体全体を轉動。 */
 function buildGizmo(){
   gizmo = new THREE.Group();
   gizmo.visible = false;
@@ -1305,7 +1305,7 @@ function pinchDist(){
 
 function dragBone(e){
   const tip  = TIPS[selected];
-  const bone = handleBone(player, selected);   // 実際に回す骨
+  const bone = handleBone(player, selected);   // 実際に轉動骨
   const eff  = handleAt(player, selected);     // 目標に合わせたい点(指先など)
   if (!bone || !eff) return;
   pointer.set(e.clientX/innerWidth*2-1, -(e.clientY/innerHeight*2-1));
@@ -1404,7 +1404,7 @@ function dragGizmo(e){
   const angle = Math.atan2(_gc.dot(drag.axis), drag.vec.dot(_gv));
   if (!angle) return;
   drag.vec.copy(_gv);
-  applyWorldRot(player, player.bones[0],        // Hips を回す = 全身が回る
+  applyWorldRot(player, player.bones[0],        // Hips を轉動 = 全身が回る
     new THREE.Quaternion().setFromAxisAngle(drag.axis, angle));
   applySkin(player);
   refreshStats();
@@ -1449,7 +1449,7 @@ function setupInput(){
         const side = handSideOf(selected);
         if (side) markHand(GRIP[side]);
         gizmo.visible = (selected === 'Spine');
-        if (gizmo.visible){                    // ギズモ表示だけ。回すのはリング
+        if (gizmo.visible){                    // ギズモ表示だけ。轉動のはリング
           updateGizmoPos();
           drag = null;
           return;
@@ -1495,7 +1495,7 @@ function setupInput(){
   $('btn-share').onclick = () => {
     const code = encodePose(player);
     const done = ok => {
-      if (ok) toast('ポーズコードをコピーしました');
+      if (ok) toast('ポーズコードを已複製');
       else prompt('ポーズコード', code);
     };
     if (navigator.clipboard && navigator.clipboard.writeText){
@@ -1816,7 +1816,7 @@ function loop(now){
 function showError(msg){
   const el = document.getElementById('err');
   el.style.display = 'block';
-  el.textContent = 'エラー: ' + msg;
+  el.textContent = '錯誤：' + msg;
 }
 addEventListener('error', e => showError(e.message));
 

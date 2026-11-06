@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>1px探し</title>
+<title>找1像素</title>
 <meta name="description" content="どこかにある1pxの点を探すタイム勝負">
 <style>
   :root{
@@ -107,17 +107,17 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <div id="over" hidden>
     <div class="card">
-      <h2>クリア！</h2>
+      <h2>過關！</h2>
       <div id="result" aria-live="polite"></div>
       <button class="btn" id="retry">もう一回</button>
-      <button class="btn secondary" id="share">共有</button>
+      <button class="btn secondary" id="share">分享</button>
     </div>
   </div>
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>白い範囲のどこかにある1pxの点を探してタップする、全5ステージのタイム勝負です。点の色は黒から始まり、ステージが進むほど白に近づきます。探す色は見出しの四角で確かめられます。5つ全部見つけると、合計タイムとミスの回数が出ます。</p>
     <h2>操作</h2>
-    <p>点だと思う所をタップします。当たりの範囲は点から半径16pxなので、指で押しても届きます。PC ではクリックで選びます。画面の拡大はできません。</p>
+    <p>点だと思う所をタップします。当たりの範囲は点から半径16pxなので、指で按も届きます。PC ではクリックで選びます。画面の拡大はできません。</p>
     <h2>コツ</h2>
     <p>外すと1回につき5秒が加算されるので、連打すると損をします。同じステージで10秒たつと点の大きさが変わり始め、20秒たつと動き出すので、見つからないときは変化を待つのも手です。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -164,7 +164,7 @@ gtag('config', 'G-41RSZLP1YQ');
     // 解像度は打ち止めにせず端末の倍率そのままで描く（引き伸ばしによるぼやけを防ぐ）
     dpr = window.devicePixelRatio || 1;
     // 基本は固定サイズ。画面がそれより小さい場合だけ収まる大きさに縮める
-    // （枠線2px分と、上の見出し・状態表示・下のメッセージ・その間隔の分を引く）
+    // （枠線2px分と、上の見出し・状態表示・下のメッセージ・その間隔の分を拉）
     const box = $('field');
     const other = $('title').offsetHeight + $('hint').offsetHeight + $('msg').offsetHeight + 8 * 3;
     W = Math.max(1, Math.min(FIELD_W, box.clientWidth - 2));
@@ -269,7 +269,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (Math.hypot(x - p.x, y - p.y) <= TAP_R) {
       mode = 'found';
       foundTimer = FOUND_SHOW;
-      $('msg').textContent = '見つけた！';
+      $('msg').textContent = '找到了！';
       $('msg').className = 'ok';
       draw();
     } else {
@@ -328,7 +328,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
     const r = cv.getBoundingClientRect();
-    tap(e.clientX - r.left - cv.clientLeft, e.clientY - r.top - cv.clientTop);   // 枠線の分を引く
+    tap(e.clientX - r.left - cv.clientLeft, e.clientY - r.top - cv.clientTop);   // 枠線の分を拉
   });
 
   $('retry').addEventListener('click', start);
@@ -364,9 +364,9 @@ gtag('config', 'G-41RSZLP1YQ');
     lastTouchEnd = now;
   }, {passive:false});
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
-    return 'タイム : ' + totalTime().toFixed(2) + '秒（ミス' + misses + '回）\n'
+    return '時間：' + totalTime().toFixed(2) + '秒（ミス' + misses + '回）\n'
       + location.href.split(/[?#]/)[0] + '\n#1px探し';
   }
 
@@ -374,15 +374,15 @@ gtag('config', 'G-41RSZLP1YQ');
   $('share').addEventListener('click', () => {
     const btn = $('share');
     const text = shareText();
-    // 1) 共有シートがある環境（スマホなど）: 文面を渡す（画像は付けない）
+    // 1) 分享シートがある環境（スマホなど）: 文面を渡す（画像は付けない）
     if (navigator.share) {
       navigator.share({text}).catch(() => {});
       return;
     }
-    // 2) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 2) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 

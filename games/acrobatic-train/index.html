@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>アクロバティックトレイン</title>
+<title>特技列車</title>
 <meta name="description" content="電車の前と後ろを別々に乗り換える">
 <style>
   :root{
@@ -126,9 +126,9 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="view3d"><div id="hud"><span id="score" aria-live="polite">0</span><small>ポイント</small><span id="best">最高 0</span></div>
     <button id="menu-btn" type="button" aria-label="メニュー" aria-expanded="false" aria-controls="menu">☰</button>
     <div id="menu" hidden>
-      <button id="sound" type="button" aria-pressed="true">効果音：ON</button>
+      <button id="sound" type="button" aria-pressed="true">音效：開</button>
       <button id="pad-toggle" type="button" aria-pressed="false">操作ボタン：非表示</button>
-      <button id="howto-btn" type="button" data-howto-open>遊び方</button>
+      <button id="howto-btn" type="button" data-howto-open>玩法</button>
     </div>
     <div id="pad" role="group" aria-label="操作ボタン" hidden>
       <button type="button" data-end="front" data-dir="-1" aria-label="前を左の線路へ">◀ 前</button>
@@ -144,20 +144,20 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <div class="tut-mark" id="tut-mark" hidden></div>
   <div id="over" hidden>
-    <div class="panel" role="dialog" aria-label="ゲームオーバー">
-      <h2>ゲームオーバー</h2>
+    <div class="panel" role="dialog" aria-label="遊戲結束">
+      <h2>遊戲結束</h2>
       <div id="final">0<small>ポイント</small></div>
       <div id="final-best">最高 0</div>
       <button id="retry" type="button">もう一回</button>
-      <button id="share" type="button">共有</button>
+      <button id="share" type="button">分享</button>
     </div>
   </div>
 </div>
 <section class="howto" hidden data-pos="none">
-  <h2>遊び方</h2>
-  <p>3本の線路を走る電車を操り、ポイントを集めて得点を伸ばすゲームです。前と後ろの台車は別々に線路を移れます。線路の切れ目に落ちたり、ポール、岩、対向列車にぶつかったりするとゲームオーバーです。速さは少しずつ上がり、最高点はこのブラウザに保存されます。</p>
+  <h2>玩法</h2>
+  <p>3本の線路を走る電車を操り、ポイントを集めて得点を伸ばすゲームです。前と後ろの台車は別々に線路を移れます。線路の切れ目に落ちたり、ポール、岩、対向列車にぶつかったりすると遊戲結束です。速さは少しずつ上がり、最高点はこのブラウザに保存されます。</p>
   <h2>操作</h2>
-  <p>画面に触れると前後の台車のうち近いほうが選ばれ、横にスワイプした量に応じて線路を移ります。右上のメニューで操作ボタンを表示すれば、ボタンでも隣の線路へ移せます。PC ではマウスのドラッグで同じように動かせます。</p>
+  <p>画面に触れると前後の台車のうち近いほうが選ばれ、横に滑動した量に応じて線路を移ります。右上のメニューで操作ボタンを表示すれば、ボタンでも隣の線路へ移せます。PC ではマウスの拖曳で同じように動かせます。</p>
   <h2>コツ</h2>
   <p>ジャンプ台で飛ぶと空中のリングが取れて、高さに応じて30点か50点が入ります。線路の間のポイントは車体を斜めにしないと取れませんが、斜めのままだとポールに当たるので注意してください。切れ目の手前では、ポイントの並ぶ線路が通れる道です。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -220,12 +220,12 @@ gtag('config', 'G-41RSZLP1YQ');
   const CAM_OFFSET = [-13, 4.2, 3.0];     // 見る点からカメラまでのずれ
 
   // 下の2D表示
-  const SHOW_MAP = false;                 // 下の2D表示を出すか（false のときは画面をスワイプして操作する）
+  const SHOW_MAP = false;                 // 下の2D表示を出すか（false のときは画面を滑動して操作する）
   const MAP_LEN = 16;                     // 画面の縦幅に入れたい線路の長さ
   const MAP_W = TRACK_SPACING * 2 + 4;    // 画面の横幅に入れたい幅（3本の線路）
   const GRAB_PX = 22;                     // 電車を掴める範囲の、車体からはみ出してよい幅（ピクセル）
 
-  // スワイプ操作（触れた位置に近いほうの先端＝前か後ろを、横にスワイプして線路を移る）
+  // 滑動操作（触れた位置に近いほうの先端＝前か後ろを、横に滑動して線路を移る）
   const SWIPE_PX = 36;                    // 指をこれだけ横に動かすごとに、線路を1本移る（ピクセル）
 
   const $ = id => document.getElementById(id);
@@ -328,7 +328,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const std = (color, metalness, roughness, extra) =>
     new THREE.MeshStandardMaterial(Object.assign({ color, metalness, roughness }, extra || {}));
 
-  // 同じ寸法の形は使い回す
+  // 同じ寸法の形は使い轉動
   const geoCache = new Map();
   const cached = (key, make) => { if (!geoCache.has(key)) geoCache.set(key, make()); return geoCache.get(key); };
   const box  = (w, h, d)        => cached(`b${w},${h},${d}`, () => new THREE.BoxGeometry(w, h, d));
@@ -691,7 +691,7 @@ gtag('config', 'G-41RSZLP1YQ');
     sleepers.instanceMatrix.needsUpdate = true;
     clips.instanceMatrix.needsUpdate = true;
   }
-  // ぶれ用に、同じ並びの枕木を薄くして何枚か重ねる（並びの元データは共有する）
+  // ぶれ用に、同じ並びの枕木を薄くして何枚か重ねる（並びの元データは分享）
   const ties = new THREE.Group();
   const tieLayers = [];
   // スマホで重くならないよう、重ねるのは枕木だけ（小さい留め具は1枚目だけ）にし、影も受けない
@@ -782,7 +782,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const vy = Math.sqrt(2 * JUMP_G * Math.max(0, peak - y0));
     Object.assign(jump, { on:true, t:0, y0, vy, spin, p0 });
     se.launch(spin);
-    jump.T = (vy + Math.sqrt(vy * vy + 2 * JUMP_G * y0)) / JUMP_G;   // 線路の高さに戻るまでの時間
+    jump.T = (vy + Math.sqrt(vy * vy + 2 * JUMP_G * y0)) / JUMP_G;   // 線路の高さに返回までの時間
     if (spin) {
       // もう一方の台車がいる側へ倒れ込むように回る
       jump.dir = Math.sign(ends[other] - r.tz) || 1;
@@ -796,7 +796,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 仕掛け（線路の切れ目・ポール・ポイント） ----------
-  // ・線路の切れ目：台車が浮かずに通ると脱線（ゲームオーバー）。別の線路へ移るか、ジャンプで飛び越える
+  // ・線路の切れ目：台車が浮かずに通ると脱線（遊戲結束）。別の線路へ移るか、ジャンプで飛び越える
   // ・ポール：線路と線路の間に立っている。車体が斜め（または線路を移っている途中）でその場所を通るとぶつかる
   // ・ポイント：線路の上（地上）と、空中1・空中2の高さに浮いている。車体が通ると取れる
   const GAP_MIN = 10, GAP_MAX = 20;            // 線路の切れ目の長さ
@@ -1301,7 +1301,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const SZ = GAUGE / 2 + 0.12;   // 軸箱と側梁の横位置
 
     [-AXLE, AXLE].forEach(ax => {
-      // 輪軸（車軸＋左右の車輪）：これをまとめて回す
+      // 輪軸（車軸＋左右の車輪）：これをまとめて轉動
       const ws = new THREE.Group();
       ws.position.set(ax, WC, 0);
       add(zCyl(0.05, GAUGE + 0.26, 10), M.wheel, 0, 0, 0, ws);
@@ -1737,11 +1737,11 @@ gtag('config', 'G-41RSZLP1YQ');
     if (jump.on) {
       // 斜め：斜めの角度を保ったまま、車体の前後方向の軸で1回転
       // まっすぐ：車体の左右方向の軸で縦に宙返り
-      // どちらも回り始めと回り終わりはゆっくりで、着地のときには元の向きに戻る
+      // どちらも回り始めと回り終わりはゆっくりで、着地のときには元の向きに返回
       const k = jump.t / jump.T, e = k * k * (3 - 2 * k);
       if (jump.spin) qSpin.setFromAxisAngle(SPIN_AXIS, jump.dir * Math.PI * 2 * e);
       else qSpin.setFromAxisAngle(FLIP_AXIS, FLIP_DIR * Math.PI * 2 * FLIP_TURNS * e);
-      // 車体の真ん中を中心に回すため、回したぶんの位置のずれを戻す
+      // 車体の真ん中を中心に轉動ため、回したぶんの位置のずれを戻す
       pivA.set(0, SPIN_PIVOT_Y, 0).applyQuaternion(car.quaternion);
       car.quaternion.multiply(qSpin);
       pivB.set(0, SPIN_PIVOT_Y, 0).applyQuaternion(car.quaternion);
@@ -1810,7 +1810,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 線路を移るときの光の軌跡 ----------
-  // 線路を移っている間だけ、台車の左右の車輪から光の帯を出す。帯は地面に残り、少しずつ消えていく
+  // 線路を移っている間だけ、台車の左右の車輪から光の帯を出す。帯は地面に剩餘、少しずつ消えていく
   const TRAIL_LIFE = 0.45;                    // 光の帯が消えるまでの時間（秒）
   const TRAIL_MAX = 90;                       // 1本の帯に残す点の数
   const TRAIL_COLOR = new THREE.Color(0x5fe3ff);
@@ -1868,7 +1868,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const v = speed * (WIND_REL - 1);   // 地面に対して後ろへ流れる速さ（電車の速さとの差で、電車からはもっと速く見える）
     windOf.forEach((w, i) => {
       if (w.s < dist - WIND_BACK || w.s > dist + WIND_FRONT + 40) {
-        // 範囲の外に出たら前に出し直す（最初とやり直したときは範囲全体にばらまく）
+        // 範囲の外に出たら前に出し直す（最初と重新開始たときは範囲全体にばらまく）
         spawnWind(w, w.s < -1e8 || w.s > dist + WIND_FRONT + 40 ? dist + rnd(-WIND_BACK, WIND_FRONT) : dist + WIND_FRONT + rnd(0, 20));
       }
       w.s -= v * dt;
@@ -2024,7 +2024,7 @@ gtag('config', 'G-41RSZLP1YQ');
         }
       });
       // 砂ぼこりは台車の左右に1つずつ
-      const d = dusts.reduce((a, b) => (b.age / b.life > a.age / a.life ? b : a));   // いちばん古いものを使い回す
+      const d = dusts.reduce((a, b) => (b.age / b.life > a.age / a.life ? b : a));   // いちばん古いものを使い轉動
       bogie.localToWorld(fxV.set(0, 0.3, side * (GAUGE / 2 + 0.3)));
       d.sp.position.copy(fxV);
       d.vel.set(fx * speed * 0.55 + nx * 1.5, 0.6, fz * speed * 0.55 + nz * 1.5);
@@ -2308,7 +2308,7 @@ gtag('config', 'G-41RSZLP1YQ');
   mapCv.addEventListener('pointerup', release);
   mapCv.addEventListener('pointercancel', release);
 
-  // ---------- スワイプ操作（2D表示をオフにしたとき。触れた位置に近いほうの先端＝前か後ろを動かす） ----------
+  // ---------- 滑動操作（2D表示をオフにしたとき。触れた位置に近いほうの先端＝前か後ろを動かす） ----------
   const swipes = new Map();  // pointerId → { end:'front'|'rear', x0:触れた横位置, i0:触れたときの行き先の線路の番号 }
   const root = $('wrap');
   // 前と後ろの台車を画面上の位置に直し、触れた点に近いほうを選ぶ
@@ -2335,7 +2335,7 @@ gtag('config', 'G-41RSZLP1YQ');
     root.addEventListener('pointermove', e => {
       const s = swipes.get(e.pointerId);
       if (!s || mode !== 'playing') return;
-      // 横に動かした量に応じて線路を移る（戻せば戻る）。右へスワイプで右の線路へ
+      // 横に動かした量に応じて線路を移る（戻せば返回）。往右滑動で右の線路へ
       const i = Math.max(0, Math.min(TRACKS.length - 1, s.i0 + Math.trunc((e.clientX - s.x0) / SWIPE_PX)));
       setTarget(s.end, TRACKS[i]);
     });
@@ -2496,12 +2496,12 @@ gtag('config', 'G-41RSZLP1YQ');
   const setMenu = open => { menu.hidden = !open; menuBtn.setAttribute('aria-expanded', String(open)); };
   ['menu-btn', 'menu'].forEach(id => $(id).addEventListener('pointerdown', e => e.stopPropagation()));
   menuBtn.addEventListener('click', () => setMenu(menu.hidden));
-  // メニューの外を触ったら閉じる
+  // メニューの外を触ったら關閉
   document.addEventListener('pointerdown', e => { if (!menu.hidden && !e.target.closest('#menu, #menu-btn')) setMenu(false); }, true);
   $('sound').addEventListener('click', () => {
     soundOn = !soundOn;
     $('sound').setAttribute('aria-pressed', String(soundOn));
-    $('sound').textContent = soundOn ? '効果音：ON' : '効果音：OFF';
+    $('sound').textContent = soundOn ? '音效：開' : '音效：關';
   });
   $('pad-toggle').addEventListener('click', () => {
     const show = $('pad').hidden;
@@ -2570,10 +2570,10 @@ gtag('config', 'G-41RSZLP1YQ');
     update(0);
   }
   // チュートリアル：開くたび（リロードのたび）に最初に出す。ブラウザには何も保存しない
-  // 1. 前をスワイプ → 2. 後ろをスワイプ → 3. 説明を読んで「はじめる」
+  // 1. 前を滑動 → 2. 後ろを滑動 → 3. 説明を読んで「はじめる」
   const TUT_TEXT = [
-    '<em>前</em>をスワイプ',
-    '<em>後ろ</em>をスワイプ',
+    '<em>前</em>を滑動',
+    '<em>後ろ</em>を滑動',
     'ポイントを集めよう！',
   ];
   let tutStep = 0, tutFrom = null;
@@ -2584,7 +2584,7 @@ gtag('config', 'G-41RSZLP1YQ');
     tutFrom = { front:moves.front.to, rear:moves.rear.to };
   }
   function updateTutorial(){
-    // 操作できたら次へ進む
+    // 操作できたら下一個進む
     if (tutStep === 0 && moves.front.to !== tutFrom.front) setTutStep(1);
     else if (tutStep === 1 && moves.rear.to !== tutFrom.rear) setTutStep(2);
     // 触る場所（前か後ろの台車）に丸を出す
@@ -2607,21 +2607,21 @@ gtag('config', 'G-41RSZLP1YQ');
   $('retry').addEventListener('pointerdown', e => e.stopPropagation());
   $('retry').addEventListener('click', resetGame);
 
-  // 共有：文面を共有シートへ。使えない環境では文面をコピーする
+  // 分享：文面を分享シートへ。使えない環境では文面をコピーする
   const shareText = () => `${score}ポイント獲得！\n${location.href.split(/[?#]/)[0]}\n#アクロバティックトレイン`;
   $('share').addEventListener('pointerdown', e => e.stopPropagation());
   $('share').addEventListener('click', () => {
     const btn = $('share');
     const text = shareText();
-    // 1) 共有シート（スマホなど）
+    // 1) 分享シート（スマホなど）
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 2) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 2) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 

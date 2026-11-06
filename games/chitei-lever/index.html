@@ -33,8 +33,8 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>地底レバー</title>
-<meta name="description" content="レバーで金貨を弾いて地下へ潜る">
+<title>地底拉桿</title>
+<meta name="description" content="レバーで金貨を弾いて地往下潜る">
 <style>
   :root{
     --bg:#0b0a0c; --fg:#f1e6d2; --sub:#a8998a;
@@ -73,15 +73,15 @@ gtag('config', 'G-41RSZLP1YQ');
     <div class="big" id="result"></div>
     <div id="best"></div>
     <button id="retry" type="button">もう一回</button>
-    <button id="share" type="button">共有</button>
+    <button id="share" type="button">分享</button>
   </div>
   <section class="howto" hidden data-pos="bottom-left">
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>レバーで金貨を弾き、レールの切れ目から下の段へ落として地底深くへ潜るゲームです。金貨が反対側のレバーの前に着くと1段進み、到達した階が記録になります。穴に落ちると終わりで、最深の階はこのブラウザに保存されます。</p>
     <h2>操作</h2>
-    <p>画面のどこかを押している間レバーが引かれ、離すと金貨を弾きます。押す時間が長いほど強くなり、約1秒でいっぱいまで引けます。金貨がレバーの前にないときに離しても空打ちになるだけです。PC ではマウスの長押しのほか、スペースキーか↓キーでも同じように操作できます。</p>
+    <p>画面のどこかを按いる間レバーが引かれ、離すと金貨を弾きます。押す時間が長いほど強くなり、約1秒でいっぱいまで引けます。金貨がレバーの前にないときに離しても空打ちになるだけです。PC ではマウスの長押しのほか、スペースキーか↓キーでも同じように操作できます。</p>
     <h2>コツ</h2>
-    <p>強すぎると切れ目を飛び越えて奥の穴に入り、弱いと途中の穴の上で勢いが足りずに落ちます。坂を上りきれず戻ってきた金貨は、もう一度弾けます。段ごとに形が変わり、前の段と同じ力加減は通じにくくなっています。3段目からはジャンプ台、くぼみ、落とし穴も現れます。</p>
+    <p>強すぎると切れ目を飛び越えて奥の穴に入り、弱いと途中の穴の上で勢いが足りずに落ちます。坂を上りきれず戻ってきた金貨は、再來一次弾けます。段ごとに形が変わり、前の段と同じ力加減は通じにくくなっています。3段目からはジャンプ台、くぼみ、落とし穴も現れます。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
   </section>
 </div>
@@ -93,14 +93,14 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- 定数 ----------
   // 縦置きの盤面。左右の壁際にレバーがあり、そこから反対側へ上り坂のレールが伸びる。
   // 弾いた金貨がレールを上りきって端から落ちると、1段下のレールを転がって反対側のレバーに着く。
-  // 盤面の穴の上を遅い速さで通ると落ちる（ゲームオーバー）。段ごとにレールの長さ・傾き・穴の位置が変わる
+  // 盤面の穴の上を遅い速さで通ると落ちる（遊戲結束）。段ごとにレールの長さ・傾き・穴の位置が変わる
   const BOARD_W = 320;        // 盤面の内側の幅（盤面の単位。画面幅に合わせて拡縮する）
   const WALL = 8;             // 左右の壁の厚さ
   const LEVER_AREA = 36;      // 壁の外側のレバーを描く幅
   const COIN_R = 12;          // 金貨の半径
   const G = 1500;             // 重力（単位/秒²）
   const V_MAX = 750;          // レバーをいっぱいに引いたときの初速（単位/秒）
-  const CHARGE_TIME = 1.0;    // レバーをいっぱいまで引くのにかかる時間（秒）
+  const CHARGE_TIME = 1.0;    // レバーをいっぱいまで拉のにかかる時間（秒）
   const ROLL_DECEL = 40;      // レールを転がるときの減速（単位/秒²）。軽い金貨はよく転がる
   const RAIL_BOUNCE = 0.6;    // レールに落ちたときの跳ね返り係数
   const BOUNCE_MIN_V = 35;    // これより遅くレールに当たったときは跳ねない（転がっている最中に細かく跳ね続けないように）
@@ -207,7 +207,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let power, fallT, fallHole, fallFrom, camY, acc;
   let trail = [], clock = 0;   // 速く動いている金貨の通った跡 {x, y, t}
 
-  // ハイスコア：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  // 最高分：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
   let best = 0;
   try { best = parseInt(localStorage.getItem(BEST_KEY)) || 0; } catch(e) {}
   function saveBest(){ try { localStorage.setItem(BEST_KEY, String(best)); } catch(e) {} }
@@ -453,7 +453,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
       gen.landMin = Math.min(gen.landMin, trialLandMin); gen.landMax = Math.max(gen.landMax, trialLandMax);
       if (res === 'next') gen.w += WIN_STEP;
-      // この段そのものを、この段のレバーから弾いてみる（切れ目から下へ抜ければ成功）
+      // この段そのものを、この段のレバーから弾いてみる（切れ目から往下抜ければ成功）
       const self = trial(k, gen.p / 100);
       if (self === 'lost'){
         gen.sw += WIN_STEP; gen.ssum += gen.p;
@@ -490,7 +490,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (gen.score === 0 || (gen.tries >= VARIETY_TRIES && gen.score <= VARIETY_PENALTY) || gen.tries >= GEN_TRIES){
       // 遊べる配置が見つからなかったら作り直す（上の段の形が原因なら、上の段から）
       if (gen.score >= 100 && retryLevel(k)) return;
-      // 決めた配置を、細かい力加減の刻みでもう一度確かめてから使う
+      // 決めた配置を、細かい力加減の刻みで再來一次確かめてから使う
       gen.verify = { p: 1, min: Infinity, max: -Infinity };
     }
   }
@@ -663,7 +663,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const c = { x: r.x, y: r.y, vx: 0, vy: 0, still: 0 };
     launch(c, k, p);
     const n = Math.round(SIM_TIME / STEP);
-    const floor = levels[Math.min(levels.length - 1, k + 2)].a.y + 100;   // 見ている段より下へ抜けたら打ち切る
+    const floor = levels[Math.min(levels.length - 1, k + 2)].a.y + 100;   // 見ている段より往下抜けたら打ち切る
     const lower = levels[k + 1];
     trialLandMin = Infinity; trialLandMax = -Infinity;
     let landed = false;
@@ -681,7 +681,7 @@ gtag('config', 'G-41RSZLP1YQ');
       if (e.stuck) return 'stuck';
       return e.rest > k ? 'next' : e.rest === k ? 'retry' : 'lost';
     }
-    return 'lost';   // 時間切れ・見ている範囲より下へ抜けた（動けなくなったわけではない）
+    return 'lost';   // 時間切れ・見ている範囲より往下抜けた（動けなくなったわけではない）
   }
 
   function update(dt){
@@ -886,7 +886,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // 木の足場（当たり判定はレールの上面）
   function drawPlank(sg){
-    // 必ず左端から描く（右から左へ伸びるレールを回転して描くと、板が上下逆＝レールの上側に出てしまうため）
+    // 必ず左端から描く（右から往左伸びるレールを回転して描くと、板が上下逆＝レールの上側に出てしまうため）
     const p = sg.a.x <= sg.b.x ? sg.a : sg.b, q = p === sg.a ? sg.b : sg.a;
     const dx = q.x - p.x, dy = q.y - p.y, len = Math.hypot(dx, dy);
     ctx.save();
@@ -930,8 +930,8 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // 穴に落ちるときの金貨の位置と大きさ。
-  // 横には動かさない（坂を上って穴へ寄っていくことはない）。重力で下へずれながら、後ろに傾いた盤面の穴へ沈んでいく。
-  // 穴より上で壁に当たって落ちてきたときは、まず真下へ落ちてから沈む
+  // 横には動かさない（坂を上って穴へ寄っていくことはない）。重力で往下ずれながら、後ろに傾いた盤面の穴へ沈んでいく。
+  // 穴より上で壁に当たって落ちてきたときは、まず真往下落ちてから沈む
   const SINK_EDGE = 0.45;   // 沈み始めてから、穴からはみ出した部分が隠れきるまでの割合
   const FALL_DROP = 0.3;    // 穴より上にいるとき、穴の高さまで落ちるのに使う時間の割合
   function fallPose(){
@@ -947,7 +947,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return {
       // 穴に入りながら、わずかなずれ（数単位）だけ穴の真ん中に収まる
       x: x + (fallHole.x - x) * Math.min(1, k * 2), y0, k,
-      y: y0 + (fallHole.y + fallHole.r + COIN_R - y0) * k * k,   // 下へずれながら穴の下の縁に隠れる
+      y: y0 + (fallHole.y + fallHole.r + COIN_R - y0) * k * k,   // 往下ずれながら穴の下の縁に隠れる
       r: COIN_R * (1 - 0.2 * k),
       shade: 0.75 * k,
       sink: true,
@@ -1116,7 +1116,7 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('pointerup', release);
   document.addEventListener('pointercancel', release);
 
-  // PC：スペースか↓キーを押している間レバーを引き、離すと弾く
+  // PC：スペースか↓キーを按いる間レバーを引き、離すと弾く
   const isKey = e => e.code === 'Space' || e.code === 'ArrowDown';
   addEventListener('keydown', e => {
     if (state === 'over' || !isKey(e)) return;
@@ -1153,7 +1153,7 @@ gtag('config', 'G-41RSZLP1YQ');
       + location.href.split(/[?#]/)[0] + '\n#地底レバー';
   }
 
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const c = document.createElement('canvas');
     c.width = 800; c.height = 420;
@@ -1177,20 +1177,20 @@ gtag('config', 'G-41RSZLP1YQ');
     const btn = $('share');
     const text = shareText();
     const file = resultImageFile();
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ text, files: [file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 

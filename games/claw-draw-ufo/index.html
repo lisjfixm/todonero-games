@@ -63,7 +63,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   #game{position:relative;margin:0 auto;width:100%;max-width:420px;height:100vh;height:100dvh;display:flex;flex-direction:column;justify-content:center;align-items:center}
 
-  /* 上の表示：残り回数と獲得数をバッジで */
+  /* 上の表示：剩餘回数と獲得数をバッジで */
   #hud{width:100%;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;display:flex;justify-content:center;gap:8px}
   .badge{display:flex;align-items:baseline;gap:6px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.1);font-size:13px;color:var(--sub)}
   .badge b{font-size:20px;color:var(--fg)}
@@ -105,22 +105,22 @@ gtag('config', 'G-41RSZLP1YQ');
 </head>
 <body>
 <div id="game">
-  <div id="hud" aria-live="polite"><span id="info" class="badge">残り<b id="hudPlays">3</b>回</span><span class="badge">獲得<b id="hudGot">0</b>個</span></div>
+  <div id="hud" aria-live="polite"><span id="info" class="badge">剩餘<b id="hudPlays">3</b>回</span><span class="badge">獲得<b id="hudGot">0</b>個</span></div>
   <div id="stage"><canvas id="cv"></canvas></div>
   <div id="controls">
-    <button id="bL" aria-label="左へ移動">←</button>
+    <button id="bL" aria-label="往左移動">←</button>
     <button id="bDrop" class="primary">降ろす</button>
-    <button id="bR" aria-label="右へ移動">→</button>
+    <button id="bR" aria-label="往右移動">→</button>
   </div>
 
   <div id="drawOv" class="ov">
     <div id="drawBox">
       <canvas id="pad"></canvas>
       <div id="tools">
-        <button id="bMirror" aria-pressed="true">左右反転 ON</button>
+        <button id="bMirror" aria-pressed="true">左右翻轉 開</button>
         <button id="bPreview" disabled>プレビュー</button>
         <button id="bClear">描き直す</button>
-        <button type="button" data-howto-open>遊び方</button>
+        <button type="button" data-howto-open>玩法</button>
       </div>
       <button id="bStart" class="primary" disabled>これで遊ぶ</button>
     </div>
@@ -131,15 +131,15 @@ gtag('config', 'G-41RSZLP1YQ');
       <div id="resNum"></div>
       <p id="result"></p>
     </div>
-    <button id="bShare" class="primary">共有</button>
+    <button id="bShare" class="primary">分享</button>
     <button id="bAgain">もう一回</button>
   </div>
 </div>
 <section class="howto" data-pos="none" hidden>
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>自分で描いた形の爪で景品をつかみ、左の取り出し口へ落とすクレーンゲームです。1ゲームで爪を降ろせるのは3回で、取り出し口に落ちた景品の個数が結果になります。自己ベストはこのブラウザに保存されます。</p>
   <h2>操作</h2>
-  <p>最初の画面の枠に爪の形を描き、「これで遊ぶ」で始めます。左右反転をオフにすると左右の爪を別々に描けます。プレイ中は「←」「→」を押している間クレーンが動き、「降ろす」で爪が降ります。PC では矢印キーで移動し、スペースキーか下キーで降ろせます。</p>
+  <p>最初の画面の枠に爪の形を描き、「これで遊ぶ」で始めます。左右反転をオフにすると左右の爪を別々に描けます。プレイ中は「←」「→」を按いる間クレーンが動き、「降ろす」で爪が降ります。PC では矢印キーで移動し、スペースキーか下キーで降ろせます。</p>
   <h2>コツ</h2>
   <p>クレーンは紐で吊られているので、動かした直後は揺れます。揺れが収まってから降ろすと狙いがずれにくくなります。「プレビュー」を押すと、描いた爪の開閉を遊ぶ前に確かめられます。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -163,17 +163,17 @@ gtag('config', 'G-41RSZLP1YQ');
   const MOVE_SPEED = 120;        // 横移動の速さ
   const DOWN_SPEED = 110;        // 降下の速さ
   const UP_SPEED = 90;           // 上昇の速さ
-  const CLOSE_SPEED = 1.8;       // 爪を閉じる速さの上限（rad/秒）
+  const CLOSE_SPEED = 1.8;       // 爪を關閉速さの上限（rad/秒）
   const OPEN_SPEED = 2.5;        // 爪を開く速さ（rad/秒）
   const OPEN_ANG = 0.7;          // 描いた形（閉じた状態）から開く角度（rad）
-  const CLOSE_MAX = OPEN_ANG;    // 開いた状態から閉じる最大角度＝描いた形に戻るまで
+  const CLOSE_MAX = OPEN_ANG;    // 開いた状態から關閉最大角度＝描いた形に返回まで
   const SPRING_PRELOAD = 0.6;    // バネの予圧（rad）。閉じ切る直前でも握る力が残るように、目標を描いた形より内側に置く
   const OPEN_HOLD = 0.4;         // 描く画面の開閉再生で、開いたまま止める時間（秒）
   const CLOSE_TIME = 0.9;        // 底で閉じている時間（秒）
   const FINISH_MIN = 0.6;        // 最後の回のあと、結果を出すまでの最短の待ち（秒）
   const FINISH_MAX = 5;          // 景品が落ち切らないときの待ちの上限（秒）
   const RELEASE_WAIT = 1.2;      // 取り出し口の上で開いてから閉じ始めるまで（秒）
-  const SPRING_K = 2.5e7;        // 爪を閉じるバネの強さ（小さいほど握る力が弱い）
+  const SPRING_K = 2.5e7;        // 爪を關閉バネの強さ（小さいほど握る力が弱い）
   const SPRING_D = 1.3e6;        // バネの減衰（揺れの収まりやすさ）
   const ARM_W_MAX = 1.5;         // 景品に押されて爪が開く速さの上限（rad/秒）
   const ARM_I = 50000;           // 爪の回転しにくさ（慣性）
@@ -192,7 +192,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const PRIZE_N = 130;           // 景品の数（山の高さもこれで決まる）
   const CLAW_MASS = 9000;        // クレーンの重さ。景品に下から押し返される力がこれを超えたら降下をやめる
   const PRIZE_U_MIN = 6, PRIZE_U_MAX = 8.5;   // 景品の大きさの単位（形の定義はこの何倍かで書く）
-  const UP_V_MAX = 250;          // 景品が上へ飛ぶ速さの上限
+  const UP_V_MAX = 250;          // 景品が往上飛ぶ速さの上限
   const PRIZE_OUTLINE = 0.8;     // 景品の縁取りの太さ（見た目だけ。当たり判定には影響しない）
   const ANG_DAMP = 1.5;          // 景品の回転の減衰（転がり続けないように）
   // 景品の形：円をいくつか組み合わせた剛体。[x, y, 半径]（単位 u）と、塗りつぶしのためにつなぐ円の組
@@ -213,8 +213,8 @@ gtag('config', 'G-41RSZLP1YQ');
   const PAD = 200;               // 爪を描く枠の論理サイズ
   const PAD_PIVOT = {x:100, y:24};  // 描く枠の中の付け根位置
   const PAD_SCALE = 0.55;        // 描いた爪 → ゲーム内サイズの倍率
-  const PAD_MIN_DIST = 4;        // 描画点を間引く間隔
-  const ARM_SIMPLIFY = 1.0;      // 爪の線を間引くときに許すずれ（ゲーム内の長さ）
+  const PAD_MIN_DIST = 4;        // 描画点を間拉間隔
+  const ARM_SIMPLIFY = 1.0;      // 爪の線を間拉ときに許すずれ（ゲーム内の長さ）
 
   // ---------- 色（CSS変数から読む） ----------
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -243,7 +243,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const rope = {tx:HOME_X, tv:0, len:TOP_Y - ROPE_TOP, a:0, w:0};
   let pendJx = 0, pendJy = 0;    // 景品がクレーンを押した力積（1ステップ分）
   let angL = 0, angR = 0;        // 左右の爪の閉じ角
-  let velL = 0, velR = 0;        // 左右の爪の閉じる方向の角速度
+  let velL = 0, velR = 0;        // 左右の爪の關閉方向の角速度
   let pushAngL = 0, pushAngR = 0; // 景品に押されて爪が動く角度（1ステップ分を貯める）
   let pushImp = 0, pushF = 0;     // 景品がクレーンを押し返す力積（1ステップ分）と、ならした力
   let clawContact = false;       // いま判定しているのがクレーン側の当たりか
@@ -315,7 +315,7 @@ gtag('config', 'G-41RSZLP1YQ');
       // 開閉アニメーション中は、線を付け根中心に外側へ OPEN_ANG × 開き具合 だけ回して表示する
       let pts = line;
       if (openT > 0){
-        const a = (meanX(line) <= PAD_PIVOT.x ? 1 : -1) * OPEN_ANG * openT;   // 左側の線は左へ、右側の線は右へ開く
+        const a = (meanX(line) <= PAD_PIVOT.x ? 1 : -1) * OPEN_ANG * openT;   // 左側の線は往左、右側の線は往右開く
         const c = Math.cos(a), sn = Math.sin(a);
         pts = line.map(p => {
           const x = p.x - PAD_PIVOT.x, y = p.y - PAD_PIVOT.y;
@@ -388,7 +388,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (Math.hypot(p.x - l.x, p.y - l.y) >= PAD_MIN_DIST){
       cur.push(p);
       // 反転OFF：描いている線が付け根の左右どちらにあるかで、その側の前の線をすぐ置き換える
-      // （途中で反対側に移ったら、最初の側の線は元に戻す）
+      // （途中で反対側に移ったら、最初の側の線は還原）
       if (!mirror){
         lastSide = meanX(cur) <= PAD_PIVOT.x ? 'L' : 'R';
         sides = {L:sidesBefore.L, R:sidesBefore.R};
@@ -428,7 +428,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     const b = $('bMirror');
     b.setAttribute('aria-pressed', String(mirror));
-    b.textContent = mirror ? '左右反転 ON' : '左右反転 OFF';
+    b.textContent = mirror ? '左右翻轉 開' : '左右翻轉 關';
     drawPad(); updateDrawButtons();
   });
   $('bStart').addEventListener('click', () => { if (strokeValid()){ stopOpenClose(); buildArm(); newGame(); } });
@@ -473,7 +473,7 @@ gtag('config', 'G-41RSZLP1YQ');
       const c = Math.cos(OPEN_ANG), sn = Math.sin(OPEN_ANG);
       pts = pts.map(p => ({x: p.x * c - p.y * sn, y: p.x * sn + p.y * c}));
     }
-    // 長く描いた線は点が多く当たり判定が重くなるので、形が変わらない程度に点を間引く
+    // 長く描いた線は点が多く当たり判定が重くなるので、形が変わらない程度に点を間拉
     return simplify(pts, ARM_SIMPLIFY);
   }
 
@@ -538,7 +538,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function newGame(){
     $('drawOv').classList.add('hidden');
     $('overOv').classList.add('hidden');
-    // 裏での山づくりが終わっていなければ、残りはプレイ画面で落ち着く様子を見せながら進める（その間は降ろせない）
+    // 裏での山づくりが終わっていなければ、剩餘はプレイ画面で落ち着く様子を見せながら進める（その間は降ろせない）
     if (!prizes.length) preparePile();
     resetCrane();
     if (settleLeft > 0) $('bDrop').disabled = true;
@@ -565,16 +565,16 @@ gtag('config', 'G-41RSZLP1YQ');
     const isNew = got > bestScore;
     if (isNew){ bestScore = got; saveBest(); }
     $('resNum').innerHTML = `${got}<small>個</small>`;
-    $('result').textContent = isNew ? '自己ベスト更新！' : `自己ベスト ${bestScore}個`;
+    $('result').textContent = isNew ? '刷新個人最佳！' : `自己ベスト ${bestScore}個`;
     $('result').classList.toggle('best', isNew);
     $('overOv').classList.remove('hidden');
     $('bDrop').disabled = true;
   }
 
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   const shareText = () => `${got}個ゲット！\n${location.href.split(/[?#]/)[0]}\n#DrawClawUFO`;
-  // 結果画像：ゲーム画面と同じ見た目のクレーン（自分で描いた爪を閉じた形）と点数。共有シートの制約で同期的に作る
+  // 結果画像：ゲーム画面と同じ見た目のクレーン（自分で描いた爪を閉じた形）と点数。分享シートの制約で同期的に作る
   function makeResultImageFile(){
     const S = 600, c = document.createElement('canvas');
     c.width = S; c.height = S;
@@ -618,11 +618,11 @@ gtag('config', 'G-41RSZLP1YQ');
       return;
     }
     navigator.clipboard?.writeText(shareText()).then(()=>{
-      btn.textContent = 'コピーしました';
-      setTimeout(()=>{ btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(()=>{ btn.textContent = '分享'; }, 1500);
     }).catch(()=>{});
   });
-  // もう一回：前回描いた爪が残ったままの描く画面に戻る
+  // もう一回：前回描いた爪が残ったままの描く画面に返回
   $('bAgain').addEventListener('click', () => {
     mode = 'draw';
     preparePile();   // 次の回の山を、爪を描いている間に作り始める（結果画面では前の回の様子を見せたままにする）
@@ -633,8 +633,8 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- クレーンの動き ----------
-  // 実機と同じ流れ：閉じたまま移動 → 降りる瞬間に開く → 開いたまま降りる → 底で閉じる
-  //   → 閉じたまま上がって取り出し口の上へ → 開いて景品を落とす → 閉じて次の回へ
+  // 実機と同じ流れ：閉じたまま移動 → 降りる瞬間に開く → 開いたまま降りる → 底で關閉
+  //   → 閉じたまま上がって取り出し口の往上 → 開いて景品を落とす → 閉じて次の回へ
   function stepCrane(h){
     let dL = 0, dR = 0;
     let targetV = 0;                 // 台車の目標速度
@@ -706,7 +706,7 @@ gtag('config', 'G-41RSZLP1YQ');
     crane.x = nx; crane.y = ny;
 
     if (springOn){
-      // 閉じている間はバネで閉じる方向へ引くだけ。景品に押されれば開く（固定しない）
+      // 閉じている間はバネで關閉方向へ拉だけ。景品に押されれば開く（固定しない）
       [angL, velL] = springArm(-1, angL, velL, h);
       [angR, velR] = springArm(1, angR, velR, h);
     } else {
@@ -721,7 +721,7 @@ gtag('config', 'G-41RSZLP1YQ');
     vel = clamp(vel + tau / ARM_I * h, -ARM_W_MAX, CLOSE_SPEED);   // 景品に弾かれても急には開かない
     ang += vel * h;
     if (ang < 0){ ang = 0; vel = Math.max(vel, 0); }
-    // 閉じるのは描いた形まで（プレビューと同じ。左右の爪が交差する形でもそのまま閉じる）
+    // 關閉のは描いた形まで（プレビューと同じ。左右の爪が交差する形でもそのまま關閉）
     if (ang > CLOSE_MAX){ ang = CLOSE_MAX; vel = Math.min(vel, 0); }
     return [ang, vel];
   }
@@ -863,7 +863,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const lim = FRICTION * (jn + B.m * GRAVITY * STEP);
     const jt = clamp(-vt / invMassAt(B, cx, cy, tx, ty), -lim, lim);
     applyImp(B, jt * tx, jt * ty, cx, cy);
-    // クレーンが景品を下へ押した分だけ、クレーンは上へ押し返される
+    // クレーンが景品を往下押した分だけ、クレーンは往上押し返される
     if (clawContact){
       pushImp += Math.max(0, jn * ny + jt * ty);
       pendJx -= jn * nx + jt * tx; pendJy -= jn * ny + jt * ty;
@@ -991,7 +991,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
     }
 
-    // 画面下へ落ちた景品を回収（取り出し口側なら獲得）
+    // 画面往下落ちた景品を回収（取り出し口側なら獲得）
     for (let i = prizes.length - 1; i >= 0; i--){
       const b = prizes[i];
       if (b.y - b.br > H){
@@ -1000,7 +1000,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
     }
 
-    // 降下中：開いたまま下がり、下がり切ったら閉じる。
+    // 降下中：開いたまま下がり、下がり切ったら關閉。
     // 下がり切る＝爪の先が床に届く、または景品の山に押し返されてクレーンの重さで沈めなくなる
     // （押し返す力は一瞬の衝突で跳ねるので、PUSH_SMOOTH 秒くらいでならして見る）
     if (phase === 'down'){
@@ -1018,7 +1018,7 @@ gtag('config', 'G-41RSZLP1YQ');
     for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y);
     g.stroke();
   }
-  // レール・台車・紐・爪・ハブ。ゲーム画面と共有画像で同じ見た目にする
+  // レール・台車・紐・爪・ハブ。ゲーム画面と分享画像で同じ見た目にする
   function drawCrane(g, tx, hx, hy, aL, aR, x0, x1){
     g.lineCap = 'round'; g.lineJoin = 'round';
     g.fillStyle = COL.rail; g.fillRect(x0, ROPE_TOP - 5, x1 - x0, 6);

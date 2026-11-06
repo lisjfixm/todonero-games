@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ホールインさせない</title>
+<title>不進洞</title>
 <meta name="description" content="カップになってゴルフボールをよける">
 <style>
 :root{
@@ -51,7 +51,7 @@ body{
 }
 #game{position:relative;width:100%;max-width:420px;height:100vh;height:100dvh;margin:0 auto}
 canvas{display:block;touch-action:none}
-/* スコア：画面上部の中央。芝の上でも読めるように薄い影を付ける */
+/* 分數：画面上部の中央。芝の上でも読めるように薄い影を付ける */
 #hud{position:absolute;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top,0px) + 10px);display:flex;flex-direction:column;align-items:center;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.5)}
 #hud .label{font-size:14px;font-weight:700;color:var(--fg);letter-spacing:.1em}
 #hud .num{font-size:44px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
@@ -80,17 +80,17 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
       <div class="score"><span class="num" id="result">0</span><span class="unit">球よけた</span></div>
       <div class="btns">
         <button id="retry" class="primary">もう一回</button>
-        <button id="share" class="secondary">共有</button>
+        <button id="share" class="secondary">分享</button>
       </div>
     </div>
   </div>
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>ゴルフのカップになって、打ち込まれるボールをよけ続けるゲームです。打たれた球がカップに入らず止まると、よけた数が1増えます。1球でも入ると終わりで、そこまでの数が結果になります。</p>
     <h2>操作</h2>
-    <p>画面をドラッグすると、指を動かした分だけカップが動きます。指でカップを隠さずに操作できますが、最高速度があるので少し遅れてついてきます。PC はマウスのドラッグか矢印キーです。</p>
+    <p>画面を拖曳すると、指を動かした分だけカップが動きます。指でカップを隠さずに操作できますが、最高速度があるので少し遅れてついてきます。PC はマウスの拖曳か矢印キーです。</p>
     <h2>コツ</h2>
-    <p>球はカップの少し先で止まる強さで打たれるので、打たれてから動きを変えると外れやすくなります。よけるほど先読みが強まり、打つ間隔も1.2秒から0.35秒まで縮みます。速い球は上を通っても落ちません。止まった球は残り、足元にゲージが出ると打ち直されます。</p>
+    <p>球はカップの少し先で止まる強さで打たれるので、打たれてから動きを変えると外れやすくなります。よけるほど先読みが強まり、打つ間隔も1.2秒から0.35秒まで縮みます。速い球は上を通っても落ちません。止まった球は剩餘、足元にゲージが出ると打ち直されます。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
   </section>
 </div>
@@ -168,7 +168,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
 
   // ---------- 3D ----------
   const wrap = $('game');
-  // 共有画像に今の画面をそのまま使うため描画バッファを残す
+  // 分享画像に今の画面をそのまま使うため描画バッファを残す
   const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   const cv = renderer.domElement;
@@ -294,7 +294,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   }
 
   function stepFlag(bx, bz){
-    // 竿の先端：真上へ戻るばね＋根元に対する速度のダンパー
+    // 竿の先端：真往上返回ばね＋根元に対する速度のダンパー
     const bvx = (bx - pinBase.x) / DT, bvz = (bz - pinBase.z) / DT;
     pinBase.x = bx; pinBase.z = bz;
     tip.vx += (PIN_K * (bx - tip.x) - PIN_C * (tip.vx - bvx)) * DT;
@@ -330,7 +330,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     for (const p of cp) if (p.y < 0.02) p.y = 0.02;
   }
 
-  // 竿をまっすぐ立て、布を横に広げた状態から少し動かして落ち着かせる（開始時・リトライ時）
+  // 竿をまっすぐ立て、布を横に広げた状態から少し動かして落ち着かせる（開始時・重試時）
   function resetFlag(bx, bz){
     pinBase.x = tip.x = bx; pinBase.z = tip.z = bz;
     tip.vx = tip.vz = 0;
@@ -374,7 +374,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   // 形そのものがへこんでいるので、光の当たり方でくぼみが見える
   function dimpledBallGeometry(){
     const geo = new THREE.SphereGeometry(BALL_R, 160, 108);
-    // くぼみの中心：球面にほぼ均等に並べる（黄金角でずらしながら上から下へ）
+    // くぼみの中心：球面にほぼ均等に並べる（黄金角でずらしながら上から往下）
     const golden = Math.PI * (3 - Math.sqrt(5));
     const cx = [], cy = [], cz = [];
     for (let i = 0; i < BALL_DIMPLES; i++){
@@ -439,7 +439,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     return m;
   }
 
-  // ---------- 軌跡（速い球の後ろに引く球の色の帯。球のすぐ後ろは球の幅で、しっぽへ向けて細く薄くなる） ----------
+  // ---------- 軌跡（速い球の後ろに拉球の色の帯。球のすぐ後ろは球の幅で、しっぽへ向けて細く薄くなる） ----------
   function trailTexture(){   // 横向きに 透明（しっぽ）→ 不透明（頭）のグラデーション
     const c = document.createElement('canvas'); c.width = 64; c.height = 1;
     const g = c.getContext('2d');
@@ -489,7 +489,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     tr.mesh.geometry.attributes.position.needsUpdate = true;
   }
 
-  // 転がった分だけ球を回す（進む向きに対して横の軸まわりに、距離 / 半径 だけ回転）
+  // 転がった分だけ球を轉動（進む向きに対して横の軸まわりに、距離 / 半径 だけ回転）
   const rollAxis = new THREE.Vector3(), rollQ = new THREE.Quaternion();
   function rollBall(b){
     const sp = Math.hypot(b.vx, b.vz);
@@ -513,7 +513,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     for (let i = 0; i < 30; i++){
       const d = (lo + hi) / 2;
       placeCam(d);
-      // 上端はスコア表示の分だけ空ける
+      // 上端は分數表示の分だけ空ける
       const ok = corners.every(c => {
         const p = c.clone().project(camera);
         return Math.abs(p.x) < 0.94 && p.y < 0.82 && p.y > -0.94;
@@ -534,7 +534,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
 
   // ---------- 状態 ----------
   let state = 'playing';        // playing / sinking / over
-  document.documentElement.setAttribute('data-howto-hidden', '');   // 開いた瞬間からプレイ中なので「遊び方」を隠す
+  document.documentElement.setAttribute('data-howto-hidden', '');   // 開いた瞬間からプレイ中なので「玩法」を隠す
   let balls = [];
   let avoided = 0;
   let spawnTimer = FIRST_DELAY;
@@ -617,7 +617,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
   });
   addEventListener('keyup', e => keys.delete(e.key));
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (dragId !== null) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => e.preventDefault());
@@ -642,7 +642,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
       spawnBall();
     }
   }
-  // 打ち直す球の足元に出す円形のゲージ（薄い円の上に、打たれるまでの残り時間ぶん弧が伸びる）
+  // 打ち直す球の足元に出す円形のゲージ（薄い円の上に、打たれるまでの剩餘時間ぶん弧が伸びる）
   const gaugeTrackMat = new THREE.MeshBasicMaterial({ color: css('--gauge'), transparent:true, opacity:0.3 });
   const gaugeFillMat = new THREE.MeshBasicMaterial({ color: css('--gauge') });
   const gaugeTrackGeo = new THREE.RingGeometry(GAUGE_IN, GAUGE_OUT, 48);
@@ -702,7 +702,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     b.shot = true;
   }
 
-  // 止まった球はその場に残り、あとで打ち直される。
+  // 止まった球はその場に剩餘、あとで打ち直される。
   // よけた数は打たれた球が止まったときだけ数える（ぶつかって動いた球は数えない）
   function avoid(b){
     if (b.shot && state === 'playing'){
@@ -780,7 +780,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
         timeScale = 1;
         $('result').textContent = avoided;
         $('over').classList.remove('hidden');
-        $('hud').classList.add('hidden');   // 結果のカードにスコアが出るので、上のスコアは隠す
+        $('hud').classList.add('hidden');   // 結果のカードに分數が出るので、上の分數は隠す
       }
     }
     const playing = state === 'playing';
@@ -929,7 +929,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     return avoided + '球よけた！\n' + location.href.split(/[?#]/)[0] + '\n#ホールインさせない';
   }
   // カップインした後の3D画面の上に、よけた数を書き込んだ画像を作る。
-  // 文字は画面上部の中央（プレイ中のスコアと同じ場所。カップやグリーンにかぶらない）に置く
+  // 文字は画面上部の中央（プレイ中の分數と同じ場所。カップやグリーンにかぶらない）に置く
   function drawResultImage(){
     const c = document.createElement('canvas');
     c.width = cv.width; c.height = cv.height;
@@ -954,7 +954,7 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     g.fillText(unit, x0 + wNum + gap, y);
     return c;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const bin = atob(drawResultImage().toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -966,20 +966,20 @@ button:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
     const btn = $('share');
     const text = shareText();
     const file = resultImageFile();
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files:[file] })){
       navigator.share({ text, files:[file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 })();

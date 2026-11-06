@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ヘキサコネクト</title>
+<title>六邊形連接</title>
 <meta name="description" content="タイルを回して辺の色をそろえるパズル">
 <style>
   :root{
@@ -68,15 +68,15 @@ gtag('config', 'G-41RSZLP1YQ');
 
 
   <div id="over" class="overlay hidden">
-    <h1 id="clearTitle">クリア！</h1>
+    <h1 id="clearTitle">過關！</h1>
     <button id="next">次のステージ</button>
-    <button id="share">共有</button>
+    <button id="share">分享</button>
   </div>
   <section class="howto" hidden data-pos="top-left">
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>3色の線が描かれた六角形のタイルを回し、盤全体の色をつなげるパズルです。隣り合うタイルの辺は同じ色にそろえ、盤の外周の辺は外側の短い線と同じ色に合わせます。すべての辺が合うとクリアです。手数や時間の制限はありません。盤はステージごとに大きくなり、ステージ6からはランダムな形が続きます。進み具合はブラウザに保存されます。</p>
     <h2>操作</h2>
-    <p>タイルをタップすると60度回ります。2本指のピンチで3倍まで拡大でき、1本指のドラッグで表示を動かせます。PC はクリックで回し、ホイールで拡大、ドラッグで移動します。</p>
+    <p>タイルをタップすると60度回ります。2本指のピンチで3倍まで拡大でき、1本指の拖曳で表示を動かせます。PC はクリックで回し、ホイールで拡大、拖曳で移動します。</p>
     <h2>コツ</h2>
     <p>光は外周の合っている辺から流れ込み、つながった線を順にたどります。外周のタイルから合わせ、光が届いた先へ内側に進めると、合っていない所を見つけやすくなります。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -398,11 +398,11 @@ gtag('config', 'G-41RSZLP1YQ');
     const w = wave(c);
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(Math.PI / 3 * c.vis);   // 回転アニメはタイルごと回す
+    ctx.rotate(Math.PI / 3 * c.vis);   // 回転アニメはタイルごと轉動
     ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
     for (const g of c.segs){
       const pts = segPoints(g), color = COLORS[g.col];
-      // 交差が見分けられるよう、下地の縁取りを先に引く
+      // 交差が見分けられるよう、下地の縁取りを先に拉
       ctx.strokeStyle = TILE; ctx.lineWidth = S * (PATH_W + 0.12); strokePart(pts, 1);
       // 光が届いていない部分：暗い線
       ctx.globalAlpha = DIM_ALPHA;
@@ -547,7 +547,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   function clear(){
     state = 'over';
-    $('clearTitle').textContent = `ステージ${stage + 1} クリア！`;
+    $('clearTitle').textContent = `ステージ${stage + 1} 過關！`;
     // クリアしたら、次に開いたときは次のステージから始まるようにする
     saveStage(stage + 1);
     $('over').classList.remove('hidden');
@@ -576,7 +576,7 @@ gtag('config', 'G-41RSZLP1YQ');
     zoomAt(sx, sy, zoom * Math.exp(-e.deltaY * WHEEL_RATE));
   }, {passive:false});
 
-  // 指（またはマウス）の管理。2本になったらピンチ、1本で動かしたらドラッグ移動、1本で動かずに離したらタップ
+  // 指（またはマウス）の管理。2本になったらピンチ、1本で動かしたら拖曳移動、1本で動かずに離したらタップ
   const pointers = new Map();
   let pinch = null, gestureHadPinch = false;
   cv.addEventListener('pointerdown', e => {
@@ -596,7 +596,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!p) return;
     const px = p.x, py = p.y;
     [p.x, p.y] = localPos(e);
-    // 1本指（またはマウス）のドラッグで表示位置を動かす。タップと区別するため、少し動いてから動かし始める
+    // 1本指（またはマウス）の拖曳で表示位置を動かす。タップと区別するため、少し動いてから動かし始める
     if (pointers.size === 1){
       if (!p.drag && (gestureHadPinch || Math.hypot(p.x - p.x0, p.y - p.y0) > TAP_MOVE)) p.drag = true;
       if (p.drag){ panX += p.x - px; panY += p.y - py; clampPan(); }
@@ -624,7 +624,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', pointerEnd);
   cv.addEventListener('pointercancel', pointerEnd);
 
-  // 盤の座標 (px, py) にあるタイルを回す
+  // 盤の座標 (px, py) にあるタイルを轉動
   function tapAt(px, py){
     if (state !== 'playing') return;
     let hit = null, bd = Infinity;
@@ -647,11 +647,11 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return `ヘキサコネクト ステージ${stage + 1}を全部つないだ！\n${location.href.split(/[?#]/)[0]}\n#ヘキサコネクト`;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const bin = atob(cv.toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -667,8 +667,8 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     if (navigator.share){ navigator.share({ text }).catch(() => {}); return; }
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 

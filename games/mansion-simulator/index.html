@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>マンションシミュレーター</title>
+<title>豪宅模擬器</title>
 <meta name="description" content="写真からマンション広告風の画像を作る">
 <style>
   :root{
@@ -106,7 +106,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   #levelMenu input{width:16px;height:16px;margin:0;accent-color:var(--gold)}
   #go{width:78px;height:78px;border-color:var(--gold);color:var(--gold);background:#12171f}
-  /* 初回だけ、押していないことが分かるように光らせる */
+  /* 初回だけ、按いないことが分かるように光らせる */
   @keyframes notice{
     0%{box-shadow:0 0 0 0 rgba(201,168,106,.5)}
     70%{box-shadow:0 0 0 18px rgba(201,168,106,0)}
@@ -126,14 +126,14 @@ gtag('config', 'G-41RSZLP1YQ');
     <p id="lead" class="off">建設予定地を決める</p>
   </div>
   <div id="center">
-    <button id="load1">画像を読み込む</button>
+    <button id="load1">画像を讀取</button>
     <p id="hint" class="hide"></p>
   </div>
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>街の写真に光の柱を建てて、マンション広告のような画像を作るおもちゃです。勝ち負けはありません。最初は街の画像が入っていて、左端のボタンで手持ちの写真に替えられます。マンション名、ポエム、駅名、階数などは架空のものがランダムで入ります。</p>
     <h2>操作</h2>
-    <p>画像をドラッグして建設予定地を決めます。印は指で隠れないよう少し上に出ます。中央の再生ボタンを押すと約4秒で建ち上がります。完成すると共有ボタンと、表示を切り替えるボタンが出ます。PC ではマウスで同じように操作できます。</p>
+    <p>画像を拖曳して建設予定地を決めます。印は指で隠れないよう少し上に出ます。中央の再生ボタンを押すと約4秒で建ち上がります。完成すると分享ボタンと、表示を切り替えるボタンが出ます。PC ではマウスで同じように操作できます。</p>
     <h2>楽しみ方</h2>
     <p>再生するたびに名前やポエム、柱の色が変わるので、気に入るまで建て直せます。切り替えのメニューでは路線やポエム、注意書きなどを個別に消せます。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -149,7 +149,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <button class="ico" id="go" disabled aria-label="建てる" title="建てる">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
   </button>
-  <button class="ico off" id="share" aria-label="共有する" title="共有する">
+  <button class="ico off" id="share" aria-label="分享" title="分享">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 14v4a2 2 0 002 2h10a2 2 0 002-2v-4"/>
     </svg>
@@ -291,7 +291,7 @@ gtag('config', 'G-41RSZLP1YQ');
   for(const cb of levelMenu.querySelectorAll('input[data-show]')){
     cb.addEventListener('change',()=>{ show[cb.dataset.show]=cb.checked; applyShow(); });
   }
-  // メニューの外をタップしたら閉じる
+  // メニューの外をタップしたら關閉
   document.addEventListener('pointerdown',e=>{
     if(levelMenu.classList.contains('hide')) return;
     if(levelMenu.contains(e.target)||levelBtn.contains(e.target)) return;
@@ -300,8 +300,8 @@ gtag('config', 'G-41RSZLP1YQ');
 
   load1.addEventListener('click',()=>fileInput.click());
 
-  // 共有（できない環境では保存に切り替わる）
-  // 共有の本文（画像と一緒に渡す）
+  // 分享（できない環境では保存に切り替わる）
+  // 分享の本文（画像と一緒に渡す）
   //   地上30階建て・全239邸
   //
   //   リュミエール・フォルム ブルー、誕生。
@@ -401,7 +401,7 @@ gtag('config', 'G-41RSZLP1YQ');
     im.src=url;
   });
 
-  // ---- 場所を一点だけドラッグで決める ----
+  // ---- 場所を一点だけ拖曳で決める ----
   let dragging=false;
   cv.addEventListener('pointerdown',e=>{
     if(!img||mode==='play') return;

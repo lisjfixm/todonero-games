@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>トルコアイス3D</title>
+<title>土耳其冰淇淋3D</title>
 <meta name="description" content="客の手をかわすトルコアイス屋">
 <style>
   :root{
@@ -97,22 +97,22 @@ gtag('config', 'G-41RSZLP1YQ');
       <div id="res-new" class="hidden">最高記録更新！</div>
       <div id="res-best"></div>
       <button id="retry" class="primary" type="button">もう一回</button>
-      <button id="share" type="button">共有</button>
+      <button id="share" type="button">分享</button>
     </div>
   </div>
 
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される結果画像">
+      <img id="share-img" alt="分享される結果画像">
       <p id="share-text"></p>
-      <button id="share-close" type="button">閉じる</button>
+      <button id="share-close" type="button">關閉</button>
     </div>
   </div>
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
-    <p>トルコアイス屋の店員になり、棒の先のアイスをお客さんの手から守るゲームです。ページを開くとすぐに始まり、取られずにいた秒数がスコアになります。取られたら終わりで、最高記録はこのブラウザに保存されます。</p>
+    <h2>玩法</h2>
+    <p>トルコアイス屋の店員になり、棒の先のアイスをお客さんの手から守るゲームです。ページを開くとすぐに始まり、取られずにいた秒数が分數になります。取られたら終わりで、最高記録はこのブラウザに保存されます。</p>
     <h2>操作</h2>
-    <p>画面のどこを触っても、指を動かした分だけ店員の手が動きます。アイスの上に指を置く必要はありません。PC ではマウスのドラッグか矢印キーで動かします。</p>
+    <p>画面のどこを触っても、指を動かした分だけ店員の手が動きます。アイスの上に指を置く必要はありません。PC ではマウスの拖曳か矢印キーで動かします。</p>
     <h2>コツ</h2>
     <p>お客さんは手を少し引いて構えてから、アイスへ一気に手を伸ばします。取られるのは伸ばしている間だけなので、構えが見えたら動く準備をして、伸びてきたところをかわしてください。かわした回数が増えるほど手は速くなり、動きの先読みも強まります。6回かわすと手が途中で曲がるようになり、8回かわすと構えだけのフェイントも混ざります。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -158,15 +158,15 @@ const KENNEY = {
   const L_ROD = 0.55;          // 手からアイス棒の先まで
   const WRIST_ANGLE = 0.7;     // 前腕に対する棒の角度（rad、上向きが正）
   const WRIST_STIFF = 0.3;     // 手首の硬さ（0〜1。小さいほど棒がぶらぶらする）
-  const PULL = 0.06;           // 手を指の位置へ引く強さ（1ステップあたりの割合）
-  const HAND_DAMP = 0.8;       // 手の速度を残す割合（引く力による揺れ戻しを抑える）
+  const PULL = 0.06;           // 手を指の位置へ拉強さ（1ステップあたりの割合）
+  const HAND_DAMP = 0.8;       // 手の速度を残す割合（拉力による揺れ戻しを抑える）
   const DRAG_GAIN = 1.0;       // 指の移動量に対する手の移動量
   const KEY_SPEED = 1.4;       // 矢印キーで手を動かす速さ (m/s)
   const TARGET_MIN_X = -0.05;  // 手を自分の体より後ろへは引けない
   const ARM_MIN_REACH = 0.3;   // 手は肩からこれ以上近づけない (m)。腕を折りたたみきらないようにする
   const ELBOW_SIDE_MIN = 0.04; // 肘を、肩と手を結ぶ線から少なくともこれだけ下・外側に出す (m)
   const ELBOW_PUSH = 0.05;     // そのために肘を押す強さ（反復1回あたりの割合）
-  const TARGET_MIN_Y = 0.9;    // 手をカウンターより下へは下げられない
+  const TARGET_MIN_Y = 0.9;    // 手をカウンターより往下は下げられない
   const ICE_OFFSET = 0.04;     // 棒の先からアイスの中心まで（棒の先にアイスが刺さっている）
   const ICE_R = 0.06;          // アイスの半径
   const HAND_R = 0.05;         // 手の大きさ（見た目）
@@ -219,7 +219,7 @@ const KENNEY = {
   const LEG_TOP = 0.04;        // 腰から股関節まで下
   const HOVER_DIST = 0.42;     // 待っている間、アイスからこれだけ離れた所で手を構える
   const HOVER_FOLLOW = 4;      // 構えた手がアイスを追う速さ
-  const WINDUP_BACK = 0.12;    // 手を出す前に引く距離 (m)
+  const WINDUP_BACK = 0.12;    // 手を出す前に拉距離 (m)
   const OVERSHOOT = 0.18;      // 狙った位置からさらに伸ばす距離
   const MISS_PAUSE = 0.15;     // 空振りのあと止まる時間（秒）
   const BACK_SPEED = 2.2;      // 手を戻す速さ (m/s)
@@ -230,7 +230,7 @@ const KENNEY = {
   const TRAIL_TIME = 0.15;     // アイスの軌跡を残す長さ（ゲーム内の秒）
   const TRAIL_OPACITY = 0.6;   // 軌跡の濃さ
 
-  // 掠り：アイスが客のコーンに触れると（いつでも）、アイスの一部がコーンの上に残り、本体との間が伸びる。1回のプレイで1度だけ。見た目だけ
+  // 掠り：アイスが客のコーンに触れると（いつでも）、アイスの一部がコーンの上に剩餘、本体との間が伸びる。1回のプレイで1度だけ。見た目だけ
   const GOLD_CHANCE = 0.001;         // 黄金のアイスが出る確率（1回のプレイごと）
   const SECRET_KEYS = '1029384756';  // 隠しコマンド（PC）：この順に数字キーを押すと、次の回は黄金のアイス
   const CORNER_SIZE = 80;            // 隠しコマンド（スマホ）：画面の4隅のこの範囲（px）を同時に押さえる
@@ -266,7 +266,7 @@ const KENNEY = {
   const diffFeint = n => n < DIFF.feintFrom ? 0 : Math.min(DIFF.feintMax, DIFF.feintBase + (n - DIFF.feintFrom)*DIFF.feintStep);
 
   const BEST_KEY = 'turkishIce3d.bestTime';
-  const SHARE_INSTANT = 0.5;   // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5;   // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
 
   // 最高記録（取られなかった秒数）：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
   let best = 0;
@@ -276,7 +276,7 @@ const KENNEY = {
 
   // ---------- three.js ----------
   const wrap = $('game');
-  // 共有画像に画面を写すため、描画バッファを残す
+  // 分享画像に画面を写すため、描画バッファを残す
   const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -454,7 +454,7 @@ const KENNEY = {
       const o = addModel(name, opts, g);
       const sz = o.userData.size;
       // opts.flip：上下をひっくり返して置く（モデルの原点は底なので、ひっくり返すと原点が上に来る）
-      // opts.tilt：底を軸に傾けて置く (rad、+ で上が左へ)。(x, y) は底の位置
+      // opts.tilt：底を軸に傾けて置く (rad、+ で上が往左)。(x, y) は底の位置
       const fl = opts.flip ? -1 : 1, t = opts.tilt || 0, ux = -Math.sin(t), uy = Math.cos(t);   // 上向き
       if (opts.flip){ o.rotation.x = Math.PI; o.userData.flip = true; }
       o.rotation.z = opts.flip ? -t : t;
@@ -465,7 +465,7 @@ const KENNEY = {
     };
     // 奥：コーンを重ねて積んだ柱を2本、横に寄せて並べる
     const CONE_STACK = 34, CONE_STEP = 0.035, CONE_H = 0.13, CONE_GAP = 0.005;   // 重ねる数・間隔・1個の高さ・柱どうしのすき間 (m)
-    // 柱は1個ずつ少しずつ傾けて、右へ曲がるカーブにする。2本は同じ中心のまわりの円弧に沿わせる（内側と外側でぶつからないように）
+    // 柱は1個ずつ少しずつ傾けて、往右曲がるカーブにする。2本は同じ中心のまわりの円弧に沿わせる（内側と外側でぶつからないように）
     const CONE_BEND = 0.45;   // 柱の根元から先までで曲がる角度の合計 (rad)
     const cbb = loadModel('cone').geo.boundingBox;
     const coneW = (cbb.max.x - cbb.min.x) * CONE_H / (cbb.max.y - cbb.min.y);
@@ -1216,7 +1216,7 @@ const KENNEY = {
       floorSolve(box, h, 2);
     }
     // 入り込んだ分は位置を直接ずらして戻す（速さで押し戻すと勢いが増えて、積み重なった部品が震え続けるため）
-    // 止まっている部品も位置は動かす（止まった部品が壁になって、重なりが残り続けないように）。壊れる前の屋台は動かさない
+    // 止まっている部品も位置は動かす（止まった部品が壁になって、重なりが剩餘続けないように）。壊れる前の屋台は動かさない
     const invP = b => (b === box && b.asleep) ? 0 : 1 / Math.min(b.m, PIECE_HIT_MASS_MAX);
     // 奥行き方向の重なり：位置をずらし、近づく向きの速さを止める（屋台は奥行き方向には動かさない）
     for (const k of zpairs){
@@ -1323,7 +1323,7 @@ const KENNEY = {
     const fw = Math.max(-STALL_BREAK_RAND_SPIN, Math.min(STALL_BREAK_RAND_SPIN, (rx * jy - ry * jx) / pI));
     let w = box.w + (Math.random() - 0.5) * STALL_BREAK_SPIN + fw;
     if (Math.abs(w) < STALL_BREAK_MIN_SPIN) w = (w < 0 ? -1 : 1) * STALL_BREAK_MIN_SPIN;
-    w = Math.max(-PIECE_MAX_SPIN, Math.min(PIECE_MAX_SPIN, w));   // 回転が打ち消し合って小さくなっても少しは回す
+    w = Math.max(-PIECE_MAX_SPIN, Math.min(PIECE_MAX_SPIN, w));   // 回転が打ち消し合って小さくなっても少しは轉動
     pieces.push({
       id:++pieceId, obj:q.obj, x, y, a:box.a + q.la, vx, vy, w, vz:(Math.random() * 2 - 1) * PIECE_SPREAD_Z,
       m, I:m * (q.hx * q.hx + q.hy * q.hy) / 3, friction:0.6, still:0, asleep:false,
@@ -1350,7 +1350,7 @@ const KENNEY = {
       p.px = p.x; p.py = p.y;
       p.x += vx; p.y += vy - GRAVITY * h * h;
     }
-    // 手を目標へ引く。揺れ戻しは手の速度だけ減らして抑え、肘と棒はぶらぶらのまま残す
+    // 手を目標へ拉。揺れ戻しは手の速度だけ減らして抑え、肘と棒はぶらぶらのまま残す
     W.px = W.x - (W.x - W.px) * HAND_DAMP;
     W.py = W.y - (W.y - W.py) * HAND_DAMP;
     // 手を引き寄せる先は、今の肩から ARM_MIN_REACH〜腕を伸ばしきる少し手前 の範囲に収める
@@ -1387,7 +1387,7 @@ const KENNEY = {
   }
 
   // ---------- 客の手 ----------
-  // wait（構えてアイスを追う）→ windup（手を引く＝合図）→ lunge（伸ばす）→ miss → back → wait
+  // wait（構えてアイスを追う）→ windup（手を拉＝合図）→ lunge（伸ばす）→ miss → back → wait
   // x, y はコーンの口の位置（ここでアイスを受け取る）。手はそこから口の向き (ax, ay) の逆へ CUP_DIST の所
   const cpu = { x:0, y:0, ax:0, ay:1, state:'wait', t:0, dx:0, dy:0, travel:0, maxTravel:0, feint:false, speed:0, homing:0, lean:0 };
 
@@ -1417,7 +1417,7 @@ const KENNEY = {
         break;
       }
       case 'windup': {
-        // アイスに狙いをつけたまま、少し手を引く
+        // アイスに狙いをつけたまま、少し手を拉
         const hp = hoverPoint();
         const ax = hp.x - ice.x, ay = hp.y - ice.y, al = Math.hypot(ax, ay) || 1e-6;
         follow(hp.x + ax / al * WINDUP_BACK, hp.y + ay / al * WINDUP_BACK, Math.min(1, HOVER_FOLLOW * 2 * h));
@@ -1499,7 +1499,7 @@ const KENNEY = {
   let state = 'playing';   // playing / caught（取られて結果待ち）/ over
   document.documentElement.setAttribute('data-howto-hidden', '');   // 開いた瞬間からプレイ中なので、結果画面までボタンを隠す
   let count = 0;           // かわした回数（客の強さに使う）
-  let elapsed = 0;         // 取られていない秒数（スコア）
+  let elapsed = 0;         // 取られていない秒数（分數）
   let overT = 0;
   let newBest = false;   // 今回のプレイで最高記録を更新した
 
@@ -1582,7 +1582,7 @@ const KENNEY = {
   }, true);
   const cornerRelease = e => {
     if (!cornerTouches.delete(e.pointerId)) return;
-    if (cornerTimer && heldCorners() < 4){ clearTimeout(cornerTimer); cornerTimer = 0; }   // 1本でも離したらやり直し
+    if (cornerTimer && heldCorners() < 4){ clearTimeout(cornerTimer); cornerTimer = 0; }   // 1本でも離したら重新開始
     if (cornerTouches.size === 0) setTimeout(() => { cornerGesture = false; }, 400);
   };
   document.addEventListener('pointerup', cornerRelease, true);
@@ -1628,7 +1628,7 @@ const KENNEY = {
   document.addEventListener('keyup', e => keys.delete(e.key));
   addEventListener('blur', () => keys.clear());
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => {
@@ -1644,7 +1644,7 @@ const KENNEY = {
     lastTouchEnd = now;
   }, { passive:false });
 
-  // ---------- 結果画面・共有 ----------
+  // ---------- 結果画面・分享 ----------
   $('retry').addEventListener('pointerdown', e => e.stopPropagation());
   $('retry').addEventListener('click', restart);
 
@@ -1681,7 +1681,7 @@ const KENNEY = {
     g.fillText(`${fmt(elapsed)}秒 取られなかった！`, 300, 58);
     return shareCv;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(c){
     const bin = atob(c.toDataURL('image/png').split(',')[1]);   // toBlob の非同期コールバックは避ける
     const buf = new Uint8Array(bin.length);
@@ -1694,7 +1694,7 @@ const KENNEY = {
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1702,20 +1702,20 @@ const KENNEY = {
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll:true });
     };
-    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
-    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files:[file] })){
       navigator.share({ text, files:[file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(failed);
       return;
@@ -1804,7 +1804,7 @@ const KENNEY = {
       const c = Math.cos(pc.a), s = Math.sin(pc.a);
       const t = pc.tip;
       if (t && !t.done){
-        // 下の辺（倒れる側）を軸に x 軸まわりに回す
+        // 下の辺（倒れる側）を軸に x 軸まわりに轉動
         const ey = upHalf(pc), sg = t.s, cs = Math.cos(t.ang), sn = Math.sin(t.ang);
         pc.obj.position.set(pc.x, pc.y - ey + ey * cs + sg * t.dz / 2 * sn, pc.pz + sg * t.dz / 2 + ey * sn - sg * t.dz / 2 * cs);
         pc.obj.rotation.set(t.ang, 0, pc.a);
@@ -1816,7 +1816,7 @@ const KENNEY = {
         _qa.setFromAxisAngle(_zAxis, pc.a); _qb.setFromAxisAngle(_xAxis, t.ang); _qc.setFromAxisAngle(_zAxis, pc.va);
         pc.obj.quaternion.copy(_qa).multiply(_qb).multiply(_qc);
       }
-      else pc.obj.rotation.z = pc.obj.userData.flip ? -pc.a : pc.a;   // ひっくり返した物は x 軸で裏返っているので、回す向きも逆になる
+      else pc.obj.rotation.z = pc.obj.userData.flip ? -pc.a : pc.a;   // ひっくり返した物は x 軸で裏返っているので、轉動向きも逆になる
     }
     drawVendor(dt);
     setLimb(vUpper, S.x, S.y, 0, E.x, E.y, 0);

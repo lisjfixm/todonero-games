@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ぐるぐるポテトメーカー</title>
+<title>螺旋薯條機</title>
 <meta name="description" content="じゃがいもをらせんに切って長さを競う">
 <style>
   :root{
@@ -79,7 +79,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #over .btns button{flex:1;height:52px;font-size:18px;font-weight:700}
   #again{border-color:var(--accent)}
 
-  /* 共有される内容（共有シートが出ない環境用） */
+  /* 分享される内容（分享シートが出ない環境用） */
   #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
   #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;background:#222;border-radius:12px;padding:12px}
   #share-img{display:block;width:100%;height:auto;border-radius:6px}
@@ -102,26 +102,26 @@ gtag('config', 'G-41RSZLP1YQ');
       <div id="rBest"></div>
       <div class="btns">
         <button id="again" type="button">もう一回</button>
-        <button id="share" type="button">共有</button>
+        <button id="share" type="button">分享</button>
       </div>
     </div>
   </div>
 
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される結果画像">
+      <img id="share-img" alt="分享される結果画像">
       <p id="share-text"></p>
-      <button id="share-close" type="button">閉じる</button>
+      <button id="share-close" type="button">關閉</button>
     </div>
   </div>
 
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>じゃがいもをらせん状に切って串に広げ、揚げて長さを競うゲームです。長さは切った深さに、周回数×3.3cmを足したものです。長さに応じた呼び名がつき、最高記録はこのブラウザに保存されます。</p>
     <h2>操作</h2>
-    <p>押している間だけじゃがいもが回り、指を下へ動かした分だけ刃が下がります。刃は上へ戻りません。揚げる場面では「できあがり」で完成です。完成品はドラッグで回り、ピンチで拡大できます。PC はマウスで同じように操作し、拡大はホイールです。</p>
+    <p>按いる間だけじゃがいもが回り、指を往下動かした分だけ刃が下がります。刃は往上戻りません。揚げる場面では「できあがり」で完成です。完成品は拖曳で回り、ピンチで拡大できます。PC はマウスで同じように操作し、拡大はホイールです。</p>
     <h2>コツ</h2>
-    <p>刃をゆっくり下ろすほど周回数が増えますが、1枚の厚みが0.1cmを切ると切れて残りが落ちます。指を止めたまま回すと切れるので、迷ったら離して回転を止めます。揚げ時間は長さに関係なく、6秒ほどでよい色になり、揚げすぎると焦げます。</p>
+    <p>刃をゆっくり下ろすほど周回数が増えますが、1枚の厚みが0.1cmを切ると切れて剩餘が落ちます。指を止めたまま轉動と切れるので、迷ったら離して回転を止めます。揚げ時間は長さに関係なく、6秒ほどでよい色になり、揚げすぎると焦げます。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
   </section>
 </div>
@@ -181,11 +181,11 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   const FLESH_COLORS = [[0, 0xf2e2a8], [GOOD_MIN, 0xe8b046], [GOOD_MAX, 0xc98225], [2.8, 0x6a3812], [4, 0x1e120c]];
   const SKIN_COLORS  = [[0, 0xb98b4e], [GOOD_MIN, 0xa8742e], [GOOD_MAX, 0x8a5a1e], [2.8, 0x4a2a10], [4, 0x150c08]];
 
-  const SHARE_INSTANT = 0.5; // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5; // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
 
   // ---------- three.js ----------
   const cv = $('cv');
-  // 共有画像に画面を写すため描画結果を残す
+  // 分享画像に画面を写すため描画結果を残す
   const renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true, preserveDrawingBuffer:true });
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(css('--bg'));
@@ -284,7 +284,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   rig.add(uncut, uncutTop);
 
   // ---------- 切った所（らせん）。切った分だけ1か所ずつ記録して作る ----------
-  // 1か所あたりの頂点：上面（内・外）、下面（内・外）、皮（上から下へ SKIN_ROWS+1 個。元の形の丸みをなぞる）
+  // 1か所あたりの頂点：上面（内・外）、下面（内・外）、皮（上から往下 SKIN_ROWS+1 個。元の形の丸みをなぞる）
   const SKIN_ROWS = 4;
   const VPS = 4 + SKIN_ROWS + 1;          // 1か所あたりの頂点数
   const sPhi = new Float32Array(MAX_SAMPLES);    // 切ったときのじゃがいもの角度
@@ -330,7 +330,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
 
   // 形を作る。切っている間は元のじゃがいもの位置のまま（切れ目が入るだけ）、
   // spread：0 で切ったままの位置、1 で1周ごとに GAP ずつすき間を空けて串に沿って伸ばした位置（その間は途中の位置）
-  // 一番新しく切った1枚（刃のすぐ上）は動かさず、上の周ほど大きく上へずらす
+  // 一番新しく切った1枚（刃のすぐ上）は動かさず、上の周ほど大きく往上ずらす
   // 伸ばしたときの崩れ（周ごとのすき間のばらつき・外側のたれ下がり/反り返り）。0 で崩れなし
   const NOISE_Y = 0.7, NOISE_TILT = 1.0;
   let noiseP = [0, 0, 0, 0, 0, 0];
@@ -406,7 +406,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
       }
       colTopY.push(L0 - d - (cut ? GROOVE / 2 : 0));
     }
-    // 皮（0 行目は下端を串の穴まで閉じる輪）
+    // 皮（0 行目は下端を串の穴まで關閉輪）
     {
       const pos = [], col = [], uvs = [], idx = [];
       const C = SAMPLES + 1;   // 列の数
@@ -785,7 +785,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   }
 
   function endCut(text, ok){
-    document.documentElement.setAttribute('data-howto-hidden', '');   // 切り終わりから結果までは「遊び方」を隠す
+    document.documentElement.setAttribute('data-howto-hidden', '');   // 切り終わりから結果までは「玩法」を隠す
     if (!ok){ fallState = 1; fallY = 0; fallV = 0; fallRot = 0; }
     phase = 'cutEnd';
     press = null;
@@ -821,7 +821,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
     buildShape(true);   // 串に広げた形にする
     buildVat(spiralLen + 2 * VAT_MARGIN);   // 伸ばした長さに合わせる
     setSkewer(L0 - depth - VAT_MARGIN + 0.5, L0 - depth + spiralLen + VAT_MARGIN - 0.5);   // 鍋の中に収める
-    // 串を寝かせて揚げ鍋の上へ（串の向きが奥へ伸びる）
+    // 串を寝かせて揚げ鍋の往上（串の向きが奥へ伸びる）
     const mid = L0 - depth + spiralLen / 2;
     rig.rotation.set(-Math.PI / 2, 0, 0);
     rig.position.set(FRY_X, rigY, mid);
@@ -1122,7 +1122,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   }
   const _qa = new THREE.Quaternion(), _ax = new THREE.Vector3();
   function rotateShow(dx, dy){
-    // 画面の横の動きは縦軸まわり、縦の動きは横軸まわりに回す（どの向きにも回せる）
+    // 画面の横の動きは縦軸まわり、縦の動きは横軸まわりに轉動（どの向きにも回せる）
     _qa.setFromAxisAngle(_ax.set(0, 1, 0), dx * SHOW_ROT);
     showPivot.quaternion.premultiply(_qa);
     _qa.setFromAxisAngle(_ax.set(1, 0, 0), dy * SHOW_ROT);
@@ -1155,7 +1155,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
         rig.rotation.y = spin; endCut('', true); return;
       }
     }
-    // 切っている所が刃の位置（右側）に来るように回す
+    // 切っている所が刃の位置（右側）に来るように轉動
     rig.rotation.y = spin;
     blade.position.y = buildShape(false);
     if (cutting && press) emitChips(dt);
@@ -1191,7 +1191,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
       }
     } else if (phase === 'over'){
       if (!$('share-view').classList.contains('hidden')) return;
-      showPtrs.set(e.pointerId, { x:e.clientX, y:e.clientY });   // 完成したポテトを回す・ズームする
+      showPtrs.set(e.pointerId, { x:e.clientX, y:e.clientY });   // 完成したポテトを轉動・ズームする
       if (showPtrs.size === 2) pinchDist = ptrDist();
     } else return;
     try { cv.setPointerCapture(e.pointerId); } catch(_) {}
@@ -1240,18 +1240,18 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
   document.addEventListener('keydown', e => {
     if (!$('share-view').classList.contains('hidden')){
       if (e.key === 'Escape') closeShareView();
-      return;   // 共有される内容を表示中は結果画面のキー操作を止める
+      return;   // 分享される内容を表示中は結果画面のキー操作を止める
     }
     if (document.activeElement && document.activeElement.tagName === 'BUTTON') return;
     if ((e.key === ' ' || e.key === 'Enter') && phase === 'over'){ e.preventDefault(); reset(); }
   });
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (press || showPtrs.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => {
     const t = e.target && e.target.nodeType === 1 ? e.target : e.target && e.target.parentElement;
-    if (!(t && t.closest('#share-text'))) e.preventDefault();   // 共有される文面は選んでコピーできるようにする
+    if (!(t && t.closest('#share-text'))) e.preventDefault();   // 分享される文面は選んでコピーできるようにする
   });
   document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
   // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
@@ -1262,7 +1262,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
     lastTouchEnd = now;
   }, { passive:false });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return `${rankName(result.len)}を${result.len.toFixed(1)}cm作った！\n`
       + location.href.split(/[?#]/)[0] + '\n#ぐるぐるポテトメーカー';
@@ -1291,7 +1291,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
     g.fillText(`${result.len.toFixed(1)}cm`, W / 2, H - 34);
     return c;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(c){
     const bin = atob(c.toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -1305,7 +1305,7 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
     const fallback = () => {
       if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1313,20 +1313,20 @@ const KNIFE_TEX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAAD
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll:true });
     };
-    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
-    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files:[file] })){
       navigator.share({ text, files:[file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(failed);
       return;

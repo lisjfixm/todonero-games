@@ -94,22 +94,22 @@ gtag('config', 'G-41RSZLP1YQ');
     <div id="menuBox">
       <label class="set"><span>音量<b id="volVal">60</b></span><input id="vol" type="range" min="0" max="100" step="1" value="60"></label>
       <label class="set"><span>視点の感度<b id="sensVal">1.0</b></span><input id="sens" type="range" min="0.2" max="3" step="0.1" value="1"></label>
-      <button class="big" type="button" data-howto-open>遊び方</button>
-      <button id="menuClose" class="big">閉じる</button>
+      <button class="big" type="button" data-howto-open>玩法</button>
+      <button id="menuClose" class="big">關閉</button>
       <p class="credit">一部の絵文字：Twemoji（CC-BY 4.0）</p>
     </div>
   </div>
-  <div id="start"><button id="startBtn" class="big">スタート</button><button class="big" type="button" data-howto-open>遊び方</button></div>
+  <div id="start"><button id="startBtn" class="big">開始</button><button class="big" type="button" data-howto-open>玩法</button></div>
   <div id="result" class="hidden" aria-live="assertive">
     <h2 id="resTitle"></h2>
     <button id="retry" class="big">もう一回</button>
-    <button id="share" class="big">共有</button>
+    <button id="share" class="big">分享</button>
   </div>
   <section class="howto" data-pos="none" hidden>
-    <h2>遊び方</h2>
-    <p>迷路の中を歩き回り、鍵を拾って出口から脱出する一人称のホラーゲームです。鍵は迷路のどこかにランダムに置かれ、鍵を持って出口の扉の前に立つと脱出成功です。うろつく風車に捕まると終わりですが、「もう一回」で迷路の最初からやり直せます。</p>
+    <h2>玩法</h2>
+    <p>迷路の中を歩き回り、鍵を拾って出口から脱出する一人称のホラーゲームです。鍵は迷路のどこかにランダムに置かれ、鍵を持って出口の扉の前に立つと脫逃成功です。うろつく風車に捕まると終わりですが、「もう一回」で迷路の最初からやり直せます。</p>
     <h2>操作</h2>
-    <p>画面の左半分をドラッグすると移動、右半分をドラッグすると視点が動きます。右上のメニューでは音量と視点の感度を変えられ、開いている間はゲームが止まります。PC では WASD か上下キーで移動し、左右キーかマウスのドラッグで向きを変え、Esc キーでメニューを開きます。</p>
+    <p>画面の左半分を拖曳すると移動、右半分を拖曳すると視点が動きます。右上のメニューでは音量と視点の感度を変えられ、開いている間はゲームが止まります。PC では WASD か上下キーで移動し、左右キーかマウスの拖曳で向きを変え、Esc キーでメニューを開きます。</p>
     <h2>コツ</h2>
     <p>風車の手の回転が速くなるのが危険の前触れです。2秒ほどで立ち止まって3秒間見回し、このとき見通せる場所にいると、歩く速さの3倍で襲ってきます。回転が速くなったら壁の陰に入りましょう。見通せる場所にいるだけで、前触れまでの時間も早く進みます。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -135,7 +135,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const PLAYER_SPEED = 3.0;      // 歩く速さ（m/s）
   const PLAYER_R = 0.3;          // プレイヤーの当たり半径
   const EYE_H = 1.55;            // 目の高さ
-  const LOOK_SENS = 0.006;       // 視点ドラッグの感度
+  const LOOK_SENS = 0.006;       // 視点拖曳の感度
   const TURN_SPEED = 2.2;        // ←→キーの旋回速度（rad/s）
   const PITCH_MAX = 1.1;         // 上下の視点の限界
   const STICK_R = 48;            // スティックの最大半径（px）
@@ -158,11 +158,11 @@ gtag('config', 'G-41RSZLP1YQ');
   const WANDER_RETARGET = 4;     // うろつき中、この秒数ごとに今のプレイヤー付近へ行き先を選び直す
   const SIGHT_HURRY = 3;         // 非認識モード中、プレイヤーが視界にいると認識モードまでの時間がこの倍の速さで進む
   const SEE_RANGE = 14;          // 見つかる距離（m）
-  // 迷路の風車の行動：非認識モード（無害）でうろつく → 手が高速回転していく → 認識モード（このとき視界にいると襲ってくる）→ 数秒で戻る
+  // 迷路の風車の行動：非認識モード（無害）でうろつく → 手が高速回転していく → 認識モード（このとき視界にいると襲ってくる）→ 数秒で返回
   const NORMAL_MIN = 6, NORMAL_MAX = 12;   // 非認識モードでうろつく時間（秒）
   const WINDUP_TIME = 2;         // 手の回転が速くなっていく時間（秒）。認識モードに入る前触れ
   const WINDUP_SPIN = 35;        // 前触れの最後の手の回転速度（rad/s）
-  const RECOG_TIME = 3;          // 認識モードが続く時間（秒）。この間は立ち止まって見回す
+  const RECOG_TIME = 3;          // 認識モードが続く時間（秒）。この間は立ち止まって見轉動
   const LOSE_TIME = 2.5;         // 見失ってから諦めるまで（秒）
   const CAUGHT_SHAKE = 0.05;     // 捕まったときのカメラの揺れ（位置、m）
   const CAUGHT_SHAKE_ROT = 0.035;// 捕まったときのカメラの揺れ（向き、ラジアン）
@@ -183,7 +183,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const NOISE_FPS = 24;          // ノイズが切り替わる回数（1秒あたり）
   const NOISE_FRAMES = 8;        // あらかじめ作っておくノイズ画像の枚数（使い回して負荷を抑える）
   const RES_SCALE = 0.7;         // 画面の描画解像度（縦横それぞれ、画面の大きさに対する割合）。小さいほど荒くなる
-  const FOG_NEAR = 1, FOG_FAR = 24;   // 霧で完全に見えなくなる距離（導入でスタートから扉が見えるように）
+  const FOG_NEAR = 1, FOG_FAR = 24;   // 霧で完全に見えなくなる距離（導入で開始から扉が見えるように）
   // 色味（リミナルスペース風：黄ばんだ壁紙・くすんだカーペット・白っぽい天井、遠くは暗い黄色にかすむ）
   const TEMP_WALL_TINT = 0xd8d2c4;    // 消える壁（W）：壁紙に掛ける色（普通の壁より少しだけくすませる）
   // テクスチャ1枚が覆う大きさ（m）。小さいほど細かく繰り返す
@@ -232,7 +232,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const MAZE_ITEMS = ['key'];     // 迷路にランダムに置くアイテム（鍵がないと出口の扉が開かない）
 
   // 導入の部屋の地図（1文字＝1マス。上が奥）
-  //   # 壁・柱   . 床   S スタート   D 扉（触れると次の部屋へ）
+  //   # 壁・柱   . 床   S 開始   D 扉（触れると次の部屋へ）
   //   W 消える壁（紙を拾うと消える）   C 風車（通常モードで動かない）   P 紙（拾うと W が消え、風車も消える）
   //   X 真っ暗な道（ここにいる間は天井のライトが消え、懐中電灯だけになる）
   //   G 次のエリアへ進む見えない判定（真っ暗な道の一部として扱う）
@@ -286,7 +286,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const ambient = new THREE.AmbientLight(AMBIENT_COLOR, AMBIENT_INT);
   scene.add(ambient);
 
-  // 天井の蛍光灯：ライトの数を途中で変えると描画の準備がやり直しになって一瞬止まるので、
+  // 天井の蛍光灯：ライトの数を途中で変えると描画の準備が重新開始になって一瞬止まるので、
   // 8個は常に置いたままにし、点けたり消したりは明るさで切り替える
   const ceilLights = [], ceilPanels = [];
   const PANEL_OFF_COLOR = 0x222222;   // 消えているときのパネルの色
@@ -614,7 +614,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const farthest = (d, list) => list.reduce((b, c) => d[c[1]][c[0]] > d[b[1]][b[0]] ? c : b, list[0]);
 
   // ステージを作る。'intro'＝導入の狭い部屋、'maze'＝次の部屋（今は仮で、これまでの広場／迷路）
-  // retry: ゲームオーバー後のやり直し（持ち物を次のエリアに入ったときの状態に戻す）
+  // retry: 遊戲結束後の重新開始（持ち物を次のエリアに入ったときの状態に戻す）
   function buildLevel(name, retry){
     stage = name;
     darkSet = new Set(); inDark = false; goSet = new Set(); exitArmed = true;
@@ -748,7 +748,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   const placeItem = (id, tx, ty) => placeItemAt(id, center(tx), center(ty));
 
-  // 導入：INTRO_MAP から部屋を作る。スタートから扉が見え、上の部屋の真ん中に通常モードの風車がいる
+  // 導入：INTRO_MAP から部屋を作る。開始から扉が見え、上の部屋の真ん中に通常モードの風車がいる
   function buildIntro(){
     TILE = INTRO_TILE;
     gh = INTRO_MAP.length; gw = INTRO_MAP[0].length;
@@ -825,7 +825,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const r = cells[Math.random() * cells.length | 0];
     const edge = cells.filter(([x, y]) => x === 1 || y === 1 || x === gw - 2 || y === gh - 2);
     const ex = farthest(bfsDist(r[0], r[1]), edge);
-    // スタート：出口から一番遠いセル
+    // 開始：出口から一番遠いセル
     const dEx = bfsDist(ex[0], ex[1]);
     const start = farthest(dEx, cells);
 
@@ -865,7 +865,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const open = DIRS.find(([dx, dy]) => grid[start[1] + dy][start[0] + dx] === 0) || [0, -1];
     yaw = Math.atan2(-open[0], -open[1]); pitch = 0;
 
-    // 風車：スタートから十分離れたセル
+    // 風車：開始から十分離れたセル
     mill.still = false;
     const dSt = bfsDist(start[0], start[1]);
     const maxD = Math.max(...cells.map(([x, y]) => dSt[y][x]));
@@ -873,7 +873,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const ms = far[Math.random() * far.length | 0];
     mill.x = center(ms[0]); mill.z = center(ms[1]);
 
-    // アイテム：スタート・出口・風車の初期位置以外のマスにランダムに置く
+    // アイテム：開始・出口・風車の初期位置以外のマスにランダムに置く
     const used = new Set([start, ex, ms].map(([x, y]) => x + ',' + y));
     const spots = cells.filter(([x, y]) => !used.has(x + ',' + y)).sort(() => Math.random() - 0.5);
     MAZE_ITEMS.forEach((id, i) => placeItem(id, spots[i][0], spots[i][1]));
@@ -950,7 +950,7 @@ gtag('config', 'G-41RSZLP1YQ');
     setMillLook(true);
     sting(0.5);
   }
-  // 非認識モードに戻る（追っていた場合は、最後に見た場所をまず見に行く）
+  // 非認識モードに返回（追っていた場合は、最後に見た場所をまず見に行く）
   function toNormal(fromChase){
     mill.state = 'wander';
     mill.modeT = NORMAL_MIN + Math.random() * (NORMAL_MAX - NORMAL_MIN);
@@ -1049,7 +1049,7 @@ gtag('config', 'G-41RSZLP1YQ');
         mill.state = 'windup'; mill.modeT = WINDUP_TIME;
       }
     } else if (mill.state === 'recog'){
-      // 認識モード：立ち止まり、視界にプレイヤーがいれば襲ってくる。いなければ数秒で戻る
+      // 認識モード：立ち止まり、視界にプレイヤーがいれば襲ってくる。いなければ数秒で返回
       mill.modeT -= dt;
       if (mill.see) startChase();
       else if (mill.modeT <= 0) toNormal(false);
@@ -1103,7 +1103,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const humGain = actx.createGain(); humGain.gain.value = HUM_VOL;
     hum.connect(humLp); humLp.connect(humGain); humGain.connect(master);
     hum.start();
-    // 足音：埋め込んだ2歩分の音（右足・左足）を読み込む
+    // 足音：埋め込んだ2歩分の音（右足・左足）を讀取
     STEP_SOUNDS.forEach((b64, i) => {
       const bin = atob(b64), arr = new Uint8Array(bin.length);
       for (let k = 0; k < bin.length; k++) arr[k] = bin.charCodeAt(k);
@@ -1255,7 +1255,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const keys = new Set();
   const stick = $('stick'), knob = $('knob');
 
-  // タッチ：左半分＝移動スティック、右半分＝視点。マウス：ドラッグで視点
+  // タッチ：左半分＝移動スティック、右半分＝視点。マウス：拖曳で視点
   cv.addEventListener('pointerdown', e => {
     if (state !== 'playing') return;
     e.preventDefault();
@@ -1371,7 +1371,7 @@ gtag('config', 'G-41RSZLP1YQ');
       return;
     }
     $('dlgText').textContent = dlgQueue.shift();
-    $('dlgHint').textContent = dlgQueue.length ? 'タップで次へ' : 'タップで閉じる';
+    $('dlgHint').textContent = dlgQueue.length ? '點擊繼續' : '點擊關閉';
   }
   $('dialog').addEventListener('pointerdown', e => {
     e.preventDefault();
@@ -1421,7 +1421,7 @@ gtag('config', 'G-41RSZLP1YQ');
     result = { type };
     stick.classList.add('hidden');
     drags.clear(); movePid = null;
-    $('resTitle').textContent = type === 'escape' ? '脱出成功' : '認識された';
+    $('resTitle').textContent = type === 'escape' ? '脫逃成功' : '認識された';
     $('resTitle').classList.toggle('caught', type === 'caught');
     $('result').classList.remove('hidden');
     state = 'over';
@@ -1431,7 +1431,7 @@ gtag('config', 'G-41RSZLP1YQ');
     $('result').classList.add('hidden');
     $('dialog').classList.add('hidden');
     dlgQueue = []; dlgDone = null;
-    $('share').textContent = '共有';
+    $('share').textContent = '分享';
     // 捕まったときは次のエリアの最初から、脱出したときは導入からやり直す
     if (result && result.type === 'caught') buildLevel('maze', true);
     else buildLevel('intro');
@@ -1439,7 +1439,7 @@ gtag('config', 'G-41RSZLP1YQ');
     state = 'playing';
   }
 
-  // スタート画面：ボタンを押したら始める（このタップで音も出せるようになる）
+  // 開始画面：ボタンを押したら始める（このタップで音も出せるようになる）
   function startGame(){
     if (state !== 'start') return;
     $('start').classList.add('hidden');
@@ -1452,7 +1452,7 @@ gtag('config', 'G-41RSZLP1YQ');
   $('retry').addEventListener('pointerdown', e => e.stopPropagation());
   $('retry').addEventListener('click', restart);
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     const url = location.href.split(/[?#]/)[0];
     return result.type === 'escape'
@@ -1466,15 +1466,15 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!result) return;
     const btn = $('share');
     const text = shareText();
-    // 1) 共有シートがある環境（スマホなど）: 文面を渡す（画像は付けない）
+    // 1) 分享シートがある環境（スマホなど）: 文面を渡す（画像は付けない）
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 2) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 2) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 

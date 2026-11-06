@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>USBシミュレーター3D</title>
+<title>USB模擬器3D</title>
 <meta name="description" content="USBを刺されないように粘る">
 <style>
   :root{
@@ -63,7 +63,7 @@ gtag('config', 'G-41RSZLP1YQ');
     --wall3:#f2a65e;      /* 壁紙の色3 */
     --shade:rgba(0,0,0,.45);
     --accent:#2b6be0;
-    --gold:#ffc83d;       /* 自己ベスト更新 */
+    --gold:#ffc83d;       /* 刷新個人最佳 */
     --gold-fg:#5a3a00;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -102,23 +102,23 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="flash" aria-hidden="true"></div>
   <div id="over" class="hidden">
     <div id="card">
-      <div id="newbest" class="hidden">ベスト更新</div>
+      <div id="newbest" class="hidden">刷新紀錄</div>
       <div id="res" aria-live="polite"></div>
       <div id="best"></div>
       <button id="retry" type="button">もう一回</button>
-      <button id="share" type="button">共有</button>
+      <button id="share" type="button">分享</button>
     </div>
   </div>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される結果画像">
+      <img id="share-img" alt="分享される結果画像">
       <p id="share-text"></p>
-      <button id="share-close" type="button">閉じる</button>
+      <button id="share-close" type="button">關閉</button>
     </div>
   </div>
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
-    <p>ノートPCの差し込み口を上下にひっくり返して、USBプラグを刺されないように粘るゲームです。ページを開くとすぐに、手がプラグを持って近づいてきます。向きが合った状態で押し込まれると刺さって終わりで、刺されずにいた秒数がスコアです。自己ベストはこのブラウザに保存されます。</p>
+    <h2>玩法</h2>
+    <p>ノートPCの差し込み口を上下にひっくり返して、USBプラグを刺されないように粘るゲームです。ページを開くとすぐに、手がプラグを持って近づいてきます。向きが合った状態で押し込まれると刺さって終わりで、刺されずにいた秒数が分數です。自己ベストはこのブラウザに保存されます。</p>
     <h2>操作</h2>
     <p>画面をタップするたびに差し込み口がひっくり返ります。PC ではクリックのほか、スペースキーや矢印キーでも回せます。</p>
     <h2>コツ</h2>
@@ -138,7 +138,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const APPROACH_TIME = 1.6;   // 手が差し込み口まで近づく時間（秒）。着いたらあとは引っ込まずに刺そうとし続ける
   const INSERT_TIME = 1.3;     // 刺さってから結果が出るまで（秒）
   const BUMP_TIME = 0.14;      // 押し込もうとして弾かれる動きの時間（秒）
-  const BUMP_DIST = 0.3;       // 弾かれて手前に戻る距離
+  const BUMP_DIST = 0.3;       // 弾かれて手前に返回距離
   const REACT_JITTER = 0.25;   // 手が気づくまでの時間のばらつき（±割合。ひねるたびに選び直す）
   const RAMP = 60;             // この秒数たつと最高難度
   // 難易度：開始時と RAMP 秒以降の値。その間はなめらかにつなぐ
@@ -168,15 +168,15 @@ gtag('config', 'G-41RSZLP1YQ');
   const QUICK_RATE = 0.6;      // 素早いひねり：いつものひねる時間に掛ける割合
   const TRACK_FROM = 0.6;      // 近づく途中、ここまで来てから（割合）向きを合わせに来る
   const FEINT_MIN = 0.35, FEINT_MAX = 0.6;    // フェイント：ひねりのどこまで進んでから戻すか（割合）
-  const PULL_OUT = 0.22, PULL_IN = 0.16;      // 一旦離す：手を引く時間・戻って刺しに来る時間（秒）
-  const PULL_MIN = 1.2, PULL_MAX = 2.6;       // 一旦離す：手を引く距離
+  const PULL_OUT = 0.22, PULL_IN = 0.16;      // 一旦離す：手を拉時間・戻って刺しに来る時間（秒）
+  const PULL_MIN = 1.2, PULL_MAX = 2.6;       // 一旦離す：手を拉距離
   const PULL_HOLD_MIN = 0.25, PULL_HOLD_MAX = 0.8;   // 一旦離す：離れたまま様子を見る時間（秒）。この間も向きを変えることがある
   const JAB_MIN = 2, JAB_MAX = 3;             // グイグイ：押し付ける回数
-  const JAB_GAP = 0.1;         // グイグイ：押し込んでから次に引くまでの間（秒）
-  const THRUST_BACK = 0.13;    // 押し込む前に、手を引く時間（秒）
+  const JAB_GAP = 0.1;         // グイグイ：押し込んでから次に拉までの間（秒）
+  const THRUST_BACK = 0.13;    // 押し込む前に、手を拉時間（秒）
   const THRUST_IN = 0.07;      // 引いたところから一気に押し込む時間（秒）
-  const THRUST_DIST = 0.75;    // 押し込む前に手を引く距離
-  const JAB_DIST = 0.45;       // グイグイのときに手を引く距離
+  const THRUST_DIST = 0.75;    // 押し込む前に手を拉距離
+  const JAB_DIST = 0.45;       // グイグイのときに手を拉距離
   const PAUSE_MIN = 0.35, PAUSE_MAX = 1.0;    // 間を置く：何もしない時間（秒）
   // 手の出てき方（差し込み口の正面＝右側から来る）
   const START_Z = 3.4;         // 出てくる位置の差し込み口からの距離（最初から画面に映る近さ）。差し込み口の正面からまっすぐ近づく
@@ -206,9 +206,9 @@ gtag('config', 'G-41RSZLP1YQ');
   const CAM_DIR = [0.75, 0.8, 1.05];        // 見ている向き（見る点から見たカメラの方向）。手前右上から見る
   const CAM_TARGET = [-0.4, 0.5, -0.9];  // カメラが見る点（差し込み口の近く）
   const CAM_MIN_DIST = 11;     // カメラの最小距離
-  const VIEW_HALF = 3.0;       // 横幅にこれだけは必ず収める（縦長の画面でカメラを引く量）
+  const VIEW_HALF = 3.0;       // 横幅にこれだけは必ず収める（縦長の画面でカメラを拉量）
   const BEST_KEY = 'usbSimulator3d.best';   // 自己ベストの保存先（localStorage）
-  const SHARE_INSTANT = 0.5;   // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5;   // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
 
   const mod = (a, n) => ((a % n) + n) % n;
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -457,7 +457,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // ---------- ノートPC ----------
   const pc = new THREE.Group();
   {
-    // 本体：右側面の形（角を丸め、差し込み口の穴をあけたもの）を左へ押し出す
+    // 本体：右側面の形（角を丸め、差し込み口の穴をあけたもの）を往左押し出す
     const B = 0.05;
     const side = withHole(
       rrect(PC_FRONT + PC_BACK, PC_THICK, PC_ROUND, THREE.Shape, (PC_FRONT - PC_BACK) / 2, 0),
@@ -801,10 +801,10 @@ gtag('config', 'G-41RSZLP1YQ');
       qTurns: portTurns + 1,   // プラグの向き（偶数 = 印が上）。最初は差し込み口と逆向きで来る
       turn: null,      // ひねっている途中：{ from, to（向き。半回転を1とする）, t, dur, feintAt（フェイントで戻し始める割合） }
       react: nextReact(),
-      wait: 0,         // 間を置いている残り時間（秒）
+      wait: 0,         // 間を置いている剩餘時間（秒）
       pull: null,      // 一旦離している途中：{ stage: 'out' | 'hold' | 'in', t, dist, hold }
       pullZ: 0,        // 一旦離して手前に引いている距離
-      jab: 0, jabT: 0, // グイグイ押し付ける残り回数と、次まで（秒）
+      jab: 0, jabT: 0, // グイグイ押し付ける剩餘回数と、次まで（秒）
       bump: 0,
       thrust: null,    // 押し込んでいる途中：{ stage: 'back' | 'in', t, dist }
       thrustFor: null, // 最後に押し込んだとき見ていた差し込み口の向き
@@ -826,7 +826,7 @@ gtag('config', 'G-41RSZLP1YQ');
     hand.visible = true;
   }
 
-  // 共有画像用：刺さる直前（プラグが差し込み口の少し手前にある瞬間）を撮っておく
+  // 分享画像用：刺さる直前（プラグが差し込み口の少し手前にある瞬間）を撮っておく
   const SNAP_GAP = 0.45;        // 撮るときのプラグと差し込み口の間（この分だけ手前に戻して撮る）
   const SNAP_SPAN = 6;          // 撮る範囲の横幅（差し込み口のまわりこの長さ分）
   const SNAP_W = 600, SNAP_H = 370;
@@ -877,7 +877,7 @@ gtag('config', 'G-41RSZLP1YQ');
     h.thrustFor = seenTurns(h.react);
     if (!h.turn && mod(h.qTurns, 2) === portDir()){ insert(); return; }
     h.bump = BUMP_TIME;
-    // 直前に回したおかげでかわせた（回す前の向きならプラグが刺さっていた）ならギリギリの演出
+    // 直前に回したおかげでかわせた（轉動前の向きならプラグが刺さっていた）ならギリギリの演出
     const last = portLog[portLog.length - 1];
     const near = !h.turn && time - last.t < NEAR_WINDOW && mod(h.qTurns, 2) === mod(last.turns - 1, 2);
     if (near) fxNear(); else fxBump();
@@ -919,7 +919,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function updateHand(dt){
     const P = params();
     h.bump = Math.max(0, h.bump - dt);
-    // 押し込んでいる途中（引く→押し込む）。押し込みきった瞬間に判定する
+    // 押し込んでいる途中（拉→押し込む）。押し込みきった瞬間に判定する
     if (h.thrust){
       const T = h.thrust;
       T.t += dt;
@@ -1031,7 +1031,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (h.thrust){
       const T = h.thrust;
       thrustZ = T.stage === 'back'
-        ? T.dist * Math.sin(Math.min(T.t / THRUST_BACK, 1) * Math.PI / 2)     // ためながら引く
+        ? T.dist * Math.sin(Math.min(T.t / THRUST_BACK, 1) * Math.PI / 2)     // ためながら拉
         : T.dist * (1 - Math.pow(Math.min(T.t / THRUST_IN, 1), 2));          // 一気に押し込む
     }
     let z = lerp(START_Z, CONTACT_Z, u) + h.pullZ + thrustZ + snapGap;
@@ -1122,7 +1122,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
   });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return `${fmt(result.time)}まもった！\n${location.href.split(/[?#]/)[0]}\n#USBシミュレーター3D`;
   }
@@ -1140,11 +1140,11 @@ gtag('config', 'G-41RSZLP1YQ');
     g.textBaseline = 'middle';
     if (result.isNew){
       g.font = `800 22px ${FONT}`;
-      const bw = g.measureText('ベスト更新').width + 36;
+      const bw = g.measureText('刷新紀錄').width + 36;
       g.fillStyle = colStr('gold');
       g.beginPath(); g.roundRect ? g.roundRect(S / 2 - bw / 2, 22, bw, 36, 18) : g.rect(S / 2 - bw / 2, 22, bw, 36); g.fill();
       g.fillStyle = colStr('gold-fg');
-      g.fillText('ベスト更新', S / 2, 41);
+      g.fillText('刷新紀錄', S / 2, 41);
     }
     g.fillStyle = colStr('fg');
     g.font = `800 96px ${FONT}`;
@@ -1154,7 +1154,7 @@ gtag('config', 'G-41RSZLP1YQ');
     g.fillText($('best').textContent, S / 2, result.isNew ? 192 : 176);
     return c;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(c){
     const bin = atob(c.toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -1166,7 +1166,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 共有シートが無い・使えない環境：文面をコピーし、共有される内容を画面に出す
+    // 3) 分享シートが無い・使えない環境：文面をコピーし、分享される内容を画面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1174,18 +1174,18 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll: true });
     };
-    // 失敗、または押してすぐのキャンセル扱いは共有シートが出なかったとみなして 3) へ
+    // 失敗、または按すぐのキャンセル扱いは分享シートが出なかったとみなして 3) へ
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート：文面＋結果画像
+    // 1) 画像を渡せる分享シート：文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })){
       navigator.share({ text, files: [file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート：文面のみ
+    // 2) 画像を渡せない分享シート：文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(failed);
       return;

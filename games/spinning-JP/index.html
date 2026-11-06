@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>47都道府県バトル</title>
+<title>47都道府縣對戰</title>
 <meta name="description" content="都道府県のコマを場外へはじき出す">
 <style>
   :root{
@@ -192,7 +192,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <!-- 1: 都道府県えらび -->
   <section class="panel" id="p-select">
     <div class="row center">
-      <button class="btn" type="button" data-howto-open>遊び方</button>
+      <button class="btn" type="button" data-howto-open>玩法</button>
     </div>
     <div id="kenList"></div>
   </section>
@@ -206,7 +206,7 @@ gtag('config', 'G-41RSZLP1YQ');
     <div id="bracketBox"><canvas id="bracket"></canvas></div>
     <div class="row center">
       <button class="btn" id="restart">はじめから</button>
-      <button class="btn" type="button" data-howto-open>遊び方</button>
+      <button class="btn" type="button" data-howto-open>玩法</button>
     </div>
   </section>
 
@@ -214,17 +214,17 @@ gtag('config', 'G-41RSZLP1YQ');
   <section class="panel hidden" id="p-battle">
     <div id="stick" role="application" aria-label="移動スティック">
       <div id="stickBase"><div id="stickKnob"></div></div>
-      <p id="stickHint">ドラッグして動かす</p>
+      <p id="stickHint">拖曳して動かす</p>
     </div>
   </section>
 
   <p class="credit" id="credit"></p>
 
 <section class="howto" data-pos="none" hidden>
-  <h2>遊び方</h2>
-  <p>都道府県の形をしたコマをぶつけ合い、丸い土俵の外へはじき出す対戦ゲームです。47都道府県から1つ選ぶとトーナメントが始まり、決勝まで勝ち抜けば優勝で、選択画面のその県に星が付きます。相手が落ちれば勝ちで、自分が落ちるか同時に落ちると負けです。組み合わせによっては不戦勝もあります。</p>
+  <h2>玩法</h2>
+  <p>都道府県の形をしたコマをぶつけ合い、丸い土俵の外へはじき出す対戦ゲームです。47都道府県から1つ選ぶとトーナメントが始まり、決賽まで勝ち抜けば優勝で、選択画面のその県に星が付きます。相手が落ちれば勝ちで、自分が落ちるか同時に落ちると負けです。組み合わせによっては不戦勝もあります。</p>
   <h2>操作</h2>
-  <p>対戦中は土俵の下の枠を押すと、その場所にスティックが出ます。ドラッグした向きへ、倒した量に応じてコマが加速します。PC はマウスのドラッグのほか、矢印キーでも動かせます。</p>
+  <p>対戦中は土俵の下の枠を押すと、その場所にスティックが出ます。拖曳した向きへ、倒した量に応じてコマが加速します。PC はマウスの拖曳のほか、矢印キーでも動かせます。</p>
   <h2>コツ</h2>
   <p>コマの大きさは実際の面積に比例し、小さい県ほど速く回ります。土俵はくぼんでいて、ふちに近いほど強く中心へ引き戻されます。ぶつかると回転の勢いで横へはじかれるので、相手をふちへ追い込んでから当てましょう。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -302,7 +302,7 @@ const TUNE = {
   // 操作。accel を上げすぎると自力でふちを越えられてしまう。
   // 県ごとに moveFactor 倍されるので、いちばん小さい県で足りているか確認すること
   move: {
-    accel:    460*1.1,  // 押している間の加速（px/s²）
+    accel:    460*1.1,  // 按いる間の加速（px/s²）
     maxSpeed: 300 * 20,  // 自力で出せる最高速度（px/s）。吹き飛びには適用されない
   },
 
@@ -336,7 +336,7 @@ const TUNE = {
     slowScale:   0.1, // スロー中の再生速度
   },
 
-  start: { offset: 95 },   // 開始時に中心から左右へ離す距離
+  start: { offset: 95 },   // 開始時に中心から左往右離す距離
 };
 
 
@@ -577,9 +577,9 @@ function sizeKens(){
   });
 
   // 大きさによる機動力の差。基準の取り方が重要。
-  //   回転は「いちばん大きい県」を 1.0 にして、小さい県ほど速く回す（上へ伸ばす）
-  //   移動は「いちばん小さい県」を 1.0 にして、大きい県ほど鈍くする（下へ伸ばす）
-  // 移動を 1.0 より上へ伸ばすと、加速が引き寄せに勝って自分でふちを越えてしまう
+  //   回転は「いちばん大きい県」を 1.0 にして、小さい県ほど速く轉動（往上伸ばす）
+  //   移動は「いちばん小さい県」を 1.0 にして、大きい県ほど鈍くする（往下伸ばす）
+  // 移動を 1.0 より往上伸ばすと、加速が引き寄せに勝って自分でふちを越えてしまう
   const areas = KENS.map(k => k.polyArea);
   const aMin = Math.min(...areas), aMax = Math.max(...areas);
   const H = TUNE.handling;
@@ -763,7 +763,7 @@ function thinkCPU(cpu, foe, dt){
     dx /= d; dy /= d;
     if (d < C.closeRange){ dx *= C.closeFactor; dy *= C.closeFactor; }
 
-    // ふちに寄りすぎたら中心へ戻る気持ちを混ぜる
+    // ふちに寄りすぎたら中心へ返回気持ちを混ぜる
     const ex = cpu.x - F.cx, ey = cpu.y - F.cy;
     const er = Math.hypot(ex, ey) || 1;
     const safe = F.radius - C.edgeMargin;
@@ -923,7 +923,7 @@ function drawChar(ch, isPlayer){
 /* ══════════════════════════════════════════════════════════
    トーナメント
    ══════════════════════════════════════════════════════════ */
-const ROUND_NAMES = ["1回戦","2回戦","3回戦","4回戦","準決勝","決勝"];
+const ROUND_NAMES = ["第一輪","第二輪","第三輪","第四輪","準決賽","決賽"];
 const SLOTS = 64, ROUNDS = 6;
 
 let tour = null;   // { rounds:[[kenIndex|null,...],...], me, round, match }
@@ -931,7 +931,7 @@ let phase = "select";
 
 function buildTournament(myIndex){
   const others = shuffle(KENS.map((_,i) => i).filter(i => i !== myIndex));
-  const PAIRS = SLOTS/2;                 // 1回戦の組数
+  const PAIRS = SLOTS/2;                 // 第一輪の組数
   const nFull = KENS.length - PAIRS;     // 両側そろう組（47県なら15組）
   const nBye  = PAIRS - nFull;           // 片側が空きの組（17組）
 
@@ -941,7 +941,7 @@ function buildTournament(myIndex){
 
   const first = new Array(SLOTS).fill(null);
 
-  // 自分は必ず相手のいる組に入れる。1回戦が不戦勝になることはない
+  // 自分は必ず相手のいる組に入れる。第一輪が不戦勝になることはない
   const myPair = fullPairs[Math.floor(Math.random()*fullPairs.length)];
   first[myPair*2 + (Math.random() < 0.5 ? 0 : 1)] = myIndex;
 
@@ -1013,7 +1013,7 @@ function drawBracket(){
     }
   }
 
-  // 勝ち上がりの経路。決まっている試合はすべて引く
+  // 勝ち上がりの経路。決まっている試合はすべて拉
   const routeSeg = (r, m) => {
     const win = tour.rounds[r+1][m];
     if (win === null) return null;
@@ -1236,7 +1236,7 @@ function advance(won){
   next[t.match] = won ? t.me : foe;
   t.round++;
   if (!won){
-    // 自分が抜けた後の残りはランダムで埋める
+    // 自分が抜けた後の剩餘はランダムで埋める
     fillRest(t);
     drawBracket();
     showOutcome(false);
@@ -1269,7 +1269,7 @@ function showOutcome(champion){
   el("nextLine").innerHTML = champion
     ? `<span class="roundTag">優勝</span> ${KENS[tour.me].name}`
     : `<span class="roundTag">${lost}敗退</span> 優勝は ${KENS[tour.rounds[ROUNDS][0]].name}`;
-  el("goBattle").textContent = "もういちど";
+  el("goBattle").textContent = "再來一次";
   el("goBattle").onclick = () => { location.reload(); };
 }
 
@@ -1315,7 +1315,7 @@ let me = null, cpu = null, raf = 0;
 let acc = 0, last = 0, over = false, slowTimer = 0, resultShown = false;
 
 function startBattle(){
-  // 2つとも同じ向きに回す。逆回転どうしだと接点の相対速度が消えて弾かれない
+  // 2つとも同じ向きに轉動。逆回転どうしだと接点の相対速度が消えて弾かれない
   me  = makeChar(KENS[tour.me],  F.cx - TUNE.start.offset, F.cy, 1);
   cpu = makeChar(KENS[nextFoe],  F.cx + TUNE.start.offset, F.cy, 1);
   acc = 0; over = false; slowTimer = 0; resultShown = false;
@@ -1380,7 +1380,7 @@ function showResult(){
   resultShown = true;
   el("verdict").textContent = iWon ? "かち" : "まけ";
   el("verdict").style.color = iWon ? COL.green : COL.red;
-  el("resultBtn").textContent = iWon ? "つぎの試合へ" : "結果を見る";
+  el("resultBtn").textContent = iWon ? "下一場比賽" : "結果を見る";
   el("result").classList.remove("hidden");
 }
 

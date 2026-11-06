@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>スカイスター</title>
+<title>星空</title>
 <meta name="description" content="ジェット付きの車を噴射だけで操る">
 <style>
   :root{
@@ -73,8 +73,8 @@ gtag('config', 'G-41RSZLP1YQ');
   #goal span{background:var(--panel);padding:10px 22px;border-radius:12px;font-size:34px;font-weight:bold}
   #time{background:var(--panel);padding:6px 16px;border-radius:8px;font-size:22px;font-weight:bold;font-variant-numeric:tabular-nums}
 
-  /* ジェットの操作パッド（押している間だけ噴射）。車を上から見た並び（上が車の前）で4×4のマスに分ける。
-     どこを押しても下のジェットが噴き、外側のマスはそこにある前・横・後ろのジェットも一緒に噴く。
+  /* ジェットの操作パッド（按いる間だけ噴射）。車を上から見た並び（上が車の前）で4×4のマスに分ける。
+     どこを按も下のジェットが噴き、外側のマスはそこにある前・横・後ろのジェットも一緒に噴く。
      真ん中の2×2は押す位置で下の4本を傾ける所（縦横の中心線で前後左右を分け、真ん中の四角は4本均等） */
   #controls{position:absolute;left:3%;right:3%;bottom:calc(12px + env(safe-area-inset-bottom));height:226px;
     display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);
@@ -104,7 +104,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #again{background:var(--accent);color:var(--ink)}
   #share{background:#fff;color:var(--ink)}
 
-  /* 共有シートが出ない環境で、共有される内容を見せる画面 */
+  /* 分享シートが出ない環境で、分享される内容を見せる画面 */
   #confetti{position:absolute;inset:0;z-index:2;width:100%;height:100%;pointer-events:none}   /* クリア時の紙吹雪（結果の上に重ねる） */
   #share-view{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);touch-action:none}
   #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;background:#fff;color:var(--ink);border-radius:12px;padding:14px}
@@ -125,7 +125,7 @@ gtag('config', 'G-41RSZLP1YQ');
           <button type="button" class="stage-btn" data-stage="0">ステージ1</button>
           <button type="button" class="stage-btn" data-stage="1">ステージ2</button>
           <button type="button" class="stage-btn" data-stage="2">ステージ3</button>
-          <button type="button" class="stage-btn" data-howto-open>遊び方</button>
+          <button type="button" class="stage-btn" data-howto-open>玩法</button>
         </div>
       </div>
       <button type="button" class="stage-btn" id="reset">リセット</button>
@@ -133,7 +133,7 @@ gtag('config', 'G-41RSZLP1YQ');
     <div id="time">0.00</div>
   </div>
   <div id="goal" aria-live="polite"><span id="goalText"></span></div>
-  <div id="controls" role="group" aria-label="ジェットの操作パッド（押している間噴射。どこを押しても下のジェットが噴き、外側のマスはその位置の前・横・後ろのジェットも噴く）">
+  <div id="controls" role="group" aria-label="ジェットの操作パッド（按いる間噴射。どこを按も下のジェットが噴き、外側のマスはその位置の前・横・後ろのジェットも噴く）">
     <div class="cell" data-zone="C0"  style="grid-area:C0"></div>
     <div class="cell" data-zone="FL"  style="grid-area:FL"></div>
     <div class="cell" data-zone="FR"  style="grid-area:FR"></div>
@@ -164,23 +164,23 @@ gtag('config', 'G-41RSZLP1YQ');
       <div id="resSub"></div>
       <button type="button" class="btn" id="next"></button>
       <button type="button" class="btn" id="again">もう一回</button>
-      <button type="button" class="btn" id="share">共有</button>
+      <button type="button" class="btn" id="share">分享</button>
     </div>
   </div>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される結果画像">
+      <img id="share-img" alt="分享される結果画像">
       <p id="share-text"></p>
-      <button type="button" class="btn" id="share-close">閉じる</button>
+      <button type="button" class="btn" id="share-close">關閉</button>
     </div>
   </div>
 <section class="howto" data-pos="none" hidden>
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>車体のジェット噴射だけで車を操り、3つのステージの目標をどれだけ速く達成できるかを競います。ステージ1は走り続ける電車を飛び越えて先のエリアへ、ステージ2は満車の駐車場の空きスペースへ、ステージ3は高架の高速道路へ飛び上がって合流します。タイムは最初の噴射から計り、駐車場の車や本線の車にぶつかると失敗です。</p>
   <h2>操作</h2>
-  <p>画面下のパッドは車を上から見た配置で、押した位置のジェットが噴き、どこを押しても下向きの噴射が加わって浮きます。下の段で前進、上の段で減速、中央は押す位置で傾きます。PC は W E、A S D F、Z X C V と左右の矢印キーです。</p>
+  <p>画面下のパッドは車を上から見た配置で、押した位置のジェットが噴き、どこを按も下向きの噴射が加わって浮きます。下の段で前進、上の段で減速、中央は押す位置で傾きます。PC は W E、A S D F、Z X C V と左右の矢印キーです。</p>
   <h2>コツ</h2>
-  <p>押している間は上昇し続けるので、高さは指を離して調整します。片側だけ噴くと向きが変わります。ステージごとのベストタイムはこのブラウザに保存され、クリアすると次のステージを選べます。</p>
+  <p>按いる間は上昇し続けるので、高さは指を離して調整します。片側だけ噴くと向きが変わります。ステージごとのベストタイムはこのブラウザに保存され、クリアすると次のステージを選べます。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
 </section>
 </div>
@@ -219,15 +219,15 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // 「下」ボタン：押す位置で下の4本の噴き方を変える。真ん中は4本均等、端に寄せるほど寄せた側の2本が強く噴いて回る
   const TILT_BIAS = 1;        // 端を押したときの偏り（1 で寄せた側が2倍、反対側が0）
-  const RECOVER_BOOST = 3;    // 横倒し・逆さまで地面に着いている間、下のジェットで回す力を何倍にするか（起き上がり用）
+  const RECOVER_BOOST = 3;    // 横倒し・逆さまで地面に着いている間、下のジェットで轉動力を何倍にするか（起き上がり用）
   const D_DEAD = 0.15;        // 真ん中の、均等に噴く範囲（ボタンの半分の大きさに対する割合）
 
   // 回転の止まりやすさ（1/秒）
-  const SPIN_DAMP = 1.5;      // 空中。水平に戻る力は無く、自由に回る
+  const SPIN_DAMP = 1.5;      // 空中。水平に返回力は無く、自由に回る
   const SCRAPE_SPIN = 4;      // 横倒し・ひっくり返って地面をこすっているとき
   const SCRAPE = 3;           // 地面をこすっているときの滑りの止まりやすさ（1/秒）
   const UPRIGHT_COS = 0.7;    // 車の上向きがこれより上を向いていればタイヤで立つ（約45°まで）
-  // タイヤで立っているときに水平に戻る強さ（rad/s²）と揺れの減衰（1/秒）
+  // タイヤで立っているときに水平に返回強さ（rad/s²）と揺れの減衰（1/秒）
   const RIGHTING_GROUND = 200;
   const TILT_DAMP = 18;
   const GRIP = 4;             // タイヤの横グリップの強さ（横滑りを止める速さ 1/秒）。小さいほど滑る
@@ -251,7 +251,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const SLOT_L = 4.6;         // 駐車スペース1台分の長さ（m）
   const PARK_COLS = 5;        // 駐車スペースの横の数（真ん中が空き）
   const PARK_ROWS = 3;        // 駐車スペースの縦の数（真ん中が空き）
-  const PARK_Z = 30;          // 駐車場の中心の位置（スタートの先 m）
+  const PARK_Z = 30;          // 駐車場の中心の位置（開始の先 m）
   const PARK_SPEED = 0.5;     // 空きスペースの中でこの速さ（m/s）より遅くなったら止めたとみなす
   const PARK_LOT_W = PARK_COLS*SLOT_W + 24;   // 駐車場（アスファルト）の広さ（m）。この上だけ動ける
   const PARK_LOT_D = PARK_ROWS*SLOT_L + 36;
@@ -287,13 +287,13 @@ gtag('config', 'G-41RSZLP1YQ');
   const TRAFFIC_SPEEDS = [22, 27];
   const TRAFFIC_GAP_MIN = 14;
   const TRAFFIC_GAP_MAX = 40;
-  const TRAFFIC_BACK = -60;   // 本線の車が走り始める所（m）。道路の終わりまで行くとここへ戻る
+  const TRAFFIC_BACK = -60;   // 本線の車が走り始める所（m）。道路の終わりまで行くとここへ返回
   // 本線の車のブレーキ：同じ車線の前に車（自分の車も）がいたら、すき間に合わせて速さを落とす
   const TRAFFIC_LOOK = 90;        // 前を見る距離（m）
   const TRAFFIC_SAFE_GAP = 4;     // 止まるときに前の車と空けるすき間（m）
   const TRAFFIC_BRAKE = 6;        // 前の車に合わせて減速するときの減速の強さ（m/s²）
   const TRAFFIC_BRAKE_MAX = 12;   // 減速の一番強い強さ（m/s²）。急に割り込まれたときはこれ以上は止まれない
-  const TRAFFIC_ACCEL = 3;        // 元の速さへ戻るときの加速の強さ（m/s²）
+  const TRAFFIC_ACCEL = 3;        // 元の速さへ返回ときの加速の強さ（m/s²）
 
   // 地面の模様（草原とアスファルト）：小さな画像を作って敷き詰める
   const GRASS_TILE = 4;       // 草原の模様1枚の大きさ（m）
@@ -302,7 +302,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ジェットの炎と煙
   const NOZZLE_R = 0.09;      // 噴き口の半径（m）
-  const NOZZLE_OUT = 0.3;     // 噴き口の筒のうち、車体の外に出す割合（残りは車体にめり込ませる）
+  const NOZZLE_OUT = 0.3;     // 噴き口の筒のうち、車体の外に出す割合（剩餘は車体にめり込ませる）
   const BOTTOM_Y = 0.25;      // 下の噴き口の高さ（車の底から m）。車体の底にめり込ませる
   const FLAME_LEN = 1.6;      // 炎の長さ（m、いちばん強く噴いたとき）
   const FIRE_RATE = 70;       // 噴き口1つあたり1秒に出す火の粉の数
@@ -322,7 +322,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const CAM_LOOK = 5;         // 注視点を車の前へずらす距離（m）
   const CAM_TURN = 4;         // カメラが車の向きに追いつく速さ（1/秒）
   const CAM_DRAG = 0.01;      // 画面を横になぞったときのカメラの回り具合（ラジアン/px）
-  const CAM_RETURN = 3;       // 車を操作している間、回したカメラが真後ろへ戻る速さ（1/秒）
+  const CAM_RETURN = 3;       // 車を操作している間、回したカメラが真後ろへ返回速さ（1/秒）
 
   // ベストタイム（ステージごと）：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
   const BEST_KEY = n => 'skystar.best' + n;
@@ -414,7 +414,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- 車 ----------
   // 車のモデル：Kenney「Car Kit」（CC0）。データはファイルの最後の carModelData() に埋め込んである。
-  // 全部の車で1枚の色見本の画像を共有し、形は種類ごとに1回だけ作って使い回す
+  // 全部の車で1枚の色見本の画像を分享し、形は種類ごとに1回だけ作って使い轉動
   const CAR_DATA = carModelData();
   // 自分の車の色：色見本の赤のマス（左から7列目・上から2段目）を使っている所を、すぐ下の白〜シルバーのマスへずらす
   const PAINT_FROM = { u0:384/512, u1:448/512, v0:128/512, v1:256/512 };
@@ -493,7 +493,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   const carObj = new THREE.Group();   // 重心の位置と向き
   scene.add(carObj);
-  const carBody = new THREE.Group();  // 車の底を y=0 とした車体（重心まわりに回るよう下へずらす）
+  const carBody = new THREE.Group();  // 車の底を y=0 とした車体（重心まわりに回るよう往下ずらす）
   carBody.position.y = -COM_Y;
   carObj.add(carBody);
   const myCar = carModel('me');
@@ -525,11 +525,11 @@ gtag('config', 'G-41RSZLP1YQ');
     ['FR',  [-JET_SPAN, COM_Y,  END_Z], [0, 0, -1], FRONT_THRUST],
     ['RL',  [ JET_SPAN, COM_Y, -END_Z], [0, 0,  1], THRUST],         // 後ろ：前へ押す
     ['RR',  [-JET_SPAN, COM_Y, -END_Z], [0, 0,  1], THRUST],
-    ['SLF', [ SIDE_X, COM_Y,  SIDE_Z], [-1, 0, 0], SIDE_THRUST],     // 左の横：右へ押す
+    ['SLF', [ SIDE_X, COM_Y,  SIDE_Z], [-1, 0, 0], SIDE_THRUST],     // 左の横：往右押す
     ['SLR', [ SIDE_X, COM_Y, -SIDE_Z], [-1, 0, 0], SIDE_THRUST],
-    ['SRF', [-SIDE_X, COM_Y,  SIDE_Z], [ 1, 0, 0], SIDE_THRUST],     // 右の横：左へ押す
+    ['SRF', [-SIDE_X, COM_Y,  SIDE_Z], [ 1, 0, 0], SIDE_THRUST],     // 右の横：往左押す
     ['SRR', [-SIDE_X, COM_Y, -SIDE_Z], [ 1, 0, 0], SIDE_THRUST],
-    ['DLF', [ BOTTOM_SPAN, BOTTOM_Y,  BOTTOM_Z], [0, 1, 0], LIFT],   // 下：上へ押す
+    ['DLF', [ BOTTOM_SPAN, BOTTOM_Y,  BOTTOM_Z], [0, 1, 0], LIFT],   // 下：往上押す
     ['DRF', [-BOTTOM_SPAN, BOTTOM_Y,  BOTTOM_Z], [0, 1, 0], LIFT],
     ['DLR', [ BOTTOM_SPAN, BOTTOM_Y, -BOTTOM_Z], [0, 1, 0], LIFT],
     ['DRR', [-BOTTOM_SPAN, BOTTOM_Y, -BOTTOM_Z], [0, 1, 0], LIFT]
@@ -616,7 +616,7 @@ gtag('config', 'G-41RSZLP1YQ');
     fire.mat.uniforms.scale.value = smoke.mat.uniforms.scale.value = s;
   }
   updatePuffScale();
-  // 粒を1つ出す（いっぱいなら一番古い粒を使い回す）
+  // 粒を1つ出す（いっぱいなら一番古い粒を使い轉動）
   function emit(P, x, y, z, vx, vy, vz, life){
     const p = P.list[P.next];
     P.next = (P.next + 1) % P.max;
@@ -658,7 +658,7 @@ gtag('config', 'G-41RSZLP1YQ');
       fire.size[i] = (0.55 - 0.35*t) * (0.8 + p.r*0.4);
       fire.alpha[i] = 1 - t;
     }
-    // 煙：空気で止まりながら上へ漂い、ふくらみながら薄くなる。地面に当たると横へ広がる
+    // 煙：空気で止まりながら往上漂い、ふくらみながら薄くなる。地面に当たると横へ広がる
     const drag = Math.exp(-SMOKE_DRAG*dt);
     for (let i = 0; i < smoke.max; i++){
       const p = smoke.list[i];
@@ -845,7 +845,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return grp;
   }
 
-  // 目標の駐車スペースから下から立ちのぼる光（当たらない）。下ほど濃く、上へ行くほど消える四角い光の壁
+  // 目標の駐車スペースから下から立ちのぼる光（当たらない）。下ほど濃く、往上行くほど消える四角い光の壁
   let glowTex = null;
   function addGoalGlow(x, z, w, d, y0){
     if (!glowTex){
@@ -1000,7 +1000,7 @@ gtag('config', 'G-41RSZLP1YQ');
   function buildStage(i){
     if (world){
       scene.remove(world);
-      // 車のモデルの形と色は使い回すので捨てない
+      // 車のモデルの形と色は使い轉動ので捨てない
       world.traverse(o => {
         if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose();
         // 電車の車体のように、1つの形に色を複数使う物もある
@@ -1026,7 +1026,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const car = { x:0, y:0, z:0, vx:0, vy:0, vz:0, th:0, q:new THREE.Quaternion(), av:new THREE.Vector3(), bottom:0, gh:0, onWheels:true, onGround:true };
   let state = 'ready';      // ready（最初の噴射待ち） / playing / clear / fail
   let elapsed = 0;
-  let failWait = 0;         // 失敗してから結果を出すまでの残り時間（秒）
+  let failWait = 0;         // 失敗してから結果を出すまでの剩餘時間（秒）
   let wheelSpin = 0;
   let camHead = 0;
   let camYaw = 0;   // 画面をなぞって回したカメラの向き（車の後ろからのずれ、ラジアン）
@@ -1064,11 +1064,11 @@ gtag('config', 'G-41RSZLP1YQ');
   ];
   // 四隅のマスを押したときに一緒に噴く、両隣のマスのジェット（例：左下を押すと、下と左後ろの横と後ろの左）
   const CORNER_JETS = { C0:['FL', 'SLF'], C1:['FR', 'SRF'], C2:['SLR', 'RL'], C3:['SRR', 'RR'] };
-  const holds = new Map();    // パッドを押している指（pointerId → { zone: 押しているマス, u, v: 真ん中での傾け -1〜1 }）
+  const holds = new Map();    // パッドを按いる指（pointerId → { zone: 按いるマス, u, v: 真ん中での傾け -1〜1 }）
   const tracked = new Set();  // パッドで押し始めた指
-  const keys = {};            // 押しているキー（e.code → true）
+  const keys = {};            // 按いるキー（e.code → true）
   const keyOn = s => Object.keys(keys).some(c => keys[c] && KEYMAP[c] === s);
-  // ジェットが噴いているか。下（D）はパッドのどこかを押していれば噴く（キーも、前・横・後ろのキーで下が一緒に噴く）
+  // ジェットが噴いているか。下（D）はパッドのどこかを按いれば噴く（キーも、前・横・後ろのキーで下が一緒に噴く）
   function jetOn(s){
     if (s === 'D') return holds.size > 0 || Object.keys(keys).some(c => keys[c] && KEYMAP[c]);
     if (keyOn(s)) return true;
@@ -1092,7 +1092,7 @@ gtag('config', 'G-41RSZLP1YQ');
     // パッドは車を上から見た並び（上が前、左が左）
     holds.set(e.pointerId, { zone, u:inner ? -t((fx - 0.5)/0.25) : 0, v:inner ? -t((fy - 0.5)/0.25) : 0 });
   }
-  // 下の4本の偏り：真ん中の2×2を押している指と、キー（S 左前 / D 右前 / X 左後ろ / C 右後ろ）の平均
+  // 下の4本の偏り：真ん中の2×2を按いる指と、キー（S 左前 / D 右前 / X 左後ろ / C 右後ろ）の平均
   const D_KEYS = { KeyS:{u:1, v:1}, KeyD:{u:-1, v:1}, KeyX:{u:1, v:-1}, KeyC:{u:-1, v:-1} };
   function bottomBias(){
     let u = 0, v = 0, n = 0;
@@ -1142,7 +1142,7 @@ gtag('config', 'G-41RSZLP1YQ');
       b.textContent = 'ステージ' + (i + 1) + (bests[i] > 0 ? ' : ' + fmt(bests[i]) + '秒' : '');
     }
   }
-  // 左上の「ステージ選択」を押すと一覧を開く。もう一度押すか、ステージを選ぶか、ほかの所を押すと閉じる
+  // 左上の「ステージ選択」を押すと一覧を開く。再來一次押すか、ステージを選ぶか、ほかの所を押すと關閉
   const stageOpen = $('stageOpen');
   function showStageList(open){
     $('stages').classList.toggle('hidden', !open);
@@ -1187,7 +1187,7 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('keydown', e => {
     if (KEYMAP[e.code]){ keys[e.code] = true; e.preventDefault(); return; }
     if (e.key === 'Escape' && !$('share-view').classList.contains('hidden')){ closeShareView(); return; }
-    // 結果画面ではスペース / Enter で、クリアなら次のステージ、失敗ならもう一回（共有内容の表示中は止める）
+    // 結果画面ではスペース / Enter で、クリアなら次のステージ、失敗ならもう一回（分享内容の表示中は止める）
     if (!$('result').classList.contains('hidden') && $('share-view').classList.contains('hidden') && (e.code === 'Space' || e.code === 'Enter')){
       e.preventDefault();
       if (state === 'clear') nextStage(); else reset();
@@ -1226,7 +1226,7 @@ gtag('config', 'G-41RSZLP1YQ');
   for (const x of [CAR_W/2, -CAR_W/2]) for (const y of [-COM_Y, CAR_TOP - COM_Y]) for (const z of [CAR_L/2, -CAR_L/2]){
     CORNERS.push(new THREE.Vector3(x, y, z));
   }
-  // 当たり判定用の自分の車の物体（位置と速さはぶつかりを解くときに car と行き来させる。向きと回転の速さは car と共有）
+  // 当たり判定用の自分の車の物体（位置と速さはぶつかりを解くときに car と行き来させる。向きと回転の速さは car と分享）
   const me = makeBody('me', new THREE.Vector3(), ME_HALF, null, { c:new THREE.Vector3(0, CAR_TOP/2 - COM_Y, 0) });
   me.q = car.q; me.w = car.av;
   me.corners = boxCorners(me.c, me.half);
@@ -1268,14 +1268,14 @@ gtag('config', 'G-41RSZLP1YQ');
       j.k = j.btn === 'D' ? Math.max(0, 1 + TILT_BIAS*(j.sx*bias.u + j.sz*bias.v)) : 1;
       tmpF.copy(j.dir).applyQuaternion(q).multiplyScalar(j.thrust * j.k);
       ax += tmpF.x; ay += tmpF.y; az += tmpF.z;
-      // 横倒し・逆さまで地面に着いている間は、下のジェットで回す力を強くする（重さに負けて起き上がれなくならないように）
+      // 横倒し・逆さまで地面に着いている間は、下のジェットで轉動力を強くする（重さに負けて起き上がれなくならないように）
       const boost = (j.btn === 'D' && onGround && !upright) ? RECOVER_BOOST : 1;
       tmpT.copy(j.torque).multiplyScalar(j.k * boost).divide(I_BODY).applyQuaternion(q);
       alpha.add(tmpT);
     }
 
     if (onWheels){
-      // 地面ではタイヤで立つので水平に戻る
+      // 地面ではタイヤで立つので水平に返回
       axis.crossVectors(up, AXIS_Y);
       alpha.addScaledVector(axis, RIGHTING_GROUND);
       alpha.x -= TILT_DAMP*car.av.x; alpha.z -= TILT_DAMP*car.av.z;
@@ -1291,7 +1291,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
       alpha.y -= ANG_DAMP*car.av.y;
     } else if (onGround){
-      // 横倒し・ひっくり返って地面をこすっている：滑りと回転が止まりやすい。ジェットで回して戻る
+      // 横倒し・ひっくり返って地面をこすっている：滑りと回転が止まりやすい。ジェットで回して返回
       ax -= SCRAPE*car.vx; az -= SCRAPE*car.vz;
       alpha.addScaledVector(car.av, -SCRAPE_SPIN);
       // 重さで倒れる：地面に着いている角（一番低い角の近く）が車を支える。支える所が重心の真下からずれていると、
@@ -1307,7 +1307,7 @@ gtag('config', 'G-41RSZLP1YQ');
         .applyQuaternion(qInv.copy(q).invert()).divide(I_BODY).applyQuaternion(q);
       alpha.add(tmpT);
     } else {
-      // 空中：水平に戻る力は無く、自由に回る
+      // 空中：水平に返回力は無く、自由に回る
       alpha.addScaledVector(car.av, -SPIN_DAMP);
     }
 
@@ -1446,7 +1446,7 @@ gtag('config', 'G-41RSZLP1YQ');
     car.vx = me.v.x; car.vy = me.v.y; car.vz = me.v.z;
   }
 
-  // 向き q を回転の速さ w で h 秒ぶん回す
+  // 向き q を回転の速さ w で h 秒ぶん轉動
   function rotateBy(q, w, h){
     const a = w.length();
     if (a > 1e-6){ dq.setFromAxisAngle(tmpV.copy(w).divideScalar(a), a*h); q.premultiply(dq).normalize(); }
@@ -1490,7 +1490,7 @@ gtag('config', 'G-41RSZLP1YQ');
         const g = (o.z - o.hz) - (b.p.z + b.half.z);
         if (g < gap && g < TRAFFIC_LOOK){ gap = g; vz = o.vz; }
       }
-      // 前の車の速さ ＋ 残りのすき間でちょうど止まれる速さ
+      // 前の車の速さ ＋ 剩餘のすき間でちょうど止まれる速さ
       const target = gap === Infinity ? b.cruise : Math.min(b.cruise, Math.max(0, vz) + Math.sqrt(2*TRAFFIC_BRAKE*Math.max(0, gap - TRAFFIC_SAFE_GAP)));
       const v = b.v.z;
       b.v.z = target < v ? Math.max(target, v - TRAFFIC_BRAKE_MAX*h) : Math.min(target, v + TRAFFIC_ACCEL*h);
@@ -1532,7 +1532,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (state === 'fail') $('again').focus({ preventScroll:true });
   }
   function clear(){
-    // クリアした瞬間の画面を取っておく（共有画像の背景にする）。描いた直後でないと中身が消えているので、ここで描き直して写す
+    // クリアした瞬間の画面を取っておく（分享画像の背景にする）。描いた直後でないと中身が消えているので、ここで描き直して写す
     renderer.render(scene, camera);
     const el = renderer.domElement;
     clearShot.width = el.width; clearShot.height = el.height;
@@ -1542,7 +1542,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (!bests[stageIdx] || elapsed < bests[stageIdx]){ bests[stageIdx] = elapsed; saveBest(stageIdx); }
     updateStageBtns();
     $('time').textContent = fmt(elapsed);
-    $('resTitle').textContent = 'ステージ' + (stageIdx + 1) + 'クリア！';
+    $('resTitle').textContent = 'ステージ' + (stageIdx + 1) + '過關！';
     $('resMain').textContent = fmt(elapsed) + '秒';
     $('resMain').classList.remove('reason');
     $('resSub').textContent = 'ベスト ' + fmt(bests[stageIdx]) + '秒';
@@ -1629,11 +1629,11 @@ gtag('config', 'G-41RSZLP1YQ');
     confG.clearRect(0, 0, confCv.width, confCv.height);
   }
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   const clearShot = document.createElement('canvas');   // クリアした瞬間の画面
-  const SHARE_DIM = 0.4;   // 共有画像で、文字を読みやすくするため背景の画面を暗くする濃さ（0〜1）
+  const SHARE_DIM = 0.4;   // 分享画像で、文字を読みやすくするため背景の画面を暗くする濃さ（0〜1）
   function shareText(){
-    return 'ステージ' + (stageIdx + 1) + 'クリア！\nタイム : ' + fmt(elapsed) + '秒\n'
+    return 'ステージ' + (stageIdx + 1) + '過關！\n時間：' + fmt(elapsed) + '秒\n'
       + location.href.split(/[?#]/)[0] + '\n#スカイスター';
   }
   function resultCanvas(){
@@ -1652,13 +1652,13 @@ gtag('config', 'G-41RSZLP1YQ');
     g.fillStyle = css('--fg');
     g.font = 'bold 56px ' + font; g.fillText('スカイスター', 300, 110);
     g.font = 'bold 36px ' + font; g.fillText('ステージ' + (stageIdx + 1) + '　' + STAGES[stageIdx].label, 300, 190);
-    g.font = 'bold 40px ' + font; g.fillText('クリア！', 300, 250);
+    g.font = 'bold 40px ' + font; g.fillText('過關！', 300, 250);
     g.font = 'bold 96px ' + font; g.fillText(fmt(elapsed) + '秒', 300, 350);
     g.fillStyle = css('--fg');
     g.font = 'bold 40px ' + font; g.fillText('ベスト ' + fmt(bests[stageIdx]) + '秒', 300, 500);
     return c;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(c){
     const bin = atob(c.toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -1666,13 +1666,13 @@ gtag('config', 'G-41RSZLP1YQ');
     return new File([buf], 'result.png', { type:'image/png' });
   }
 
-  const SHARE_INSTANT = 0.5;   // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5;   // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   $('share').addEventListener('pointerdown', e => e.stopPropagation());
   $('share').addEventListener('click', () => {
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1680,20 +1680,20 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll:true });
     };
-    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
-    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files:[file] })){
       navigator.share({ text, files:[file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(failed);
       return;
@@ -1746,7 +1746,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     updatePuffs(dt);
     const active = state === 'ready' || state === 'playing';
-    // 押しているマス（指・キー）と、下が噴いている間の真ん中を光らせる
+    // 按いるマス（指・キー）と、下が噴いている間の真ん中を光らせる
     for (const z in cells){
       const on = z === 'D' ? jetOn('D') : (keyOn(z) || [...holds.values()].some(h => h.zone === z));
       cells[z].classList.toggle('on', active && on);

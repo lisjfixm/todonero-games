@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ブランコマスター</title>
+<title>鞦韆大師</title>
 <meta name="description" content="ブランコをこいで遠くへ跳ぶ">
 <style>
   :root{
@@ -62,7 +62,7 @@ gtag('config', 'G-41RSZLP1YQ');
   .hud{background:var(--panel);border-radius:10px;padding:6px 14px;font-weight:700;font-variant-numeric:tabular-nums}
   #info{position:absolute;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 12px);font-size:20px;white-space:nowrap}
 
-  /* 押す/離すのタイミングを示す手。ブランコの下から上へ指す（位置は毎フレーム JS で合わせる）。
+  /* 押す/離すのタイミングを示す手。ブランコの下から往上指す（位置は毎フレーム JS で合わせる）。
      上がっている＝押す、下がっている＝離す。操作は画面のどこでもよい */
   #hint{position:absolute;left:50%;top:70%;width:60px;height:80px;transform:translate(-50%,0);pointer-events:none}
   .hand{position:absolute;left:0;right:0;top:0;text-align:center;font-size:44px;line-height:1}
@@ -95,7 +95,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #resPlace:empty{display:none}
   #result .row{display:flex;gap:10px;width:100%;margin-top:14px}
   #result .btn{flex:1;min-height:56px;font-size:20px;touch-action:manipulation}
-  /* 共有シートが使えない環境で、共有される内容（結果画像と文面）を見せる画面 */
+  /* 分享シートが使えない環境で、分享される内容（結果画像と文面）を見せる画面 */
   #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
   #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;background:var(--panel);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
   #share-img{display:block;width:100%;height:auto;border-radius:6px}
@@ -124,31 +124,31 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
   <div id="result" class="hidden">
     <div class="card hud" aria-live="assertive">
-      <div id="resNew">新記録！</div>
+      <div id="resNew">新紀錄！</div>
       <div class="label">記録</div>
       <div class="big" id="resDist">0.00 m</div>
       <div class="place" id="resPlace"></div>
       <div class="sub" id="resBest"></div>
       <div class="row">
         <button id="again" class="btn">もう一回</button>
-        <button id="share" class="btn">共有</button>
+        <button id="share" class="btn">分享</button>
       </div>
     </div>
   </div>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される結果画像">
+      <img id="share-img" alt="分享される結果画像">
       <p id="share-text"></p>
-      <button id="share-close" class="btn" type="button">閉じる</button>
+      <button id="share-close" class="btn" type="button">關閉</button>
     </div>
   </div>
 <section class="howto" data-pos="top-left" hidden>
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>ブランコを20秒こいで勢いをつけ、飛び出して飛距離を競うゲームです。最初にこいだ瞬間から20秒を数え、時間が来ると「そこまで！」と出て、その速さのまま回り続けます。好きな瞬間に飛び出すと着地点までが記録になり、距離に応じてどこまで届いたかの地名が表示されます。</p>
   <h2>操作</h2>
-  <p>画面のどこでも、押している間は立ち、離すとしゃがみます。20秒たったあとは、タップで飛び出します。PC はスペースキーの長押しでこぎ、スペースか上矢印キーで飛びます。</p>
+  <p>画面のどこでも、按いる間は立ち、離すとしゃがみます。20秒たったあとは、タップで飛び出します。PC はスペースキーの長押しでこぎ、スペースか上矢印キーで飛びます。</p>
   <h2>コツ</h2>
-  <p>一番下で立つほど速さが増し、真横より上で立っても増えません。座面が外へ振れていく間は押し、戻る間は離すのが基本で、こぎ始めから10秒は手のマークが教えてくれます。座面が右上へ上がる途中で飛ぶと右へ飛びます。左へ飛ぶと最高記録は更新されません。</p>
+  <p>一番下で立つほど速さが増し、真横より上で立っても増えません。座面が外へ振れていく間は押し、返回間は離すのが基本で、こぎ始めから10秒は手のマークが教えてくれます。座面が右往上上がる途中で飛ぶと往右飛びます。往左飛ぶと最高記録は更新されません。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
 </section>
 </div>
@@ -180,7 +180,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const STEP = 1 / 240;     // 物理の固定タイムステップ (秒)
   const HINT_SEC = 10;      // こぐタイミングの手を出しておく時間 (秒)。こぎ始めてからこの時間で消す
   const HINT_Y = 0.15;      // タイミングの手の指先の高さ (m)。座面が一番下に来たときの少し下
-  const INFO_GAP = 0.35;    // 残り時間の表示と、ブランコの上の棒とのすき間 (m)
+  const INFO_GAP = 0.35;    // 剩餘時間の表示と、ブランコの上の棒とのすき間 (m)
   const VIEW_W = 5.5;       // 漕いでいる間に画面に収める横幅 (m)
   const PUMP_TIME = 20;     // こげる時間 (秒)。最初にこいだ瞬間から数える
   // 宇宙まで飛ぶ想定の誇張: 飛び出す瞬間に座面の速さを (1 + (v / BOOST_REF)²) 倍にする。
@@ -197,13 +197,13 @@ gtag('config', 'G-41RSZLP1YQ');
   const LAND_FX = 0.3;      // 着地の演出の大きさ（1 = 元の大きさ）。大きいと着地した所が見えなくなる
   const SLOW_MOVE = 3;      // スローモーション中に見せる進む速さ (m/s)。本当の速さとは関係なく、飛ぶ向きへこの速さで動かす
   const SLOW_FOLLOW = 5;    // スローモーション中にカメラが人を追う速さ。小さいほど遅れて付いていき、進む向きが分かりやすい（大きすぎると人が画面から出る）
-  const LAND_TAU = 0.5;     // 着地が近づくと早送りをゆるめる。残り時間がこの秒数の割合で縮むように時間を進める（小さいほど早く着地する）
+  const LAND_TAU = 0.5;     // 着地が近づくと早送りをゆるめる。剩餘時間がこの秒数の割合で縮むように時間を進める（小さいほど早く着地する）
   const LAND_VIS_SPEED = 40; // 着地の直前に見せる最高の速さ (m/s)。これより速いときはスローにして、地面に近づくところが見えるようにする
   const FLY_VIEW_SEC = 8;   // 長い飛行はこの秒数くらいで見終わるように早送りする
   const LOW_ALT = 1500;     // この高さ (m) より上では地上の景色を消して、丸い地球を見せる
   const EARTH_R = 6371000;  // 地球の半径 (m)
   const JUMP_LOCK = 1.2;    // 20秒たってから「とぶ」を押せるようになるまでの時間 (秒)。連打の勢いで即座に飛ばないように
-  const MARK_HALF = 80;     // カメラの前後に目盛りを引く範囲 (m)
+  const MARK_HALF = 80;     // カメラの前後に目盛りを拉範囲 (m)
   const MARK_STEP = 5;      // 地面の線の間隔 (m)
   const MAX_DTH = 0.02;     // 1回の計算で進める角度の上限 (rad)。速く回っても計算が崩れないように細かく刻む
 
@@ -216,7 +216,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ---------- three.js の準備 ----------
   const view = $('view');
-  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); // 共有画像を取るため描画バッファを残す
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); // 分享画像を取るため描画バッファを残す
   view.appendChild(renderer.domElement);
   const scene = new THREE.Scene();
   scene.background = null; // 背景は bgScene で描く
@@ -341,7 +341,7 @@ gtag('config', 'G-41RSZLP1YQ');
     sp.scale.set(LABEL_W / 160, LABEL_H / 160, 1);
     return sp;
   }
-  // 飛距離に上限がないので、目盛りはカメラの周りの分だけ用意して使い回す
+  // 飛距離に上限がないので、目盛りはカメラの周りの分だけ用意して使い轉動
   // 地面に貼る物は少し手前に描く設定にして、地面とのちらつきを防ぐ
   const decal = n => ({ polygonOffset: true, polygonOffsetFactor: -n, polygonOffsetUnits: -n });
   const lineMat = new THREE.MeshBasicMaterial({ color: C.line, ...decal(2) });
@@ -368,7 +368,7 @@ gtag('config', 'G-41RSZLP1YQ');
     marks.forEach(({ ln, lb }, i) => {
       const n = base + i;                 // 何本目の線か
       const m = n * MARK_STEP;            // その線の位置 (m)
-      ln.visible = lb.visible = show && n > 0; // 0m の線と文字は出さない（スタートの赤い線があるため）
+      ln.visible = lb.visible = show && n > 0; // 0m の線と文字は出さない（開始の赤い線があるため）
       if (!ln.visible) return;
       ln.position.x = m;
       ln.scale.x = 0.06;
@@ -468,7 +468,7 @@ gtag('config', 'G-41RSZLP1YQ');
   placeRod(bar, V(0, PIVOT_H + 0.05, -1), V(0, PIVOT_H + 0.05, 1));
   scene.add(bar);
 
-  // 振れる部分（支点を原点にして z 軸まわりに回す）
+  // 振れる部分（支点を原点にして z 軸まわりに轉動）
   const swing = new THREE.Group();
   swing.position.set(0, PIVOT_H, 0);
   scene.add(swing);
@@ -570,7 +570,7 @@ gtag('config', 'G-41RSZLP1YQ');
       placeLeg(k, V(hip.x, hipY, z), V(kx, half, z), V(0, 0.04, z), true);
     });
     placeBody(hip, sh);
-    // 漕いでいる間は鎖を握る（ひじは後ろ下へ曲げる）。飛んだら腕を前に出す
+    // 漕いでいる間は鎖を握る（ひじは後ろ往下曲げる）。飛んだら腕を前に出す
     [['L', -1], ['R', 1]].forEach(([k, side]) => {
       const sp = V(sh.x, sh.y - 0.06, SH_Z * side);
       const hand = onSwing ? V(0, hipY + 0.35, ROPE_Z * side) : V(0.5, sh.y + 0.1, 0.22 * side);
@@ -580,7 +580,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // 飛んでいる間の姿勢。3つの姿勢をなめらかに混ぜる
   //  ・飛び出した直後: 両手を上げて体をぐっと伸ばす
-  //  ・空中: ひざを抱え込んで小さく丸まり、宙返りする（回転は person ごと回す）
+  //  ・空中: ひざを抱え込んで小さく丸まり、宙返りする（回転は person ごと轉動）
   //  ・着地の直前: 体を開き、両足を前に投げ出し、腕を前に出して着地にそなえる
   const FLY_STRETCH = 0.3;  // 飛び出し直後の伸びた姿勢が続く時間の目安 (秒)
   const ARM = 0.55;
@@ -634,7 +634,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const shinA = Math.atan2(LAND_FOOT.x - kn.x, (FLY_HIP_Y + kn.y) - LAND_FOOT.y);
     return { a, bend: a - shinA };
   })();
-  // r は着地のあとに両腕を斜め上へ伸ばすポーズの強さ 0〜1（体もまっすぐ起こす）
+  // r は着地のあとに両腕を斜め往上伸ばすポーズの強さ 0〜1（体もまっすぐ起こす）
   function setLandPose(c, r = 0){
     const hip = V(0, mix(FLY_HIP_Y, 0.5, c), 0);
     const lean = (LAND_LEAN + 0.45 * c) * (1 - r);
@@ -648,7 +648,7 @@ gtag('config', 'G-41RSZLP1YQ');
     [['L', -1], ['R', 1]].forEach(([k, side]) => {
       const s0 = V(sh.x, sh.y - 0.06, SH_Z * side);
       const fwd = V(ARM * 0.9, 0.1 - 0.3 * c, 0.1 * side); // 前へ（着地の構え）
-      const up = V(0.05, ARM * 0.95, 0.3 * side);          // 斜め上へ伸ばす（Y の字）
+      const up = V(0.05, ARM * 0.95, 0.3 * side);          // 斜め往上伸ばす（Y の字）
       placeArm(k, s0, s0.clone().add(fwd.lerp(up, r)), V(-0.3, -1, 0.6 * side));
     });
   }
@@ -755,7 +755,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const wrapX = (base, period, cx) => base + period * Math.round((cx - base) / period);
 
   // ---------- 3Dモデル（Kenney Game Assets、CC0） ----------
-  // ファイルを小さくするため、頂点を詰めた形で埋め込んである（位置とUVは16bit、法線は8bit）。ここで元に戻す
+  // ファイルを小さくするため、頂点を詰めた形で埋め込んである（位置とUVは16bit、法線は8bit）。ここで還原
   const KENNEY = JSON.parse($('kenney-models').textContent);
   const kBin = (() => {
     const s = atob(KENNEY.bin), u = new Uint8Array(s.length);
@@ -1154,7 +1154,7 @@ gtag('config', 'G-41RSZLP1YQ');
       if (q.life <= 0) continue;
       q.vy -= q.grav * dt;
       q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt;
-      // 地面に落ちたら跳ねてすぐ消す（地面の上に光が残り続けないように）
+      // 地面に落ちたら跳ねてすぐ消す（地面の上に光が剩餘続けないように）
       if (q.y < 0.02){ q.y = 0.02; q.vy *= -0.3; q.vx *= 0.7; q.vz *= 0.7; q.life = Math.min(q.life, 0.12); }
       const f = q.life / q.max * SPARK_GAIN;
       pos[n * 3] = q.x - ORIGIN; pos[n * 3 + 1] = q.y; pos[n * 3 + 2] = q.z;
@@ -1173,7 +1173,7 @@ gtag('config', 'G-41RSZLP1YQ');
     dust: () => tmpC.setHSL(0.09, 0.4, 0.45 + Math.random() * 0.3).clone(),
   };
 
-  // 衝撃波の輪（地面に広がる輪・空中で広がる輪）。いくつも同時に出せるように使い回す
+  // 衝撃波の輪（地面に広がる輪・空中で広がる輪）。いくつも同時に出せるように使い轉動
   const rings = [];
   for (let i = 0; i < 12; i++){
     const m = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 96), new THREE.MeshBasicMaterial({
@@ -1230,9 +1230,9 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // ヒットストップ（着地の瞬間だけ時間を止める）
   let hitStop = 0;
-  let resultT = 0; // 結果を出すまでの残り時間（秒）
-  let slowT = 0, slowScaleNow = 0.1; // とんだ瞬間のスローモーションの残り時間と、そのときの時間の進み
-  // スローモーションの効き具合 0〜1。最初の7割はずっと効かせ、残り3割でなめらかに元の速さへ戻す
+  let resultT = 0; // 結果を出すまでの剩餘時間（秒）
+  let slowT = 0, slowScaleNow = 0.1; // とんだ瞬間のスローモーションの剩餘時間と、そのときの時間の進み
+  // スローモーションの効き具合 0〜1。最初の7割はずっと効かせ、剩餘3割でなめらかに元の速さへ戻す
   function slowAmount(st = slowT){
     const u = Math.max(0, st) / SLOW_DUR;
     const k = Math.min(1, u / 0.3);
@@ -1243,7 +1243,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let shake = 0;
   let bloomKick = 0; // フラッシュの瞬間にブルームを強める分
   const BASE_FOV = 45;
-  const CAM_YAW = 0;      // カメラを真横から横へ回す角度 (rad)
+  const CAM_YAW = 0;      // カメラを真横から横へ轉動角度 (rad)
   const CAM_PITCH = 0;    // カメラを上から見下ろす分の角度 (rad)
   let fovNow = BASE_FOV;
   function flash(strength, color = '#fff'){
@@ -1333,7 +1333,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const flightT = (Math.max(fvy, 0) + Math.sqrt(fvy * fvy + 2 * G * fy)) / G;
     flyScale = Math.max(1, flightT / FLY_VIEW_SEC);
     flyAnim = 0;
-    fRot = Math.atan2(s, c); // 何回転もしていても -180°〜180° に直す（そのままだと空中で何回も巻き戻る）
+    fRot = Math.atan2(s, c); // 何回転もしていても -180°〜180° に直す（そのままだと空中で何回も巻き返回）
     // ブランコの回る向きのまま宙返りする。速く飛び出すほど速く回し、速いときはひねりも加える
     {
       const sp0 = Math.abs(v);
@@ -1341,7 +1341,7 @@ gtag('config', 'G-41RSZLP1YQ');
       fSpinW = dir * Math.min(SPIN_MAX, SPIN_BASE + sp0 * 0.12);
       fTwistW = sp0 > TWIST_FROM ? dir * Math.min(SPIN_MAX * 0.6, (sp0 - TWIST_FROM) * 0.3 + 3) : 0;
       fTwist = 0; spinLock = null;
-      // 腰を中心に回すため、飛び出した瞬間に足が座面の位置にくるよう補正を入れ、すぐに消していく
+      // 腰を中心に轉動ため、飛び出した瞬間に足が座面の位置にくるよう補正を入れ、すぐに消していく
       pivotCorr.x = -FLY_HIP_Y * Math.sin(fRot); pivotCorr.y = -(FLY_HIP_Y - FLY_HIP_Y * Math.cos(fRot));
     }
     flyT = 0;
@@ -1365,17 +1365,17 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // 今の早送りの倍率。速く飛んだときは全体を早送りするが、そのままだと地面が見える高さを一瞬で通り過ぎて
-  // 着地してしまうので、着地までの残り時間に合わせて早送りをゆるめ、最後はスローにする
-  const timeToLand = () => Math.max(0, (fvy + Math.sqrt(Math.max(0, fvy * fvy + 2 * G * fy))) / G); // 着地までの残り時間（本当の時間）
+  // 着地してしまうので、着地までの剩餘時間に合わせて早送りをゆるめ、最後はスローにする
+  const timeToLand = () => Math.max(0, (fvy + Math.sqrt(Math.max(0, fvy * fvy + 2 * G * fy))) / G); // 着地までの剩餘時間（本当の時間）
   // 宙返り
   const SPIN_BASE = 6;   // 宙返りの速さ（最低） (rad/s、見た目の時間)
   const SPIN_MAX = 14;   // 宙返りの速さ（最高）
   const TWIST_FROM = 12; // この速さ (m/s) より速く飛び出したら、ひねりも加える
   const TAU = Math.PI * 2;
   const SPIN_STOP = 0.8;  // 着地のこの時間前（見た目の秒）から回転をゆるめて、体を開く
-  // 着地までの「見た目の」残り時間。着地前は早送りの倍率が変わるので、同じ計算で先まで進めて数える
+  // 着地までの「見た目の」剩餘時間。着地前は早送りの倍率が変わるので、同じ計算で先まで進めて数える
   // 物理は 1/240 秒ごとにしか進まないので、まだ進めていない端数の時間 acc の分を見込んだ位置から数える
-  // （そうしないと着地前のゆっくりした所で残り時間が飛び飛びになり、構えや回転がコマ送りに見える）
+  // （そうしないと着地前のゆっくりした所で剩餘時間が飛び飛びになり、構えや回転がコマ送りに見える）
   function visualTimeToLand(maxT){
     let y = fy + fvy * acc - 0.5 * G * acc * acc, vy = fvy - G * acc, t = 0, st = slowT;
     const VD = 1 / 120;
@@ -1393,14 +1393,14 @@ gtag('config', 'G-41RSZLP1YQ');
     return t;
   }
 
-  // 回る向きを保ったまま止められる、まっすぐ立つ角度（少しだけなら戻る方を選ぶ）
+  // 回る向きを保ったまま止められる、まっすぐ立つ角度（少しだけなら返回方を選ぶ）
   function uprightNear(r0, guess, dir){
     let r1 = Math.round(guess / TAU) * TAU;
     if (dir && (r1 - r0) * dir < -0.8) r1 += dir * TAU;
     return r1;
   }
   // 空中での回転を進める（dt は見た目の時間）。着地の SPIN_STOP 秒前からは、
-  // 回っていた勢いのまま入って、着地の瞬間にまっすぐ立つ角度でちょうど止まるように回す
+  // 回っていた勢いのまま入って、着地の瞬間にまっすぐ立つ角度でちょうど止まるように轉動
   function updateSpin(dt){
     if (!spinLock){
       const tv = visualTimeToLand(SPIN_STOP + 0.05);
@@ -1415,7 +1415,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
     }
     if (spinLock){
-      // 進み具合は「着地までの残り時間」から毎フレーム求める（経過時間で数えると、先読みとずれたときに
+      // 進み具合は「着地までの剩餘時間」から毎フレーム求める（経過時間で数えると、先読みとずれたときに
       // 着地より先に回転と構えが終わって、着地の姿勢のまま止まって見える間ができるため）
       const rem = visualTimeToLand(spinLock.T + 0.1);
       spinLock.t = Math.max(spinLock.t, spinLock.T - rem);
@@ -1600,8 +1600,8 @@ gtag('config', 'G-41RSZLP1YQ');
       swing.rotation.z = th;
       setPose((R_SQUAT - r) / (R_SQUAT - R_STAND), true);
       showHint();
-      // こいでいる間は残り時間だけ。20秒たったら何も出さない
-      $('info').textContent = '残り ' + timeLeft.toFixed(1) + '秒';
+      // こいでいる間は剩餘時間だけ。20秒たったら何も出さない
+      $('info').textContent = '剩餘 ' + timeLeft.toFixed(1) + '秒';
       $('info').classList.toggle('hidden', phase !== 'pump');
       camT.x += (0 - camT.x) * Math.min(1, 4 * dt);
       camT.y += (1.7 - camT.y) * Math.min(1, 4 * dt);
@@ -1616,7 +1616,7 @@ gtag('config', 'G-41RSZLP1YQ');
         updateSpin(simDt);
         setFlyPose(flyAnim, landBlend()); // 手足の動きは早送りしない
       } else if (mode === 'over'){
-        // 着地後: ひざでぐっと沈み込んでから、起き上がりながら両腕を斜め上へ伸ばしてポーズを決める
+        // 着地後: ひざでぐっと沈み込んでから、起き上がりながら両腕を斜め往上伸ばしてポーズを決める
         landT += simDt;
         const DOWN = LAND_DOWN, UP = LAND_UP;
         let c, r = 0;
@@ -1628,7 +1628,7 @@ gtag('config', 'G-41RSZLP1YQ');
         }
         setLandPose(c, r);
       }
-      // 宙返りは腰を中心に回す（人の原点は足元なので、回した分だけ位置をずらす）
+      // 宙返りは腰を中心に轉動（人の原点は足元なので、回した分だけ位置をずらす）
       const pvx = mode === 'fly' ? FLY_HIP_Y * Math.sin(fRot) + pivotCorr.x : 0;
       const pvy = mode === 'fly' ? FLY_HIP_Y - FLY_HIP_Y * Math.cos(fRot) + pivotCorr.y : 0;
       person.position.set(px + pvx, py + pvy, 0);
@@ -1667,7 +1667,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const cd = d * (1 - ZOOM_IN * slowAmount()); // スローモーション中は寄る
     camera.position.set(camT.x + sx + cd * Math.sin(CAM_YAW), camT.y + 0.5 + sy + cd * Math.sin(CAM_PITCH), cd * Math.cos(CAM_YAW));
     camera.lookAt(camT.x + sx * 0.5, camT.y + sy * 0.5, 0);
-    // こいでいる間は、タイミングの手をブランコの真下に置いて下から上へ指させ、残り時間をブランコの上の棒の真上に出す
+    // こいでいる間は、タイミングの手をブランコの真下に置いて下から往上指させ、剩餘時間をブランコの上の棒の真上に出す
     const info = $('info');
     if (mode === 'swing'){
       camera.updateMatrixWorld();
@@ -1738,10 +1738,10 @@ gtag('config', 'G-41RSZLP1YQ');
       }
     }
   }
-  // 画面のどこを押してもよい: こぐ時間は押している間こぐ、20秒たったら押した瞬間にとぶ（結果の画面の上は除く）
+  // 画面のどこを按もよい: こぐ時間は按いる間こぐ、20秒たったら押した瞬間にとぶ（結果の画面の上は除く）
   const gameEl = $('game');
   const inResult = t => t instanceof Element && !!t.closest('#result');
-  const downs = new Set(); // 押している指（どれか1本でも押していればこぐ）
+  const downs = new Set(); // 按いる指（どれか1本でも按いればこぐ）
   gameEl.addEventListener('pointerdown', e => {
     if (inResult(e.target)) return;
     e.preventDefault();
@@ -1770,7 +1770,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // iPhone(Safari)で長押しにより文字選択・拡大鏡が出て操作が奪われるのを防ぐ（結果の画面のボタンは普通に押せるよう除く）
   const isHold = t => t instanceof Element && !!t.closest('#game') && !inResult(t) && !t.closest('#share-view');
   document.addEventListener('touchstart', e => { if (isHold(e.target)) e.preventDefault(); }, { passive:false });
-  document.addEventListener('selectstart', e => { if (!(e.target instanceof Element && e.target.closest('#share-text'))) e.preventDefault(); }); // 共有の文面は選んでコピーできるようにする
+  document.addEventListener('selectstart', e => { if (!(e.target instanceof Element && e.target.closest('#share-text'))) e.preventDefault(); }); // 分享の文面は選んでコピーできるようにする
   document.addEventListener('contextmenu', e => { if (isHold(e.target)) e.preventDefault(); });
   // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
@@ -1780,14 +1780,14 @@ gtag('config', 'G-41RSZLP1YQ');
     lastTouchEnd = now;
   }, { passive:false });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     // 見出し（どこまで飛んだか）→ 詳細（飛距離）→ URL → ハッシュタグ
     const place = placeText(dist);
     return (place ? place + '\n飛距離 ' + fmtLen(dist) : 'ブランコで' + fmtLen(dist) + '飛んだ！') + '\n'
       + location.href.split(/[?#]/)[0] + '\n#ブランコマスター';
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageUrl(){
     render(); // 描いた直後に読むので、描画バッファが消える前に取れる
     return renderer.domElement.toDataURL('image/png');
@@ -1798,13 +1798,13 @@ gtag('config', 'G-41RSZLP1YQ');
     for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
     return new File([buf], 'result.png', { type: 'image/png' });
   }
-  const SHARE_INSTANT = 0.5;   // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5;   // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   $('share').addEventListener('pointerdown', e => e.stopPropagation());
   $('share').addEventListener('click', () => {
     const text = shareText();
     const url = resultImageUrl();
     const file = resultImageFile(url);
-    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = url;
@@ -1812,20 +1812,20 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll:true });
     };
-    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
-    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ text, files: [file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share) {
       navigator.share({ text }).catch(failed);
       return;

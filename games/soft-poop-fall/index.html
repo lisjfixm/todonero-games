@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>うんこ図鑑</title>
+<title>大便圖鑑</title>
 <meta name="description" content="うんこを積んで珍しい種類を集める">
 <style>
   :root{--howto-bg:#fff;--howto-fg:#5c5560}
@@ -121,7 +121,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="tools">
     <button id="book" type="button">図鑑</button>
     <button id="flush" type="button">流す</button>
-    <button id="howtoBtn" type="button" data-howto-open>遊び方</button>
+    <button id="howtoBtn" type="button" data-howto-open>玩法</button>
   </div>
   <div id="pop" hidden>
     <div class="ttl">はじめて発見！</div>
@@ -136,10 +136,10 @@ gtag('config', 'G-41RSZLP1YQ');
     </div>
   </div>
 <section class="howto" data-pos="none" hidden>
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>タップした位置の上から、やわらかいうんこが落ちてきて積み重なっていくおもちゃです。勝ち負けや時間制限はなく、落とした数だけカウントが増えます。5色の通常の種類に加えて、でかめ、顔つき、ゴールデンなど17の特殊な種類が低い確率で混ざり、はじめて出ると図鑑に載ります。</p>
   <h2>操作</h2>
-  <p>何もない所をタップすると1個落ち、うんこを押さえてドラッグすると掴んで動かせます。「流す」で全部を排水口へ吸い込み、「図鑑」で種類と出現率を確認できます。PC はマウスで同じように遊べ、スペースキーか Enter でも落とせます。</p>
+  <p>何もない所をタップすると1個落ち、うんこを押さえて拖曳すると掴んで動かせます。「流す」で全部を排水口へ吸い込み、「図鑑」で種類と出現率を確認できます。PC はマウスで同じように遊べ、スペースキーか Enter でも落とせます。</p>
   <h2>楽しみ方</h2>
   <p>流れている途中のものも、掴めば助け出せます。かたい、やわらかい、重いなど、動きの違う種類もあります。いちばん珍しい「めちゃくちゃでかい」の出現率は0.05%です。カウントと図鑑はこのブラウザに保存されます。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -181,8 +181,8 @@ const SHINES = [
 
 // 指定パレット。個体ごとにここからランダムで1色選ぶ
 const PALETTE = ['#FCE4D8', '#FBD87F', '#FF82A9', '#B5F8FE', '#10FFCB'];
-// 種族テーブル。抽選・描画・図鑑はすべてここから引く
-// rate を持つものが特殊個体。持たないものは残りの確率から均等に出る
+// 種族テーブル。抽選・描画・図鑑はすべてここから拉
+// rate を持つものが特殊個体。持たないものは剩餘の確率から均等に出る
 const GOLD = { h: 45, s: 95, l: 57 };
 const SPECIES = [
   { name: 'シェルピンク',       col: 0, icon: 0.74 },
@@ -213,7 +213,7 @@ function speciesColor(sp){
 }
 const SPECIAL = SPECIES.map((sp, i) => i).filter(i => SPECIES[i].rate);
 const NORMAL  = SPECIES.map((sp, i) => i).filter(i => !SPECIES[i].rate);
-// 通常色は「特殊を全部外した残り」を均等に分ける
+// 通常色は「特殊を全部外した剩餘」を均等に分ける
 const NORMAL_RATE = (1 - SPECIAL.reduce((a, i) => a + SPECIES[i].rate, 0)) / NORMAL.length;
 function rateOf(i){ return SPECIES[i].rate || NORMAL_RATE; }
 // 図鑑の記録をブラウザに保存する。種族名をキーにするので、
@@ -515,7 +515,7 @@ const WAKE_PEN = 4.0;    // これ以上めり込まれたら起きる（積み�
 const WORLD = { floor: FLOOR, left: 14, right: W-14 };
 const bodies = [];
 
-// 眠っている体は毎フレーム描き直さず、専用レイヤーに焼いて使い回す
+// 眠っている体は毎フレーム描き直さず、専用レイヤーに焼いて使い轉動
 const layer = document.createElement('canvas');
 const lctx = layer.getContext('2d');
 let layerDirty = true;
@@ -551,7 +551,7 @@ function drop(x){
     // ふたご・みつごは輪郭が少し重なる間隔で並べ、あとで連結する
     const spread = n > 1 ? (k - (n-1)/2) * 1.30 * size : 0;
     const px = Math.max(WORLD.left + hw, Math.min(WORLD.right - hw, x + spread));
-    // 連続で出したときに重なった状態で生まれないよう、ぶつかる相手がいれば上へずらす
+    // 連続で出したときに重なった状態で生まれないよう、ぶつかる相手がいれば往上ずらす
     let py = -0.75*size - 40;
     for (let t = 0; t < 8; t++){
       let moved = false;
@@ -896,7 +896,7 @@ function drawHint(){
   ctx.fillStyle = 'rgba(150,150,155,.9)';
   ctx.font = "600 17px 'Hiragino Maru Gothic ProN','Hiragino Sans','Yu Gothic',system-ui,sans-serif";
   ctx.fillText('タップした位置にうんこを落とす', W/2, H/2 - 14);
-  ctx.fillText('ドラッグでうんこを掴む', W/2, H/2 + 14);
+  ctx.fillText('拖曳でうんこを掴む', W/2, H/2 + 14);
   ctx.restore();
 }
 
@@ -1093,7 +1093,7 @@ let shownCount = -1;
 const flushBtn = document.getElementById('flush');
 flushBtn.addEventListener('click', () => { startFlush(); cv.focus(); });
 
-// タブを閉じる・隠すタイミングでも取りこぼさないよう書き出す
+// タブを關閉・隠すタイミングでも取りこぼさないよう匯出
 addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
 addEventListener('pagehide', flushSave);
 function flushSave(){

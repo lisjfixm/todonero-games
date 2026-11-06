@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ドロースモー</title>
+<title>塗鴉相撲</title>
 <meta name="description" content="描いた手足で相手を押し出す相撲">
 <style>
   :root{ --ink:#23262b; --player:#e0413a; --cpu:#3b6ec7; --ground:#2b2f36; --howto-bg:#23262b; --howto-fg:#fff; }
@@ -51,10 +51,10 @@ gtag('config', 'G-41RSZLP1YQ');
 <canvas id="race"></canvas>
 <canvas id="pad" width="300" height="180"></canvas>
 <section class="howto" data-pos="top-right" hidden>
-  <h2>遊び方</h2>
-  <p>手足を描いた人形を CPU とぶつけ合い、相手を土俵から落とす相撲ゲームです。勝つと連勝数が増えて次の土俵へ進み、負けると連勝が途切れて同じ土俵でやり直します。土俵は平ら、中央が高い、相手側が一段高い、滑る、細かい凹凸、シーソーの6種類です。</p>
+  <h2>玩法</h2>
+  <p>手足を描いた人形を CPU とぶつけ合い、相手を土俵から落とす相撲ゲームです。勝つと連勝数が増えて次の土俵へ進み、負けると連勝が途切れて同じ土俵で重新開始ます。土俵は平ら、中央が高い、相手側が一段高い、滑る、細かい凹凸、シーソーの6種類です。</p>
   <h2>操作</h2>
-  <p>下の白い枠に線を引くと、描き始めに近い肩か腰に手足が付きます。中央の点線より右なら手前、左なら奥の手足になるので、肩と腰に2本ずつ描けます。線を描くと取組が始まり、掛け声の間は構えて待ちます。取組中も描き直せます。PC ではマウスで描けます。</p>
+  <p>下の白い枠に線を拉と、描き始めに近い肩か腰に手足が付きます。中央の点線より右なら手前、左なら奥の手足になるので、肩と腰に2本ずつ描けます。線を描くと取組が始まり、掛け声の間は構えて待ちます。取組中も描き直せます。PC ではマウスで描けます。</p>
   <h2>コツ</h2>
   <p>手足は常に相手の方へ向かって回り続けます。体の重さは線の長さに関係なく一定なので、長く描いても重くはなりません。CPU は回転が遅めですが、2.5秒ごとに形を変えてくるので、土俵の形に合わせて描き直しましょう。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -159,7 +159,7 @@ function samplePolyline(pts, spacing){
 }
 const M_PT = 100;
 const BODY_MASS = 12000;   // 全員同じ質量
-// facing: +1 右向き（右へ進む）、-1 左向き（左へ進む）。手足は facing に合わせて左右反転し回転方向も反転
+// facing: +1 右向き（往右進む）、-1 左向き（往左進む）。手足は facing に合わせて左右反転し回転方向も反転
 function makeBody(limbs, color, facing){
   let tp = samplePolyline(TORSO, 9);
   for (let i = 0; i < 12; i++){ const t = i / 12 * Math.PI * 2; tp.push({ x: HEAD.x + Math.cos(t) * HEAD.r, y: HEAD.y + Math.sin(t) * HEAD.r }); }
@@ -572,8 +572,8 @@ function render(){
     }
     hud.restart = { x: px + 24, y: py + 100, w: pw - 48, h: 40 };
     hud.share = { x: px + 24, y: py + 148, w: pw - 48, h: 40 };
-    for (const [k, label, fill, color] of [['restart', result === 'WIN' ? 'つぎへ' : 'もういっかい', css('--ink'), '#fff'],
-                                           ['share', 'Xでシェア', '#fff', css('--ink')]]){
+    for (const [k, label, fill, color] of [['restart', result === 'WIN' ? '下一個' : '再來一次', css('--ink'), '#fff'],
+                                           ['share', '分享到X', '#fff', css('--ink')]]){
       const r = hud[k];
       rctx.fillStyle = fill; rctx.strokeStyle = css('--ink'); rctx.lineWidth = 2;
       roundRect(rctx, r.x, r.y, r.w, r.h, 20); rctx.fill(); rctx.stroke();
@@ -652,7 +652,7 @@ race.addEventListener('pointerdown', e => {
   if (hit('share')) shareImage();
   else if (hit('restart')){ if (result === 'WIN') stage = (stage + 1) % STAGES.length; startBout(); }
 });
-// 完成したキャラの画像を作ってXでシェア
+// 完成したキャラの画像を作って分享到X
 function shareImage(){
   if (!player) return;
   const c = document.createElement('canvas'); c.width = 720; c.height = 900;
@@ -676,23 +676,23 @@ function shareImage(){
   const copyImage = () => (navigator.clipboard && window.ClipboardItem)
     ? navigator.clipboard.write([new ClipboardItem({ 'image/png': new Blob([bytes], { type: 'image/png' }) })])
     : Promise.reject();
-  // 1) 画像ごと共有ダイアログ（スマホ・対応PC）
+  // 1) 画像ごと分享ダイアログ（スマホ・対応PC）
   if (navigator.canShare && navigator.canShare({ files: [file] })){
     navigator.share({ files: [file], text }).catch(() => {});
     return;
   }
-  // 2) 画像は非対応でも共有ダイアログが使えるPC（Chrome 128+ / macOS Safari など）
-  //    画像はクリップボードに入れてから本文だけ共有ダイアログへ（貼り付けで画像を添付できる）
+  // 2) 画像は非対応でも分享ダイアログが使えるPC（Chrome 128+ / macOS Safari など）
+  //    画像はクリップボードに入れてから本文だけ分享ダイアログへ（貼り付けで画像を添付できる）
   if (navigator.share){
     copyImage().catch(() => {}).finally(() => {
       navigator.share({ text }).catch(() => { showImage(dataUrl); openIntent(); });
     });
     return;
   }
-  // 3) 共有ダイアログが無い環境（Firefox など）は X の投稿画面を開く
+  // 3) 分享ダイアログが無い環境（Firefox など）は X の投稿画面を開く
   copyImage().then(openIntent).catch(() => { showImage(dataUrl); openIntent(); });
 }
-// ページ遷移せずに画像を重ねて表示（タップで閉じる。長押し／右クリックで保存）
+// ページ遷移せずに画像を重ねて表示（點擊關閉。長押し／右クリックで保存）
 function showImage(dataUrl){
   const box = document.createElement('div');
   box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:10';

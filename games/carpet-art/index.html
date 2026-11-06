@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>カーペットアート</title>
+<title>地毯藝術</title>
 <meta name="description" content="カーペットをなぞって模様を描く">
 <style>
   :root{ --bg:#3a3a3e; --pile:#ba2315; --howto-bg:#3a3a3e; --howto-fg:#fff; }
@@ -46,7 +46,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   #game{position:fixed;inset:0}
   canvas{display:block;touch-action:none}
-  /* 上：視点の操作（左）と共有（右）。下：色・画像・指の大きさ */
+  /* 上：視点の操作（左）と分享（右）。下：色・画像・指の大きさ */
   #buttons{
     position:absolute;left:calc(16px + env(safe-area-inset-left));top:calc(16px + env(safe-area-inset-top));
     display:flex;
@@ -128,14 +128,14 @@ gtag('config', 'G-41RSZLP1YQ');
         <path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M6 20.6v-3.3h3.3"/>
       </svg>
     </button>
-    <!-- 視点リセット：カメラと、元に戻す向きの矢印 -->
+    <!-- 視点リセット：カメラと、還原向きの矢印 -->
     <button id="resetBtn" type="button" aria-label="視点リセット">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="8" y="10" width="8" height="6" rx="1"/><circle cx="12" cy="13" r="1.5"/><path d="M10.5 10l.8-1.4h1.4l.8 1.4"/>
         <path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 3v4.5H8"/>
       </svg>
     </button>
-    <button id="howtoBtn" type="button" data-howto-open>遊び方</button>
+    <button id="howtoBtn" type="button" data-howto-open>玩法</button>
   </div>
   <div id="bottom">
     <div id="tools">
@@ -147,8 +147,8 @@ gtag('config', 'G-41RSZLP1YQ');
         </svg>
         <span id="pickText"></span><input id="file" type="file" accept="image/*" aria-label="画像を選ぶ">
       </label>
-      <!-- 元に戻す：左向きに戻る矢印 -->
-      <button id="undo" type="button" aria-label="元に戻す" disabled>
+      <!-- 還原：左向きに返回矢印 -->
+      <button id="undo" type="button" aria-label="還原" disabled>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>
         </svg>
@@ -161,16 +161,16 @@ gtag('config', 'G-41RSZLP1YQ');
       <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10" fill="currentColor"/></svg>
     </label>
   </div>
-  <button id="share" type="button" aria-label="共有">
+  <button id="share" type="button" aria-label="分享">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>
     </svg>
   </button>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される画像">
+      <img id="share-img" alt="分享される画像">
       <p id="share-text"></p>
-      <button id="share-close" type="button">閉じる</button>
+      <button id="share-close" type="button">關閉</button>
     </div>
   </div>
   <div id="crop-view" class="hidden" role="dialog" aria-label="画像の使う範囲を選ぶ">
@@ -190,10 +190,10 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
 </div>
 <section class="howto" hidden data-pos="none">
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>毛足のあるカーペットを指でなぞり、毛の倒れる向きの違いで模様や文字を描く作品です。手前に倒した毛は濃く、奥へ倒した毛は明るく見えます。勝ち負けや得点はありません。描いた跡はこのブラウザに自動で保存され、次に開くと続きから始まります。</p>
   <h2>操作</h2>
-  <p>指でなぞると毛が倒れます。何本の指でも同時に描けて、PC では左ドラッグです。左上のカメラのボタンを押すと、なぞる代わりに視点を回せます(PC は右ドラッグでも回せます)。下のボタンで毛の色と画像を選べるほか、なぞった操作を20回まで戻せます。スライダーで指の大きさを変えられます。</p>
+  <p>指でなぞると毛が倒れます。何本の指でも同時に描けて、PC では左拖曳です。左上のカメラのボタンを押すと、なぞる代わりに視点を回せます(PC は右拖曳でも回せます)。下のボタンで毛の色と画像を選べるほか、なぞった操作を20回まで戻せます。スライダーで指の大きさを変えられます。</p>
   <h2>楽しみ方</h2>
   <p>1回なぞるだけでは毛は少ししか倒れないので、同じ所を何度かなぞると濃淡がはっきりします。線を消したいときは反対向きになぞってください。画像を選ぶと、使う範囲を切り取ってカーペットの柄にできます。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -235,8 +235,8 @@ gtag('config', 'G-41RSZLP1YQ');
   const CAM_FOV = 40;          // カメラの画角（度）
   const CAM_ELEV = 1.0;        // 最初のカメラの見下ろし角（rad）
   const ELEV_MIN = 0.5, ELEV_MAX = 1.5;   // 見下ろし角の範囲（rad）。浅くしすぎると遠くでカーペットの端が見える
-  const ROT_SPEED = 0.008;     // 視点を回す速さ（rad/px）
-  const RESET_TIME = 0.6;      // 視点リセットで最初の視点に戻るまでの時間（秒）
+  const ROT_SPEED = 0.008;     // 視点を轉動速さ（rad/px）
+  const RESET_TIME = 0.6;      // 視点リセットで最初の視点に返回までの時間（秒）
 
   const DARK_RATIO = 0.58;     // 毛先が見える向き（手前に倒れた毛）の明るさ（側面が見える向きを1とした比）
   const IMAGE_WIDTH = 1.8;     // 画像がカーペットの中央で占める横幅（m）。画像は1枚だけで、外側は画像の端に近い色で馴染ませる
@@ -737,7 +737,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const makeTex = canvas => {
     const t = new THREE.CanvasTexture(canvas);
     t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
-    t.premultiplyAlpha = true;   // 透過の境目が黒くにじまないよう、透過度を掛けた色で読み込む
+    t.premultiplyAlpha = true;   // 透過の境目が黒くにじまないよう、透過度を掛けた色で讀取
     t.minFilter = THREE.LinearFilter;   // 毛ごとに色を拾うので、縮小用の画像は作らない
     t.generateMipmaps = false;
     return t;
@@ -795,8 +795,8 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- 入力 ----------
-  // 押さえた指（PCは左ドラッグ）ごとに、それぞれ別の線としてなぞる。何本の指でも同時に描ける。
-  // 「視点を動かす」ボタンを押している間（PCは右ドラッグ）は、指の動きで視点を回す
+  // 押さえた指（PCは左拖曳）ごとに、それぞれ別の線としてなぞる。何本の指でも同時に描ける。
+  // 「視点を動かす」ボタンを按いる間（PCは右拖曳）は、指の動きで視点を轉動
   const strokes = new Map();    // pointerId → なぞっている指の前回の位置（カーペット上）と向き（まだ位置が無ければ null）
   const orbits = new Map();     // pointerId → 視点を回している指の前回の画面上の位置
   let camMode = false;          // 「視点を動かす」ボタンが押されている
@@ -850,7 +850,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const pt = orbits.get(e.pointerId);
     if (pt){
       resetAnim = null;   // 戻している途中に回し始めたら、戻すのをやめて指の操作を優先する
-      // 押さえている指の平均の動きで回す
+      // 押さえている指の平均の動きで轉動
       const n = orbits.size;
       azim -= (e.clientX - pt.x) / n * ROT_SPEED;
       elev = Math.min(ELEV_MAX, Math.max(ELEV_MIN, elev + (e.clientY - pt.y) / n * ROT_SPEED));
@@ -881,7 +881,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', release);
   cv.addEventListener('pointercancel', release);
 
-  // ---------- 元に戻す ----------
+  // ---------- 還原 ----------
   // なぞり始めに毛の向きを丸ごと控えておき、なぞり終わったら、なぞった範囲だけを切り出して残す。
   // 画面の大きさが変わってカーペットが広がっても戻せるよう、そのときのカーペットの大きさ（S）も残す
   const undoStack = [];
@@ -929,7 +929,7 @@ gtag('config', 'G-41RSZLP1YQ');
   });
 
   // ---------- 画像の切り取り ----------
-  // 画像を選んだあと、四角い枠で使う範囲を選ぶ。枠の中をドラッグで移動、四隅をドラッグで大きさを変える
+  // 画像を選んだあと、四角い枠で使う範囲を選ぶ。枠の中を拖曳で移動、四隅を拖曳で大きさを変える
   const CROP_MIN = 24;         // 枠の最小の大きさ（画面上のpx）
   const CROP_MAX_PX = 2048;    // 切り取った画像の長い辺の上限（px）
   let cropSrc = null, cropScale = 1, cropW = 0, cropH = 0;
@@ -1012,8 +1012,8 @@ gtag('config', 'G-41RSZLP1YQ');
     if (e.key === 'Escape' && !$('crop-view').classList.contains('hidden')) closeCrop();
   });
 
-  // ---------- 共有 ----------
-  const SHARE_INSTANT = 0.5;   // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  // ---------- 分享 ----------
+  const SHARE_INSTANT = 0.5;   // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   const shareText = () => 'カーペットに模様を描いた！\n' + location.href.split(/[?#]/)[0] + '\n#カーペットアート';
 
   // 今の画面をPNGにする。描いた直後でないとcanvasの中身が消えていることがあるので、その場で描き直して読む
@@ -1022,7 +1022,7 @@ gtag('config', 'G-41RSZLP1YQ');
     renderer.render(scene, camera);
     return cv.toDataURL('image/png');
   }
-  // PNGを共有用のファイルにする（共有シートの制約があるため同期処理で作る）
+  // PNGを分享用のファイルにする（分享シートの制約があるため同期処理で作る）
   function pngFile(dataUrl){
     const bin = atob(dataUrl.split(',')[1]);   // toBlob の非同期コールバックは避ける
     const buf = new Uint8Array(bin.length);
@@ -1035,7 +1035,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const url = screenDataUrl();
     const file = pngFile(url);
-    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（画像と文面）を画面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = url;
@@ -1043,20 +1043,20 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll:true });
     };
-    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
-    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋画像
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ text, files: [file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share) {
       navigator.share({ text }).catch(failed);
       return;
@@ -1165,7 +1165,7 @@ gtag('config', 'G-41RSZLP1YQ');
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveState, SAVE_DELAY * 1000);
   }
-  // 閉じる・別のアプリに移るときは、待たずにすぐ保存する
+  // 關閉・別のアプリに移るときは、待たずにすぐ保存する
   const flushSave = () => { if (saveTimer) saveState(); };
   addEventListener('pagehide', flushSave);
   document.addEventListener('visibilitychange', () => { if (document.hidden) flushSave(); });
@@ -1239,11 +1239,11 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
   document.addEventListener('touchmove', e => { if (strokes.size || orbits.size) e.preventDefault(); }, { passive:false });
   document.addEventListener('selectstart', e => {
-    // 共有の画面の文面は選んでコピーできるようにする
+    // 分享の画面の文面は選んでコピーできるようにする
     if (e.target instanceof Node && $('share-text').contains(e.target)) return;
     e.preventDefault();
   });
-  // PCの右ドラッグでメニューを出さない（共有の画面ではコピーできるよう残す）
+  // PCの右拖曳でメニューを出さない（分享の画面ではコピーできるよう残す）
   document.addEventListener('contextmenu', e => {
     if (e.target instanceof Element && e.target.closest('#share-view')) return;
     e.preventDefault();
@@ -1251,7 +1251,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // スマホでのダブルタップ拡大を防ぐ（拡大すると元に戻せなくなるため）
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
-    if (e.target instanceof Element && e.target.closest('#buttons,#tools,#sizeTool,#share,#share-view,#crop-view')) return;   // ボタンの連続タップ・色や画像の選択・共有の画面は止めない
+    if (e.target instanceof Element && e.target.closest('#buttons,#tools,#sizeTool,#share,#share-view,#crop-view')) return;   // ボタンの連続タップ・色や画像の選択・分享の画面は止めない
     const now = Date.now();
     if (now - lastTouchEnd < 350) e.preventDefault();
     lastTouchEnd = now;

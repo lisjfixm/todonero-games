@@ -66,7 +66,7 @@ canvas{display:block}
 #pad{touch-action:none;transition:opacity .25s}
 #over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(18,18,19,.92);opacity:0;transition:opacity .35s}
 #over.show{opacity:1}
-/* 正解時のアンロック演出: 画面全体を覆って鍵が現れ、ツルが外れて上へ抜ける */
+/* 正解時のアンロック演出: 画面全体を覆って鍵が現れ、ツルが外れて往上抜ける */
 #unlock{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:var(--bg);opacity:0;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
 #unlock.on{opacity:1;visibility:visible;transition:opacity .25s}
 #lock{width:96px;height:120px;overflow:visible;color:var(--green);transform:scale(.8);transition:opacity .4s,transform .4s}
@@ -94,7 +94,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
 </head>
 <body>
 <div id="game">
-  <button id="helpBtn" aria-label="遊び方">?</button>
+  <button id="helpBtn" aria-label="玩法">?</button>
   <div id="histWrap"><canvas id="hist" role="img" aria-label="これまでの回答"></canvas></div>
   <div id="status" aria-live="polite"></div>
   <div id="padWrap">
@@ -102,7 +102,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
     <div id="over" class="hidden">
       <div id="resTitle" aria-live="assertive"></div>
       <canvas id="ans" aria-hidden="true"></canvas>
-      <div class="btns"><button id="share">共有</button><button id="again">もう一回</button></div>
+      <div class="btns"><button id="share">分享</button><button id="again">もう一回</button></div>
     </div>
   </div>
 </div>
@@ -116,12 +116,12 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
       <li><span class="sw" style="background:var(--gray)"></span>正解にない線（向きが逆でも灰）</li>
     </ul>
     <p>緑になった線は次の回答から自動でつながります。できるだけ少ない回数で解きましょう。</p>
-    <button type="button" data-howto-open>遊び方</button>
-    <button id="start">スタート</button>
+    <button type="button" data-howto-open>玩法</button>
+    <button id="start">開始</button>
   </div>
 </div>
 <section class="howto" hidden data-pos="none">
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>隠されたパターンロックを、色のヒントから推理して解くパズルです。9つの点をすべて1回ずつ通る線を描くと、8本の線それぞれの判定が履歴に並びます。回答回数に上限はなく、全部の線が緑になるまでにかかった回数が結果になります。</p>
   <h2>操作</h2>
   <p>スマホは盤を指でなぞり、指を離すと回答になります。9点を通らずに離した場合は回答になりません。まだ通っていない点を飛び越えると、その点も自動でつながります。PC はマウスで同じように描け、Esc で描きかけを消せます。</p>
@@ -150,9 +150,9 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
   const TITLE = 'PatternHacker';
   const HELP_KEY = 'patternHacker.helpShown';   // 説明画面を見たかどうかの保存キー
   const UNLOCK_T = [400, 750, 1150];   // アンロック演出の各段階の開始時刻（ミリ秒）: 鍵が出る / ツルが外れる / 鍵が抜けて結果を出す
-  const DOT_ANIM_MS = 280;   // 点に触れたとき、膨らんで元の大きさに戻るまでの時間（ミリ秒）
+  const DOT_ANIM_MS = 280;   // 点に触れたとき、膨らんで元の大きさに返回までの時間（ミリ秒）
   const DOT_POP = 0.6;       // 点に触れたときの膨らみの最大値（半径の増加率）
-  const LINE_ANIM_MS = 360;  // 線がつながったとき、太く光って元に戻るまでの時間（ミリ秒）
+  const LINE_ANIM_MS = 360;  // 線がつながったとき、太く光って元に返回までの時間（ミリ秒）
   const LINE_GLOW = 0.05;    // 線がつながった瞬間の光の太さ（盤の一辺に対する比率。通常の線幅に足す）
   const REVEAL_STAGGER = 90; // 回答後、黄・緑の線を1本ずつ色付けしていく間隔（ミリ秒）
   const REVEAL_MS = 320;     // 1本の線が太く光ってから色付きの線に落ち着くまでの時間（ミリ秒）
@@ -177,7 +177,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
     return a;
   }
 
-  // 9点すべてを通る正解パターンを作る（ランダムな順に試し、行き詰まったら戻る）
+  // 9点すべてを通る正解パターンを作る（ランダムな順に試し、行き詰まったら返回）
   function makeSecret(){
     const used = Array(9).fill(false), path = [];
     const dfs = () => {
@@ -361,7 +361,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
       const [x, y] = dotPos(i, S);
       pctx.fillStyle = used[i] ? on : C.dot;
       if (!used[i]){ circle(pctx, x, y, S * 0.028); continue; }
-      // 触れた瞬間に膨らんで戻る。外側の輪は点から広がって出てくる
+      // 触れた瞬間に膨らんで返回。外側の輪は点から広がって出てくる
       const t = progress(dotAt[i], now, DOT_ANIM_MS);
       const pop = 1 + DOT_POP * Math.sin(Math.PI * t);
       circle(pctx, x, y, S * 0.035 * pop);
@@ -571,7 +571,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
     unlockTimers = [
       setTimeout(() => layer.classList.add('on'), UNLOCK_T[0]),
       setTimeout(() => layer.classList.add('open'), UNLOCK_T[1]),
-      // 鍵が上へ抜けると同時に覆いを消し、下から結果を出す
+      // 鍵が往上抜けると同時に覆いを消し、下から結果を出す
       setTimeout(() => { layer.classList.add('gone'); layer.classList.remove('on'); showResult(); }, UNLOCK_T[2]),
     ];
   }
@@ -591,13 +591,13 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
     $('histWrap').scrollTop = 0;
   }
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     const rows = guesses.map(g => g.fb.map(v => ['⬛', '🟨', '🟩'][v]).join('')).join('\n');
     return `${headline()}\n${rows}\n${location.href.split(/[?#]/)[0]}\n#${TITLE}`;
   }
 
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const W = 720, M = 40, HEAD = 80, rows = guesses.length;
     const c = document.createElement('canvas');
@@ -619,20 +619,20 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
     const btn = $('share');
     const text = shareText();
     const file = resultImageFile();
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ text, files: [file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
   $('again').addEventListener('click', restart);
@@ -647,7 +647,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
   });
 
   // ---------- iOS 対策 ----------
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   const isDraggable = t => t instanceof Element && !!t.closest('#pad');
   document.addEventListener('touchstart', e => { if (isDraggable(e.target)) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove',  e => { if (activeId !== null) e.preventDefault(); }, { passive:false });
@@ -666,7 +666,7 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
   // 初回に開いたときは自動で出す。以降は右上の「?」で開く
   const helpOpen = () => !$('help').classList.contains('hidden');
   function openHelp(first){
-    $('start').textContent = first ? 'スタート' : '閉じる';
+    $('start').textContent = first ? '開始' : '關閉';
     $('help').classList.remove('hidden');
     $('start').focus({ preventScroll: true });
   }

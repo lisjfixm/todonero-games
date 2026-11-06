@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ジッパーフィンガー</title>
+<title>拉鍊手指</title>
 <meta name="description" content="なぞるとジッパーが付く写真のおもちゃ">
 <style>
   :root{
@@ -41,8 +41,8 @@ gtag('config', 'G-41RSZLP1YQ');
     --howto-bg:#333; --howto-fg:#eee;
     --front:#888; --back:#444;
     --tape:#2a2a2a; --tooth:#c8c8c8; --slider:#d8d8d8;
-    --danger:#e53935;                                              /* 削除がオンのときのアイコン */
-    --del-tape:#6e1414; --del-tooth:#e53935; --del-slider:#ef6a66;  /* 削除がオンのときのジッパー */
+    --danger:#e53935;                                              /* 刪除がオンのときのアイコン */
+    --del-tape:#6e1414; --del-tooth:#e53935; --del-slider:#ef6a66;  /* 刪除がオンのときのジッパー */
     --gold-tooth:#f2c14e; --gold-slider:#ffd86b;  /* 黄金のジッパー（布はふつうと同じ黒） */
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -66,7 +66,7 @@ gtag('config', 'G-41RSZLP1YQ');
   .icon{width:44px;flex:none;padding:0}
   .icon svg{width:24px;height:24px;display:block}
   .btn:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
-  /* 削除：オフはふたの閉じたゴミ箱、オンは赤いふたの開いたゴミ箱 */
+  /* 刪除：オフはふたの閉じたゴミ箱、オンは赤いふたの開いたゴミ箱 */
   #del .on{display:none}
   #del[aria-pressed="true"]{color:var(--danger);border-color:var(--danger)}
   /* カメラ：オンのときは反転表示し、どちらの写真をカメラにしているか（外・中）を添える */
@@ -82,7 +82,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #sound[aria-pressed="false"] .on{display:none}
   #sound[aria-pressed="false"] .off{display:block}
   .hidden{display:none !important}
-  /* 共有される内容の画面（共有シートが出ない環境用） */
+  /* 分享される内容の画面（分享シートが出ない環境用） */
   #share-view{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
   #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;background:var(--panel);border-radius:10px;padding:12px}
   #share-img{display:block;width:100%;height:auto}
@@ -121,10 +121,10 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="bar">
     <label class="pick" id="pick0"><span id="pickText0">外の写真</span><input id="file0" type="file" accept="image/*"></label>
     <label class="pick" id="pick1"><span id="pickText1">中の写真</span><input id="file1" type="file" accept="image/*"></label>
-    <button id="share" class="btn icon" type="button" aria-label="共有">
+    <button id="share" class="btn icon" type="button" aria-label="分享">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2"/></svg>
     </button>
-    <button id="del" class="btn icon" type="button" aria-pressed="false" aria-label="ジッパーを削除">
+    <button id="del" class="btn icon" type="button" aria-pressed="false" aria-label="ジッパーを刪除">
       <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
       <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6.5l13.5-4M10.5 3.5l3.6-1.1M6 9l1 11h10l1-11M10 12v5M14 12v5"/></svg>
     </button>
@@ -135,25 +135,25 @@ gtag('config', 'G-41RSZLP1YQ');
       <p id="cam-title">カメラを使います</p>
       <p id="cam-text">スマホの外カメラ（背面）と内カメラ（画面側）を使います。外の写真には外カメラ、中の写真には内カメラの映像が入ります。</p>
       <div id="cam-actions">
-        <button id="cam-close" class="btn" type="button">閉じる</button>
+        <button id="cam-close" class="btn" type="button">關閉</button>
         <button id="cam-allow" class="btn" type="button">許可</button>
       </div>
     </div>
   </div>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される画像">
+      <img id="share-img" alt="分享される画像">
       <p id="share-text"></p>
-      <button id="share-close" class="btn" type="button">閉じる</button>
+      <button id="share-close" class="btn" type="button">關閉</button>
     </div>
   </div>
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>写真の上を指でなぞるとジッパーが付き、引き手を動かすと写真が開いて中の写真が見えるおもちゃです。勝ち負けはありません。開いた所をさらになぞると奥の層にもジッパーを付けられ、外の写真と中の写真が交互に重なっていきます。</p>
     <h2>操作</h2>
-    <p>引き手をつかんで線に沿って動かすと開け閉めできます。短すぎる線はジッパーになりません。下のボタンで外と中の写真を手持ちの画像に替えられ、ゴミ箱を押してからジッパーに触れると消せます。PC ではマウスのドラッグで操作し、矢印キーでも最後に触ったジッパーを開け閉めできます。</p>
+    <p>引き手をつかんで線に沿って動かすと開け閉めできます。短すぎる線はジッパーになりません。下のボタンで外と中の写真を手持ちの画像に替えられ、ゴミ箱を按からジッパーに触れると消せます。PC ではマウスの拖曳で操作し、矢印キーでも最後に触ったジッパーを開け閉めできます。</p>
     <h2>楽しみ方</h2>
-    <p>右上のカメラのボタンを押すたびに、外の写真か中の写真をカメラの映像に切り替えられます。ジッパーは長く開くほど開き口が広がります。1%の確率で黄金のジッパーが付くこともあり、できた画面は共有できます。</p>
+    <p>右上のカメラのボタンを押すたびに、外の写真か中の写真をカメラの映像に切り替えられます。ジッパーは長く開くほど開き口が広がります。1%の確率で黄金のジッパーが付くこともあり、できた画面は分享できます。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
   </section>
 </div>
@@ -227,20 +227,20 @@ gtag('config', 'G-41RSZLP1YQ');
   const SE_VOLUME = 0.5;   // 全体の音量
   const PITCH_RISE = 1;    // 引き手が終わりに近づくほど音を高くする量（オクターブ。1で終わりの端が始まりの2倍の高さ）
   const TICK_GAP = 0.008;  // 引き手のカチカチ音の最短間隔（秒）。速く動かしても鳴りすぎないように
-  const FADE_OUT = 0.1;    // ジッパーを消したとき、消えるまでの時間（秒）。開いていた所もこの間に閉じる
+  const FADE_OUT = 0.1;    // ジッパーを消したとき、消えるまでの時間（秒）。開いていた所もこの間に關閉
   // 黄金のジッパー
   const GOLD_RATE = 0.01;  // ジッパーが黄金になる確率
   // 隠しコマンド（成功すると次に付けるジッパーが黄金になる）
   const SECRET_KEYS = '1029384756';   // PC：この順に数字キーを押す
   const CORNER_SIZE = 80;             // スマホ：画面の4隅のこの範囲（px）を同時に押さえる
   const CORNER_HOLD = 5;              // スマホ：4隅を押さえ続ける時間（秒）
-  // 共有
-  const SHARE_INSTANT = 0.5;   // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  // 分享
+  const SHARE_INSTANT = 0.5;   // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   // 操作
   const GRAB = 16;         // 引き手をつかめる範囲の余裕（px）
   const SEARCH = 30;       // 引き手を動かすとき、今の位置から前後何点までを探すか（線が交差していても飛ばないように）
   const KEY_STEP = 20;     // 矢印キー1回で引き手が動く量（px）
-  const DEL_R = 16;        // 削除するとき、ジッパーの線（開いた部分はその幅）からこの距離までのタップで消す（px）
+  const DEL_R = 16;        // 刪除するとき、ジッパーの線（開いた部分はその幅）からこの距離までのタップで消す（px）
 
   // ---------- 準備 ----------
   const $ = id => document.getElementById(id);
@@ -364,7 +364,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // 層0：外の写真（縁をめくるために網目にしてある）
   const front = makeMask();
-  // 開いた所は半透明でも描けるようにする（消すときに開いた所をフェードで閉じるため）。
+  // 開いた所は半透明でも描けるようにする（消すときに開いた所をフェードで關閉ため）。
   // 完全に透明な所は捨てて、奥のものを隠さないようにする
   const frontMat = new THREE.MeshLambertMaterial({ map: texs[0], alphaMap: front.t, transparent: true, alphaTest: 0.01 });
   const maskOf = k => k === 0 ? front : planes[k];
@@ -382,7 +382,7 @@ gtag('config', 'G-41RSZLP1YQ');
     color: 0xffffff, vertexColors: true, side: THREE.DoubleSide,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
   });
-  // 色の組：ふつう・黄金・削除がオンのとき（削除がオンの間はどれも赤くする）
+  // 色の組：ふつう・黄金・刪除がオンのとき（刪除がオンの間はどれも赤くする）
   const palette = (tape, tooth, slider) => ({
     tape: new THREE.Color(tape), tooth: new THREE.Color(tooth), slider: new THREE.Color(slider),
     body: new THREE.Color(slider).multiplyScalar(BODY_SHADE),
@@ -587,7 +587,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // 線を STEP 間隔の点に並べ直す（歯を等間隔に付けるため）
   function resample(pts){
     const out = [{ x: pts[0].x, y: pts[0].y }];
-    let rest = STEP;  // 次の点までの残りの長さ
+    let rest = STEP;  // 次の点までの剩餘の長さ
     for (let i = 1; i < pts.length; i++){
       let ax = pts[i - 1].x, ay = pts[i - 1].y;
       const bxx = pts[i].x, byy = pts[i].y;
@@ -792,7 +792,7 @@ gtag('config', 'G-41RSZLP1YQ');
       m.g.fillStyle = '#fff';
       m.g.fillRect(0, 0, m.c.width, m.c.height);
       m.g.setTransform(m.c.width / W, 0, 0, m.c.height / H, 0, 0);
-      // 消している途中の開き口は、残っている度合いに合わせて灰色で薄く抜く（だんだん閉じる）
+      // 消している途中の開き口は、残っている度合いに合わせて灰色で薄く抜く（だんだん關閉）
       for (const [z, a] of fadingZips()){
         if (z.level !== k || !holePath(m.g, z)) continue;
         const v = Math.round(255 * (1 - a));
@@ -1182,7 +1182,7 @@ gtag('config', 'G-41RSZLP1YQ');
     startFading([...dead]);
     if (dead.has(active)) active = zippers[zippers.length - 1] || null;
     se.remove();
-    if (deleteMode && !zippers.length) toggleDelete();  // 全部消したら削除モードを自動で解除する
+    if (deleteMode && !zippers.length) toggleDelete();  // 全部消したら刪除モードを自動で解除する
     requestDraw();
   }
 
@@ -1263,7 +1263,7 @@ gtag('config', 'G-41RSZLP1YQ');
   cv.addEventListener('pointerup', e => endPointer(e, false));
   cv.addEventListener('pointercancel', e => endPointer(e, true));
 
-  // 削除トグル（タッチは連打の拡大防止に止められないよう pointerdown で、キーボード操作は click で切り替える）
+  // 刪除トグル（タッチは連打の拡大防止に止められないよう pointerdown で、キーボード操作は click で切り替える）
   const delBtn = $('del');
   const toggleDelete = () => {
     deleteMode = !deleteMode;
@@ -1274,7 +1274,7 @@ gtag('config', 'G-41RSZLP1YQ');
   delBtn.addEventListener('pointerdown', e => { e.preventDefault(); toggleDelete(); });
   delBtn.addEventListener('click', e => { if (e.detail === 0) toggleDelete(); });
 
-  // 効果音のオン・オフ（切り替え方は削除トグルと同じ）
+  // 効果音のオン・オフ（切り替え方は刪除トグルと同じ）
   const soundBtn = $('sound');
   const toggleSound = () => {
     const v = soundBtn.getAttribute('aria-pressed') !== 'true';
@@ -1284,7 +1284,7 @@ gtag('config', 'G-41RSZLP1YQ');
   soundBtn.addEventListener('pointerdown', e => { e.preventDefault(); toggleSound(); });
   soundBtn.addEventListener('click', e => { if (e.detail === 0) toggleSound(); });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   const shareText = () => 'ジッパーで写真を開いた！\n' + location.href.split(/[?#]/)[0] + '\n#ジッパーフィンガー';
   // 今の画面を画像にする（WebGLの描画は次の表示までしか残らないので、描き直した直後に写し取る）
   function snapshotCanvas(){
@@ -1294,7 +1294,7 @@ gtag('config', 'G-41RSZLP1YQ');
     c.getContext('2d').drawImage(cv, 0, 0);
     return c;
   }
-  // 画像をPNGのファイルにする（共有シートの制約があるため同期処理で作る）
+  // 画像をPNGのファイルにする（分享シートの制約があるため同期処理で作る）
   function imageFile(c){
     const bin = atob(c.toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -1307,7 +1307,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = snapshotCanvas();
     const file = imageFile(c);
-    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（画像と文面）を画面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1315,20 +1315,20 @@ gtag('config', 'G-41RSZLP1YQ');
       shareView.classList.remove('hidden');
       $('share-close').focus({ preventScroll:true });
     };
-    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
-    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋画像
     if (navigator.canShare && navigator.canShare({ files: [file] })){
       navigator.share({ text, files: [file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(failed);
       return;
@@ -1343,7 +1343,7 @@ gtag('config', 'G-41RSZLP1YQ');
   $('share-close').addEventListener('click', closeShareView);
   shareView.addEventListener('pointerdown', e => e.stopPropagation());
 
-  // PCでは矢印キーでも、最後に触ったジッパーを開け閉めできる（共有の画面を出している間は止める）
+  // PCでは矢印キーでも、最後に触ったジッパーを開け閉めできる（分享の画面を出している間は止める）
   document.addEventListener('keydown', e => {
     if (shareViewOpen()){
       if (e.key === 'Escape') closeShareView();
@@ -1390,7 +1390,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }, true);
   const cornerRelease = e => {
     if (!cornerTouches.delete(e.pointerId)) return;
-    if (cornerTimer && heldCorners() < 4){ clearTimeout(cornerTimer); cornerTimer = 0; }   // 1本でも離したらやり直し
+    if (cornerTimer && heldCorners() < 4){ clearTimeout(cornerTimer); cornerTimer = 0; }   // 1本でも離したら重新開始
     if (cornerTouches.size === 0) setTimeout(() => { cornerGesture = false; }, 400);
   };
   document.addEventListener('pointerup', cornerRelease, true);
@@ -1400,10 +1400,10 @@ gtag('config', 'G-41RSZLP1YQ');
     if (cornerGesture){ e.preventDefault(); e.stopPropagation(); }
   }, true);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
   document.addEventListener('touchmove', e => { if (drag || drawing) e.preventDefault(); }, { passive:false });
-  // 共有の文面だけは選んでコピーできるようにする
+  // 分享の文面だけは選んでコピーできるようにする
   document.addEventListener('selectstart', e => {
     const t = e.target.nodeType === 1 ? e.target : e.target.parentElement;
     if (t && t.closest('#share-text')) return;
@@ -1595,7 +1595,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (camViewOpen() && e.key === 'Escape') closeCamView();
   });
 
-  // 切り替え方は削除トグルと同じ（タッチは pointerdown、キーボード操作は click）
+  // 切り替え方は刪除トグルと同じ（タッチは pointerdown、キーボード操作は click）
   const toggleCam = () => {
     if (!camAllowed){ openCamView(); return; }
     setCamState((cam.state + 1) % CAM_STATES.length);

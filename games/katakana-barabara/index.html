@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>カタカナバラバラ</title>
+<title>片假名散亂</title>
 <meta name="description" content="バラバラのカタカナから単語を当てる">
 <style>
   /* 配色：白地に淡いグレーの線、強調はサーモン */
@@ -70,7 +70,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #cv{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
   #msg{margin:10px 0 6px;min-height:1.5em;text-align:center;font-size:22px;font-weight:800;letter-spacing:.05em}
   #msg.ok{color:var(--ok)} #msg.ng{color:var(--ng)}
-  /* 残り時間ゲージ：中の棒の幅で残り時間を表す */
+  /* 剩餘時間ゲージ：中の棒の幅で剩餘時間を表す */
   #timebar{height:10px;margin:0 0 10px;background:var(--line);border-radius:999px;overflow:hidden}
   #timefill{height:100%;width:100%;background:var(--ok);border-radius:999px}
   #timefill.low{background:var(--ng)}
@@ -157,17 +157,17 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="hud"><div class="stat"><span id="chars">0</span><span class="label">文字</span></div><div class="stat"><span class="label">連続正解</span><span id="score">0</span></div></div>
   <div id="stage"><canvas id="cv"></canvas><div id="announce" class="hidden" aria-live="assertive"><b id="annNum"></b><span>文字</span></div><div id="correct" class="hidden" aria-live="assertive">正解！</div></div>
   <p id="msg" aria-live="polite"></p>
-  <div id="timebar" role="progressbar" aria-label="残り時間" aria-valuemin="0" aria-valuemax="100"><div id="timefill"></div></div>
+  <div id="timebar" role="progressbar" aria-label="剩餘時間" aria-valuemin="0" aria-valuemax="100"><div id="timefill"></div></div>
   <div id="ansForm">
     <input id="ans" type="text" autocomplete="off" placeholder="答えを入力" aria-label="答え" enterkeyhint="done" autocapitalize="off" spellcheck="false">
     <button id="send" class="primary" type="button">回答</button>
   </div>
-  <button id="next" class="primary invisible">次へ</button>
+  <button id="next" class="primary invisible">下一個</button>
 
   <div id="chart" class="overlay hidden">
     <h2>カタカナ一覧</h2>
     <div class="scroll" id="chartBody"></div>
-    <button id="chartClose">閉じる</button>
+    <button id="chartClose">關閉</button>
   </div>
   <div id="license" class="overlay hidden">
     <h2>ライセンス</h2>
@@ -177,12 +177,12 @@ gtag('config', 'G-41RSZLP1YQ');
       クリエイティブ・コモンズ 表示 - 継承 3.0<br>（CC BY-SA 3.0）<br>
       https://creativecommons.org/licenses/by-sa/3.0/<br><br>
       このゲームでは、使用する文字の抜き出し、座標の縮小、当たり判定用の点の追加を行っています。変更した字形データも CC BY-SA 3.0 で提供します。</p>
-    <button id="licenseClose">閉じる</button>
+    <button id="licenseClose">關閉</button>
   </div>
   <div id="startDlg" class="overlay dialog">
-    <div class="box" role="dialog" aria-modal="true" aria-label="スタート">
-      <button id="start" class="primary">スタート</button>
-      <button class="ghost" type="button" data-howto-open>遊び方</button>
+    <div class="box" role="dialog" aria-modal="true" aria-label="開始">
+      <button id="start" class="primary">開始</button>
+      <button class="ghost" type="button" data-howto-open>玩法</button>
       <div class="links">
         <button class="ghost openChart">カタカナ一覧</button>
         <button class="ghost openLicense">ライセンス</button>
@@ -192,9 +192,9 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="result" class="overlay dialog hidden">
     <div class="box" role="dialog" aria-modal="true" aria-label="結果">
       <p class="big" id="resultText" aria-live="polite"><span id="resultNum">0</span><small>問連続正解</small></p>
-      <button id="share">共有</button>
+      <button id="share">分享</button>
       <button id="retry" class="primary">もう一回</button>
-      <button class="ghost" type="button" data-howto-open>遊び方</button>
+      <button class="ghost" type="button" data-howto-open>玩法</button>
       <div class="links">
         <button class="ghost openChart">カタカナ一覧</button>
         <button class="ghost openLicense">ライセンス</button>
@@ -203,12 +203,12 @@ gtag('config', 'G-41RSZLP1YQ');
   </div>
 </div>
 <section class="howto" data-pos="none" hidden>
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>カタカナを1画ずつバラバラにして盤面にばらまき、元の単語を当てるゲームです。最初は1文字で、3問ごとに文字数が増え、4文字で止まります。制限時間は15秒に1文字あたり5秒を足した長さです。不正解か時間切れで終わり、そこまでの連続正解数が結果になります。</p>
   <h2>操作</h2>
-  <p>線に触れてドラッグすると動かせます。掴んだまま2本目の指をひねると回ります。答えは入力欄に打って「回答」で送ります。PC ではマウスで動かしてホイールで回し、Enter でも送れます。</p>
+  <p>線に触れて拖曳すると動かせます。掴んだまま2本目の指をひねると回ります。答えは入力欄に打って「回答」で送ります。PC ではマウスで動かしてホイールで回し、Enter でも送れます。</p>
   <h2>コツ</h2>
-  <p>ひらがなや半角カナで打っても正しく判定され、長音はハイフンでも通ります。スタート画面と結果画面の「カタカナ一覧」で字形の見本を確認できます。</p>
+  <p>ひらがなや半角カナで打っても正しく判定され、長音はハイフンでも通ります。開始画面と結果画面の「カタカナ一覧」で字形の見本を確認できます。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
 </section>
 <script>
@@ -225,7 +225,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const ROTATE = true;     // パーツを回転させるか（false にすると向きはそのまま）
   const TIME_BASE = 15;     // 制限時間の基本（秒）
   const TIME_PER_CHAR = 5;  // 単語の1文字ごとに足す制限時間（秒）。制限時間 = TIME_BASE + TIME_PER_CHAR × 文字数
-  const TIME_WARN = 0.3;    // 残り時間がこの割合を切ったらゲージを赤にする
+  const TIME_WARN = 0.3;    // 剩餘時間がこの割合を切ったらゲージを赤にする
   const ANNOUNCE_TIME = 1.2; // 問題の始めに「○文字」を大きく出しておく時間（秒）。その後にパーツが現れて制限時間が動き出す
   const REVEAL_TIME = 0.9;
   const RESULT_DELAY = 1.5;   // 不正解のとき、正解を見せてから結果ダイアログを出すまでの時間（秒） // 回答後、パーツが正しい位置へ動くのにかける時間（秒）
@@ -277,9 +277,9 @@ gtag('config', 'G-41RSZLP1YQ');
     'ショートケーキ','バスケットボール','バレーボール','ソフトクリーム','フライドポテト','オレンジジュース','ミネラルウォーター','ローラースケート','スノーボード','スケートボード',
     'トランポリン','プラネタリウム','ティラノサウルス','アルマジロ','オランウータン','チンパンジー','ハリネズミ','ブロッコリー','カリフラワー','アスパラガス',
     'グレープフルーツ','ホットケーキ','パンケーキ','シュークリーム','カフェオレ','ミルクティー','レモンティー','クリームソーダ','コーンスープ','ポップコーン',
-    'ジェットコースター','メリーゴーランド','ゲームセンター','ショッピングモール','コンビニエンスストア','キーホルダー','ランドセル','リコーダー','アコーディオン','サクソフォン',
+    'ジェットコースター','メリーゴーランド','遊戲中心','ショッピングモール','コンビニエンスストア','キーホルダー','ランドセル','リコーダー','アコーディオン','サクソフォン',
     'トライアングル','シンセサイザー','スマートフォン','タブレット','デジタルカメラ','ノートパソコン','ドライヤー','コインランドリー','ガソリンスタンド','パトカー',
-    'ブルドーザー','ショベルカー','キャンピングカー','オートバイ','モノレール','ロープウェイ','タイムマシン','インターネット','ホームページ','パスワード',
+    'ブルドーザー','ショベルカー','キャンピングカー','オートバイ','モノレール','ロープウェイ','タイムマシン','インターネット','首頁','パスワード',
     'コンピューター','クレジットカード','サングラス','ハイヒール','ランニングシューズ','ワンピース','カーディガン','トレーナー','ヘルメット','ウエディングドレス',
     'バドミントン','ドッジボール','テーブルテニス','スカイダイビング','ボディーボード','ロッククライミング','ピクニックシート','バーベキュー','マシュマロ','キャラメルポップコーン',
     'カスタードプリン','ミートソース','カルボナーラ','オムレツ','ハヤシライス','ビーフシチュー','ロールキャベツ','ポテトサラダ','フルーツポンチ','ミックスジュース',
@@ -321,7 +321,7 @@ gtag('config', 'G-41RSZLP1YQ');
         ps.push({ path: st.path, poly: st.pts.map(([x, y]) => [x - cx, y - cy]), ci, gx: cx, gy: cy });
       }
     });
-    // ci：何文字目か、gx/gy：その文字の中での中心位置（正解表示のときに戻る場所）
+    // ci：何文字目か、gx/gy：その文字の中での中心位置（正解表示のときに返回場所）
     // 大きいパーツから置くと、あとの小さいパーツを隙間に入れやすい
     const size = p => Math.max(...p.poly.map(q => Math.hypot(q[0], q[1])));
     ps.sort((a, b) => size(b) - size(a));
@@ -442,7 +442,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const target = Math.min(START_LEN + Math.floor(k / LEVEL_STEP), MAX_CHARS);
     const all = POOL.filter(w => len(w) === target);
     let cand = all.filter(w => !used.has(w));
-    // その文字数の問題を出し切ったら、その文字数の中で使い回す
+    // その文字数の問題を出し切ったら、その文字数の中で使い轉動
     if (!cand.length){ all.forEach(w => used.delete(w)); cand = all; }
     const w = cand[Math.random() * cand.length | 0];
     used.add(w);
@@ -563,7 +563,7 @@ gtag('config', 'G-41RSZLP1YQ');
     $('score').textContent = score;
     draw();
     if (lastOk){
-      $('next').textContent = '次へ';
+      $('next').textContent = '下一個';
       $('next').classList.remove('invisible');
     } else {
       // 不正解・時間切れは、正解をしばらく見せてから自動で結果ダイアログへ進む
@@ -581,13 +581,13 @@ gtag('config', 'G-41RSZLP1YQ');
     $('result').classList.remove('hidden');
   }
 
-  // ---------- 結果の共有 ----------
+  // ---------- 結果の分享 ----------
   function shareText(){
     return 'カタカナバラバラ\n' + score + '問連続正解！\n'
       + location.href.split(/[?#]/)[0] + '\n#カタカナバラバラ';
   }
 
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const c = document.createElement('canvas');
     c.width = 600; c.height = 600;
@@ -605,30 +605,30 @@ gtag('config', 'G-41RSZLP1YQ');
     return new File([buf], 'result.png', { type:'image/png' });
   }
 
-  // 共有：上から順に使えるものを試す。失敗・キャンセルでは何もしない
+  // 分享：上から順に使えるものを試す。失敗・キャンセルでは何もしない
   function share(){
     const btn = $('share');
     const text = shareText();
     const file = resultImageFile();
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })){
       navigator.share({ text, files: [file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   }
 
   // ---------- 入力 ----------
-  // 共有ボタンは背景のタップ判定に吸われないよう伝播を止め、処理はclickで行う
+  // 分享ボタンは背景のタップ判定に吸われないよう伝播を止め、処理はclickで行う
   $('share').addEventListener('pointerdown', e => e.stopPropagation());
   $('share').addEventListener('click', share);
 
@@ -657,7 +657,7 @@ gtag('config', 'G-41RSZLP1YQ');
   document.querySelectorAll('.openChart').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); buildChart(); $('chart').classList.remove('hidden'); $('chartBody').scrollTop = 0; }));
   $('chartClose').addEventListener('pointerdown', e => { e.preventDefault(); $('chart').classList.add('hidden'); });
 
-  // ライセンス画面：タイトルから開いて、閉じるとタイトルに戻る
+  // ライセンス画面：タイトルから開いて、關閉とタイトルに返回
   document.querySelectorAll('.openLicense').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); $('license').classList.remove('hidden'); }));
   $('licenseClose').addEventListener('pointerdown', e => { e.preventDefault(); $('license').classList.add('hidden'); });
   $('retry').addEventListener('pointerdown', e => { e.preventDefault(); startGame(); });
@@ -674,10 +674,10 @@ gtag('config', 'G-41RSZLP1YQ');
     submit();
   });
 
-  // ---------- パーツのドラッグ ----------
+  // ---------- パーツの拖曳 ----------
   // 指で掴みやすいよう、線から少し離れていても掴めるようにする（ピクセル）
   const GRAB = 24;
-  const drags = new Map();   // pointerId → { p, ox, oy, twist }（twist：回す指の情報）
+  const drags = new Map();   // pointerId → { p, ox, oy, twist }（twist：轉動指の情報）
 
   // 点(x,y)から一番近いパーツ（上に描かれているものを優先）
   function pick(x, y){
@@ -711,12 +711,12 @@ gtag('config', 'G-41RSZLP1YQ');
     if (mode !== 'question') return;
     e.preventDefault();
     const q = local(e);
-    // 掴んでいるパーツがあれば、この指はそのパーツを回す指にする
+    // 掴んでいるパーツがあれば、この指はそのパーツを轉動指にする
     for (const [id, d] of drags){
       if (!d.twist && ptrs.has(id)){
         cv.setPointerCapture(e.pointerId);
         ptrs.set(e.pointerId, q);
-        // 回し始めの角度と、掴んだ指からパーツ中心までのずれを覚えておく（指の位置を軸に回すため）
+        // 回し始めの角度と、掴んだ指からパーツ中心までのずれを覚えておく（指の位置を軸に轉動ため）
         d.twist = { id: e.pointerId, a0: angle(ptrs.get(id), q), r0: d.p.rot, ox0: d.ox, oy0: d.oy };
         return;
       }
@@ -737,7 +737,7 @@ gtag('config', 'G-41RSZLP1YQ');
       if (id !== e.pointerId && !(d.twist && d.twist.id === e.pointerId)) continue;
       const f = ptrs.get(id);
       if (d.twist){
-        // 掴んでいる指の位置を軸に回す：パーツの向きと一緒に、指→中心のずれも同じ角度だけ回す
+        // 掴んでいる指の位置を軸に轉動：パーツの向きと一緒に、指→中心のずれも同じ角度だけ轉動
         delete d.p.targetRot;
         const da = angle(f, ptrs.get(d.twist.id)) - d.twist.a0, c = Math.cos(da), sn = Math.sin(da);
         d.p.rot = d.twist.r0 + da;
@@ -752,15 +752,15 @@ gtag('config', 'G-41RSZLP1YQ');
   const release = e => {
     ptrs.delete(e.pointerId);
     drags.delete(e.pointerId);
-    // 回す指だけ離したら、掴んだまま移動に戻る
+    // 轉動指だけ離したら、掴んだまま移動に返回
     for (const d of drags.values()) if (d.twist && d.twist.id === e.pointerId) d.twist = null;
   };
   cv.addEventListener('pointerup', release);
   cv.addEventListener('pointercancel', release);
 
   // PC：掴んでいるパーツ、または掴んでいなくてもカーソルの下にあるパーツを、ホイールで回転。
-  // 1段ごとに跳ばないよう、目標角度へなめらかに追いつかせる。回す軸はカーソルの位置
-  const WHEEL_HOLD = 0.3;   // 掴まずに回すとき、回している途中はこの秒数だけ同じパーツを回し続ける（カーソルが線から外れても切り替わらない）
+  // 1段ごとに跳ばないよう、目標角度へなめらかに追いつかせる。轉動軸はカーソルの位置
+  const WHEEL_HOLD = 0.3;   // 掴まずに轉動とき、回している途中はこの秒数だけ同じパーツを回し続ける（カーソルが線から外れても切り替わらない）
   let easing = false, easeLast = 0, hoverPart = null, hoverAt = 0;
   cv.addEventListener('wheel', e => {
     e.preventDefault();
@@ -793,7 +793,7 @@ gtag('config', 'G-41RSZLP1YQ');
       const step = Math.abs(diff) < 0.001 ? diff : diff * k;
       p.rot += step;
       if (step === diff) delete p.targetRot; else busy = true;
-      // 掴んでいる点を軸に回す：指（カーソル）→中心のずれも同じだけ回して位置を合わせ直す
+      // 掴んでいる点を軸に轉動：指（カーソル）→中心のずれも同じだけ回して位置を合わせ直す
       for (const [id, d] of drags){
         if (d.p !== p || !ptrs.has(id)) continue;
         const c = Math.cos(step), sn = Math.sin(step), f = ptrs.get(id);
@@ -802,7 +802,7 @@ gtag('config', 'G-41RSZLP1YQ');
         p.nx = Math.min(Math.max((f.x + ox) / W, 0), 1);
         p.ny = Math.min(Math.max((f.y + oy) / H, 0), 1);
       }
-      // 掴まずに回しているときは、回し始めたカーソル位置を軸に中心を回す
+      // 掴まずに回しているときは、回し始めたカーソル位置を軸に中心を轉動
       if (p.pivot && ![...drags.values()].some(d => d.p === p)){
         const c = Math.cos(step), sn = Math.sin(step), v = p.pivot;
         const dx = p.nx * W - v.x, dy2 = p.ny * H - v.y;
@@ -814,7 +814,7 @@ gtag('config', 'G-41RSZLP1YQ');
     if (busy && mode === 'question') requestAnimationFrame(ease); else easing = false;
   }
 
-  // PC：Enter/スペースで次へ・開始（入力欄で打っているときは入力を優先）
+  // PC：Enter/スペースで下一個・開始（入力欄で打っているときは入力を優先）
   const isInput = t => t instanceof Element && t.tagName === 'INPUT';
   document.addEventListener('keydown', e => {
     // 入力欄で打っているとき・回答ボタンにフォーカスがあるときは、ブラウザ標準の動作（送信）に任せる
@@ -846,7 +846,7 @@ gtag('config', 'G-41RSZLP1YQ');
   if (window.visualViewport) visualViewport.addEventListener('resize', () => window.scrollTo(0, 0));
   $('ans').addEventListener('blur', () => setTimeout(resize, 100));
   resize();
-  // タイトル画面は作らず、ゲーム画面の上に「スタート」ボタンだけを重ねて待つ
+  // タイトル画面は作らず、ゲーム画面の上に「開始」ボタンだけを重ねて待つ
   $('ans').disabled = true; $('send').disabled = true;
 })();
 </script>

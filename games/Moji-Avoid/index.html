@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>文字爆散アボイド</title>
+<title>文字閃避大作戰</title>
 <meta name="description" content="入力した文字を自機にして弾をよける">
 <style>
   :root{
@@ -107,7 +107,7 @@ gtag('config', 'G-41RSZLP1YQ');
     height:min(100dvh, 780px);
     box-sizing:border-box;
   }
-  /* 枠線は周りに余白がある広い画面でだけ引く（スマホでは画面いっぱいに見せる） */
+  /* 枠線は周りに余白がある広い画面でだけ拉（スマホでは画面いっぱいに見せる） */
   @media (min-width:421px){ #stage{border:1px solid var(--line);} }
   #cv{display:block;width:100%;height:100%;touch-action:none;}
 
@@ -173,7 +173,7 @@ gtag('config', 'G-41RSZLP1YQ');
     border-radius:0;
     cursor:pointer;
   }
-  /* 主ボタンは横幅いっぱい。結果画面では「共有」と半分ずつ */
+  /* 主ボタンは横幅いっぱい。結果画面では「分享」と半分ずつ */
   #start,#share{flex:1 1 0;min-height:48px;}
   #start{font-size:14px;font-weight:600;}
   #rand,#howtoBtn{padding:10px 12px;font-size:12px;letter-spacing:.1em;}
@@ -203,19 +203,19 @@ gtag('config', 'G-41RSZLP1YQ');
         <button id="rand" type="button">ランダム</button>
       </div>
       <div class="row btns">
-        <button id="howtoBtn" type="button" data-howto-open>遊び方</button>
-        <button id="share" type="button" hidden>共有</button>
-        <button id="start" type="button">スタート</button>
+        <button id="howtoBtn" type="button" data-howto-open>玩法</button>
+        <button id="share" type="button" hidden>分享</button>
+        <button id="start" type="button">開始</button>
       </div>
     </div>
   </div>
 </div>
 
 <section class="howto" hidden data-pos="none">
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>入力した文字がそのまま自機になり、全方位から飛んでくる弾をよけるゲームです。使える文字は12文字までで、ランダムのボタンでお題を選ぶこともできます。弾が来るのは開始時の1回だけで、当たった弾の数だけ文字の画が吹き飛びます。弾がすべて過ぎるか文字が全部壊れると終わり、残った文字を大きく表示します。</p>
   <h2>操作</h2>
-  <p>画面のどこかに指を置いてドラッグすると、指の動いた分だけ文字が動きます。PC ではマウスのドラッグのほか、矢印キーや WASD でも動かせます。</p>
+  <p>画面のどこかに指を置いて拖曳すると、指の動いた分だけ文字が動きます。PC ではマウスの拖曳のほか、矢印キーや WASD でも動かせます。</p>
   <h2>コツ</h2>
   <p>弾は開始時の文字の位置をめがけて集まるので、すぐに中央を離れると当たりにくくなります。速く動かすと文字列は進む向きへ傾き、当たり判定も一緒に回ります。画の多い文字ほど弾の数が増えます。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -252,7 +252,7 @@ gtag('config', 'G-41RSZLP1YQ');
   // 不具合の切り分け用：読み込み時のエラーを画面に出す
   window.addEventListener('error', function(e){
     if (!msg) return;
-    msg.textContent = 'エラー: ' + (e.message || '') + ' @' + (e.lineno || '?');
+    msg.textContent = '錯誤：' + (e.message || '') + ' @' + (e.lineno || '?');
   });
 
   const SAMPLE_WORDS = [
@@ -798,14 +798,14 @@ gtag('config', 'G-41RSZLP1YQ');
   function finishEnding(){
     state = 'over';
     msg.textContent = '';
-    startBtn.textContent = 'もう一度';
+    startBtn.textContent = '再來一次';
     shareBtn.hidden = false;
-    shareBtn.textContent = '共有';
+    shareBtn.textContent = '分享';
     overlay.classList.add('result');
     overlay.hidden = false;
   }
 
-  // 共有文面：見出し（成績）→URL→ハッシュタグ
+  // 分享文面：見出し（成績）→URL→ハッシュタグ
   // 1パーツでも残れば「守り切った」、全部爆散したら「守りきれなかった」
   function shareText(){
     const url = location.href.split(/[?#]/)[0];
@@ -814,12 +814,12 @@ gtag('config', 'G-41RSZLP1YQ');
     return head + '\n' + url + '\n#MojiAvoid';
   }
 
-  // ---------- 共有画像 ----------
-  const SHARE_W = 1200, SHARE_H = 675;   // 共有画像の大きさ（Xのタイムラインで切れない16:9の横長）
+  // ---------- 分享画像 ----------
+  const SHARE_W = 1200, SHARE_H = 675;   // 分享画像の大きさ（Xのタイムラインで切れない16:9の横長）
   const SHARE_FIT_W = 0.8;               // 残った文字を収める幅（画像の幅に対する割合）
   const SHARE_FIT_H = 0.6;               // 残った文字を収める高さ（画像の高さに対する割合）
 
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   // 背景色の上に、残った文字だけを中央に描く（後光は載せない）
   function resultImageFile(){
     try {
@@ -836,7 +836,7 @@ gtag('config', 'G-41RSZLP1YQ');
     } catch (e){ return null; }
   }
 
-  // 残った文字を共有画像の中央に描く。粗くならないよう解析ラスタ（高解像度）から描く
+  // 残った文字を分享画像の中央に描く。粗くならないよう解析ラスタ（高解像度）から描く
   function drawShareText(g){
     if (!body || body.alivePartCount <= 0) return;
     const rw = body.bx1 - body.bx0, rh = body.by1 - body.by0;
@@ -869,23 +869,23 @@ gtag('config', 'G-41RSZLP1YQ');
 
   function shareResult(){
     const text = shareText();
-    // 全部爆散したときは画像に描くものがないので、文章だけを共有する
+    // 全部爆散したときは画像に描くものがないので、文章だけを分享
     const file = body.alivePartCount > 0 ? resultImageFile() : null;
-    // 1) 画像を渡せる共有シート：文面＋結果画像
+    // 1) 画像を渡せる分享シート：文面＋結果画像
     if (file && navigator.canShare && navigator.canShare({ files: [file] })){
       navigator.share({ text: text, files: [file] }).catch(function(){});
       return;
     }
-    // 2) 画像を渡せない共有シート：文面のみ
+    // 2) 画像を渡せない分享シート：文面のみ
     if (navigator.share){
       navigator.share({ text: text }).catch(function(){});
       return;
     }
-    // 3) 共有シートがない環境：コピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境：コピーしてボタンの文言で知らせる
     if (navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(text).then(function(){
-        shareBtn.textContent = 'コピーしました';
-        setTimeout(function(){ shareBtn.textContent = '共有'; }, 1500);
+        shareBtn.textContent = '已複製';
+        setTimeout(function(){ shareBtn.textContent = '分享'; }, 1500);
       }, function(){});
     }
   }
@@ -992,7 +992,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const rc = Math.cos(body.angle), rs = Math.sin(body.angle);
 
     // 消す範囲は「パーツのセル＋周囲の非インクセル」。
-    // そうしないと縁のアンチエイリアスが細い線として残り、画が取れたように見えない。
+    // そうしないと縁のアンチエイリアスが細い線として剩餘、画が取れたように見えない。
     const area = [];
     const seen = new Set();
     for (let i = 0; i < cells.length; i++){
@@ -1084,7 +1084,7 @@ gtag('config', 'G-41RSZLP1YQ');
     }
     clampBody();
 
-    // 進行方向に合わせて機体（文字列）を回す。左右どちらに進んでも上下は反転しないよう、
+    // 進行方向に合わせて機体（文字列）を轉動。左右どちらに進んでも上下は反転しないよう、
     // 進行方向の「軸」に合わせる（±180度は同じ向きとして扱う）。
     // 指の細かいブレで向きが暴れないよう、速度を均してから角度を求め、回転速度にも上限を設ける。
     const vx = (body.x - body.prevX) / dt, vy = (body.y - body.prevY) / dt;

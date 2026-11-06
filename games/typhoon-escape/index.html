@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>タイフーンエスケープ</title>
+<title>颱風逃脫</title>
 <meta name="description" content="日本列島を動かして台風から逃げる">
 <style>
   :root { --howto-bg: #1B2F5E; --howto-fg: #E6F1FB; }
@@ -76,12 +76,12 @@ gtag('config', 'G-41RSZLP1YQ');
 <div id="wrap">
   <canvas id="cv"></canvas>
   <div class="hud"><div id="time">2026年8月1日</div></div>
-  <div id="popup"><h1 id="ptitle"></h1><p id="ptext"></p><button id="pbtn"></button><button id="sharebtn">𝕏 でシェア</button><button id="howtobtn" type="button" data-howto-open>遊び方</button></div>
+  <div id="popup"><h1 id="ptitle"></h1><p id="ptext"></p><button id="pbtn"></button><button id="sharebtn">𝕏 で分享</button><button id="howtobtn" type="button" data-howto-open>玩法</button></div>
   <div id="pad"><div id="knob"></div></div>
   <div id="ticker"></div>
   <button id="menubtn" aria-label="メニュー">☰</button>
   <div id="menu">
-    <button id="menuclose" aria-label="閉じる">×</button>
+    <button id="menuclose" aria-label="關閉">×</button>
     <h3>使用データ・ライセンス</h3>
     <p>地図データ：Natural Earth（パブリックドメイン）を world-atlas で TopoJSON 化したものを使用しています。</p>
     <p>タイフーンのアジア名：気象庁「台風の番号とアジア名の付け方」に掲載のリストを使用しています。</p>
@@ -93,10 +93,10 @@ Permission to use, copy, modify, and/or distribute this software for any purpose
 THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.</pre>
   </div>
   <section class="howto" data-pos="none" hidden>
-    <h2>遊び方</h2>
-    <p>日本列島を動かしてタイフーンから逃げ続けるゲームです。8月1日から始まり、1秒で1日ずつ日付が進みます。タイフーンの赤い円が列島の海岸線に触れると上陸となって終わり、その日付が結果になります。結果は X でシェアできます。</p>
+    <h2>玩法</h2>
+    <p>日本列島を動かしてタイフーンから逃げ続けるゲームです。8月1日から始まり、1秒で1日ずつ日付が進みます。タイフーンの赤い円が列島の海岸線に触れると上陸となって終わり、その日付が結果になります。結果は X で分享できます。</p>
     <h2>操作</h2>
-    <p>画面をドラッグすると、最初に触れた位置から指を動かした向きへ列島が動きます。左下のパッドに触れるとパッドの中心が基準になり、指を離すと止まります。PC では矢印キーか WASD キーでも動かせます。</p>
+    <p>画面を拖曳すると、最初に触れた位置から指を動かした向きへ列島が動きます。左下のパッドに触れるとパッドの中心が基準になり、指を離すと止まります。PC では矢印キーか WASD キーでも動かせます。</p>
     <h2>コツ</h2>
     <p>当たり判定があるのは内側の赤い円だけで、外側の黄色い円は触れても上陸になりません。破線の先の円が進路の予報です。動き方はまっすぐ進むもの、迷走するもの、曲がるもの、追ってくるもの、止まるものの5種類があります。日がたつほどタイフーンは速くなって発生の間隔も縮み、同時に最大7個まで現れます。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -251,7 +251,7 @@ function draw() {
   else {
     pop.className = over ? 'over' : '';
     if (over) { ptitle.textContent = fmtDate(gameDate()); ptext.textContent = 'タイフーン' + hit.no + '号（' + hit.name + '）が' + hit.region + 'に上陸'; pbtn.textContent = '新しい夏を始める'; }
-    else { ptitle.textContent = ''; ptext.textContent = 'ドラッグで日本列島を動かし\nタイフーンから逃げよう'; pbtn.textContent = '夏を始める'; }
+    else { ptitle.textContent = ''; ptext.textContent = '拖曳で日本列島を動かし\nタイフーンから逃げよう'; pbtn.textContent = '夏を始める'; }
   }
 }
 var ticker = document.getElementById('ticker');

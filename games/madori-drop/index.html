@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, maximum-scale=1, viewport-fit=cover">
-<title>間取りドロップ</title>
+<title>戶型掉落</title>
 <meta name="description" content="部屋ブロックを積んで家賃を競う落ちもの">
 <style>
   :root{
@@ -211,9 +211,9 @@ gtag('config', 'G-41RSZLP1YQ');
           <button id="bHold" class="lbl" aria-label="ホールド">ホールド</button>
           <button id="bDrop" aria-label="一気に落とす">↑</button>
           <span></span>
-          <button id="bL" aria-label="左へ">←</button>
+          <button id="bL" aria-label="往左">←</button>
           <button id="bDown" aria-label="早く落とす">↓</button>
-          <button id="bR" aria-label="右へ">→</button>
+          <button id="bR" aria-label="往右">→</button>
         </div>
         <div class="rots">
           <button id="bRotL" class="lbl">左回転</button>
@@ -265,14 +265,14 @@ gtag('config', 'G-41RSZLP1YQ');
       </div>
     </div>
     <div class="btns">
-      <button id="overAgain">もう一度</button>
-      <button id="overShare" class="sub2">共有</button>
+      <button id="overAgain">再來一次</button>
+      <button id="overShare" class="sub2">分享</button>
       <button id="overClose" class="sub2">閉じて眺める</button>
     </div>
   </div>
 
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>落ちてくる部屋のブロックを横8マス、縦14マスに積み、一軒の間取りを作る落ちものゲームです。列を消す仕組みはなく、次のブロックが入らなくなると終わりです。家が3Dで建ち、家賃が結果になります。最高額はこのブラウザに保存されます。</p>
     <h2>操作</h2>
     <p>画面下のボタンで移動と回転をします。↓で早く、↑で一気に落とします。ホールドは1ブロックにつき1回です。PC は矢印キー、Z と X で回転、C でホールドです。完成後は「歩く」で家の中を見て回れます。</p>
@@ -889,7 +889,7 @@ function startGame(){
   grid.fill(0); rooms.clear();
   nextRoomId = 1;
   piece = null; nextPiece = null; holdPiece = null; holdUsed = false;
-  document.documentElement.setAttribute('data-howto-hidden', '');   // プレイ中は「遊び方」を隠す
+  document.documentElement.setAttribute('data-howto-hidden', '');   // プレイ中は「玩法」を隠す
   state = 'play'; dirty3d = true; fallAcc = 0;
   document.getElementById('over').hidden = true;
   drawHold();
@@ -913,12 +913,12 @@ function replay(el, cls){
   void el.offsetWidth;
   el.classList.add(cls);
 }
-// ===== 結果の共有 =====
+// ===== 結果の分享 =====
 let lastResult = null;
 
-// 共有画像の背景用に、家全体が入る俯瞰で 3D を描いた canvas を返す（描けなければ null）
+// 分享画像の背景用に、家全体が入る俯瞰で 3D を描いた canvas を返す（描けなければ null）
 // zoom は家の大きさ。1 で家全体が枠に収まり、大きくすると中央に寄ったまま枠からはみ出す
-// 画面の 3D 表示を一時的に借りて描くので、カメラや表示サイズは必ず元に戻す
+// 画面の 3D 表示を一時的に借りて描くので、カメラや表示サイズは必ず還原
 function houseSnapshot(w, h, zoom = 1){
   const b = bounds();
   if(!renderer || !b || !houseGroup.children.length) return null;
@@ -988,8 +988,8 @@ function houseSnapshot(w, h, zoom = 1){
   return out;
 }
 
-// 共有用の画像（結果の募集図面と同じ横長の体裁）
-// 共有シートの制約で同期的に作る必要があるため toBlob は使わない
+// 分享用の画像（結果の募集図面と同じ横長の体裁）
+// 分享シートの制約で同期的に作る必要があるため toBlob は使わない
 function makeResultImage(){
   const W = 1440, H = 1000, PAD = 24, GAP = 24;
   const cv = document.createElement('canvas');
@@ -1040,7 +1040,7 @@ function makeResultImage(){
   g.strokeStyle = '#111'; g.lineWidth = 2;
   g.strokeRect(px, pyy, pw, phh);
 
-  // 罫線の表を引くヘルパー
+  // 罫線の表を拉ヘルパー
   //   rows: {side:縦のラベル(最初の行だけ), span:縦ラベルの行数, label:ラベル, value:値, h:高さ, big:大きい文字}
   const table = (x, y, w, sideW, labW, rows)=>{
     let ty = y, sideTop = null, sideRows = 0, sideText = '';
@@ -1168,7 +1168,7 @@ const shareBtn = $('overShare');
 shareBtn.addEventListener('pointerdown', e=> e.stopPropagation());
 function flashLabel(msg){
   shareBtn.textContent = msg;
-  setTimeout(()=>{ shareBtn.textContent = '共有'; }, 1500);
+  setTimeout(()=>{ shareBtn.textContent = '分享'; }, 1500);
 }
 shareBtn.addEventListener('click', ()=>{
   if(!lastResult) return;
@@ -1186,7 +1186,7 @@ shareBtn.addEventListener('click', ()=>{
   }
   if(navigator.clipboard){
     navigator.clipboard.writeText(text)
-      .then(()=>flashLabel('コピーしました'))
+      .then(()=>flashLabel('已複製'))
       .catch(()=>flashLabel('コピーできません'));
   } else {
     flashLabel('コピーできません');
@@ -1366,7 +1366,7 @@ function wallTexture(){
   return tex;
 }
 
-// 面の大きさに合わせてUVを引き伸ばす（テクスチャは1枚を共有する）
+// 面の大きさに合わせてUVを引き伸ばす（テクスチャは1枚を分享）
 function scaleUV(geo, u, v){
   const uv = geo.attributes.uv;
   for(let i=0;i<uv.count;i++) uv.setXY(i, uv.getX(i)*u, uv.getY(i)*v);
@@ -2329,7 +2329,7 @@ function exitFPS(){
   stickVec.x = stickVec.y = 0;
   knobEl.style.transform = '';
   drawPlanView();
-  // 家全体が見える俯瞰へ戻る（向いていた方角だけ引き継ぐ）
+  // 家全体が見える俯瞰へ返回（向いていた方角だけ引き継ぐ）
   const b = bounds();
   const size = b ? Math.max(b.x1-b.x0, b.y1-b.y0) : 10;
   cam.target.set(0, 1.2, 0);
@@ -2515,13 +2515,13 @@ function showView(animate){
 
 // ===== iOS対策 =====
 // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て、
-// 盤面や3Dのドラッグが奪われるのを防ぐ（ボタンのclickは殺さないよう対象を限定する）
+// 盤面や3Dの拖曳が奪われるのを防ぐ（ボタンのclickは殺さないよう対象を限定する）
 const isDraggable = t => t instanceof Element && !!t.closest('#field,#view3d,#stick');
 document.addEventListener('touchstart', e=>{
   if(isDraggable(e.target)) e.preventDefault();
 }, {passive:false});
 document.addEventListener('touchmove', e=>{
-  if(ptrs.size || stickId !== null) e.preventDefault();   // ドラッグ中だけ潰す
+  if(ptrs.size || stickId !== null) e.preventDefault();   // 拖曳中だけ潰す
 }, {passive:false});
 document.addEventListener('selectstart', e=> e.preventDefault());
 document.addEventListener('contextmenu', e=> e.preventDefault());

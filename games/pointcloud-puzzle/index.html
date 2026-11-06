@@ -75,13 +75,13 @@ gtag('config', 'G-41RSZLP1YQ');
 </head>
 <body>
 <div id="brand">POINT CLOUD PUZZLE</div>
-<div id="hint">ドラッグして回転 — 正しい角度で絵が現れる</div>
+<div id="hint">拖曳して回転 — 正しい角度で絵が現れる</div>
 <div id="done">Level Complete</div>
 <section class="howto" hidden data-pos="top-right">
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>宙に浮かぶ20万個の点のかたまりを回し、動物の写真が見える角度を探すパズルです。点は球や立方体、星形など5種類の立体に並んでいます。正解の角度から約4度以内に合わせるとステージ完了となり、次の立体へ進みます。5つ解くと最初の形に戻り、正解の角度は毎回変わります。時間制限や失敗はありません。</p>
   <h2>操作</h2>
-  <p>スマホは指で、PC はマウスでドラッグすると回せます。動かしながら離すと、しばらく惰性で回り続けます。</p>
+  <p>スマホは指で、PC はマウスで拖曳すると回せます。動かしながら離すと、しばらく惰性で回り続けます。</p>
   <h2>楽しみ方</h2>
   <p>判定は指を離したときと、押さえたまま1秒止めたときに行われます。惰性で回っている間は判定されないので、絵が見えてきたら指を置いたまま細かく合わせてください。正解から遠い向きほど色がばらばらに崩れるので、色のまとまりを手がかりに回せます。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -430,7 +430,7 @@ gtag('config', 'G-41RSZLP1YQ');
     farAttr.needsUpdate = true;
   }
 
-  // ---------- 入力(マウス / タッチでドラッグ回転) ----------
+  // ---------- 入力(マウス / タッチで拖曳回転) ----------
   var dragging = false, lastX = 0, lastY = 0;
   var ROT_SPEED = 0.006; // rad / px
   var INERTIA_DAMPING = 3.0; // 慣性の減衰の強さ(大きいほどすぐ止まる)
@@ -558,7 +558,7 @@ gtag('config', 'G-41RSZLP1YQ');
     material.uniforms.uTime.value += dt;
     bgMaterial.uniforms.uTime.value += dt;
 
-    // 慣性回転: ドラッグを離した後も速度が減衰しながら回り続ける
+    // 慣性回転: 拖曳を離した後も速度が減衰しながら回り続ける
     if (!dragging && !solved && (Math.abs(velX) > 2 || Math.abs(velY) > 2)) {
       rotateBy(velX * dt, velY * dt);
       var damp = Math.exp(-INERTIA_DAMPING * dt);

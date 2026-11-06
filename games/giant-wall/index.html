@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>巨人壁ゲーム</title>
+<title>巨牆遊戲</title>
 <style>
   :root{
     --bg:#222; --fg:#eee; --panel:#333; --line:#555;
@@ -73,7 +73,7 @@ gtag('config', 'G-41RSZLP1YQ');
   #sound[aria-pressed="false"] .on{display:none}
   #sound[aria-pressed="false"] .off{display:block}
   .hidden{display:none !important}
-  /* 共有される内容の画面（共有シートが出ない環境用） */
+  /* 分享される内容の画面（分享シートが出ない環境用） */
   #share-view{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
   #share-view .panel{width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y;background:var(--panel);border-radius:10px;padding:12px}
   #share-img{display:block;width:100%;height:auto}
@@ -112,7 +112,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <div id="bar">
     <label class="pick" id="pick0"><span id="pickText0">壁の写真</span><input id="file0" type="file" accept="image/*"></label>
     <label class="pick" id="pick1"><span id="pickText1">中の写真</span><input id="file1" type="file" accept="image/*"></label>
-    <button id="share" class="btn icon" type="button" aria-label="共有">
+    <button id="share" class="btn icon" type="button" aria-label="分享">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2"/></svg>
     </button>
   </div>
@@ -122,16 +122,16 @@ gtag('config', 'G-41RSZLP1YQ');
       <p id="cam-title">カメラを使います</p>
       <p id="cam-text">スマホの外カメラ（背面）と内カメラ（画面側）を使います。壁の写真には外カメラ、中の写真には内カメラの映像が入ります。</p>
       <div id="cam-actions">
-        <button id="cam-close" class="btn" type="button">閉じる</button>
+        <button id="cam-close" class="btn" type="button">關閉</button>
         <button id="cam-allow" class="btn" type="button">許可</button>
       </div>
     </div>
   </div>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される画像">
+      <img id="share-img" alt="分享される画像">
       <p id="share-text"></p>
-      <button id="share-close" class="btn" type="button">閉じる</button>
+      <button id="share-close" class="btn" type="button">關閉</button>
     </div>
   </div>
 </div>
@@ -163,18 +163,18 @@ gtag('config', 'G-41RSZLP1YQ');
   // 破片の落ち方
   const GRAVITY = 2200;        // 重力（px/秒²）
   const POP = [40, 220];       // タップした所から外へはじける速さ（px/秒、最小, 最大）
-  const POP_UP = 180;          // 上へはね上がる速さの最大（px/秒）
+  const POP_UP = 180;          // 往上はね上がる速さの最大（px/秒）
   const SPIN = 5;              // 回転の速さの最大（ラジアン/秒）
   const GROW = 0.7;            // 手前に倒れてくるように、1秒ごとにこの割合だけ大きくする
   // 壁の厚み（穴の縁に見える、壁の割れた断面）
   const THICK = 7;             // 厚み（px）。光が左上から来るので、穴の左上の縁に断面が見える
-  const THICK_DIR = [0.5, 0.85];  // 断面が見える向き（右下へ）
+  const THICK_DIR = [0.5, 0.85];  // 断面が見える向き（右往下）
   const THICK_DARK = 0.55;     // 断面を壁の表面よりどれだけ暗くするか（0〜1）
   // 穴の中に落ちる壁の影（縁ほど濃い、ぼかした黒いグラデーション）
   // 縁のすぐそばを濃くする狭い影と、内側まで届く広い影を重ねる [ぼかしの幅(px), 濃さ(0〜1)]
   const FADE_LAYERS = [[5, 0.9], [14, 0.85], [32, 0.7]];
-  const FADE_X = 4;            // 影のずれ（px、右へ）
-  const FADE_Y = 8;            // 影のずれ（px、下へ）
+  const FADE_X = 4;            // 影のずれ（px、往右）
+  const FADE_Y = 8;            // 影のずれ（px、往下）
   // 叩いたときの壁の震え
   const SHAKE_AMP = 3;         // 震える幅（px）
   const SHAKE_TIME = 0.25;     // 震えが収まるまでの時間（秒）
@@ -189,8 +189,8 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // 効果音
   const SE_VOLUME = 0.6;       // 全体の音量
-  // 共有
-  const SHARE_INSTANT = 0.5;   // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  // 分享
+  const SHARE_INSTANT = 0.5;   // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
 
   // ---------- 準備 ----------
   const $ = id => document.getElementById(id);
@@ -214,7 +214,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   // 壁の状態は壁の写真の画素の座標で持つ（画面の大きさが変わってもずれないように）
   let holes = [];         // 開いた穴：縁の点の列 [[x, y], …]
-  let shakeT = 0;         // 壁の震えの残り時間（秒）
+  let shakeT = 0;         // 壁の震えの剩餘時間（秒）
   const sand = [];        // 降っている砂粒 {x, y, vx, vy, r, c}
   let sandDue = 0;        // まだ出していない砂粒の数（端数を持ち越す）
   let spots = [];         // ひびだけ入っていて、まだ穴が開いていない所 {x, y, hits, need}
@@ -622,7 +622,7 @@ gtag('config', 'G-41RSZLP1YQ');
       f.x += f.vx * dt; f.y += f.vy * dt;
       f.a += f.va * dt;
       f.sc += GROW * dt;
-      // 画面の下へ出たら片付ける
+      // 画面の往下出たら片付ける
       if (f.y - Math.hypot(f.w, f.h) * f.sc > H) frags.splice(i, 1);
     }
   }
@@ -653,14 +653,14 @@ gtag('config', 'G-41RSZLP1YQ');
   };
   cv.addEventListener('pointerdown', e => {
     e.preventDefault();
-    if (!imgs[0]) return;   // 壁の写真を読み込むまでは崩さない
+    if (!imgs[0]) return;   // 壁の写真を讀取までは崩さない
     const { x, y } = localPos(e);
     hit(x, y);
   });
 
   // iPhone(Safari)で長押しにより文字選択・拡大鏡・メニューが出るのを防ぐ
   document.addEventListener('touchstart', e => { if (e.target === cv) e.preventDefault(); }, { passive:false });
-  // 共有の文面だけは選んでコピーできるようにする
+  // 分享の文面だけは選んでコピーできるようにする
   document.addEventListener('selectstart', e => {
     const t = e.target.nodeType === 1 ? e.target : e.target.parentElement;
     if (t && t.closest('#share-text')) return;
@@ -816,7 +816,7 @@ gtag('config', 'G-41RSZLP1YQ');
   soundBtn.addEventListener('pointerdown', e => { e.preventDefault(); toggleSound(); });
   soundBtn.addEventListener('click', e => { if (e.detail === 0) toggleSound(); });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   const shareText = () => '壁の中には...?\n' + location.href.split(/[?#]/)[0] + '\n#ジャイアントウォール';
   // 今の画面を画像にする
   function snapshotCanvas(){
@@ -826,7 +826,7 @@ gtag('config', 'G-41RSZLP1YQ');
     c.getContext('2d').drawImage(cv, 0, 0);
     return c;
   }
-  // 画像をPNGのファイルにする（共有シートの制約があるため同期処理で作る）
+  // 画像をPNGのファイルにする（分享シートの制約があるため同期処理で作る）
   function imageFile(c){
     const bin = atob(c.toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -839,7 +839,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = snapshotCanvas();
     const file = imageFile(c);
-    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（画像と文面）を画面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -847,20 +847,20 @@ gtag('config', 'G-41RSZLP1YQ');
       shareView.classList.remove('hidden');
       $('share-close').focus({ preventScroll:true });
     };
-    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
-    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋画像
     if (navigator.canShare && navigator.canShare({ files: [file] })){
       navigator.share({ text, files: [file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(failed);
       return;

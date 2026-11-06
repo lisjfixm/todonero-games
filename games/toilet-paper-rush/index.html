@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>トイレットペーパーラッシュ</title>
+<title>捲筒衛生紙衝鋒</title>
 <meta name="description" content="トイレットペーパーを出し切るタイム勝負">
 <style>
   :root{
@@ -71,7 +71,7 @@ gtag('config', 'G-41RSZLP1YQ');
     font-size:52px;font-weight:700;font-variant-numeric:tabular-nums;margin:0 0 4px;
   }
   #result-best{font-size:15px;font-weight:bold;font-variant-numeric:tabular-nums;color:var(--ink);opacity:.7;margin:0 0 20px}
-  /* ベスト更新！：ぽんと飛び出してから、ゆっくり弾みつづける */
+  /* 刷新紀錄！：ぽんと飛び出してから、ゆっくり弾みつづける */
   #result-best.new{
     color:var(--accent);opacity:1;font-size:18px;
     animation:best-pop .6s cubic-bezier(.2,1.6,.4,1) both, best-bounce 1.4s ease-in-out .6s infinite;
@@ -92,7 +92,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   #retry{background:var(--accent);color:#fff}
   #share{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
-  /* 共有シートが使えない環境で、共有される内容（結果画像と文面）を見せる */
+  /* 分享シートが使えない環境で、分享される内容（結果画像と文面）を見せる */
   #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(30,36,32,.6);touch-action:none}
   #share-view .panel{
     background:var(--panel);color:var(--ink);border-radius:18px;padding:16px;
@@ -129,30 +129,30 @@ gtag('config', 'G-41RSZLP1YQ');
 </head>
 <body>
 <div id="game">
-  <canvas id="cv" aria-label="トイレットペーパー。紙を下にスワイプして引き出す"></canvas>
+  <canvas id="cv" aria-label="トイレットペーパー。紙を下に滑動して引き出す"></canvas>
   <div id="over" class="hidden">
     <div class="panel" aria-live="polite">
       <p id="result-head">25m 出し切った！</p>
       <p id="result-time">0.00秒</p>
       <p id="result-best">ベスト 0.00秒</p>
-      <button id="share" type="button">共有</button>
+      <button id="share" type="button">分享</button>
       <button id="retry" type="button">もう一回</button>
     </div>
   </div>
   <button id="mute" type="button" aria-label="効果音" aria-pressed="false"></button>
   <button id="flip" type="button" aria-label="ロールの向き"></button>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される結果画像">
+      <img id="share-img" alt="分享される結果画像">
       <p id="share-text"></p>
-      <button id="share-close" type="button">閉じる</button>
+      <button id="share-close" type="button">關閉</button>
     </div>
   </div>
   <section class="howto" data-pos="top-left" hidden>
-    <h2>遊び方</h2>
-    <p>ロールに巻かれた25mのトイレットペーパーを、できるだけ速く全部引き出すタイムアタックです。紙をつかんだ瞬間に計測が始まり、出し切ったところでタイムが決まります。残りの長さはホルダーのふたに表示され、ベストタイムはこのブラウザに保存されます。</p>
+    <h2>玩法</h2>
+    <p>ロールに巻かれた25mのトイレットペーパーを、できるだけ速く全部引き出すタイムアタックです。紙をつかんだ瞬間に計測が始まり、出し切ったところでタイムが決まります。剩餘の長さはホルダーのふたに表示され、ベストタイムはこのブラウザに保存されます。</p>
     <h2>操作</h2>
-    <p>ロールから床までの紙のあたりに指を置き、下へスワイプすると紙が出ます。上へ動かしても紙は戻りません。PC ではマウスのドラッグで同じように遊べます。右上のボタンでは、効果音のオンとオフや、紙を前と壁側のどちらに垂らすかを切り替えられます。</p>
+    <p>ロールから床までの紙のあたりに指を置き、往下滑動すると紙が出ます。往上動かしても紙は戻りません。PC ではマウスの拖曳で同じように遊べます。右上のボタンでは、効果音のオンとオフや、紙を前と壁側のどちらに垂らすかを切り替えられます。</p>
     <h2>コツ</h2>
     <p>指を動かしたまま離すと、その勢いでロールが回り続けて紙が出ていきます。指を止めてから離すと勢いは付きません。回っているロールは紙をつかむと止まるので、勢いのあるうちはつかみ直しを少し待つのも手です。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -222,7 +222,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const RUSTLE_VOL = 0.35;         // 紙が出ていくときのサラサラ音の最大音量
   const RUSTLE_SPEED = 30;         // この紙の速さ（単位/秒）でサラサラ音が最大になる
   const TICK_VOL = 0.18;           // ロールが回るときのカラカラ音の音量
-  const SHARE_INSTANT = 0.5;       // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5;       // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   const FLOWER_RATE = 0.01;        // 紙がお花柄になる確率（1回ごと）
   // 隠しコマンド：入れると次の回は必ずお花柄
   const SECRET_KEYS = '1029384756';   // PC：この順に数字キーを押す
@@ -397,7 +397,7 @@ gtag('config', 'G-41RSZLP1YQ');
   scene.add(rod);
 
   // ふた：ちょうつがいから前へのびる板と、その先で下に折れた板。ロールの上に乗っていて、
-  // ロールが細くなると下がり、跳ねると一緒に持ち上がる。前の板に残りの長さを印刷する
+  // ロールが細くなると下がり、跳ねると一緒に持ち上がる。前の板に剩餘の長さを印刷する
   const LID_LEN = 1.05;    // ちょうつがいから前の端までの長さ（前に折れた板がロールの前の上に乗る長さ）
   const LID_T = 0.04;      // 板の厚み
   const FLAP_H = 0.35;     // 前に折れた板の高さ
@@ -462,16 +462,16 @@ gtag('config', 'G-41RSZLP1YQ');
     g.globalAlpha = 0.08; g.strokeStyle = '#fff';
     for (let y = 0; y < h; y += 3){ g.beginPath(); g.moveTo(0, y + Math.random()); g.lineTo(w, y + Math.random()); g.stroke(); }
     g.globalAlpha = 1;
-    // 「残り ○○.○ m」：数字を大きく、前後の文字は小さく
+    // 「剩餘 ○○.○ m」：数字を大きく、前後の文字は小さく
     g.fillStyle = css('--metal-ink'); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
     const big = '700 ' + Math.round(h * 0.62) + 'px ' + FONT_NUM;
     const small = '700 ' + Math.round(h * 0.2) + 'px ' + FONT_JP;
     g.font = big;   const nw = g.measureText(text).width;
-    g.font = small; const lw = g.measureText('残り').width, mw = g.measureText('m').width;
+    g.font = small; const lw = g.measureText('剩餘').width, mw = g.measureText('m').width;
     const gap = h * 0.06;
     let x = (w - (lw + gap + nw + gap + mw)) / 2;
     const base = h * 0.76;
-    g.font = small; g.fillText('残り', x, base); x += lw + gap;
+    g.font = small; g.fillText('剩餘', x, base); x += lw + gap;
     g.font = big;   g.fillText(text, x, base);   x += nw + gap;
     g.font = small; g.fillText('m', x, base);
     labelTex.needsUpdate = true;
@@ -615,7 +615,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- ロール ----------
-  // 側面：開いた円柱を、残りの量に合わせて太さを変える（軸は横向き）
+  // 側面：開いた円柱を、剩餘の量に合わせて太さを変える（軸は横向き）
   const rollSideTex = canvasTexture(sheetCanvas(true, false), 3, 1);
   const rollSideFlowerTex = canvasTexture(sheetCanvas(true, true), 3, 1);
   const rollSide = new THREE.Mesh(
@@ -776,7 +776,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const hangBottom = contactY + BEND_H;   // まっすぐ垂れている部分の下端（ここから床の紙へ曲がり込む）
     const hangLen = rollY - hangBottom;
     if (dropped || out > rollY - contactY){
-      // 床の紙（先端から）→ 曲がり込み → 上へ垂れた紙
+      // 床の紙（先端から）→ 曲がり込み → 往上垂れた紙
       const pileLen = dropped ? out : out - hangLen - BEND_H;
       growPile(pileLen);
       let last = -1;
@@ -845,7 +845,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
     }
     stripGeo.setDrawRange(0, Math.max(0, n - 1) * 6);
-    // 床の紙の区間は材質1、残り（垂れた紙）は材質0で描く
+    // 床の紙の区間は材質1、剩餘（垂れた紙）は材質0で描く
     stripGeo.clearGroups();
     const floorIdx = Math.max(0, nFloor - 1) * 6, allIdx = Math.max(0, n - 1) * 6;
     if (floorIdx > 0) stripGeo.addGroup(0, floorIdx, 1);
@@ -1091,7 +1091,7 @@ gtag('config', 'G-41RSZLP1YQ');
       const off = (m.yMax + m.yMin) / 2 - (lim.top + lim.bottom) / 2;
       target.y += off * dist * tanHalf;
     }
-    // 最後に、動かした注視点でもう一度ぴったりの距離に合わせる
+    // 最後に、動かした注視点で再來一次ぴったりの距離に合わせる
     let lo = 2, hi = 80;
     for (let k = 0; k < 30; k++){
       const mid = (lo + hi) / 2;
@@ -1144,7 +1144,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const isNew = bestTime === 0 || elapsed < bestTime;
     if (isNew){ bestTime = elapsed; saveBest(); }
     const best = $('result-best');
-    best.textContent = isNew ? 'ベスト更新！' : 'ベスト ' + bestTime.toFixed(2) + '秒';
+    best.textContent = isNew ? '刷新紀錄！' : 'ベスト ' + bestTime.toFixed(2) + '秒';
     best.classList.toggle('new', isNew);
     // 出し切った様子を少し見せてから結果を出す（タイムは出し切った瞬間で止まっている）
     resultTimer = setTimeout(() => {
@@ -1222,7 +1222,7 @@ gtag('config', 'G-41RSZLP1YQ');
     // 指の下向きの速さ（px/秒）をならして覚えておく：離したときの勢いに使う
     grab.vy = grab.vy * 0.5 + (dy / dtm) * 0.5;
     grab.tm = now; grab.y = p.y;
-    // 下へ動かした分だけ紙が出る（上へ動かしても紙は戻らない）
+    // 往下動かした分だけ紙が出る（往上動かしても紙は戻らない）
     if (dy > 0) pull(dy * perPx);
   });
 
@@ -1239,10 +1239,10 @@ gtag('config', 'G-41RSZLP1YQ');
   document.addEventListener('pointerup', release);
   document.addEventListener('pointercancel', release);
 
-  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出てドラッグが奪われるのを防ぐ
+  // iPhone(Safari)で長押しや指の移動により文字選択・拡大鏡が出て拖曳が奪われるのを防ぐ
   cv.addEventListener('touchstart', e => e.preventDefault(), { passive:false });
   document.addEventListener('touchmove', e => { if (grab) e.preventDefault(); }, { passive:false });
-  // （共有される文面だけは選んでコピーできるようにする）
+  // （分享される文面だけは選んでコピーできるようにする）
   document.addEventListener('selectstart', e => {
     if (e.target instanceof Node && $('share-text').contains(e.target)) return;
     e.preventDefault();
@@ -1285,7 +1285,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }, true);
   const cornerRelease = e => {
     if (!cornerTouches.delete(e.pointerId)) return;
-    if (cornerTimer && heldCorners() < 4){ clearTimeout(cornerTimer); cornerTimer = 0; }   // 1本でも離したらやり直し
+    if (cornerTimer && heldCorners() < 4){ clearTimeout(cornerTimer); cornerTimer = 0; }   // 1本でも離したら重新開始
     if (cornerTouches.size === 0) setTimeout(() => { cornerGesture = false; }, 400);
   };
   document.addEventListener('pointerup', cornerRelease, true);
@@ -1306,7 +1306,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
   $('retry').addEventListener('click', restart);
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return 'トイレットペーパーを出し切った！\n' + TOTAL_M + 'm ' + elapsed.toFixed(2) + '秒\n'
       + location.href.split(/[?#]/)[0] + '\n#トイレットペーパーラッシュ';
@@ -1325,7 +1325,7 @@ gtag('config', 'G-41RSZLP1YQ');
     g.font = 'bold 84px ' + font; g.fillText(elapsed.toFixed(2) + '秒', 300, 390);
     return c;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(c){
     const bin = atob(c.toDataURL('image/png').split(',')[1]);
     const buf = new Uint8Array(bin.length);
@@ -1338,7 +1338,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 3) 共有シートが無い・使えない環境: 文面をコピーし、共有される内容（結果画像と文面）を画面に出す
+    // 3) 分享シートが無い・使えない環境: 文面をコピーし、分享される内容（結果画像と文面）を画面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -1346,20 +1346,20 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll:true });
     };
-    // 共有シートが出なかったときは 3) へ：失敗した（埋め込み表示で共有が禁止されている等）とき、
-    // またはキャンセル扱いでも押してすぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
-    // 共有シートを開いてから自分で閉じたキャンセルでは何もしない
+    // 分享シートが出なかったときは 3) へ：失敗した（埋め込み表示で分享が禁止されている等）とき、
+    // またはキャンセル扱いでも按すぐ（SHARE_INSTANT 秒未満）に終わったとき（シートを出せないアプリ内ブラウザ等）。
+    // 分享シートを開いてから自分で閉じたキャンセルでは何もしない
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;
       if (!err || err.name !== 'AbortError' || instant) fallback();
     };
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files:[file] })){
       navigator.share({ text, files:[file] }).catch(failed);
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(failed);
       return;

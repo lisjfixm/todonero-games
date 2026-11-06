@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ドローレース</title>
+<title>塗鴉滾輪賽跑</title>
 <meta name="description" content="描いた手足で転がって走るレース">
 <style>
   :root{ --ink:#23262b; --player:#e0413a; --cpu:#3b6ec7; --ground:#2b2f36; --howto-bg:#23262b; --howto-fg:#fff; }
@@ -51,10 +51,10 @@ gtag('config', 'G-41RSZLP1YQ');
 <canvas id="race"></canvas>
 <canvas id="pad" width="300" height="180"></canvas>
 <section class="howto" data-pos="top-right" hidden>
-  <h2>遊び方</h2>
-  <p>手足を描いた人形を転がして、CPU と競走するレースです。先にゴールすると勝ちで次のステージへ進み、CPU に先を越されると同じステージをやり直します。ステージは全部で3つあり、ゴールするとタイムが表示されます。</p>
+  <h2>玩法</h2>
+  <p>手足を描いた人形を転がして、CPU と競走するレースです。先にゴールすると勝ちで下一關進み、CPU に先を越されると同じステージを重新開始ます。ステージは全部で3つあり、ゴールするとタイムが表示されます。</p>
   <h2>操作</h2>
-  <p>下の白い枠に線を引くと、描き始めに近い肩か腰に手足が付き、反対側にも同じ形が付いて回り続けます。最初の線を描いた瞬間にレースが始まります。走っている間も描き直せて、同じ関節の前の線は置き換わります。PC ではマウスで描けます。</p>
+  <p>下の白い枠に線を拉と、描き始めに近い肩か腰に手足が付き、反対側にも同じ形が付いて回り続けます。最初の線を描いた瞬間にレースが始まります。走っている間も描き直せて、同じ関節の前の線は置き換わります。PC ではマウスで描けます。</p>
   <h2>コツ</h2>
   <p>階段や溝、水、泥、逆走ベルトには長い脚、トンネルには小さな輪、氷の坂には輪が向いています。上の進行バーで太く白い所が形を変えたい区間です。CPU は回転が遅く、形を変えるのも区間に入って3秒後なので、素早く描き直せば追い抜けます。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -446,7 +446,7 @@ function endStroke(){
     limbs[kind].push(limb);
     if (limbs[kind].length > MAX_PER_JOINT) limbs[kind].shift();
     if (racing) player = replaceBody(player, limbs, css('--player'));
-    else if (!result) startRace();                 // リザルト表示中は描いても始めない（ボタンで次へ）
+    else if (!result) startRace();                 // リザルト表示中は描いても始めない（ボタンで下一個）
   }
   stroke = [];
   drawPad();
@@ -600,17 +600,17 @@ function render(){
     rctx.textAlign = 'center'; rctx.textBaseline = 'middle';
     rctx.fillStyle = result === 'WIN' ? css('--player') : css('--cpu');
     rctx.font = 'bold 34px sans-serif';
-    rctx.fillText(result === 'WIN' ? 'ゴール！ 勝利' : 'ゴール… 敗北', cw / 2, py + 44);
+    rctx.fillText(result === 'WIN' ? 'ゴール！ 勝利' : 'ゴール… 失敗', cw / 2, py + 44);
     rctx.fillStyle = css('--ink'); rctx.font = '16px sans-serif';
     rctx.fillText('ステージ ' + (stage + 1) + ' / ' + STAGES.length, cw / 2, py + 88);
     rctx.font = 'bold 26px sans-serif';
     rctx.fillText('タイム ' + raceTime.toFixed(2) + ' 秒', cw / 2, py + 122);
     // ボタン
     const bw = pw - 48, bh = 40;
-    const mainLabel = result === 'WIN' ? (stage + 1 < STAGES.length ? '次のステージへ' : 'ステージ1に戻る') : 'もう一度';
+    const mainLabel = result === 'WIN' ? (stage + 1 < STAGES.length ? '下一關' : 'ステージ1に返回') : '再來一次';
     hud.restart = { x: px + 24, y: py + 154, w: bw, h: bh };
     hud.share = { x: px + 24, y: py + 202, w: bw, h: bh };
-    for (const [k, label, fill, color] of [['restart', mainLabel, css('--ink'), '#fff'], ['share', 'シェア', '#fff', css('--ink')]]){
+    for (const [k, label, fill, color] of [['restart', mainLabel, css('--ink'), '#fff'], ['share', '分享', '#fff', css('--ink')]]){
       const r = hud[k];
       rctx.fillStyle = fill; rctx.strokeStyle = css('--ink'); rctx.lineWidth = 2;
       roundRect(rctx, r.x, r.y, r.w, r.h, 20); rctx.fill(); rctx.stroke();
@@ -656,7 +656,7 @@ function startRace(){
   cancelAnimationFrame(raf);
   raf = requestAnimationFrame(frame);
 }
-// click で受ける（タッチの pointerdown はユーザー操作扱いにならず、共有シートやXのタブが開かないことがあるため）
+// click で受ける（タッチの pointerdown はユーザー操作扱いにならず、分享シートやXのタブが開かないことがあるため）
 race.addEventListener('click', e => {
   if (racing || !result) return;
   const r = race.getBoundingClientRect();
@@ -665,7 +665,7 @@ race.addEventListener('click', e => {
   if (hit('share')) shareImage();
   else if (hit('restart')){ if (result === 'WIN') stage = (stage + 1) % STAGES.length; startRace(); }
 });
-// 完成した人の画像を作ってシェア（共有シートが使えない環境では画面内に画像を表示）
+// 完成した人の画像を作って分享（分享シートが使えない環境では画面内に画像を表示）
 let sharing = false;
 function shareImage(){
   if (!player || sharing) return;
@@ -686,14 +686,14 @@ function shareImage(){
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   const file = new File([bytes], 'runner.png', { type: 'image/png' });
-  // シェア文: 見出し / タイム(秒:1/100秒) / 空行 / このページのURL / ハッシュタグ
+  // 分享文: 見出し / タイム(秒:1/100秒) / 空行 / このページのURL / ハッシュタグ
   const cs = Math.round(raceTime * 100);
   const time = String(Math.floor(cs / 100)).padStart(2, '0') + ':' + String(cs % 100).padStart(2, '0');
-  const head = 'ステージ' + (stage + 1) + (result === 'WIN' ? 'クリア！' : 'に挑戦中！');
-  const text = head + '\nタイム : ' + time + '\n\n' + location.href.split(/[?#]/)[0] + '\n#ドローレース';
+  const head = 'ステージ' + (stage + 1) + (result === 'WIN' ? '過關！' : 'に挑戦中！');
+  const text = head + '\n時間：' + time + '\n\n' + location.href.split(/[?#]/)[0] + '\n#ドローレース';
   const intent = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
   if (navigator.canShare && navigator.canShare({ files: [file] })){
-    // スマホ：OSの共有シートからXを選ぶと画像付きで投稿できる
+    // スマホ：OSの分享シートからXを選ぶと画像付きで投稿できる
     // キャンセル（AbortError）では何もしない。それ以外の失敗は画像を表示
     sharing = true;
     navigator.share({ files: [file], text })
@@ -716,7 +716,7 @@ function shareImage(){
     }
   }
 }
-// ページ遷移せずに画像を重ねて表示（タップで閉じる。長押し／右クリックで保存）
+// ページ遷移せずに画像を重ねて表示（點擊關閉。長押し／右クリックで保存）
 function showImage(dataUrl, intent){
   document.getElementById('share-box')?.remove();      // 重ねて開かない
   const box = document.createElement('div');
@@ -727,7 +727,7 @@ function showImage(dataUrl, intent){
   box.appendChild(img);
   if (intent){
     const a = document.createElement('a');
-    a.href = intent; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Xに投稿';
+    a.href = intent; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '發文到X';
     a.style.cssText = 'padding:10px 28px;border-radius:20px;background:#fff;color:#000;font:bold 16px sans-serif;text-decoration:none';
     box.appendChild(a);
   }

@@ -70,12 +70,12 @@
   <div id="overlay" class="off"></div>
 </div>
 <section class="howto" data-pos="top-left" hidden>
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>星のまわりを回る衛星を操り、重力圏から重力圏へ飛び移って宇宙の奥へ進むゲームです。タップで今の星を離れ、次の星の重力圏に入ると自動で周回に入ります。星に入るたびに1点で、途中の星を飛ばして先の星に入ると、飛ばした数だけ加点されます。画面の下か左右の外へ出ると終わりです。</p>
   <h2>操作</h2>
-  <p>画面のどこかをタップすると飛び出します。押したまま指を左右へ動かすと、飛んでいる間の進路を少しずつ曲げられます。PC はスペースか Enter で飛び出し、左右の矢印キーで曲げます。終了後はタップでやり直せます。</p>
+  <p>画面のどこかをタップすると飛び出します。押したまま指を左往右動かすと、飛んでいる間の進路を少しずつ曲げられます。PC はスペースか Enter で飛び出し、左右の矢印キーで曲げます。終了後はタップでやり直せます。</p>
   <h2>コツ</h2>
-  <p>周回中に失敗することはないので、進みたい向きへ衛星が向いた瞬間に押してください。重力圏の輪が青い星は遅く、橙の星は速く回ります。進むほど全体の速さも上がり、最大で2倍になります。</p>
+  <p>周回中に失敗することはないので、進みたい向きへ衛星が向いた瞬間に按ください。重力圏の輪が青い星は遅く、橙の星は速く回ります。進むほど全体の速さも上がり、最大で2倍になります。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
 </section>
 </div>
@@ -144,7 +144,7 @@ const RAMP     = 5000;  // この距離進むと基準速度が上限に達す�
 const SPEED_CAP= 2.0;   // 基準速度の上限倍率
 const LEAD_BIAS = 0.5;  // 次の星をプレイヤーの進路側へ寄せる割合
 const DAMP     = 1.25;  // 周回に馴染むまでの振れの収まりやすさ
-const STEER_RATE = 0.15; // 押している間に曲がり続ける速さ（rad/s）
+const STEER_RATE = 0.15; // 按いる間に曲がり続ける速さ（rad/s）
 const STEER_DRAG = 110;  // 最大まで曲げるのに必要な横スライド量(px)
 const SPD = [ {m:0.70, hue:205}, {m:1.00, hue:275}, {m:1.38, hue:22} ];
 
@@ -266,7 +266,7 @@ function tap(){
     document.documentElement.setAttribute('data-howto-hidden', '');
     player.ignore = player.eng;
     player.eng = null;
-    player.sSign = player.vy < 0 ? 1 : -1;   // 画面右へ曲がる向きを揃える
+    player.sSign = player.vy < 0 ? 1 : -1;   // 画面往右曲がる向きを揃える
   }
 }
 addEventListener('pointerdown', e => {
@@ -296,8 +296,8 @@ function gameOver(){
   elOv.innerHTML =
     '<h1>LOST</h1><div class="big">' + score + '</div>' +
     '<div class="sub">BEST ' + best + '</div>' +
-    '<a class="share" id="share" target="_blank" rel="noopener">Xでシェア</a>' +
-    '<p class="blink">タップでもう一度</p>';
+    '<a class="share" id="share" target="_blank" rel="noopener">分享到X</a>' +
+    '<p class="blink">タップで再來一次</p>';
   const share = document.getElementById('share');
   // ページURLは url 引数で渡すと X 側でリンクとして表示される
   share.href = 'https://x.com/intent/post?text=' + encodeURIComponent(buildShareText())
@@ -346,7 +346,7 @@ function update(dt){
     const na = Math.atan2(player.vy, player.vx) + om*dt;
     player.vx = Math.cos(na)*v; player.vy = Math.sin(na)*v;
   } else {
-    // 飛行中: 押している間ずっと曲がり続ける（制限なし）
+    // 飛行中: 按いる間ずっと曲がり続ける（制限なし）
     let ang = Math.atan2(player.vy, player.vx);
     ang += steerVal() * player.sSign * STEER_RATE * dt;
     player.vx = Math.cos(ang)*v; player.vy = Math.sin(ang)*v;

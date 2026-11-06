@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, maximum-scale=1, viewport-fit=cover">
-<title>オセリス - OTHELLIS</title>
+<title>黑白棋 OTHELLIS</title>
 <meta name="description" content="挟んで裏返して消すオセロ風の落ちもの">
 <style>
   :root{
@@ -116,10 +116,10 @@ gtag('config', 'G-41RSZLP1YQ');
 <header>
   <button id="menuBtn" class="menubtn" aria-label="メニュー" aria-expanded="false">☰</button>
 </header>
-<div id="menu" class="menu hidden" role="dialog" aria-label="ルールと操作">
+<div id="menu" class="menu hidden" role="dialog" aria-label="規則與操作">
   <div class="menubox">
-    <div class="menuhead"><strong>ルール・操作</strong><button id="menuClose" aria-label="閉じる">✕</button></div>
-    <button class="menuhowto" type="button" data-howto-open>遊び方</button>
+    <div class="menuhead"><strong>ルール・操作</strong><button id="menuClose" aria-label="關閉">✕</button></div>
+    <button class="menuhowto" type="button" data-howto-open>玩法</button>
     <h3>ルール</h3>
     <ul>
       <li>白か黒のミノが落ちてくる</li>
@@ -143,7 +143,7 @@ gtag('config', 'G-41RSZLP1YQ');
 </div>
 
 <section class="howto" hidden data-pos="none">
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>白か黒1色の、4個ひと組の石が落ちてくるパズルです。置いた石で相手の色を挟むと、8方向に裏返ります。同じ色で埋まった1行と、赤線から下まで同じ色の列は消えます。裏返しが起きた手では、裏返した石を含む壁から壁までの同色の斜め線も消えます。裏返しと消去のあとで赤線より上に石が残ると終わりです。</p>
   <h2>操作</h2>
   <p>スマホは画面下のボタンで操作します。↑は一気に落とすボタンで、ホールドは1個につき1回使えます。PC は←→で移動、↑か X と Z で回転、↓で少しずつ落とし、Space で一気に落とします。Shift か C がホールドで、Esc か P で一時停止します。</p>
@@ -157,7 +157,7 @@ gtag('config', 'G-41RSZLP1YQ');
     <canvas id="board"></canvas>
     <div class="overlay" id="startOv">
       <p>白か黒のミノが落ちてくる。<br>置いた石で相手色を挟むと反転。<br>1行が同じ色で埋まると消える。<br>赤線から下まで同じ色で積み上がった列も消える。<br>反転で揃った斜め線（壁から壁まで）も消える。<br>赤線より上に石が残ったら終了。</p>
-      <button id="startBtn">スタート</button>
+      <button id="startBtn">開始</button>
     </div>
     <div class="overlay hidden" id="pauseOv">
       <h2>PAUSED</h2>
@@ -168,8 +168,8 @@ gtag('config', 'G-41RSZLP1YQ');
       <p id="overText"></p>
       <p id="bestText" class="best hidden">NEW BEST!</p>
       <div class="btns">
-        <button id="retryBtn">もう一度</button>
-        <button id="shareBtn" class="sub">共有</button>
+        <button id="retryBtn">再來一次</button>
+        <button id="shareBtn" class="sub">分享</button>
       </div>
     </div>
   </div>
@@ -191,9 +191,9 @@ gtag('config', 'G-41RSZLP1YQ');
   <div class="dpad">
     <button data-act="hold" class="c1 r1 txt">ホールド</button>
     <button data-act="drop" class="c2 r1" aria-label="ハードドロップ">↑</button>
-    <button data-act="left" class="c1 r2" aria-label="左へ移動">←</button>
+    <button data-act="left" class="c1 r2" aria-label="往左移動">←</button>
     <button data-act="down" class="c2 r2" aria-label="ソフトドロップ">↓</button>
-    <button data-act="right" class="c3 r2" aria-label="右へ移動">→</button>
+    <button data-act="right" class="c3 r2" aria-label="往右移動">→</button>
   </div>
   <div class="rot">
     <button data-act="rotateccw" class="txt">左回転</button>
@@ -225,7 +225,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const DROP_BASE = 800, DROP_STEP = 70, DROP_MIN = 120;
   const LINES_PER_LEVEL = 10;     // 何ライン消すごとにレベルが上がるか
 
-  // スコア
+  // 分數
   const SCORE_FLIP = 10;                          // 反転1個あたり（レベル倍率なし）
   const SCORE_ROWS = [0, 100, 300, 500, 800];     // 同時に消した行数 → 基本点（×レベル）
   const SCORE_COL = 500;                          // 列消去1本あたり（×レベル）
@@ -239,8 +239,8 @@ gtag('config', 'G-41RSZLP1YQ');
   // 演出の長さ（ms）
   const DUR = { flip: 420, clear: 320, clearcol: 320, clearcells: 320, fall: 180 };
   const MAX_DT = 50;              // ループの経過時間の上限（タブ復帰時の大ジャンプ防止）
-  const HI_KEY = 'othellis.hiScore';   // ハイスコアの localStorage キー
-  const SHARE_TAG = '#オセリス';       // 共有文面のハッシュタグ
+  const HI_KEY = 'othellis.hiScore';   // 最高分の localStorage キー
+  const SHARE_TAG = '#オセリス';       // 分享文面のハッシュタグ
 
   // ---------- 参照 ----------
   const $ = id => document.getElementById(id);
@@ -257,10 +257,10 @@ gtag('config', 'G-41RSZLP1YQ');
   let board, cur, next, hold, holdUsed, score, lines, flips, level;
   let dropTimer = 0, lastTime = 0;
   let anim = null;                // 演出中: { steps, idx, t0 }
-  let pendingOver = false;        // 演出後にゲームオーバーにする
+  let pendingOver = false;        // 演出後に遊戲結束にする
   let held = {};                  // 長押し中のキー: action -> 次に発火する時刻
   let menuPaused = false;         // メニューを開いたことで一時停止したか
-  // ハイスコア：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
+  // 最高分：ブラウザのlocalStorageに保存（使えない環境ではその回だけ保持）
   let hiScore = 0;
   try { hiScore = parseInt(localStorage.getItem(HI_KEY)) || 0; } catch (e) {}
   function saveHi() { try { localStorage.setItem(HI_KEY, String(hiScore)); } catch (e) {} }
@@ -629,11 +629,11 @@ gtag('config', 'G-41RSZLP1YQ');
     draw();
   }
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText() {
     return `オセリス SCORE ${score} / LINES ${lines} / FLIPS ${flips}\n${location.href}\n${SHARE_TAG}`;
   }
-  // 結果画像: 盤面のスクリーンショットの上にスコアを重ねる（共有シートの制約で同期的に作る）
+  // 結果画像: 盤面のスクリーンショットの上に分數を重ねる（分享シートの制約で同期的に作る）
   function makeResultImageFile() {
     const W = LW, PAD = 24, HEAD = 96;
     const c = document.createElement('canvas');
@@ -664,8 +664,8 @@ gtag('config', 'G-41RSZLP1YQ');
       return;
     }
     navigator.clipboard?.writeText(shareText()).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   }
 

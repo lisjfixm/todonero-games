@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>タイムスケジュールシミュレーター</title>
+<title>時間表模擬器</title>
 <meta name="description" content="回る予定を止めて1日の予定を組む">
 <style>
 :root{
@@ -75,7 +75,7 @@ body{
 #result{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));text-align:center;background:var(--bg)}
 #result.hidden{display:none}
 #rtitle{font-size:26px;font-weight:800;letter-spacing:.04em}
-/* ステージ名の横の再生ボタン：押すと1日を暮らす演出をもう一度見る */
+/* ステージ名の横の再生ボタン：押すと1日を暮らす演出を再來一次見る */
 .rhead{display:flex;align-items:center;justify-content:center;gap:10px}
 #replay{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:2px solid var(--fg);border-radius:50%;background:var(--plate);color:var(--fg)}
 #rcv{display:block;width:min(100%,46dvh);aspect-ratio:1;margin:4px auto 0}
@@ -117,7 +117,7 @@ body{
 #editor .btns button:disabled,#addRow:disabled,.slot button:disabled{opacity:.35}
 /* ステージ名 */
 #sname-in{display:block;width:100%;height:48px;margin-bottom:14px;border:0;border-radius:14px;background:var(--plate);box-shadow:0 1px 3px var(--shadow);color:var(--fg);font-weight:800;font-size:18px;font-family:inherit;text-align:center}
-/* 共有コードと削除 */
+/* 分享コードと刪除 */
 .codebox{margin-top:22px;padding:12px;border-radius:14px;background:var(--plate);box-shadow:0 1px 3px var(--shadow)}
 .codebox .lbl{font-size:12px;color:var(--sub);letter-spacing:.1em;margin-bottom:8px;text-align:center}
 .coderow{display:flex;gap:8px}
@@ -163,9 +163,9 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     <canvas id="rcv"></canvas>
     <div class="btns">
       <button id="retry" type="button">もう一回</button>
-      <button id="share" type="button">共有</button>
+      <button id="share" type="button">分享</button>
     </div>
-    <button id="toSelect" type="button">ステージ選択に戻る</button>
+    <button id="toSelect" type="button">ステージ選択に返回</button>
   </div>
   <div id="select" class="hidden">
     <div class="stages">
@@ -178,15 +178,15 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     <div class="note">作ったステージは3つまでブラウザに保存されます</div>
     <div id="slots"></div>
     <div class="codebox">
-      <div class="lbl">コードを読み込む</div>
+      <div class="lbl">コードを讀取</div>
       <div class="coderow">
-        <input id="imp-in" type="text" placeholder="コードを貼り付け" aria-label="読み込むコード" autocomplete="off" autocapitalize="off" spellcheck="false">
-        <button id="impBtn" type="button">読み込む</button>
+        <input id="imp-in" type="text" placeholder="コードを貼り付け" aria-label="讀取コード" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button id="impBtn" type="button">讀取</button>
       </div>
       <div id="impMsg" aria-live="polite"></div>
     </div>
     <div class="btns">
-      <button id="mback" type="button">戻る</button>
+      <button id="mback" type="button">返回</button>
     </div>
   </div>
   <div id="editor" class="hidden">
@@ -196,13 +196,13 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     <button id="addRow" type="button">＋ 項目を追加</button>
     <div id="total" aria-live="polite"></div>
     <div class="btns">
-      <button id="eback" type="button">戻る</button>
+      <button id="eback" type="button">返回</button>
       <button id="eplay" type="button">この予定で遊ぶ</button>
     </div>
     <div class="codebox">
-      <div class="lbl">共有コード（相手の「コードを読み込む」に貼ると同じステージが作れます）</div>
+      <div class="lbl">分享コード（相手の「コードを讀取」に貼ると同じステージが作れます）</div>
       <div class="coderow">
-        <input id="code-out" type="text" readonly aria-label="共有コード">
+        <input id="code-out" type="text" readonly aria-label="分享コード">
         <button id="codeCopy" type="button">コピー</button>
       </div>
       <div id="codeMsg" aria-live="polite"></div>
@@ -210,8 +210,8 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     <button id="edel" type="button">このステージを消す</button>
   </div>
 <section class="howto" data-pos="none" hidden>
-  <h2>遊び方</h2>
-  <p>24時間の時計盤に、決められた予定を1つずつはめていくゲームです。予定は円のまわりを回っていて、タップした所で止まります。先に置いた予定と重なると、その予定が前後へ押し出されます。全部置くと、キャラクターがその通りに1日を暮らす様子が流れ、円グラフが結果に残ります。点数はありません。</p>
+  <h2>玩法</h2>
+  <p>24時間の時計盤に、決められた予定を1つずつはめていくゲームです。予定は円のまわりを回っていて、タップした所で止まります。先に置いた予定と重なると、その予定が前後へ押し出されます。全部置くと、キャラクターがその通りに1日を暮らす様子が流れ、円グラフが結果に剩餘ます。点数はありません。</p>
   <h2>操作</h2>
   <p>ステージを選び、止めたい所でタップします。PC はスペースか Enter でも止められます。暮らす様子はタップで飛ばせます。カスタムステージでは予定の名前と長さを決めて3つまで保存でき、コードで人に渡せます。ただし暮らす様子は流れません。</p>
   <h2>楽しみ方</h2>
@@ -400,7 +400,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
   function stageButtons(){
     return PATTERNS.map((pt, i) => `<button type="button" data-stage="${i}">${esc(pt.name)}</button>`).join('')
       + `<button type="button" data-make class="make">カスタムステージ</button>`
-      + `<button type="button" data-howto-open>遊び方</button>`;
+      + `<button type="button" data-howto-open>玩法</button>`;
   }
   // 画面を1つだけ出す（結果・起動時の選択・自分で作る・ステージを作る）
   function showPanel(id){
@@ -519,7 +519,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     return shiftFrom[i] + signedDiff(placed[i], shiftFrom[i]) * e;
   }
 
-  // ハマる最中のピースの大きさ。浮いた大きさから盤面に押し込まれ、少し沈んで戻る（カチッとハマる感じ）
+  // ハマる最中のピースの大きさ。浮いた大きさから盤面に押し込まれ、少し沈んで返回（カチッとハマる感じ）
   function snapScale(){
     const c1 = 1.70158, c3 = c1 + 1, t = shiftT - 1;
     const back = 1 + c3 * t * t * t + c1 * t * t;
@@ -559,7 +559,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
   // 完成演出：輪がポンと弾み、外へ広がる波紋と、真ん中の穴に「完成！」が飛び出す
   function drawDone(r){
     const cx = W / 2, cy = H / 2, t = doneT;
-    // 弾み（最初の0.5秒で一度ふくらんで戻る）
+    // 弾み（最初の0.5秒で一度ふくらんで返回）
     const pulse = t < 0.5 ? 1 + 0.06 * Math.sin(Math.PI * t / 0.5) : 1;
     ctx.save();
     ctx.translate(cx, cy);
@@ -1048,7 +1048,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
 
   $('retry').addEventListener('pointerdown', e => e.stopPropagation());
   $('retry').addEventListener('click', () => reset(pattern));   // もう一回は同じステージをやり直す
-  // 結果のステージ名の横の再生ボタン：1日を暮らす演出をもう一度流し、終わったら結果に戻る
+  // 結果のステージ名の横の再生ボタン：1日を暮らす演出を再來一次流し、終わったら結果に返回
   $('replay').addEventListener('pointerdown', e => e.stopPropagation());
   $('replay').addEventListener('click', () => {
     mode = 'day';
@@ -1115,7 +1115,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     if (customs[i] && isComplete(customs[i])) reset(customPattern(i));
   }
 
-  // ----- 共有コード：ステージ名と項目（長さは15分を1とした数）を文字列にする -----
+  // ----- 分享コード：ステージ名と項目（長さは15分を1とした数）を文字列にする -----
   function encodeCode(c){
     const json = JSON.stringify([c.name, c.items.map(it => [it.name, it.dur / STEP])]);
     let bin = '';
@@ -1205,18 +1205,18 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
   }
   $('codeCopy').addEventListener('click', () => {
     const code = $('code-out').value;
-    const done = () => { $('codeMsg').textContent = 'コピーしました'; setTimeout(() => { $('codeMsg').textContent = ''; }, 1500); };
+    const done = () => { $('codeMsg').textContent = '已複製'; setTimeout(() => { $('codeMsg').textContent = ''; }, 1500); };
     // コピーできない環境ではコードを選んだ状態にして、手でコピーしてもらう
     const manual = () => { $('code-out').focus(); $('code-out').select(); $('codeMsg').textContent = 'コードを長押ししてコピーしてください'; };
     if (navigator.clipboard) navigator.clipboard.writeText(code).then(done).catch(manual); else manual();
   });
-  // 消すボタンは誤って押さないよう、2回押して消す（確認ダイアログは出さない）
+  // 消すボタンは誤って押さないよう、2回按消す（確認ダイアログは出さない）
   let delArmed = false, delTimer = 0;
   function resetDelete(){ delArmed = false; clearTimeout(delTimer); $('edel').textContent = 'このステージを消す'; }
   $('edel').addEventListener('click', () => {
     if (!delArmed) {
       delArmed = true;
-      $('edel').textContent = 'もう一度押すと消えます';
+      $('edel').textContent = '再按一次取消';
       delTimer = setTimeout(resetDelete, 3000);
       return;
     }
@@ -1255,7 +1255,7 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
       row.querySelectorAll('button[data-d]').forEach(b => { b.disabled = !canChange(it, Number(b.dataset.d), total); });
     });
     const over = total > DAY;
-    // 24時間ぴったり埋まっていないと遊べない。足りないときは残りを出す
+    // 24時間ぴったり埋まっていないと遊べない。足りないときは剩餘を出す
     $('total').textContent = over ? `合計 ${fmtLen(total)}（24時間を超えています）`
       : total < DAY ? `合計 ${fmtLen(total)} ／ 24時間（あと${fmtLen(DAY - total)}）`
       : `合計 24時間 ／ 24時間`;
@@ -1328,12 +1328,12 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     playCustom(editIdx);
   });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     return `${pattern.name}を組みました！\n${location.href.split(/[?#]/)[0]}\n#タイムスケジュールシミュレーター`;
   }
 
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const S = 600;
     const c = document.createElement('canvas');
@@ -1358,20 +1358,20 @@ button:focus-visible{outline:3px solid var(--work);outline-offset:3px}
     const btn = $('share');
     const text = shareText();
     const file = resultImageFile();
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ text, files: [file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
 

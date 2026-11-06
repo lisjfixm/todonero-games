@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>家電マスター</title>
+<title>家電達人</title>
 <meta name="description" content="調子の悪い家電を叩いて直すタイム勝負">
 <style>
   :root{
@@ -74,7 +74,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
   button.primary{background:var(--fg);color:var(--panel)}
   button:focus-visible{outline:3px solid var(--water);outline-offset:2px}
-  .howto-open{min-height:0}   /* 上の button の min-height を「遊び方」ボタンに効かせない */
+  .howto-open{min-height:0}   /* 上の button の min-height を「玩法」ボタンに効かせない */
   #share-view{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
   #share-view .panel{background:var(--panel);border-radius:12px;padding:16px;width:min(90%,340px);max-height:94%;overflow:auto;touch-action:pan-y}
   #share-img{display:block;width:100%;height:auto;border-radius:6px}
@@ -94,23 +94,23 @@ gtag('config', 'G-41RSZLP1YQ');
       <div id="r-time" aria-live="polite"></div>
       <div id="r-hits"></div>
       <div class="btns">
-        <button id="share" type="button">共有</button>
+        <button id="share" type="button">分享</button>
         <button id="again" type="button" class="primary">もう一回</button>
       </div>
     </div>
   </div>
-  <div id="share-view" class="hidden" role="dialog" aria-label="共有される内容">
+  <div id="share-view" class="hidden" role="dialog" aria-label="分享される内容">
     <div class="panel">
-      <img id="share-img" alt="共有される結果画像">
+      <img id="share-img" alt="分享される結果画像">
       <p id="share-text"></p>
-      <button id="share-close" type="button">閉じる</button>
+      <button id="share-close" type="button">關閉</button>
     </div>
   </div>
   <section class="howto" hidden data-pos="bottom-left">
-    <h2>遊び方</h2>
+    <h2>玩法</h2>
     <p>調子の悪い家電を叩いて直すタイムアタックです。テレビ、ラジオ、扇風機、冷蔵庫、洗濯機の5台を順に直し、全部直すまでの時間と叩いた回数が結果に出ます。家電にはそれぞれ直るツボがランダムな場所に隠れていて、そこを叩くと直ります。ページを開くとすぐに計測が始まります。</p>
     <h2>操作</h2>
-    <p>家電の本体をタップして叩きます。PC ではクリックです。結果画面では、スペースキーか Enter キーでもやり直せます。</p>
+    <p>家電の本体を點擊叩きます。PC ではクリックです。結果画面では、スペースキーか Enter キーでもやり直せます。</p>
     <h2>コツ</h2>
     <p>ツボに近い所を叩くほど、直後の約0.8秒だけ症状が軽くなり、そのあと元に戻ります。遠すぎると全く変わりません。症状の軽くなり方を比べて、ツボの場所を絞り込んでください。叩いた回数はタイムに響かないので、ためらわずに叩くほうが速く終わります。後の家電ほどツボは小さくなります。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -127,12 +127,12 @@ gtag('config', 'G-41RSZLP1YQ');
   const HINT_RANGE = 170;          // ツボからこの距離（論理px）より遠いと、叩いても全く調子が良くならない
   const HINT_POWER = 0.85;         // ツボのすぐ近くを叩いたとき、調子の悪さをどこまで減らすか（0〜1）
   const HOLD_TIME = 0.8;           // 叩いて良くなった状態が続く時間（秒）
-  const RECOVER_TIME = 0.9;        // そこから元の調子の悪さに戻るまでの時間（秒）
+  const RECOVER_TIME = 0.9;        // そこから元の調子の悪さに返回までの時間（秒）
   const FIXED_WAIT = 1.8;          // 直ってから次の家電に替わるまでの時間（秒）
   const SPOT_MARGIN = 18;          // ツボは家電の縁からこの距離（論理px）以上内側に置く
   const KICK_AMP = 7;              // 叩いたときに家電が揺れる大きさ（論理px）
   const KICK_DECAY = 7;            // 叩いた揺れが収まる速さ（1/秒）
-  const SHARE_INSTANT = 0.5;       // 共有がこの秒数より早くキャンセル扱いで終わったら、共有シートは出ていなかったとみなす
+  const SHARE_INSTANT = 0.5;       // 分享がこの秒数より早くキャンセル扱いで終わったら、分享シートは出ていなかったとみなす
   const FONT = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif';
 
   // 家電ごとの設定：r = 直るツボの半径（論理px、小さいほど難しい）、shake = 調子が悪いときの震えの大きさ（論理px）
@@ -148,7 +148,7 @@ gtag('config', 'G-41RSZLP1YQ');
   const CAM_SHAKE = 8;             // 叩いたときの画面揺れ（論理px）。ツボに近いほど最大でこの2倍
   const CAM_SHAKE_FIX = 26;        // 直ったときの画面揺れ（論理px）
   const CAM_DECAY = 9;             // 画面揺れが収まる速さ（1/秒）
-  const SQ_K = 320, SQ_D = 14;     // 叩いたときに家電がつぶれて戻るばねの強さ・減衰
+  const SQ_K = 320, SQ_D = 14;     // 叩いたときに家電がつぶれて返回ばねの強さ・減衰
   const ENTER_TIME = 0.7;          // 次の家電が上から落ちてくる時間（秒）
   const SPARKS = 14;               // 1回叩いたときの火花の数（ツボに近いほど最大でこの3倍）
   const DEBRIS = 6;                // 1回叩いたときに飛ぶネジ・部品の数
@@ -477,7 +477,7 @@ gtag('config', 'G-41RSZLP1YQ');
     $('hits').textContent = `${hits}回`;
   }
 
-  // 今の調子の悪さ（1 = 最悪、0 = 正常）。叩いた直後だけ近さに応じて良くなり、だんだん戻る
+  // 今の調子の悪さ（1 = 最悪、0 = 正常）。叩いた直後だけ近さに応じて良くなり、だんだん返回
   function currentBad(){
     if (state === 'enter') return 1;
     if (state !== 'playing') return 0;
@@ -664,7 +664,7 @@ gtag('config', 'G-41RSZLP1YQ');
     e.preventDefault();
   });
 
-  // ---------- 共有 ----------
+  // ---------- 分享 ----------
   function shareText(){
     const url = location.href.split(/[?#]/)[0];
     return `${hits}回叩いて全ての家電を${timeText()}秒で直した！\n${url}\n#家電マスター`;
@@ -692,7 +692,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const text = shareText();
     const c = resultCanvas();
     const file = resultImageFile(c);
-    // 共有シートが無い・使えない環境：文面をコピーし、共有される内容を画面に出す
+    // 分享シートが無い・使えない環境：文面をコピーし、分享される内容を画面に出す
     const fallback = () => {
       navigator.clipboard?.writeText(text).catch(() => {});
       $('share-img').src = c.toDataURL('image/png');
@@ -700,7 +700,7 @@ gtag('config', 'G-41RSZLP1YQ');
       $('share-view').classList.remove('hidden');
       $('share-close').focus({ preventScroll: true });
     };
-    // 失敗、または押してすぐのキャンセル扱いは共有シートが出なかったとみなす
+    // 失敗、または按すぐのキャンセル扱いは分享シートが出なかったとみなす
     const shareStart = performance.now();
     const failed = err => {
       const instant = performance.now() - shareStart < SHARE_INSTANT * 1000;

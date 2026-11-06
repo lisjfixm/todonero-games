@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>バンジョーキャット</title>
+<title>斑鳩琴貓</title>
 <meta name="description" content="バンジョーを鳴らすと猫が出てくる">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -129,10 +129,10 @@ h1{font-size:1.1rem;font-weight:700}
   </div>
 </div>
 <section class="howto" hidden data-pos="top-right">
-  <h2>遊び方</h2>
+  <h2>玩法</h2>
   <p>画面の下半分がバンジョーの操作盤になっている、音を鳴らして楽しむおもちゃです。弾き始めると部屋の扉が開き、猫が出てきて一緒に弾く姿を見せます。弾くのをやめると扉の奥へ戻ります。得点や終わりはありません。</p>
   <h2>操作</h2>
-  <p>丸いヘッドを上下になぞるとストローク、タップすると近い弦の単音が鳴ります。指板のマスをタップすると弦を押さえて鳴らし、なぞるとマスを移るたびに鳴ります。G や Em などのコードボタンは押している間だけ押さえが変わり、PC ではクリックで切り替わります。左端の再生ボタンは自動演奏です。</p>
+  <p>丸いヘッドを上下になぞるとストローク、タップすると近い弦の単音が鳴ります。指板のマスをタップすると弦を押さえて鳴らし、なぞるとマスを移るたびに鳴ります。G や Em などのコードボタンは按いる間だけ押さえが変わり、PC ではクリックで切り替わります。左端の再生ボタンは自動演奏です。</p>
   <h2>楽しみ方</h2>
   <p>片方の指でコードボタンを押さえながら、もう片方の指でヘッドをなぞると伴奏になります。自動演奏は押すたびに3曲を順番に弾きます。猫の毛色は出てくるたびに7種類から選ばれるので、何度も呼び出してみてください。</p>
   <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -660,7 +660,7 @@ board.addEventListener('pointermove', e => {
 ['pointerup','pointercancel'].forEach(t => board.addEventListener(t, e => boardDrag.delete(e.pointerId)));
 
 
-// コードボタン：押している間だけそのコードを押さえる（マウスはクリックで切り替え）
+// コードボタン：按いる間だけそのコードを押さえる（マウスはクリックで切り替え）
 // 並び：5弦,4弦,3弦,2弦,1弦（5弦は常に開放）
 const CHORDS = [
   ['G',  [0,0,0,0,0]],

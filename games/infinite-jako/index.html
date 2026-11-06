@@ -33,7 +33,7 @@ gtag('config', 'G-41RSZLP1YQ');
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>無限ちりめんじゃこ</title>
+<title>無限小魚乾</title>
 <meta name="description" content="ちりめんじゃこの山から生き物を探す">
 <style>
   :root {
@@ -88,7 +88,7 @@ gtag('config', 'G-41RSZLP1YQ');
     background: #e6503c; border: 2px solid var(--soy);
   }
   #zukanBtn:focus-visible, #shareBtn:focus-visible { outline: 2px solid var(--sea); }
-  /* 「遊び方」ボタンをヘッダーのすぐ下に置くための枠。高さ0なので山の操作を邪魔しない */
+  /* 「玩法」ボタンをヘッダーのすぐ下に置くための枠。高さ0なので山の操作を邪魔しない */
   #howtoSlot { position: absolute; left: 0; right: 0; top: 44px; height: 0; z-index: 6; }
 
   /* 山は座布団（下部160px）＋確認用の単色帯（70px）の上まで。境目はグラデーション */
@@ -237,7 +237,7 @@ gtag('config', 'G-41RSZLP1YQ');
   <header>
     <h1>無限ちりめんじゃこ</h1>
     <button id="zukanBtn" type="button">図鑑</button>
-    <button id="shareBtn" type="button">シェア</button>
+    <button id="shareBtn" type="button">分享</button>
   </header>
 
   <div id="pile" aria-label="雑魚の山"></div>
@@ -245,10 +245,10 @@ gtag('config', 'G-41RSZLP1YQ');
 
   <div id="howtoSlot">
     <section class="howto" hidden data-pos="top-left">
-      <h2>遊び方</h2>
+      <h2>玩法</h2>
       <p>ちりめんじゃこの山から1匹ずつ取り出して、食べたり観察したりする作品です。時間制限や終わりはなく、取っても山は尽きません。じゃこに混ざったエビやタコの仲間など、全28種を図鑑に集められます。記録はこのブラウザに保存されます。</p>
       <h2>操作</h2>
-      <p>山の中の1匹に指を置いてドラッグします。左の皿に入れると食べた数に加わり、右の虫眼鏡に入れると観察して図鑑に載ります。それ以外の場所で離すと山に戻ります。PC ではマウスのドラッグです。</p>
+      <p>山の中の1匹に指を置いて拖曳します。左の皿に入れると食べた数に加わり、右の虫眼鏡に入れると観察して図鑑に載ります。それ以外の場所で離すと山に戻ります。PC ではマウスの拖曳です。</p>
       <h2>楽しみ方</h2>
       <p>図鑑に載るのは虫眼鏡で観察したものだけで、皿に入れたものは記録されません。皿でも虫眼鏡でも、25匹取り除くごとに山が1段深くなり、じゃこ以外が出やすくなります。いちばん珍しい星5の生き物は、150匹取り除いた深さから現れます。</p>
       <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
@@ -269,13 +269,13 @@ gtag('config', 'G-41RSZLP1YQ');
     <div id="zukanBox">
       <div id="zukanTop">
         <p class="sub" id="zukanSub"></p>
-        <button id="closeZukan" type="button" aria-label="閉じる">×</button>
+        <button id="closeZukan" type="button" aria-label="關閉">×</button>
       </div>
       <div id="zukanBody">
         <div id="list"></div>
         <div id="zukanFoot">
           <button id="resetBtn" type="button">記録をリセット</button>
-          <button id="closeZukan2" type="button">閉じる</button>
+          <button id="closeZukan2" type="button">關閉</button>
         </div>
       </div>
     </div>
@@ -424,8 +424,8 @@ gtag('config', 'G-41RSZLP1YQ');
     for (let i = 0; i < n; i++) makeItem(Math.random() * (width + 40) - 20, Math.random() * (height + 40) - 20);
   }
 
-  // ---- ドラッグ ----
-  // ドラッグ中は #app 直下に移して、#app 基準の座標で動かす（山の filter や overflow の影響を受けない）
+  // ---- 拖曳 ----
+  // 拖曳中は #app 直下に移して、#app 基準の座標で動かす（山の filter や overflow の影響を受けない）
   const app = document.getElementById('app');
   // ---- 当たり判定：画像のアルファ値を使い、透明部分は掴めないようにする ----
   const MASK_SIZE = 128;
@@ -536,7 +536,7 @@ gtag('config', 'G-41RSZLP1YQ');
     window.addEventListener('pointerup', endDrag);
     window.addEventListener('pointercancel', endDrag);
   }
-  const LIFT = 50; // ドラッグ中に指より上に表示する最大量(px)。掴んだ瞬間は0で、動かすほど持ち上がる
+  const LIFT = 50; // 拖曳中に指より上に表示する最大量(px)。掴んだ瞬間は0で、動かすほど持ち上がる
   function moveTo(cx, cy) {
     const { el, offX, offY, w, h } = drag;
     const moved = Math.hypot(cx - drag.startX, cy - drag.startY);
@@ -601,7 +601,7 @@ gtag('config', 'G-41RSZLP1YQ');
       lens.classList.toggle('new', isNew);
       bump(lens);
       fxRing(lens, 'lens');
-      if (isNew) { fxShine(lens); fxText(lens, '新発見！', 'new'); zukanBtn.classList.add('badge'); }
+      if (isNew) { fxShine(lens); fxText(lens, '新發現！', 'new'); zukanBtn.classList.add('badge'); }
       el.remove();
       onRemoved();
       save();
@@ -670,7 +670,7 @@ gtag('config', 'G-41RSZLP1YQ');
     img.src = IMAGES['01_shirasu.png'];
   }
 
-  // ---- シェア ----
+  // ---- 分享 ----
   const shareBtn = document.getElementById('shareBtn');
   function shareText() {
     const known = SPECIES.filter(s => found[s.id]).length;
@@ -683,8 +683,8 @@ gtag('config', 'G-41RSZLP1YQ');
         await navigator.share({ text });
       } else {
         await navigator.clipboard.writeText(text);
-        shareBtn.textContent = 'コピーしました';
-        setTimeout(() => { shareBtn.textContent = 'シェア'; }, 1500);
+        shareBtn.textContent = '已複製';
+        setTimeout(() => { shareBtn.textContent = '分享'; }, 1500);
       }
     } catch (e) { /* キャンセル時は何もしない */ }
   });

@@ -34,7 +34,7 @@ gtag('config', 'G-41RSZLP1YQ');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#4aa3dc">
-<title>都道府県ダービー</title>
+<title>都道府縣賽馬</title>
 <meta name="description" content="支出額トップの県を当てる競馬風ゲーム">
 <style>
   :root{
@@ -186,7 +186,7 @@ gtag('config', 'G-41RSZLP1YQ');
         <p class="intro-item" id="introItem"></p>
         <p class="intro-ask" id="introAsk"></p>
       </div>
-      <p class="intro-tap">タップで次へ</p>
+      <p class="intro-tap">點擊繼續</p>
     </div>
   </div>
 
@@ -201,12 +201,12 @@ gtag('config', 'G-41RSZLP1YQ');
     <div class="bar">
       <div class="sum" id="sum">
         <span>賭け金<b class="num" id="total"></b></span>
-        <span>残り<b class="num" id="left"></b></span>
+        <span>剩餘<b class="num" id="left"></b></span>
       </div>
       <p class="round">第<b class="num js-race"></b>レース<small>/ <span class="js-races"></span></small></p>
       <div class="startrow">
-        <button class="btn howtobtn" type="button" data-howto-open>遊び方</button>
-        <button id="start" class="btn" type="button" disabled>スタート！</button>
+        <button class="btn howtobtn" type="button" data-howto-open>玩法</button>
+        <button id="start" class="btn" type="button" disabled>開始！</button>
       </div>
       <button type="button" class="credit js-credit">出典</button>
     </div>
@@ -239,18 +239,18 @@ gtag('config', 'G-41RSZLP1YQ');
       <div class="body" style="padding:18px 16px 16px;text-align:left">
         <p class="credit-title">出典</p>
         <p class="credit-full">総務省統計局「家計調査（二人以上の世帯）品目別都道府県庁所在市及び政令指定都市ランキング（2023年〜2025年平均）」（https://www.stat.go.jp/data/kakei/5.html）を加工して作成。品目は穀類・魚介類・肉類・乳卵類・生鮮野菜・乾物/海藻/大豆加工品等・果物の各品目（「乾めん」は「乾うどん・そば」で、そうめん・冷麦を含む）。各都道府県の値は県庁所在市（東京都は東京都区部）の値。</p>
-        <button id="creditClose" class="btn" type="button">閉じる</button>
+        <button id="creditClose" class="btn" type="button">關閉</button>
       </div>
     </div>
   </div>
 
   <section class="howto" hidden data-pos="none">
-    <h2>遊び方</h2>
-    <p>品目ごとの1世帯あたり年間支出額や購入量について、いちばん多い都道府県を当てる競馬風の予想ゲームです。出走は毎回5県で、持ち点1000から賭けて全3レースを戦い、最後の持ち点がスコアになります。途中で持ち点が0になると、そこで終わります。</p>
+    <h2>玩法</h2>
+    <p>品目ごとの1世帯あたり年間支出額や購入量について、いちばん多い都道府県を当てる競馬風の予想ゲームです。出走は毎回5県で、持ち点1000から賭けて全3レースを戦い、最後の持ち点が分數になります。途中で持ち点が0になると、そこで終わります。</p>
     <h2>操作</h2>
-    <p>各県の右にある＋と−で、賭け金を100ずつ変えます。複数の県に分けて賭けることもでき、スタートを押すとレースが始まります。PC はマウスのクリックで同じように操作できます。</p>
+    <p>各県の右にある＋と−で、賭け金を100ずつ変えます。複数の県に分けて賭けることもでき、開始を押すとレースが始まります。PC はマウスのクリックで同じように操作できます。</p>
     <h2>コツ</h2>
-    <p>紙飛行機は統計の実際の値に比例した距離を飛びます。追い風や落石で途中の順位は動きますが、着地の順は値のとおりです。オッズは実際の値にぶれを加えて決まるので、低い倍率ほど本命です。戻るのは1着の県に賭けた額と倍率を掛けた分だけです。</p>
+    <p>紙飛行機は統計の実際の値に比例した距離を飛びます。追い風や落石で途中の順位は動きますが、着地の順は値のとおりです。オッズは実際の値にぶれを加えて決まるので、低い倍率ほど本命です。返回のは1着の県に賭けた額と倍率を掛けた分だけです。</p>
     <p class="howto-home"><a href="../../index.html">ゲーム一覧</a></p>
   </section>
 
@@ -262,7 +262,7 @@ gtag('config', 'G-41RSZLP1YQ');
       </div>
       <div class="body" style="padding:14px 16px 16px">
         <p id="finalSub"></p>
-        <button id="share" class="btn share" type="button">共有</button>
+        <button id="share" class="btn share" type="button">分享</button>
         <button id="restart" class="btn" type="button">もう一回</button>
         <button type="button" class="credit js-credit">出典</button>
       </div>
@@ -627,8 +627,8 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- お題の出題演出 ----------
-  // レースごとに「第◯レース」の札のあと、品目と問いかけを1枚のカードで一気に出す。タップで閉じる（しばらくすると自動で閉じる）
-  const INTRO_TIME = 3.4;    // 自動で閉じるまでの時間（秒）
+  // レースごとに「第◯レース」の札のあと、品目と問いかけを1枚のカードで一気に出す。點擊關閉（しばらくすると自動で關閉）
+  const INTRO_TIME = 3.4;    // 自動で關閉までの時間（秒）
   let introTimer = 0;
 
   function showIntro(){
@@ -653,7 +653,7 @@ gtag('config', 'G-41RSZLP1YQ');
   }
 
   // ---------- 賭ける画面 ----------
-  // 持ち点を複数の県に振り分けて賭けられる（1着の県に賭けた分だけ 賭け金×オッズ が戻る）
+  // 持ち点を複数の県に振り分けて賭けられる（1着の県に賭けた分だけ 賭け金×オッズ が返回）
   const totalBet = () => bets.reduce((a, b) => a + b, 0);
   const payout = (amount, h) => Math.floor(amount * h.odds10 / 10);  // 賭け金×オッズ（整数計算）
 
@@ -727,7 +727,7 @@ gtag('config', 'G-41RSZLP1YQ');
     scaleMax = niceCeil(vmax * 1.06);
     field.forEach(h => {
       h.dist = h.value / scaleMax;              // 止まる位置（コース全体を1とした割合）
-      h.dur = T_MAX * h.value / vmax;           // 止まるまでの時間（距離に比例＝スタートの速さはみんな同じ）
+      h.dur = T_MAX * h.value / vmax;           // 止まるまでの時間（距離に比例＝開始の速さはみんな同じ）
       h.stopped = false;
       h.pos = 0;
       h.speed = 0;
@@ -745,7 +745,7 @@ gtag('config', 'G-41RSZLP1YQ');
     camX = 0;
     field.forEach(h => { h.trail = []; });
     live = { last:-9, leader:-1, started:false, finished:false, two:false, surged:new Set(), stopSaid:new Set() };
-    setLive('まもなくスタートです', true);
+    setLive('即將開始', true);
   }
 
   // きりのいい数に切り上げる（1・2・2.5・5 × 10のべき乗）
@@ -871,7 +871,7 @@ gtag('config', 'G-41RSZLP1YQ');
     return null;
   }
 
-  // 風の筋（追い風は右へ、向かい風は左へ流れる）
+  // 風の筋（追い風は往右、向かい風は往左流れる）
   function drawWind(){
     for (const e of evs){
       if (e.type === 'rock') continue;
@@ -974,7 +974,7 @@ gtag('config', 'G-41RSZLP1YQ');
   let live = null;
   const COMMENT_GAP = 1.3;   // 実況を次に出すまでの最短の間（秒）
 
-  // 実況は下に1行ずつ追加し、古い行は上へスライドして消えていく
+  // 実況は下に1行ずつ追加し、古い行は往上スライドして消えていく
   function setLive(text, reset){
     const list = $('liveList');
     if (reset) list.textContent = '';
@@ -1040,7 +1040,7 @@ gtag('config', 'G-41RSZLP1YQ');
       }
       return;
     }
-    // 残り2県
+    // 剩餘2県
     if (running.length === 2 && !live.two){
       if (say(`残るは${nm(running[0])}と${nm(running[1])}！`, raceT - live.last > 0.6)) live.two = true;
       return;
@@ -1086,7 +1086,7 @@ gtag('config', 'G-41RSZLP1YQ');
     });
 
     const over = raceNo >= RACES || points <= 0;
-    $('next').textContent = over ? 'スコアを見る' : '次のレースへ';
+    $('next').textContent = over ? '分數を見る' : '下一場比賽';
     $('result').hidden = false;
   }
 
@@ -1141,7 +1141,7 @@ gtag('config', 'G-41RSZLP1YQ');
     const trail = Math.min(...field.map(worldX));
     const sz = planeLen();
     let target = Math.min(lead - W * 0.6, trail - sz * 1.2);   // 先頭の右に数値を出す余白を残す
-    target = Math.max(target, lead - W * 0.72);   // 先頭は画面の7割より右へは行かせない（後ろの県は見切れてもよい）
+    target = Math.max(target, lead - W * 0.72);   // 先頭は画面の7割より往右は行かせない（後ろの県は見切れてもよい）
     target = Math.min(Math.max(0, target), startWX + trackLen - W * 0.78);
     camX += (target - camX) * Math.min(1, dt * 6);
 
@@ -1359,13 +1359,13 @@ gtag('config', 'G-41RSZLP1YQ');
   $('next').addEventListener('click', next);
   $('restart').addEventListener('click', newGame);
 
-  // ---------- 結果の共有 ----------
+  // ---------- 結果の分享 ----------
   const SHARE_TAG = '#都道府県ダービー';
   function shareText(){
-    const head = points <= 0 ? `第${raceNo}レースで持ち点がなくなった…` : `スコア ${fmt(points)}！`;
+    const head = points <= 0 ? `第${raceNo}レースで持ち点がなくなった…` : `分數 ${fmt(points)}！`;
     return `${head}\n最初の持ち点 ${fmt(START_POINTS)} → ${fmt(points)}\n${location.href.split(/[?#]/)[0]}\n${SHARE_TAG}`;
   }
-  // 結果をPNG画像にする（共有シートの制約があるため同期処理で作る）
+  // 結果をPNG画像にする（分享シートの制約があるため同期処理で作る）
   function resultImageFile(){
     const S = 600;
     const c = document.createElement('canvas');
@@ -1405,20 +1405,20 @@ gtag('config', 'G-41RSZLP1YQ');
     const btn = $('share');
     const text = shareText();
     const file = resultImageFile();
-    // 1) 画像を渡せる共有シート（スマホなど）: 文面＋結果画像
+    // 1) 画像を渡せる分享シート（スマホなど）: 文面＋結果画像
     if (navigator.canShare && navigator.canShare({ files: [file] })){
       navigator.share({ text, files: [file] }).catch(() => {});
       return;
     }
-    // 2) 画像を渡せない共有シート: 文面のみ
+    // 2) 画像を渡せない分享シート: 文面のみ
     if (navigator.share){
       navigator.share({ text }).catch(() => {});
       return;
     }
-    // 3) 共有シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
+    // 3) 分享シートがない環境（PCのブラウザなど）: 文面をコピーしてボタンの文言で知らせる
     navigator.clipboard?.writeText(text).then(() => {
-      btn.textContent = 'コピーしました';
-      setTimeout(() => { btn.textContent = '共有'; }, 1500);
+      btn.textContent = '已複製';
+      setTimeout(() => { btn.textContent = '分享'; }, 1500);
     }).catch(() => {});
   });
   $('intro').addEventListener('click', hideIntro);
